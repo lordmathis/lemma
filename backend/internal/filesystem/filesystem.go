@@ -1,7 +1,6 @@
 package filesystem
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -10,28 +9,52 @@ type FileSystem struct {
 	RootDir string
 }
 
+type FileNode struct {
+	Type  string     `json:"type"`
+	Name  string     `json:"name"`
+	Files []FileNode `json:"files,omitempty"`
+}
+
 func New(rootDir string) *FileSystem {
 	return &FileSystem{RootDir: rootDir}
 }
 
-func (fs *FileSystem) ListFilesRecursively() ([]string, error) {
-	var files []string
+func (fs *FileSystem) ListFilesRecursively() ([]FileNode, error) {
+	return fs.walkDirectory(fs.RootDir)
+}
 
-	err := filepath.Walk(fs.RootDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			relPath, _ := filepath.Rel(fs.RootDir, path)
-			files = append(files, relPath)
-		}
-		return nil
-	})
+func (fs *FileSystem) walkDirectory(dir string) ([]FileNode, error) {
+	var nodes []FileNode
 
-	return files, err
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			subdir := filepath.Join(dir, entry.Name())
+			subFiles, err := fs.walkDirectory(subdir)
+			if err != nil {
+				return nil, err
+			}
+			nodes = append(nodes, FileNode{
+				Type:  "directory",
+				Name:  entry.Name(),
+				Files: subFiles,
+			})
+		} else {
+			nodes = append(nodes, FileNode{
+				Type: "file",
+				Name: entry.Name(),
+			})
+		}
+	}
+
+	return nodes, nil
 }
 
 func (fs *FileSystem) GetFileContent(filePath string) ([]byte, error) {
 	fullPath := filepath.Join(fs.RootDir, filePath)
-	return ioutil.ReadFile(fullPath)
+	return os.ReadFile(fullPath)
 }

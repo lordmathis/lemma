@@ -1,33 +1,49 @@
+// Variables
+$sidebar-width: 250px;
+$border-color: #eaeaea;
+$padding: 20px;
+
 .App {
-    display: flex;
-    height: 100vh;
-  
-    .sidebar {
-      width: 200px;
-      background-color: #f0f0f0;
-      padding: 20px;
-      overflow-y: auto;
-    }
-  
-    .main-content {
-      flex-grow: 1;
-      padding: 20px;
-      overflow-y: auto;
+  display: flex;
+  height: 100vh;
+
+  .sidebar {
+    width: $sidebar-width;
+    padding: $padding;
+    border-right: 1px solid $border-color;
+    overflow-y: auto;
+  }
+
+  .main-content {
+    flex-grow: 1;
+    padding: $padding;
+    overflow-y: auto;
+
+    h1 {
+      margin-top: 0;
     }
   }
-  
+}
+
+// Geist UI Tree component customization
+:global {
   .file-tree {
-    ul {
-      list-style-type: none;
-      padding-left: 20px;
+    .label {
+      display: flex;
+      align-items: center;
     }
-  
-    li {
-      margin-bottom: 5px;
-      cursor: pointer;
-  
-      &:hover {
-        text-decoration: underline;
-      }
+
+    .icon {
+      margin-right: 8px;
+    }
+
+    .name {
+      font-size: 14px;
+    }
+
+    .selected {
+      color: #0070f3;
+      font-weight: bold;
     }
   }
+}
