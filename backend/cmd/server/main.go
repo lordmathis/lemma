@@ -27,6 +27,8 @@ func main() {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/files", api.ListFiles(fs))
 		r.Get("/files/*", api.GetFileContent(fs))
+		r.Post("/files/*", api.SaveFile(fs))
+		r.Delete("/files/*", api.DeleteFile(fs))
 	})
 
 	port := os.Getenv("PORT")

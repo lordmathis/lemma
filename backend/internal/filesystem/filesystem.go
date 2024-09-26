@@ -58,3 +58,19 @@ func (fs *FileSystem) GetFileContent(filePath string) ([]byte, error) {
 	fullPath := filepath.Join(fs.RootDir, filePath)
 	return os.ReadFile(fullPath)
 }
+
+func (fs *FileSystem) SaveFile(filePath string, content []byte) error {
+	fullPath := filepath.Join(fs.RootDir, filePath)
+	dir := filepath.Dir(fullPath)
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	return os.WriteFile(fullPath, content, 0644)
+}
+
+func (fs *FileSystem) DeleteFile(filePath string) error {
+	fullPath := filepath.Join(fs.RootDir, filePath)
+	return os.Remove(fullPath)
+}
