@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Grid, Breadcrumbs, Tabs, Dot } from '@geist-ui/core';
+import { Grid, Breadcrumbs, Tabs, Dot, useTheme } from '@geist-ui/core';
 import { Code, Eye } from '@geist-ui/icons';
 import Editor from './Editor';
 import FileTree from './FileTree';
@@ -16,6 +16,7 @@ const MainContent = ({
   onSave,
 }) => {
   const [activeTab, setActiveTab] = useState('source');
+  const { type: themeType } = useTheme();
 
   const renderBreadcrumbs = () => {
     if (!selectedFile) return null;
@@ -60,6 +61,7 @@ const MainContent = ({
               onChange={onContentChange} 
               onSave={onSave}
               filePath={selectedFile}
+              themeType={themeType}
             />
           ) : (
             <MarkdownPreview content={content} />

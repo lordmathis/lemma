@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GeistProvider, CssBaseline, Page } from '@geist-ui/core';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
@@ -6,6 +6,7 @@ import useFileManagement from './hooks/useFileManagement';
 import './App.scss';
 
 function App() {
+  const [themeType, setThemeType] = useState('light');
   const {
     content,
     files,
@@ -18,11 +19,15 @@ function App() {
     handleSave,
   } = useFileManagement();
 
+  const toggleTheme = () => {
+    setThemeType(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+  };
+
   return (
-    <GeistProvider>
+    <GeistProvider themeType={themeType}>
       <CssBaseline />
       <Page>
-        <Header />
+        <Header currentTheme={themeType} onThemeChange={toggleTheme} />
         <Page.Content>
           <MainContent
             content={content}

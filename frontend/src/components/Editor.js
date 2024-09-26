@@ -4,8 +4,9 @@ import { EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { defaultKeymap } from "@codemirror/commands";
+import { oneDark } from "@codemirror/theme-one-dark";
 
-const Editor = ({ content, onChange, onSave, filePath }) => {
+const Editor = ({ content, onChange, onSave, filePath, themeType }) => {
   const editorRef = useRef();
   const viewRef = useRef();
 
@@ -14,6 +15,24 @@ const Editor = ({ content, onChange, onSave, filePath }) => {
       onSave(filePath, view.state.doc.toString());
       return true;
     };
+
+    const theme = EditorView.theme({
+      "&": {
+        height: "100%",
+        fontSize: "14px",
+      },
+      ".cm-scroller": {
+        overflow: "auto",
+      },
+      ".cm-gutters": {
+        backgroundColor: themeType === "dark" ? "#1e1e1e" : "#f5f5f5",
+        color: themeType === "dark" ? "#858585" : "#999",
+        border: "none",
+      },
+      ".cm-activeLineGutter": {
+        backgroundColor: themeType === "dark" ? "#2c313a" : "#e8e8e8",
+      },
+    });
 
     const state = EditorState.create({
       doc: content,
@@ -32,6 +51,8 @@ const Editor = ({ content, onChange, onSave, filePath }) => {
             onChange(update.state.doc.toString());
           }
         }),
+        theme,
+        themeType === "dark" ? oneDark : [],
       ],
     });
 
@@ -45,7 +66,7 @@ const Editor = ({ content, onChange, onSave, filePath }) => {
     return () => {
       view.destroy();
     };
-  }, [filePath]);
+  }, [filePath, themeType]);
 
   useEffect(() => {
     if (viewRef.current && content !== viewRef.current.state.doc.toString()) {

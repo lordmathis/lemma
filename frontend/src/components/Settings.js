@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { Modal, Input, Toggle, Select, Spacer, Button } from '@geist-ui/core';
+import { Modal, Input, Toggle, Spacer, Button, Text } from '@geist-ui/core';
 
-const Settings = ({ visible, onClose }) => {
-  const [theme, setTheme] = useState('light');
+const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
   const [fontSize, setFontSize] = useState('14');
   const [autoSave, setAutoSave] = useState(false);
 
   const handleSubmit = () => {
     const settings = {
-      theme,
       fontSize,
       autoSave,
     };
@@ -21,14 +19,13 @@ const Settings = ({ visible, onClose }) => {
     <Modal visible={visible} onClose={onClose}>
       <Modal.Title>Settings</Modal.Title>
       <Modal.Content>
-        <Select 
-          label="Theme" 
-          value={theme} 
-          onChange={(val) => setTheme(val)}
+        <Text>Theme</Text>
+        <Toggle 
+          checked={currentTheme === 'dark'}
+          onChange={() => onThemeChange()}
         >
-          <Select.Option value="light">Light</Select.Option>
-          <Select.Option value="dark">Dark</Select.Option>
-        </Select>
+          Dark Mode
+        </Toggle>
         <Spacer h={0.5} />
         <Input 
           label="Font Size" 
