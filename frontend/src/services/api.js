@@ -27,7 +27,7 @@ export const fetchFileContent = async (filePath) => {
 };
 
 export const saveFileContent = async (filePath, content) => {
-    const response = await fetch(`/api/v1/files/${filePath}`, {
+    const response = await fetch(`${API_BASE_URL}/files/${filePath}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain',
