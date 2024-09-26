@@ -20,6 +20,7 @@ const Editor = ({ content, onChange, onSave, filePath }) => {
       extensions: [
         basicSetup,
         markdown(),
+        EditorView.lineWrapping,
         keymap.of(defaultKeymap),
         keymap.of([{
           key: "Ctrl-s",
@@ -54,7 +55,7 @@ const Editor = ({ content, onChange, onSave, filePath }) => {
     }
   }, [content]);
 
-  return <div ref={editorRef} />;
+  return <div ref={editorRef} className="editor-container" />;
 };
 
 export default Editor;

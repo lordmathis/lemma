@@ -1,5 +1,4 @@
 // Variables
-$sidebar-width: 250px;
 $border-color: #eaeaea;
 $padding: 20px;
 $navbar-height: 64px; // Adjust this value based on your preference
@@ -13,27 +12,63 @@ $navbar-height: 64px; // Adjust this value based on your preference
   border-bottom: 1px solid $border-color;
 }
 
-.main-container {
-  display: flex;
-  height: calc(100vh - #{$navbar-height});
-  padding: 0 !important; // Override Geist UI's default padding
-}
-
 .sidebar {
-  width: $sidebar-width;
-  padding: $padding;
   border-right: 1px solid $border-color;
   overflow-y: auto;
+  padding: $padding;
 }
 
 .main-content {
-  flex-grow: 1;
-  padding: $padding;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-  // Add styles for breadcrumbs
-  .breadcrumbs {
-    margin-bottom: $padding;
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $padding;
+  border-bottom: 1px solid $border-color;
+
+  .breadcrumbs-container {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+
+    .unsaved-indicator {
+      margin-left: 8px;
+    }
+  }
+
+  .tabs {
+    flex-shrink: 0;
+  }
+}
+
+.content-body {
+  flex-grow: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-container, .markdown-preview {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: $padding;
+}
+
+// Ensure CodeMirror takes full height of its container
+.editor-container {
+  height: 100%;
+  
+  .cm-editor {
+    height: 100%;
+  }
+
+  .cm-scroller {
+    overflow: auto;
   }
 }
 

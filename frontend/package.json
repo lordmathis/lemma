@@ -30,8 +30,13 @@
     "@geist-ui/core": "^2.3.8",
     "@geist-ui/icons": "^1.0.2",
     "codemirror": "^6.0.1",
+    "katex": "^0.16.11",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0"
   },
   "eslintConfig": {
     "extends": [
