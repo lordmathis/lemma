@@ -2,26 +2,38 @@
 $sidebar-width: 250px;
 $border-color: #eaeaea;
 $padding: 20px;
+$navbar-height: 64px; // Adjust this value based on your preference
 
-.App {
+.custom-navbar {
   display: flex;
-  height: 100vh;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 $padding;
+  height: $navbar-height;
+  border-bottom: 1px solid $border-color;
+}
 
-  .sidebar {
-    width: $sidebar-width;
-    padding: $padding;
-    border-right: 1px solid $border-color;
-    overflow-y: auto;
-  }
+.main-container {
+  display: flex;
+  height: calc(100vh - #{$navbar-height});
+  padding: 0 !important; // Override Geist UI's default padding
+}
 
-  .main-content {
-    flex-grow: 1;
-    padding: $padding;
-    overflow-y: auto;
+.sidebar {
+  width: $sidebar-width;
+  padding: $padding;
+  border-right: 1px solid $border-color;
+  overflow-y: auto;
+}
 
-    h1 {
-      margin-top: 0;
-    }
+.main-content {
+  flex-grow: 1;
+  padding: $padding;
+  overflow-y: auto;
+
+  // Add styles for breadcrumbs
+  .breadcrumbs {
+    margin-bottom: $padding;
   }
 }
 

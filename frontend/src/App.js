@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GeistProvider, CssBaseline, useToasts } from '@geist-ui/core';
+import { GeistProvider, CssBaseline, useToasts, Page, Text, User, Button, Spacer, Breadcrumbs } from '@geist-ui/core';
+import { Settings } from '@geist-ui/icons';
 import Editor from './components/Editor';
 import FileTree from './components/FileTree';
 import { fetchFileList, fetchFileContent, saveFileContent } from './services/api';
@@ -52,31 +53,52 @@ function App() {
     }
   }, [setToast]);
 
+  const renderBreadcrumbs = () => {
+    if (!selectedFile) return null;
+    const pathParts = selectedFile.split('/');
+    return (
+      <Breadcrumbs>
+        {pathParts.map((part, index) => (
+          <Breadcrumbs.Item key={index}>{part}</Breadcrumbs.Item>
+        ))}
+      </Breadcrumbs>
+    );
+  };
+
   return (
     <GeistProvider>
       <CssBaseline />
-      <div className="App">
-        <div className="sidebar">
-          {error ? (
-            <div className="error">{error}</div>
-          ) : (
-            <FileTree 
-              files={files} 
-              onFileSelect={handleFileSelect} 
-              selectedFile={selectedFile} 
+      <Page>
+        <Page.Header className="custom-navbar">
+          <Text b>NovaMD</Text>
+          <Spacer w={1} />
+          <User src="https://via.placeholder.com/40" name="User" />
+          <Spacer w={0.5} />
+          <Button auto icon={<Settings />} />
+        </Page.Header>
+        <Page.Content className="main-container">
+          <div className="sidebar">
+            {error ? (
+              <div className="error">{error}</div>
+            ) : (
+              <FileTree 
+                files={files} 
+                onFileSelect={handleFileSelect} 
+                selectedFile={selectedFile} 
+              />
+            )}
+          </div>
+          <div className="main-content">
+            {renderBreadcrumbs()}
+            <Editor 
+              content={content} 
+              onChange={setContent} 
+              onSave={handleSave}
+              filePath={selectedFile}
             />
-          )}
-        </div>
-        <div className="main-content">
-          <h1>NovaMD</h1>
-          <Editor 
-            content={content} 
-            onChange={setContent} 
-            onSave={handleSave}
-            filePath={selectedFile}
-          />
-        </div>
-      </div>
+          </div>
+        </Page.Content>
+      </Page>
     </GeistProvider>
   );
 }
