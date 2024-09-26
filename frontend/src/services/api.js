@@ -25,3 +25,19 @@ export const fetchFileContent = async (filePath) => {
         throw error;
     }
 };
+
+export const saveFileContent = async (filePath, content) => {
+    const response = await fetch(`/api/v1/files/${filePath}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+      body: content,
+    });
+  
+    if (!response.ok) {
+      throw new Error('Failed to save file');
+    }
+  
+    return await response.text();
+  };

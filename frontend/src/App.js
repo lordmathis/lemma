@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { GeistProvider, CssBaseline } from '@geist-ui/core';
+import React, { useState, useEffect, useCallback } from 'react';
+import { GeistProvider, CssBaseline, useToasts } from '@geist-ui/core';
 import Editor from './components/Editor';
 import FileTree from './components/FileTree';
-import { fetchFileList, fetchFileContent } from './services/api';
+import { fetchFileList, fetchFileContent, saveFileContent } from './services/api';
 import './App.scss';
 
 function App() {
@@ -10,6 +10,7 @@ function App() {
   const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState(null);
+  const { setToast } = useToasts();
 
   useEffect(() => {
     const loadFileList = async () => {
@@ -34,11 +35,22 @@ function App() {
       const fileContent = await fetchFileContent(filePath);
       setContent(fileContent);
       setSelectedFile(filePath);
+      setError(null);
     } catch (error) {
       console.error('Failed to load file content:', error);
       setError('Failed to load file content. Please try again.');
     }
   };
+
+  const handleSave = useCallback(async (filePath, fileContent) => {
+    try {
+      await saveFileContent(filePath, fileContent);
+      setToast({ text: 'File saved successfully', type: 'success' });
+    } catch (error) {
+      console.error('Error saving file:', error);
+      setToast({ text: 'Failed to save file. Please try again.', type: 'error' });
+    }
+  }, [setToast]);
 
   return (
     <GeistProvider>
@@ -57,7 +69,12 @@ function App() {
         </div>
         <div className="main-content">
           <h1>NovaMD</h1>
-          <Editor content={content} onChange={setContent} />
+          <Editor 
+            content={content} 
+            onChange={setContent} 
+            onSave={handleSave}
+            filePath={selectedFile}
+          />
         </div>
       </div>
     </GeistProvider>
