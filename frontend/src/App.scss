@@ -1,5 +1,4 @@
 // Variables
-$border-color: #eaeaea;
 $padding: 20px;
 $navbar-height: 64px; // Adjust this value based on your preference
 
@@ -9,11 +8,9 @@ $navbar-height: 64px; // Adjust this value based on your preference
   justify-content: space-between;
   padding: 0 $padding;
   height: $navbar-height;
-  border-bottom: 1px solid $border-color;
 }
 
 .sidebar {
-  border-right: 1px solid $border-color;
   overflow-y: auto;
   padding: $padding;
 }
@@ -29,7 +26,6 @@ $navbar-height: 64px; // Adjust this value based on your preference
   justify-content: space-between;
   align-items: center;
   padding: $padding;
-  border-bottom: 1px solid $border-color;
 
   .breadcrumbs-container {
     flex-grow: 1;
@@ -46,6 +42,21 @@ $navbar-height: 64px; // Adjust this value based on your preference
   }
 }
 
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.setting-group {
+  margin-bottom: 1rem;
+}
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
 .content-body {
   flex-grow: 1;
   overflow: hidden;
@@ -59,7 +70,6 @@ $navbar-height: 64px; // Adjust this value based on your preference
   padding: $padding;
 }
 
-// Ensure CodeMirror takes full height of its container
 .editor-container {
   height: 100%;
   

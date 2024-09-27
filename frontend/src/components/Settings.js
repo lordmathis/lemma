@@ -1,47 +1,45 @@
 import React, { useState } from 'react';
-import { Modal, Input, Toggle, Spacer, Button, Text } from '@geist-ui/core';
+import { Modal, Text, Toggle, Tooltip, Input, Spacer, Button, useTheme } from '@geist-ui/core';
 
-const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
+const Settings = ({ visible, onClose, currentTheme, onThemeChange, onSettingsChange }) => {
+  const theme = useTheme();
   const [fontSize, setFontSize] = useState('14');
   const [autoSave, setAutoSave] = useState(false);
 
   const handleSubmit = () => {
-    const settings = {
-      fontSize,
-      autoSave,
-    };
-    console.log('Settings to be sent to backend:', settings);
-    // TODO: Implement API call to send settings to backend
+    onSettingsChange({ fontSize, autoSave });
     onClose();
   };
+
+  const disabledMessage = "This feature is not yet implemented";
 
   return (
     <Modal visible={visible} onClose={onClose}>
       <Modal.Title>Settings</Modal.Title>
       <Modal.Content>
-        <Text>Theme</Text>
-        <Toggle 
-          checked={currentTheme === 'dark'}
-          onChange={() => onThemeChange()}
-        >
-          Dark Mode
-        </Toggle>
-        <Spacer h={0.5} />
-        <Input 
-          label="Font Size" 
-          value={fontSize} 
-          onChange={(e) => setFontSize(e.target.value)} 
-        />
-        <Spacer h={0.5} />
-        <Toggle 
-          checked={autoSave}
-          onChange={(e) => setAutoSave(e.target.checked)}
-        >
-          Auto Save
-        </Toggle>
+        <div className="setting-group">
+          <Text h4>Appearance</Text>
+          <div className="setting-item">
+            <Text>Dark Mode</Text>
+            <Toggle 
+              checked={currentTheme === 'dark'}
+              onChange={() => onThemeChange()}
+            />
+          </div>
+        </div>
+        <Spacer h={1} />
+        <div className="setting-group">
+          <Text h4>Editor</Text>
+          <Tooltip text={disabledMessage} type="dark" placement="left">
+          <div className="setting-item disabled">
+            <Text>Auto Save</Text>
+            <Toggle disabled/>
+          </div>
+          </Tooltip>
+        </div>
       </Modal.Content>
       <Modal.Action passive onClick={onClose}>Cancel</Modal.Action>
-      <Modal.Action onClick={handleSubmit}>Submit</Modal.Action>
+      <Modal.Action onClick={handleSubmit}>Save Changes</Modal.Action>
     </Modal>
   );
 };
