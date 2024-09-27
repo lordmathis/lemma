@@ -9,33 +9,43 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"novamd/internal/api"
+	"novamd/internal/db"
 	"novamd/internal/filesystem"
 )
 
 func main() {
-	r := chi.NewRouter()
 
-	// Middleware
+	// Initialize database
+	dbPath := os.Getenv("NOVAMD_DB_PATH")
+	if dbPath == "" {
+		dbPath = "./sqlite.db"
+	}
+	database, err := db.Init(dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer database.Close()
+
+	// Workdir
+	workdir := os.Getenv("NOVAMD_WORKDIR")
+	if workdir == "" {
+		workdir = "./data"
+	}
+	fs := filesystem.New(workdir)
+
+	// Set up router
+	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	// Initialize filesystem
-	folderPath := os.Getenv("FOLDER_PATH")
-	fs := filesystem.New(folderPath)
+	// Set up routes
+	api.SetupRoutes(r, database, fs)
 
-	// API routes
-	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/files", api.ListFiles(fs))
-		r.Get("/files/*", api.GetFileContent(fs))
-		r.Post("/files/*", api.SaveFile(fs))
-		r.Delete("/files/*", api.DeleteFile(fs))
-	})
-
-	port := os.Getenv("PORT")
+	// Start server
+	port := os.Getenv("NOVAMD_PORT")
 	if port == "" {
 		port = "8080"
 	}
-
 	log.Printf("Server starting on port %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }
