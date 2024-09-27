@@ -64,10 +64,14 @@ export const saveUserSettings = async (settings) => {
             },
             body: JSON.stringify(settings),
         });
+
         if (!response.ok) {
-            throw new Error('Failed to save user settings');
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
         }
-        return await response.json();
+
+        const savedSettings = await response.json();
+        return savedSettings;
     } catch (error) {
         console.error('Error saving user settings:', error);
         throw error;

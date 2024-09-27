@@ -34,15 +34,15 @@ function App() {
     loadUserSettings();
   }, [userId]);
 
-  const toggleTheme = () => {
-    setThemeType(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+  const setTheme = (newTheme) => {
+    setThemeType(newTheme);
   };
 
   return (
     <GeistProvider themeType={themeType}>
       <CssBaseline />
       <Page>
-        <Header currentTheme={themeType} onThemeChange={toggleTheme} />
+        <Header currentTheme={themeType} onThemeChange={setTheme} />
         <Page.Content>
           <MainContent
             content={content}

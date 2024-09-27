@@ -120,6 +120,15 @@ func UpdateSettings(db *db.DB) http.HandlerFunc {
 			return
 		}
 
+		// Fetch the saved settings to return
+		savedSettings, err := db.GetSettings(settings.UserID)
+		if err != nil {
+			http.Error(w, "Settings saved but could not be retrieved", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(savedSettings)
 	}
 }

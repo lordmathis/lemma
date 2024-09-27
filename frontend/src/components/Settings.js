@@ -1,30 +1,35 @@
 import React, { useState } from 'react';
-import { Modal, Text, Toggle, Tooltip, Spacer, useTheme } from '@geist-ui/core';
+import { Modal, Text, Toggle, Tooltip, Spacer, useTheme, useToasts } from '@geist-ui/core';
 import { saveUserSettings } from '../services/api';
 
 const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
   const theme = useTheme();
   const [autoSave, setAutoSave] = useState(false);
   const userId = 1;
+  const { setToast } = useToasts();
 
   const handleSubmit = async () => {
     try {
-      await saveUserSettings({
+      const savedSettings = await saveUserSettings({
         userId: userId,
         settings: {
           theme: currentTheme,
           autoSave: autoSave
         }
       });
+      setToast({ text: 'Settings saved successfully', type: 'success' });
+      // Update local state with saved settings
+      setAutoSave(savedSettings.settings.autoSave);
+      onThemeChange(savedSettings.settings.theme);
       onClose();
     } catch (error) {
       console.error('Failed to save settings:', error);
-      // You might want to show an error message to the user here
+      setToast({ text: 'Failed to save settings: ' + error.message, type: 'error' });
     }
   };
 
   const handleThemeChange = () => {
-    onThemeChange();
+    onThemeChange(currentTheme === 'light' ? 'dark' : 'light');
   };
 
   const disabledMessage = "This feature is not yet implemented";
