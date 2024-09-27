@@ -13,7 +13,7 @@ type UserSettings struct {
 
 type Settings struct {
 	UserID   int          `json:"userId" validate:"required,min=1"`
-	Settings UserSettings `json:"settings" validate:"required,dive"`
+	Settings UserSettings `json:"settings" validate:"required"`
 }
 
 var validate = validator.New()

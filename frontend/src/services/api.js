@@ -41,3 +41,35 @@ export const saveFileContent = async (filePath, content) => {
   
     return await response.text();
   };
+
+  export const fetchUserSettings = async (userId) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/settings?userId=${userId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch user settings');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching user settings:', error);
+        throw error;
+    }
+};
+
+export const saveUserSettings = async (settings) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/settings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(settings),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to save user settings');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error saving user settings:', error);
+        throw error;
+    }
+};

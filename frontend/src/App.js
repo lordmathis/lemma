@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GeistProvider, CssBaseline, Page } from '@geist-ui/core';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
 import useFileManagement from './hooks/useFileManagement';
+import { fetchUserSettings } from './services/api';
 import './App.scss';
 
 function App() {
   const [themeType, setThemeType] = useState('light');
+  const [userId, setUserId] = useState(1);
   const {
     content,
     files,
@@ -18,6 +20,19 @@ function App() {
     handleContentChange,
     handleSave,
   } = useFileManagement();
+
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      try {
+        const settings = await fetchUserSettings(userId);
+        setThemeType(settings.settings.theme);
+      } catch (error) {
+        console.error('Failed to load user settings:', error);
+      }
+    };
+
+    loadUserSettings();
+  }, [userId]);
 
   const toggleTheme = () => {
     setThemeType(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
