@@ -73,6 +73,11 @@ func DeleteFile(fs *filesystem.FileSystem) http.HandlerFunc {
 	}
 }
 
+var defaultSettings = models.UserSettings{
+	Theme:    "light",
+	AutoSave: false,
+}
+
 func GetSettings(db *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userIDStr := r.URL.Query().Get("userId")
@@ -88,6 +93,8 @@ func GetSettings(db *db.DB) http.HandlerFunc {
 			return
 		}
 
+		settings.SetDefaults(defaultSettings)
+
 		json.NewEncoder(w).Encode(settings)
 	}
 }
@@ -96,6 +103,13 @@ func UpdateSettings(db *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var settings models.Settings
 		if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		settings.SetDefaults(defaultSettings)
+
+		if err := settings.Validate(); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

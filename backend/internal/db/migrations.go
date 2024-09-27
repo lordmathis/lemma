@@ -15,10 +15,9 @@ var migrations = []Migration{
 		Version: 1,
 		SQL: `CREATE TABLE IF NOT EXISTS settings (
 			user_id INTEGER PRIMARY KEY,
-			settings TEXT
+			settings JSON NOT NULL
 		)`,
 	},
-	// Add new migrations here as your schema evolves
 }
 
 func (db *DB) Migrate() error {

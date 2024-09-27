@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Text, Toggle, Tooltip, Input, Spacer, Button, useTheme } from '@geist-ui/core';
+import { Modal, Text, Toggle, Tooltip, Spacer, useTheme } from '@geist-ui/core';
 
 const Settings = ({ visible, onClose, currentTheme, onThemeChange, onSettingsChange }) => {
   const theme = useTheme();
