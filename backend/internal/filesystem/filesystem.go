@@ -1,8 +1,10 @@
 package filesystem
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type FileSystem struct {
@@ -17,6 +19,27 @@ type FileNode struct {
 
 func New(rootDir string) *FileSystem {
 	return &FileSystem{RootDir: rootDir}
+}
+
+// validatePath checks if the given path is within the root directory
+func (fs *FileSystem) validatePath(path string) (string, error) {
+	fullPath := filepath.Join(fs.RootDir, path)
+	cleanPath := filepath.Clean(fullPath)
+
+	if !strings.HasPrefix(cleanPath, fs.RootDir) {
+		return "", errors.New("invalid path: outside of root directory")
+	}
+
+	relPath, err := filepath.Rel(fs.RootDir, cleanPath)
+	if err != nil {
+		return "", err
+	}
+
+	if strings.HasPrefix(relPath, "..") {
+		return "", errors.New("invalid path: outside of root directory")
+	}
+
+	return cleanPath, nil
 }
 
 func (fs *FileSystem) ListFilesRecursively() ([]FileNode, error) {
@@ -55,14 +78,20 @@ func (fs *FileSystem) walkDirectory(dir string) ([]FileNode, error) {
 }
 
 func (fs *FileSystem) GetFileContent(filePath string) ([]byte, error) {
-	fullPath := filepath.Join(fs.RootDir, filePath)
+	fullPath, err := fs.validatePath(filePath)
+	if err != nil {
+		return nil, err
+	}
 	return os.ReadFile(fullPath)
 }
 
 func (fs *FileSystem) SaveFile(filePath string, content []byte) error {
-	fullPath := filepath.Join(fs.RootDir, filePath)
-	dir := filepath.Dir(fullPath)
+	fullPath, err := fs.validatePath(filePath)
+	if err != nil {
+		return err
+	}
 
+	dir := filepath.Dir(fullPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
@@ -71,6 +100,9 @@ func (fs *FileSystem) SaveFile(filePath string, content []byte) error {
 }
 
 func (fs *FileSystem) DeleteFile(filePath string) error {
-	fullPath := filepath.Join(fs.RootDir, filePath)
+	fullPath, err := fs.validatePath(filePath)
+	if err != nil {
+		return err
+	}
 	return os.Remove(fullPath)
 }

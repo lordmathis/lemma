@@ -16,7 +16,7 @@ func ListFiles(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		files, err := fs.ListFilesRecursively()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to list files", http.StatusInternalServerError)
 			return
 		}
 
@@ -30,7 +30,7 @@ func GetFileContent(fs *filesystem.FileSystem) http.HandlerFunc {
 		filePath := strings.TrimPrefix(r.URL.Path, "/api/v1/files/")
 		content, err := fs.GetFileContent(filePath)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "Failed to read file", http.StatusNotFound)
 			return
 		}
 
