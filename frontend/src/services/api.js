@@ -70,8 +70,7 @@ export const saveUserSettings = async (settings) => {
             throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
         }
 
-        const savedSettings = await response.json();
-        return savedSettings;
+        return await response.json();
     } catch (error) {
         console.error('Error saving user settings:', error);
         throw error;

@@ -9,12 +9,12 @@ import (
 type UserSettings struct {
 	Theme                string `json:"theme" validate:"oneof=light dark"`
 	AutoSave             bool   `json:"autoSave"`
-	GitEnabled           bool   `json:"git_enabled"`
-	GitURL               string `json:"git_url" validate:"required_with=GitEnabled"`
-	GitUser              string `json:"git_user" validate:"required_with=GitEnabled"`
-	GitToken             string `json:"git_token" validate:"required_with=GitEnabled"`
-	GitAutoCommit        bool   `json:"git_auto_commit"`
-	GitCommitMsgTemplate string `json:"git_commit_msg_template"`
+	GitEnabled           bool   `json:"gitEnabled"`
+	GitURL               string `json:"gitUrl" validate:"required_with=GitEnabled"`
+	GitUser              string `json:"gitUser" validate:"required_with=GitEnabled"`
+	GitToken             string `json:"gitToken" validate:"required_with=GitEnabled"`
+	GitAutoCommit        bool   `json:"gitAutoCommit"`
+	GitCommitMsgTemplate string `json:"gitCommitMsgTemplate"`
 }
 
 type Settings struct {
