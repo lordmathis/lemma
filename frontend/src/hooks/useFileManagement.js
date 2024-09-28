@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToasts } from '@geist-ui/core';
-import { fetchFileList, fetchFileContent, saveFileContent } from '../services/api';
+import { fetchFileList, fetchFileContent, saveFileContent, pullChanges } from '../services/api';
 
 const DEFAULT_FILE = {
   name: 'New File.md',
@@ -8,7 +8,7 @@ const DEFAULT_FILE = {
   content: '# Welcome to NovaMD\n\nStart editing here!'
 };
 
-const useFileManagement = () => {
+const useFileManagement = (gitEnabled = false) => {
   const [content, setContent] = useState(DEFAULT_FILE.content);
   const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(DEFAULT_FILE.path);
@@ -17,23 +17,41 @@ const useFileManagement = () => {
   const [error, setError] = useState(null);
   const { setToast } = useToasts();
 
-  useEffect(() => {
-    const loadFileList = async () => {
-      try {
-        const fileList = await fetchFileList();
-        if (Array.isArray(fileList)) {
-          setFiles(fileList);
-        } else {
-          throw new Error('File list is not an array');
-        }
-      } catch (error) {
-        console.error('Failed to load file list:', error);
-        setError('Failed to load file list. Please try again later.');
+  const loadFileList = useCallback(async () => {
+    try {
+      const fileList = await fetchFileList();
+      if (Array.isArray(fileList)) {
+        setFiles(fileList);
+      } else {
+        throw new Error('File list is not an array');
       }
+    } catch (error) {
+      console.error('Failed to load file list:', error);
+      setError('Failed to load file list. Please try again later.');
+    }
+  }, []);
+
+  const pullLatestChanges = useCallback(async () => {
+    if (gitEnabled) {
+      try {
+        await pullChanges();
+        setToast({ text: 'Latest changes pulled successfully', type: 'success' });
+        await loadFileList(); // Reload file list after pulling changes
+      } catch (error) {
+        console.error('Failed to pull latest changes:', error);
+        setToast({ text: 'Failed to pull latest changes: ' + error.message, type: 'error' });
+      }
+    }
+  }, [gitEnabled, loadFileList, setToast]);
+
+  useEffect(() => {
+    const initializeFileSystem = async () => {
+      await pullLatestChanges();
+      await loadFileList();
     };
 
-    loadFileList();
-  }, []);
+    initializeFileSystem();
+  }, [pullLatestChanges, loadFileList]);
 
   const handleFileSelect = async (filePath) => {
     if (hasUnsavedChanges) {
@@ -66,14 +84,13 @@ const useFileManagement = () => {
       setIsNewFile(false);
       setHasUnsavedChanges(false);
       if (isNewFile) {
-        const updatedFileList = await fetchFileList();
-        setFiles(updatedFileList);
+        await loadFileList();
       }
     } catch (error) {
       console.error('Error saving file:', error);
       setToast({ text: 'Failed to save file. Please try again.', type: 'error' });
     }
-  }, [setToast, isNewFile]);
+  }, [setToast, isNewFile, loadFileList]);
 
   return {
     content,
@@ -85,6 +102,7 @@ const useFileManagement = () => {
     handleFileSelect,
     handleContentChange,
     handleSave,
+    pullLatestChanges,
   };
 };
 

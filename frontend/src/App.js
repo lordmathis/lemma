@@ -9,6 +9,22 @@ import './App.scss';
 function App() {
   const [themeType, setThemeType] = useState('light');
   const [userId, setUserId] = useState(1);
+  const [settings, setSettings] = useState({ gitEnabled: false });
+
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      try {
+        const fetchedSettings = await fetchUserSettings(userId);
+        setSettings(fetchedSettings.settings);
+        setThemeType(fetchedSettings.settings.theme);
+      } catch (error) {
+        console.error('Failed to load user settings:', error);
+      }
+    };
+
+    loadUserSettings();
+  }, [userId]);
+
   const {
     content,
     files,
@@ -19,20 +35,8 @@ function App() {
     handleFileSelect,
     handleContentChange,
     handleSave,
-  } = useFileManagement();
-
-  useEffect(() => {
-    const loadUserSettings = async () => {
-      try {
-        const settings = await fetchUserSettings(userId);
-        setThemeType(settings.settings.theme);
-      } catch (error) {
-        console.error('Failed to load user settings:', error);
-      }
-    };
-
-    loadUserSettings();
-  }, [userId]);
+    pullLatestChanges,
+  } = useFileManagement(settings.gitEnabled);
 
   const setTheme = (newTheme) => {
     setThemeType(newTheme);
@@ -43,7 +47,7 @@ function App() {
       <CssBaseline />
       <Page>
         <Header currentTheme={themeType} onThemeChange={setTheme} />
-        <Page.Content>
+        <Page.Content className='page-content'>
           <MainContent
             content={content}
             files={files}
@@ -54,6 +58,8 @@ function App() {
             onFileSelect={handleFileSelect}
             onContentChange={handleContentChange}
             onSave={handleSave}
+            settings={settings}
+            pullLatestChanges={pullLatestChanges}
           />
         </Page.Content>
       </Page>
