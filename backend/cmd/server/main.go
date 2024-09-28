@@ -31,7 +31,18 @@ func main() {
 	if workdir == "" {
 		workdir = "./data"
 	}
-	fs := filesystem.New(workdir)
+
+	settings, err := database.GetSettings(1) // Assuming user ID 1 for now
+	if err != nil {
+		log.Print("Settings not found, using default settings")
+	}
+	fs := filesystem.New(workdir, &settings)
+
+	if settings.Settings.GitEnabled {
+		if err := fs.InitializeGitRepo(); err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	// Set up router
 	r := chi.NewRouter()

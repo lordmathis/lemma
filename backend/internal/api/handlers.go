@@ -73,11 +73,6 @@ func DeleteFile(fs *filesystem.FileSystem) http.HandlerFunc {
 	}
 }
 
-var defaultSettings = models.UserSettings{
-	Theme:    "light",
-	AutoSave: false,
-}
-
 func GetSettings(db *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userIDStr := r.URL.Query().Get("userId")
@@ -93,7 +88,7 @@ func GetSettings(db *db.DB) http.HandlerFunc {
 			return
 		}
 
-		settings.SetDefaults(defaultSettings)
+		settings.SetDefaults()
 
 		json.NewEncoder(w).Encode(settings)
 	}
@@ -107,7 +102,7 @@ func UpdateSettings(db *db.DB) http.HandlerFunc {
 			return
 		}
 
-		settings.SetDefaults(defaultSettings)
+		settings.SetDefaults()
 
 		if err := settings.Validate(); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -130,5 +125,46 @@ func UpdateSettings(db *db.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(savedSettings)
+	}
+}
+
+func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var requestBody struct {
+			Message string `json:"message"`
+		}
+
+		err := json.NewDecoder(r.Body).Decode(&requestBody)
+		if err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if requestBody.Message == "" {
+			http.Error(w, "Commit message is required", http.StatusBadRequest)
+			return
+		}
+
+		err = fs.StageCommitAndPush(requestBody.Message)
+		if err != nil {
+			http.Error(w, "Failed to stage, commit, and push changes: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Changes staged, committed, and pushed successfully"))
+	}
+}
+
+func PullChanges(fs *filesystem.FileSystem) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := fs.Pull()
+		if err != nil {
+			http.Error(w, "Failed to pull changes: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Pulled changes from remote"})
 	}
 }

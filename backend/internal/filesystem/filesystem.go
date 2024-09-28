@@ -2,13 +2,19 @@ package filesystem
 
 import (
 	"errors"
+	"novamd/internal/gitutils"
+	"novamd/internal/models"
 	"os"
 	"path/filepath"
 	"strings"
+
+	git "novamd/internal/gitutils"
 )
 
 type FileSystem struct {
-	RootDir string
+	RootDir  string
+	GitRepo  *gitutils.GitRepo
+	Settings *models.Settings
 }
 
 type FileNode struct {
@@ -17,8 +23,30 @@ type FileNode struct {
 	Files []FileNode `json:"files,omitempty"`
 }
 
-func New(rootDir string) *FileSystem {
-	return &FileSystem{RootDir: rootDir}
+func New(rootDir string, settings *models.Settings) *FileSystem {
+	fs := &FileSystem{
+		RootDir:  rootDir,
+		Settings: settings,
+	}
+
+	if settings.Settings.GitEnabled {
+		fs.GitRepo = git.New(
+			settings.Settings.GitURL,
+			settings.Settings.GitUser,
+			settings.Settings.GitToken,
+			rootDir,
+		)
+	}
+
+	return fs
+}
+
+func (fs *FileSystem) InitializeGitRepo() error {
+	if fs.GitRepo == nil {
+		return errors.New("git settings not configured")
+	}
+
+	return fs.GitRepo.EnsureRepo()
 }
 
 // validatePath checks if the given path is within the root directory
@@ -96,6 +124,11 @@ func (fs *FileSystem) SaveFile(filePath string, content []byte) error {
 		return err
 	}
 
+	if fs.Settings.Settings.GitAutoCommit && fs.GitRepo != nil {
+		message := strings.Replace(fs.Settings.Settings.GitCommitMsgTemplate, "${filename}", filePath, -1)
+		return fs.StageCommitAndPush(message)
+	}
+
 	return os.WriteFile(fullPath, content, 0644)
 }
 
@@ -105,4 +138,24 @@ func (fs *FileSystem) DeleteFile(filePath string) error {
 		return err
 	}
 	return os.Remove(fullPath)
+}
+
+func (fs *FileSystem) StageCommitAndPush(message string) error {
+	if fs.GitRepo == nil {
+		return errors.New("git settings not configured")
+	}
+
+	if err := fs.GitRepo.Commit(message); err != nil {
+		return err
+	}
+
+	return fs.GitRepo.Push()
+}
+
+func (fs *FileSystem) Pull() error {
+	if fs.GitRepo == nil {
+		return errors.New("git settings not configured")
+	}
+
+	return fs.GitRepo.Pull()
 }

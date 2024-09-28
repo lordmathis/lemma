@@ -19,5 +19,9 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem) {
 			r.Post("/*", SaveFile(fs))
 			r.Delete("/*", DeleteFile(fs))
 		})
+		r.Route("/git", func(r chi.Router) {
+			r.Post("commit", StageCommitAndPush(fs))
+			r.Post("/pull", PullChanges(fs))
+		})
 	})
 }
