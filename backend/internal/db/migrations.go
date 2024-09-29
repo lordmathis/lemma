@@ -48,13 +48,17 @@ func (db *DB) Migrate() error {
 
 			_, err = tx.Exec(migration.SQL)
 			if err != nil {
-				tx.Rollback()
+				if rbErr := tx.Rollback(); rbErr != nil {
+					return fmt.Errorf("migration %d failed: %v, rollback failed: %v", migration.Version, err, rbErr)
+				}
 				return fmt.Errorf("migration %d failed: %v", migration.Version, err)
 			}
 
 			_, err = tx.Exec("INSERT INTO migrations (version) VALUES (?)", migration.Version)
 			if err != nil {
-				tx.Rollback()
+				if rbErr := tx.Rollback(); rbErr != nil {
+					return fmt.Errorf("failed to update migration version: %v, rollback failed: %v", err, rbErr)
+				}
 				return fmt.Errorf("failed to update migration version: %v", err)
 			}
 

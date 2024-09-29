@@ -13,7 +13,7 @@ import (
 )
 
 func ListFiles(fs *filesystem.FileSystem) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		files, err := fs.ListFilesRecursively()
 		if err != nil {
 			http.Error(w, "Failed to list files", http.StatusInternalServerError)
@@ -21,7 +21,9 @@ func ListFiles(fs *filesystem.FileSystem) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(files)
+		if err := json.NewEncoder(w).Encode(files); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -35,7 +37,9 @@ func GetFileContent(fs *filesystem.FileSystem) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write(content)
+		if _, err := w.Write(content); err != nil {
+			http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -55,7 +59,9 @@ func SaveFile(fs *filesystem.FileSystem) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("File saved successfully"))
+		if _, err := w.Write([]byte("File saved successfully")); err != nil {
+			http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -69,7 +75,9 @@ func DeleteFile(fs *filesystem.FileSystem) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("File deleted successfully"))
+		if _, err := w.Write([]byte("File deleted successfully")); err != nil {
+			http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -90,7 +98,10 @@ func GetSettings(db *db.DB) http.HandlerFunc {
 
 		settings.SetDefaults()
 
-		json.NewEncoder(w).Encode(settings)
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(settings); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -124,7 +135,9 @@ func UpdateSettings(db *db.DB) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(savedSettings)
+		if err := json.NewEncoder(w).Encode(savedSettings); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -152,12 +165,14 @@ func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Changes staged, committed, and pushed successfully"))
+		if _, err := w.Write([]byte("Changes staged, committed, and pushed successfully")); err != nil {
+			http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		}
 	}
 }
 
 func PullChanges(fs *filesystem.FileSystem) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		err := fs.Pull()
 		if err != nil {
 			http.Error(w, "Failed to pull changes: "+err.Error(), http.StatusInternalServerError)
@@ -165,6 +180,8 @@ func PullChanges(fs *filesystem.FileSystem) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Pulled changes from remote"})
+		if err := json.NewEncoder(w).Encode(map[string]string{"message": "Pulled changes from remote"}); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
 	}
 }

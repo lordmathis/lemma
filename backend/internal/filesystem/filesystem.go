@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	git "novamd/internal/gitutils"
 )
 
 type FileSystem struct {
@@ -30,7 +28,7 @@ func New(rootDir string, settings *models.Settings) *FileSystem {
 	}
 
 	if settings.Settings.GitEnabled {
-		fs.GitRepo = git.New(
+		fs.GitRepo = gitutils.New(
 			settings.Settings.GitURL,
 			settings.Settings.GitUser,
 			settings.Settings.GitToken,
