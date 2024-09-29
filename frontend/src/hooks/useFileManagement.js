@@ -13,6 +13,11 @@ const DEFAULT_FILE = {
   content: '# Welcome to NovaMD\n\nStart editing here!',
 };
 
+const isImageFile = (filePath) => {
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+  return imageExtensions.some((ext) => filePath.toLowerCase().endsWith(ext));
+};
+
 const useFileManagement = (gitEnabled = false) => {
   const [content, setContent] = useState(DEFAULT_FILE.content);
   const [files, setFiles] = useState([]);
@@ -76,8 +81,12 @@ const useFileManagement = (gitEnabled = false) => {
     }
 
     try {
-      const fileContent = await fetchFileContent(filePath);
-      setContent(fileContent);
+      if (!isImageFile(filePath)) {
+        const fileContent = await fetchFileContent(filePath);
+        setContent(fileContent);
+      } else {
+        setContent(''); // Set empty content for image files
+      }
       setSelectedFile(filePath);
       setIsNewFile(false);
       setHasUnsavedChanges(false);

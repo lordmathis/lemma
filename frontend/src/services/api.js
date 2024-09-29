@@ -127,3 +127,7 @@ export const commitAndPush = async (message) => {
     throw error;
   }
 };
+
+export const getFileUrl = (filePath) => {
+  return `${API_BASE_URL}/files/${filePath}`;
+};

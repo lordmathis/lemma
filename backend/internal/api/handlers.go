@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -36,7 +37,24 @@ func GetFileContent(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/plain")
+		// Determine content type based on file extension
+		contentType := "text/plain"
+		switch filepath.Ext(filePath) {
+		case ".png":
+			contentType = "image/png"
+		case ".jpg", ".jpeg":
+			contentType = "image/jpeg"
+		case ".webp":
+			contentType = "image/webp"
+		case ".gif":
+			contentType = "image/gif"
+		case ".svg":
+			contentType = "image/svg+xml"
+		case ".md":
+			contentType = "text/markdown"
+		}
+
+		w.Header().Set("Content-Type", contentType)
 		if _, err := w.Write(content); err != nil {
 			http.Error(w, "Failed to write response", http.StatusInternalServerError)
 		}

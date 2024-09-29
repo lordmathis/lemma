@@ -6,7 +6,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import 'katex/dist/katex.min.css';
 
-const MarkdownPreview = ({ content }) => {
+const MarkdownPreview = ({ content, baseUrl }) => {
   return (
     <div className="markdown-preview">
       <ReactMarkdown
@@ -29,6 +29,14 @@ const MarkdownPreview = ({ content }) => {
                 {children}
               </code>
             );
+          },
+          img({ src, alt, ...props }) {
+            // Check if the src is a relative path
+            if (src && !src.startsWith('http') && !src.startsWith('data:')) {
+              // Prepend the baseUrl to create an absolute path
+              src = `${baseUrl}/files/${src}`;
+            }
+            return <img src={src} alt={alt} {...props} />;
           },
         }}
       >

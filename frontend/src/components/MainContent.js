@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Grid,
   Breadcrumbs,
@@ -14,7 +14,17 @@ import { Code, Eye } from '@geist-ui/icons';
 import Editor from './Editor';
 import FileTree from './FileTree';
 import MarkdownPreview from './MarkdownPreview';
-import { commitAndPush, saveFileContent, deleteFile } from '../services/api';
+import {
+  commitAndPush,
+  saveFileContent,
+  deleteFile,
+  getFileUrl,
+} from '../services/api';
+
+const isImageFile = (filePath) => {
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+  return imageExtensions.some((ext) => filePath.toLowerCase().endsWith(ext));
+};
 
 const MainContent = ({
   content,
@@ -33,6 +43,21 @@ const MainContent = ({
   const { setToast } = useToasts();
   const [newFileModalVisible, setNewFileModalVisible] = useState(false);
   const [newFileName, setNewFileName] = useState('');
+  const [isCurrentFileImage, setIsCurrentFileImage] = useState(false);
+
+  useEffect(() => {
+    const currentFileIsImage = isImageFile(selectedFile);
+    setIsCurrentFileImage(currentFileIsImage);
+    if (currentFileIsImage) {
+      setActiveTab('preview');
+    }
+  }, [selectedFile]);
+
+  const handleTabChange = (value) => {
+    if (!isCurrentFileImage || value === 'preview') {
+      setActiveTab(value);
+    }
+  };
 
   const handlePull = async () => {
     try {
@@ -153,13 +178,17 @@ const MainContent = ({
         >
           <div className="content-header">
             {renderBreadcrumbs()}
-            <Tabs value={activeTab} onChange={setActiveTab}>
-              <Tabs.Item label={<Code />} value="source" />
+            <Tabs value={activeTab} onChange={handleTabChange}>
+              <Tabs.Item
+                label={<Code />}
+                value="source"
+                disabled={isCurrentFileImage}
+              />
               <Tabs.Item label={<Eye />} value="preview" />
             </Tabs>
           </div>
           <div className="content-body">
-            {activeTab === 'source' ? (
+            {activeTab === 'source' && !isCurrentFileImage ? (
               <Editor
                 content={content}
                 onChange={onContentChange}
@@ -167,8 +196,23 @@ const MainContent = ({
                 filePath={selectedFile}
                 themeType={themeType}
               />
+            ) : isCurrentFileImage ? (
+              <div className="image-preview">
+                <img
+                  src={getFileUrl(selectedFile)}
+                  alt={selectedFile}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                  }}
+                />
+              </div>
             ) : (
-              <MarkdownPreview content={content} />
+              <MarkdownPreview
+                content={content}
+                baseUrl={window.API_BASE_URL}
+              />
             )}
           </div>
         </Grid>

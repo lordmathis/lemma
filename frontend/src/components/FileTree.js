@@ -7,6 +7,7 @@ import {
   GitCommit,
   Plus,
   Trash,
+  Image,
 } from '@geist-ui/icons';
 
 const FileTree = ({
@@ -37,8 +38,15 @@ const FileTree = ({
     );
   };
 
-  const renderIcon = ({ type }) =>
-    type === 'directory' ? <Folder /> : <File />;
+  const isImageFile = (fileName) => {
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+    return imageExtensions.some((ext) => fileName.toLowerCase().endsWith(ext));
+  };
+
+  const renderIcon = ({ type, name }) => {
+    if (type === 'directory') return <Folder />;
+    return isImageFile(name) ? <Image /> : <File />;
+  };
 
   return (
     <div>
