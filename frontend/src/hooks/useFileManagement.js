@@ -46,12 +46,15 @@ const useFileManagement = (gitEnabled = false) => {
 
   useEffect(() => {
     const initializeFileSystem = async () => {
-      await pullLatestChanges();
-      await loadFileList();
+      if (gitEnabled) {
+        await pullLatestChanges();
+      } else {
+        await loadFileList();
+      }
     };
 
     initializeFileSystem();
-  }, [pullLatestChanges, loadFileList]);
+  }, [gitEnabled]);
 
   const handleFileSelect = async (filePath) => {
     if (hasUnsavedChanges) {
