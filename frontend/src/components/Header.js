@@ -16,9 +16,9 @@ const Header = ({ currentTheme, onThemeChange }) => {
       <User src="https://via.placeholder.com/40" name="User" />
       <Spacer w={0.5} />
       <Button auto icon={<SettingsIcon />} onClick={openSettings} />
-      <Settings 
-        visible={settingsVisible} 
-        onClose={closeSettings} 
+      <Settings
+        visible={settingsVisible}
+        onClose={closeSettings}
         currentTheme={currentTheme}
         onThemeChange={onThemeChange}
       />

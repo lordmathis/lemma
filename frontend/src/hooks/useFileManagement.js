@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToasts } from '@geist-ui/core';
-import { fetchFileList, fetchFileContent, saveFileContent, pullChanges } from '../services/api';
+import {
+  fetchFileList,
+  fetchFileContent,
+  saveFileContent,
+  pullChanges,
+} from '../services/api';
 
 const DEFAULT_FILE = {
   name: 'New File.md',
   path: 'New File.md',
-  content: '# Welcome to NovaMD\n\nStart editing here!'
+  content: '# Welcome to NovaMD\n\nStart editing here!',
 };
 
 const useFileManagement = (gitEnabled = false) => {
@@ -35,11 +40,17 @@ const useFileManagement = (gitEnabled = false) => {
     if (gitEnabled) {
       try {
         await pullChanges();
-        setToast({ text: 'Latest changes pulled successfully', type: 'success' });
+        setToast({
+          text: 'Latest changes pulled successfully',
+          type: 'success',
+        });
         await loadFileList(); // Reload file list after pulling changes
       } catch (error) {
         console.error('Failed to pull latest changes:', error);
-        setToast({ text: 'Failed to pull latest changes: ' + error.message, type: 'error' });
+        setToast({
+          text: 'Failed to pull latest changes: ' + error.message,
+          type: 'error',
+        });
       }
     }
   }, [gitEnabled, loadFileList, setToast]);
@@ -58,7 +69,9 @@ const useFileManagement = (gitEnabled = false) => {
 
   const handleFileSelect = async (filePath) => {
     if (hasUnsavedChanges) {
-      const confirmSwitch = window.confirm('You have unsaved changes. Are you sure you want to switch files?');
+      const confirmSwitch = window.confirm(
+        'You have unsaved changes. Are you sure you want to switch files?'
+      );
       if (!confirmSwitch) return;
     }
 
@@ -80,20 +93,26 @@ const useFileManagement = (gitEnabled = false) => {
     setHasUnsavedChanges(true);
   };
 
-  const handleSave = useCallback(async (filePath, fileContent) => {
-    try {
-      await saveFileContent(filePath, fileContent);
-      setToast({ text: 'File saved successfully', type: 'success' });
-      setIsNewFile(false);
-      setHasUnsavedChanges(false);
-      if (isNewFile) {
-        await loadFileList();
+  const handleSave = useCallback(
+    async (filePath, fileContent) => {
+      try {
+        await saveFileContent(filePath, fileContent);
+        setToast({ text: 'File saved successfully', type: 'success' });
+        setIsNewFile(false);
+        setHasUnsavedChanges(false);
+        if (isNewFile) {
+          await loadFileList();
+        }
+      } catch (error) {
+        console.error('Error saving file:', error);
+        setToast({
+          text: 'Failed to save file. Please try again.',
+          type: 'error',
+        });
       }
-    } catch (error) {
-      console.error('Error saving file:', error);
-      setToast({ text: 'Failed to save file. Please try again.', type: 'error' });
-    }
-  }, [setToast, isNewFile, loadFileList]);
+    },
+    [setToast, isNewFile, loadFileList]
+  );
 
   return {
     content,

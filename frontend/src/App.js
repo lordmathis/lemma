@@ -47,7 +47,7 @@ function App() {
       <CssBaseline />
       <Page>
         <Header currentTheme={themeType} onThemeChange={setTheme} />
-        <Page.Content className='page-content'>
+        <Page.Content className="page-content">
           <MainContent
             content={content}
             files={files}

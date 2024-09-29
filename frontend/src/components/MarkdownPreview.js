@@ -13,8 +13,8 @@ const MarkdownPreview = ({ content }) => {
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={{
-          code({node, inline, className, children, ...props}) {
-            const match = /language-(\w+)/.exec(className || '')
+          code({ node, inline, className, children, ...props }) {
+            const match = /language-(\w+)/.exec(className || '');
             return !inline && match ? (
               <SyntaxHighlighter
                 style={vscDarkPlus}
@@ -28,8 +28,8 @@ const MarkdownPreview = ({ content }) => {
               <code className={className} {...props}>
                 {children}
               </code>
-            )
-          }
+            );
+          },
         }}
       >
         {content}

@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Modal, Text, Toggle, Input, Spacer, useTheme, Button, Dot, useToasts } from '@geist-ui/core';
+import {
+  Modal,
+  Text,
+  Toggle,
+  Input,
+  Spacer,
+  useTheme,
+  Button,
+  Dot,
+  useToasts,
+} from '@geist-ui/core';
 import { saveUserSettings, fetchUserSettings } from '../services/api';
 
 const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
@@ -42,13 +52,14 @@ const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
   }, [isInitialized, loadSettings]);
 
   useEffect(() => {
-    const settingsChanged = JSON.stringify(settings) !== JSON.stringify(originalSettings);
+    const settingsChanged =
+      JSON.stringify(settings) !== JSON.stringify(originalSettings);
     const themeChanged = themeSettings !== originalTheme;
     setHasUnsavedChanges(settingsChanged || themeChanged);
   }, [settings, themeSettings, originalSettings, originalTheme]);
 
   const handleInputChange = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleThemeChange = () => {
@@ -70,7 +81,10 @@ const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
       onClose();
     } catch (error) {
       console.error('Failed to save settings:', error);
-      setToast({ text: 'Failed to save settings: ' + error.message, type: 'error' });
+      setToast({
+        text: 'Failed to save settings: ' + error.message,
+        type: 'error',
+      });
     }
   };
 
@@ -87,7 +101,7 @@ const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
           <Text h4>Appearance</Text>
           <div className="setting-item">
             <Text>Dark Mode</Text>
-            <Toggle 
+            <Toggle
               checked={themeSettings === 'dark'}
               onChange={handleThemeChange}
             />
@@ -111,7 +125,9 @@ const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
             <Text>Enable Git</Text>
             <Toggle
               checked={settings.gitEnabled}
-              onChange={(e) => handleInputChange('gitEnabled', e.target.checked)}
+              onChange={(e) =>
+                handleInputChange('gitEnabled', e.target.checked)
+              }
             />
           </div>
           <div className={settings.gitEnabled ? '' : 'disabled'}>
@@ -143,7 +159,9 @@ const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
               <Text>Auto Commit</Text>
               <Toggle
                 checked={settings.gitAutoCommit}
-                onChange={(e) => handleInputChange('gitAutoCommit', e.target.checked)}
+                onChange={(e) =>
+                  handleInputChange('gitAutoCommit', e.target.checked)
+                }
                 disabled={!settings.gitEnabled}
               />
             </div>
@@ -152,13 +170,17 @@ const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
               width="100%"
               label="Commit Message Template"
               value={settings.gitCommitMsgTemplate}
-              onChange={(e) => handleInputChange('gitCommitMsgTemplate', e.target.value)}
+              onChange={(e) =>
+                handleInputChange('gitCommitMsgTemplate', e.target.value)
+              }
               disabled={!settings.gitEnabled}
             />
           </div>
         </div>
       </Modal.Content>
-      <Modal.Action passive onClick={onClose}>Cancel</Modal.Action>
+      <Modal.Action passive onClick={onClose}>
+        Cancel
+      </Modal.Action>
       <Modal.Action onClick={handleSubmit}>Save Changes</Modal.Action>
     </Modal>
   );
