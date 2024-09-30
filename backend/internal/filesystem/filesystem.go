@@ -2,6 +2,7 @@ package filesystem
 
 import (
 	"errors"
+	"fmt"
 	"novamd/internal/gitutils"
 	"novamd/internal/models"
 	"os"
@@ -47,25 +48,28 @@ func (fs *FileSystem) InitializeGitRepo() error {
 	return fs.GitRepo.EnsureRepo()
 }
 
-// validatePath checks if the given path is within the root directory
-func (fs *FileSystem) validatePath(path string) (string, error) {
-	fullPath := filepath.Join(fs.RootDir, path)
+func ValidatePath(rootDir, path string) (string, error) {
+	fullPath := filepath.Join(rootDir, path)
 	cleanPath := filepath.Clean(fullPath)
 
-	if !strings.HasPrefix(cleanPath, fs.RootDir) {
-		return "", errors.New("invalid path: outside of root directory")
+	if !strings.HasPrefix(cleanPath, filepath.Clean(rootDir)) {
+		return "", fmt.Errorf("invalid path: outside of root directory")
 	}
 
-	relPath, err := filepath.Rel(fs.RootDir, cleanPath)
+	relPath, err := filepath.Rel(rootDir, cleanPath)
 	if err != nil {
 		return "", err
 	}
 
 	if strings.HasPrefix(relPath, "..") {
-		return "", errors.New("invalid path: outside of root directory")
+		return "", fmt.Errorf("invalid path: outside of root directory")
 	}
 
 	return cleanPath, nil
+}
+
+func (fs *FileSystem) validatePath(path string) (string, error) {
+	return ValidatePath(fs.RootDir, path)
 }
 
 func (fs *FileSystem) ListFilesRecursively() ([]FileNode, error) {

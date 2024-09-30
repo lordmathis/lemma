@@ -58,20 +58,26 @@ func main() {
 		api.SetupRoutes(r, database, fs)
 	})
 
-	// Set up static file server
+	// Set up static file server with path validation
 	staticPath := os.Getenv("NOVAMD_STATIC_PATH")
 	if staticPath == "" {
 		staticPath = "../frontend/dist"
 	}
 	fileServer := http.FileServer(http.Dir(staticPath))
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		filePath := filepath.Join(staticPath, r.URL.Path)
-		_, err := os.Stat(filePath)
+		requestedPath := r.URL.Path
+		validatedPath, err := filesystem.ValidatePath(staticPath, requestedPath)
+		if err != nil {
+			http.Error(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
+
+		_, err = os.Stat(validatedPath)
 		if os.IsNotExist(err) {
 			http.ServeFile(w, r, filepath.Join(staticPath, "index.html"))
 			return
 		}
-		fileServer.ServeHTTP(w, r)
+		http.StripPrefix("/", fileServer).ServeHTTP(w, r)
 	})
 
 	// Start server
