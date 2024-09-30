@@ -21,7 +21,26 @@ const MarkdownPreview = ({
       const matches = [...rawContent.matchAll(regex)];
 
       for (const match of matches) {
-        const [fullMatch, isImage, fileName] = match;
+        const [fullMatch, isImage, innerContent] = match;
+        let fileName, displayText, heading;
+
+        // Parse the inner content
+        const pipeIndex = innerContent.indexOf('|');
+        const hashIndex = innerContent.indexOf('#');
+
+        if (pipeIndex !== -1) {
+          displayText = innerContent.slice(pipeIndex + 1).trim();
+          fileName = innerContent.slice(0, pipeIndex).trim();
+        } else {
+          displayText = innerContent;
+          fileName = innerContent;
+        }
+
+        if (hashIndex !== -1 && (pipeIndex === -1 || hashIndex < pipeIndex)) {
+          heading = fileName.slice(hashIndex + 1).trim();
+          fileName = fileName.slice(0, hashIndex).trim();
+        }
+
         try {
           const paths = await lookupFileByName(fileName);
           if (paths && paths.length > 0) {
@@ -29,22 +48,21 @@ const MarkdownPreview = ({
             if (isImage) {
               result = result.replace(
                 fullMatch,
-                `![${fileName}](${baseUrl}/files/${filePath})`
+                `![${displayText}](${baseUrl}/files/${filePath})`
               );
             } else {
-              // Use a valid URL format that React Markdown will recognize
-              result = result.replace(
-                fullMatch,
-                `[${fileName}](${baseUrl}/internal/${encodeURIComponent(
-                  filePath
-                )})`
-              );
+              // Include heading in the URL if present
+              const url = heading
+                ? `${baseUrl}/internal/${encodeURIComponent(
+                    filePath
+                  )}#${encodeURIComponent(heading)}`
+                : `${baseUrl}/internal/${encodeURIComponent(filePath)}`;
+              result = result.replace(fullMatch, `[${displayText}](${url})`);
             }
           } else {
-            // Use a valid URL format for not found links
             result = result.replace(
               fullMatch,
-              `[${fileName}](${baseUrl}/notfound/${encodeURIComponent(
+              `[${displayText}](${baseUrl}/notfound/${encodeURIComponent(
                 fileName
               )})`
             );
@@ -53,7 +71,9 @@ const MarkdownPreview = ({
           console.error('Error looking up file:', error);
           result = result.replace(
             fullMatch,
-            `[${fileName}](${baseUrl}/notfound/${encodeURIComponent(fileName)})`
+            `[${displayText}](${baseUrl}/notfound/${encodeURIComponent(
+              fileName
+            )})`
           );
         }
       }
@@ -97,15 +117,15 @@ const MarkdownPreview = ({
           ),
           a: ({ href, children }) => {
             if (href.startsWith(`${baseUrl}/internal/`)) {
-              const filePath = decodeURIComponent(
+              const [filePath, heading] = decodeURIComponent(
                 href.replace(`${baseUrl}/internal/`, '')
-              );
+              ).split('#');
               return (
                 <a
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    onLinkClick(filePath);
+                    onLinkClick(filePath, heading);
                   }}
                 >
                   {children}
