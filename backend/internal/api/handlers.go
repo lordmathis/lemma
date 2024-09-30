@@ -28,6 +28,27 @@ func ListFiles(fs *filesystem.FileSystem) http.HandlerFunc {
 	}
 }
 
+func LookupFileByName(fs *filesystem.FileSystem) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		filenameOrPath := r.URL.Query().Get("filename")
+		if filenameOrPath == "" {
+			http.Error(w, "Filename or path is required", http.StatusBadRequest)
+			return
+		}
+
+		filePaths, err := fs.FindFileByName(filenameOrPath)
+		if err != nil {
+			http.Error(w, "File not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(map[string][]string{"paths": filePaths}); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
+	}
+}
+
 func GetFileContent(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		filePath := strings.TrimPrefix(r.URL.Path, "/api/v1/files/")

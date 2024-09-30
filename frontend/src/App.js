@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GeistProvider, CssBaseline, Page } from '@geist-ui/core';
+import { GeistProvider, CssBaseline, Page, useToasts } from '@geist-ui/core';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
 import useFileManagement from './hooks/useFileManagement';
@@ -10,6 +10,7 @@ function App() {
   const [themeType, setThemeType] = useState('light');
   const [userId, setUserId] = useState(1);
   const [settings, setSettings] = useState({ gitEnabled: false });
+  const { setToast } = useToasts();
 
   useEffect(() => {
     const loadUserSettings = async () => {
@@ -36,10 +37,31 @@ function App() {
     handleContentChange,
     handleSave,
     pullLatestChanges,
+    lookupFileByName,
   } = useFileManagement(settings.gitEnabled);
 
   const setTheme = (newTheme) => {
     setThemeType(newTheme);
+  };
+
+  const handleLinkClick = async (filename) => {
+    try {
+      const filePaths = await lookupFileByName(filename);
+      if (filePaths.length === 1) {
+        handleFileSelect(filePaths[0]);
+      } else if (filePaths.length > 1) {
+        setFileOptions(filePaths.map((path) => ({ label: path, value: path })));
+        setFileSelectionModalVisible(true);
+      } else {
+        setToast({ text: `File "${filename}" not found`, type: 'error' });
+      }
+    } catch (error) {
+      console.error('Error looking up file:', error);
+      setToast({
+        text: 'Failed to lookup file. Please try again.',
+        type: 'error',
+      });
+    }
   };
 
   return (
@@ -60,6 +82,7 @@ function App() {
             onSave={handleSave}
             settings={settings}
             pullLatestChanges={pullLatestChanges}
+            onLinkClick={handleLinkClick}
           />
         </Page.Content>
       </Page>

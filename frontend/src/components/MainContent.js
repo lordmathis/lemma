@@ -19,6 +19,7 @@ import {
   saveFileContent,
   deleteFile,
   getFileUrl,
+  lookupFileByName,
 } from '../services/api';
 
 const isImageFile = (filePath) => {
@@ -37,6 +38,7 @@ const MainContent = ({
   onSave,
   settings,
   pullLatestChanges,
+  onLinkClick,
 }) => {
   const [activeTab, setActiveTab] = useState('source');
   const { type: themeType } = useTheme();
@@ -212,6 +214,8 @@ const MainContent = ({
               <MarkdownPreview
                 content={content}
                 baseUrl={window.API_BASE_URL}
+                onLinkClick={onLinkClick}
+                lookupFileByName={lookupFileByName}
               />
             )}
           </div>

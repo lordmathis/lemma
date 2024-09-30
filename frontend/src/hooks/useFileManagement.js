@@ -5,6 +5,7 @@ import {
   fetchFileContent,
   saveFileContent,
   pullChanges,
+  lookupFileByName,
 } from '../services/api';
 
 const DEFAULT_FILE = {
@@ -134,6 +135,7 @@ const useFileManagement = (gitEnabled = false) => {
     handleContentChange,
     handleSave,
     pullLatestChanges,
+    lookupFileByName,
   };
 };
 

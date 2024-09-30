@@ -103,6 +103,47 @@ func (fs *FileSystem) walkDirectory(dir string) ([]FileNode, error) {
 	return nodes, nil
 }
 
+func (fs *FileSystem) FindFileByName(filenameOrPath string) ([]string, error) {
+	var foundPaths []string
+	var searchPattern string
+
+	// If no extension is provided, assume .md
+	if !strings.Contains(filenameOrPath, ".") {
+		searchPattern = filenameOrPath + ".md"
+	} else {
+		searchPattern = filenameOrPath
+	}
+
+	err := filepath.Walk(fs.RootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			relPath, err := filepath.Rel(fs.RootDir, path)
+			if err != nil {
+				return err
+			}
+
+			// Check if the file matches the search pattern
+			if strings.HasSuffix(relPath, searchPattern) || 
+			   strings.EqualFold(info.Name(), searchPattern) {
+				foundPaths = append(foundPaths, relPath)
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(foundPaths) == 0 {
+		return nil, errors.New("file not found")
+	}
+
+	return foundPaths, nil
+}
+
 func (fs *FileSystem) GetFileContent(filePath string) ([]byte, error) {
 	fullPath, err := fs.validatePath(filePath)
 	if err != nil {

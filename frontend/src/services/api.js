@@ -131,3 +131,19 @@ export const commitAndPush = async (message) => {
 export const getFileUrl = (filePath) => {
   return `${API_BASE_URL}/files/${filePath}`;
 };
+
+export const lookupFileByName = async (filename) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/files/lookup?filename=${encodeURIComponent(filename)}`
+    );
+    if (!response.ok) {
+      throw new Error('File not found');
+    }
+    const data = await response.json();
+    return data.paths;
+  } catch (error) {
+    console.error('Error looking up file:', error);
+    throw error;
+  }
+};
