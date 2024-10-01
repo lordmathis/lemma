@@ -40,7 +40,7 @@ function App() {
     lookupFileByName,
   } = useFileManagement(settings.gitEnabled);
 
-  const setTheme = (newTheme) => {
+  const handleThemeChange = (newTheme) => {
     setThemeType(newTheme);
   };
 
@@ -68,7 +68,7 @@ function App() {
     <GeistProvider themeType={themeType}>
       <CssBaseline />
       <Page>
-        <Header currentTheme={themeType} onThemeChange={setTheme} />
+        <Header currentTheme={themeType} onThemeChange={handleThemeChange} />
         <Page.Content className="page-content">
           <MainContent
             content={content}

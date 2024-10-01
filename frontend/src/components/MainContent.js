@@ -21,11 +21,7 @@ import {
   getFileUrl,
   lookupFileByName,
 } from '../services/api';
-
-const isImageFile = (filePath) => {
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-  return imageExtensions.some((ext) => filePath.toLowerCase().endsWith(ext));
-};
+import { isImageFile } from '../utils/fileHelpers';
 
 const MainContent = ({
   content,
@@ -37,7 +33,7 @@ const MainContent = ({
   onContentChange,
   onSave,
   settings,
-  pullLatestChanges,
+  onPullLatestChanges,
   onLinkClick,
 }) => {
   const [activeTab, setActiveTab] = useState('source');
@@ -63,7 +59,7 @@ const MainContent = ({
 
   const handlePull = async () => {
     try {
-      await pullLatestChanges();
+      await onPullLatestChanges();
       setToast({ text: 'Successfully pulled latest changes', type: 'success' });
     } catch (error) {
       setToast({
@@ -82,7 +78,7 @@ const MainContent = ({
           text: 'Changes committed and pushed successfully',
           type: 'success',
         });
-        await pullLatestChanges(); // Pull changes after successful push
+        await onPullLatestChanges(); // Pull changes after successful push
       }
     } catch (error) {
       setToast({
@@ -101,7 +97,7 @@ const MainContent = ({
       try {
         await saveFileContent(newFileName, '');
         setToast({ text: 'New file created successfully', type: 'success' });
-        await pullLatestChanges(); // Refresh file list
+        await onPullLatestChanges(); // Refresh file list
         onFileSelect(newFileName); // Select the new file
       } catch (error) {
         setToast({
@@ -123,7 +119,7 @@ const MainContent = ({
         try {
           await deleteFile(selectedFile);
           setToast({ text: 'File deleted successfully', type: 'success' });
-          await pullLatestChanges(); // Refresh file list
+          await onPullLatestChanges(); // Refresh file list
           onFileSelect(null); // Deselect the file
         } catch (error) {
           setToast({

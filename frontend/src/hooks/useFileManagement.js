@@ -7,16 +7,12 @@ import {
   pullChanges,
   lookupFileByName,
 } from '../services/api';
+import { isImageFile } from '../utils/fileHelpers';
 
 const DEFAULT_FILE = {
   name: 'New File.md',
   path: 'New File.md',
   content: '# Welcome to NovaMD\n\nStart editing here!',
-};
-
-const isImageFile = (filePath) => {
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-  return imageExtensions.some((ext) => filePath.toLowerCase().endsWith(ext));
 };
 
 const useFileManagement = (gitEnabled = false) => {

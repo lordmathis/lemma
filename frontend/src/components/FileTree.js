@@ -9,6 +9,7 @@ import {
   Trash,
   Image,
 } from '@geist-ui/icons';
+import { isImageFile } from '../utils/fileHelpers';
 
 const FileTree = ({
   files = [],
@@ -36,11 +37,6 @@ const FileTree = ({
         {node.name}
       </span>
     );
-  };
-
-  const isImageFile = (fileName) => {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-    return imageExtensions.some((ext) => fileName.toLowerCase().endsWith(ext));
   };
 
   const renderIcon = ({ type, name }) => {
