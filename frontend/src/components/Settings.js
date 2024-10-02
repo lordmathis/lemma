@@ -1,16 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Modal,
-  Text,
-  Toggle,
-  Input,
-  Spacer,
-  useTheme,
-  Button,
-  Dot,
-  useToasts,
-} from '@geist-ui/core';
+import { Modal, Spacer, useTheme, Dot, useToasts } from '@geist-ui/core';
 import { saveUserSettings, fetchUserSettings } from '../services/api';
+import AppearanceSettings from './settings/AppearanceSettings';
+import EditorSettings from './settings/EditorSettings';
+import GitSettings from './settings/GitSettings';
 
 const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
   const theme = useTheme();
@@ -97,86 +90,25 @@ const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
         )}
       </Modal.Title>
       <Modal.Content>
-        <div className="setting-group">
-          <Text h4>Appearance</Text>
-          <div className="setting-item">
-            <Text>Dark Mode</Text>
-            <Toggle
-              checked={themeSettings === 'dark'}
-              onChange={handleThemeChange}
-            />
-          </div>
-        </div>
+        <AppearanceSettings
+          themeSettings={themeSettings}
+          onThemeChange={handleThemeChange}
+        />
         <Spacer h={1} />
-        <div className="setting-group">
-          <Text h4>Editor</Text>
-          <div className="setting-item">
-            <Text>Auto Save</Text>
-            <Toggle
-              checked={settings.autoSave}
-              onChange={(e) => handleInputChange('autoSave', e.target.checked)}
-            />
-          </div>
-        </div>
+        <EditorSettings
+          autoSave={settings.autoSave}
+          onAutoSaveChange={(value) => handleInputChange('autoSave', value)}
+        />
         <Spacer h={1} />
-        <div className="setting-group">
-          <Text h4>Git Integration</Text>
-          <div className="setting-item">
-            <Text>Enable Git</Text>
-            <Toggle
-              checked={settings.gitEnabled}
-              onChange={(e) =>
-                handleInputChange('gitEnabled', e.target.checked)
-              }
-            />
-          </div>
-          <div className={settings.gitEnabled ? '' : 'disabled'}>
-            <Input
-              width="100%"
-              label="Git URL"
-              value={settings.gitUrl}
-              onChange={(e) => handleInputChange('gitUrl', e.target.value)}
-              disabled={!settings.gitEnabled}
-            />
-            <Spacer h={0.5} />
-            <Input
-              width="100%"
-              label="Git Username"
-              value={settings.gitUser}
-              onChange={(e) => handleInputChange('gitUser', e.target.value)}
-              disabled={!settings.gitEnabled}
-            />
-            <Spacer h={0.5} />
-            <Input.Password
-              width="100%"
-              label="Git Token"
-              value={settings.gitToken}
-              onChange={(e) => handleInputChange('gitToken', e.target.value)}
-              disabled={!settings.gitEnabled}
-            />
-            <Spacer h={0.5} />
-            <div className="setting-item">
-              <Text>Auto Commit</Text>
-              <Toggle
-                checked={settings.gitAutoCommit}
-                onChange={(e) =>
-                  handleInputChange('gitAutoCommit', e.target.checked)
-                }
-                disabled={!settings.gitEnabled}
-              />
-            </div>
-            <Spacer h={0.5} />
-            <Input
-              width="100%"
-              label="Commit Message Template"
-              value={settings.gitCommitMsgTemplate}
-              onChange={(e) =>
-                handleInputChange('gitCommitMsgTemplate', e.target.value)
-              }
-              disabled={!settings.gitEnabled}
-            />
-          </div>
-        </div>
+        <GitSettings
+          gitEnabled={settings.gitEnabled}
+          gitUrl={settings.gitUrl}
+          gitUser={settings.gitUser}
+          gitToken={settings.gitToken}
+          gitAutoCommit={settings.gitAutoCommit}
+          gitCommitMsgTemplate={settings.gitCommitMsgTemplate}
+          onInputChange={handleInputChange}
+        />
       </Modal.Content>
       <Modal.Action passive onClick={onClose}>
         Cancel
