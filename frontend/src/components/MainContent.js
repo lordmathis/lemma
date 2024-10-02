@@ -8,7 +8,6 @@ import {
   useToasts,
   Modal,
   Input,
-  Button,
 } from '@geist-ui/core';
 import { Code, Eye } from '@geist-ui/icons';
 import FileTree from './FileTree';
@@ -22,7 +21,6 @@ const MainContent = ({
   files,
   selectedFile,
   hasUnsavedChanges,
-  error,
   onFileSelect,
   onContentChange,
   onSave,

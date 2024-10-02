@@ -83,6 +83,7 @@ function App() {
             settings={settings}
             pullLatestChanges={pullLatestChanges}
             onLinkClick={handleLinkClick}
+            lookupFileByName={lookupFileByName}
           />
         </Page.Content>
       </Page>
