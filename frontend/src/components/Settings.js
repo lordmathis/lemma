@@ -96,14 +96,9 @@ const Settings = ({ visible, onClose }) => {
 
   const handleClose = useCallback(() => {
     if (state.hasUnsavedChanges) {
-      const confirmClose = window.confirm(
-        'You have unsaved changes. Are you sure you want to close without saving?'
-      );
-      if (confirmClose) {
-        updateTheme(state.initialSettings.theme); // Revert theme if not saved
-        dispatch({ type: 'RESET' });
-        onClose();
-      }
+      updateTheme(state.initialSettings.theme); // Revert theme if not saved
+      dispatch({ type: 'RESET' });
+      onClose();
     } else {
       onClose();
     }
