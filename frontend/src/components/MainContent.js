@@ -6,12 +6,13 @@ import {
   Dot,
   useTheme,
   useToasts,
-  Modal,
-  Input,
 } from '@geist-ui/core';
 import { Code, Eye } from '@geist-ui/icons';
 import FileTree from './FileTree';
 import FileActions from './FileActions';
+import CreateFileModal from './modals/CreateFileModal';
+import DeleteFileModal from './modals/DeleteFileModal';
+import CommitMessageModal from './modals/CommitMessageModal';
 import ContentView from './ContentView';
 import { commitAndPush, saveFileContent, deleteFile } from '../services/api';
 import { isImageFile } from '../utils/fileHelpers';
@@ -34,6 +35,9 @@ const MainContent = ({
   const { setToast } = useToasts();
   const [newFileModalVisible, setNewFileModalVisible] = useState(false);
   const [newFileName, setNewFileName] = useState('');
+  const [deleteFileModalVisible, setDeleteFileModalVisible] = useState(false);
+  const [commitMessageModalVisible, setCommitMessageModalVisible] =
+    useState(false);
 
   useEffect(() => {
     if (isImageFile(selectedFile)) {
@@ -54,25 +58,6 @@ const MainContent = ({
     } catch (error) {
       setToast({
         text: 'Failed to pull changes: ' + error.message,
-        type: 'error',
-      });
-    }
-  };
-
-  const handleCommitAndPush = async () => {
-    try {
-      const message = prompt('Enter commit message:');
-      if (message) {
-        await commitAndPush(message);
-        setToast({
-          text: 'Changes committed and pushed successfully',
-          type: 'success',
-        });
-        await pullLatestChanges();
-      }
-    } catch (error) {
-      setToast({
-        text: 'Failed to commit and push changes: ' + error.message,
         type: 'error',
       });
     }
@@ -100,25 +85,44 @@ const MainContent = ({
     setNewFileName('');
   };
 
-  const handleDeleteFile = async () => {
-    if (selectedFile) {
-      const confirmDelete = window.confirm(
-        `Are you sure you want to delete "${selectedFile}"?`
-      );
-      if (confirmDelete) {
-        try {
-          await deleteFile(selectedFile);
-          setToast({ text: 'File deleted successfully', type: 'success' });
-          await pullLatestChanges();
-          onFileSelect(null);
-        } catch (error) {
-          setToast({
-            text: 'Failed to delete file: ' + error.message,
-            type: 'error',
-          });
-        }
-      }
+  const handleDeleteFile = () => {
+    setDeleteFileModalVisible(true);
+  };
+
+  const confirmDeleteFile = async () => {
+    try {
+      await deleteFile(selectedFile);
+      setToast({ text: 'File deleted successfully', type: 'success' });
+      await pullLatestChanges();
+      onFileSelect(null);
+    } catch (error) {
+      setToast({
+        text: 'Failed to delete file: ' + error.message,
+        type: 'error',
+      });
     }
+    setDeleteFileModalVisible(false);
+  };
+
+  const handleCommitAndPush = () => {
+    setCommitMessageModalVisible(true);
+  };
+
+  const confirmCommitAndPush = async (message) => {
+    try {
+      await commitAndPush(message);
+      setToast({
+        text: 'Changes committed and pushed successfully',
+        type: 'success',
+      });
+      await pullLatestChanges();
+    } catch (error) {
+      setToast({
+        text: 'Failed to commit and push changes: ' + error.message,
+        type: 'error',
+      });
+    }
+    setCommitMessageModalVisible(false);
   };
 
   const renderBreadcrumbs = () => {
@@ -192,24 +196,24 @@ const MainContent = ({
           </div>
         </Grid>
       </Grid.Container>
-      <Modal
+      <CreateFileModal
         visible={newFileModalVisible}
         onClose={() => setNewFileModalVisible(false)}
-      >
-        <Modal.Title>Create New File</Modal.Title>
-        <Modal.Content>
-          <Input
-            width="100%"
-            placeholder="Enter file name"
-            value={newFileName}
-            onChange={(e) => setNewFileName(e.target.value)}
-          />
-        </Modal.Content>
-        <Modal.Action passive onClick={() => setNewFileModalVisible(false)}>
-          Cancel
-        </Modal.Action>
-        <Modal.Action onClick={handleNewFileSubmit}>Create</Modal.Action>
-      </Modal>
+        onSubmit={handleNewFileSubmit}
+        fileName={newFileName}
+        setFileName={setNewFileName}
+      />
+      <DeleteFileModal
+        visible={deleteFileModalVisible}
+        onClose={() => setDeleteFileModalVisible(false)}
+        onConfirm={confirmDeleteFile}
+        fileName={selectedFile}
+      />
+      <CommitMessageModal
+        visible={commitMessageModalVisible}
+        onClose={() => setCommitMessageModalVisible(false)}
+        onSubmit={confirmCommitAndPush}
+      />
     </>
   );
 };
