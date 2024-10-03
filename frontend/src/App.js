@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { GeistProvider, CssBaseline, Page, useToasts } from '@geist-ui/core';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
-import useFileManagement from './hooks/useFileManagement';
-import { fetchUserSettings } from './services/api';
+import { useFileManagement } from './hooks/useFileManagement';
+import { fetchUserSettings, lookupFileByName } from './services/api';
 import './App.scss';
 
 function App() {
@@ -37,7 +37,6 @@ function App() {
     handleContentChange,
     handleSave,
     pullLatestChanges,
-    lookupFileByName,
   } = useFileManagement(settings.gitEnabled);
 
   const handleThemeChange = (newTheme) => {
