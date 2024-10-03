@@ -1,30 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { GeistProvider, CssBaseline, Page, useToasts } from '@geist-ui/core';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
 import { useFileManagement } from './hooks/useFileManagement';
-import { fetchUserSettings, lookupFileByName } from './services/api';
+import { SettingsProvider, useSettings } from './contexts/SettingsContext';
+import { lookupFileByName } from './services/api';
 import './App.scss';
 
-function App() {
-  const [themeType, setThemeType] = useState('light');
-  const [userId, setUserId] = useState(1);
-  const [settings, setSettings] = useState({ gitEnabled: false });
+function AppContent() {
+  const { settings, loading } = useSettings();
   const { setToast } = useToasts();
-
-  useEffect(() => {
-    const loadUserSettings = async () => {
-      try {
-        const fetchedSettings = await fetchUserSettings(userId);
-        setSettings(fetchedSettings.settings);
-        setThemeType(fetchedSettings.settings.theme);
-      } catch (error) {
-        console.error('Failed to load user settings:', error);
-      }
-    };
-
-    loadUserSettings();
-  }, [userId]);
 
   const {
     content,
@@ -39,18 +24,14 @@ function App() {
     pullLatestChanges,
   } = useFileManagement(settings.gitEnabled);
 
-  const handleThemeChange = (newTheme) => {
-    setThemeType(newTheme);
-  };
-
   const handleLinkClick = async (filename) => {
     try {
       const filePaths = await lookupFileByName(filename);
       if (filePaths.length === 1) {
         handleFileSelect(filePaths[0]);
       } else if (filePaths.length > 1) {
-        setFileOptions(filePaths.map((path) => ({ label: path, value: path })));
-        setFileSelectionModalVisible(true);
+        // Handle multiple file options (you may want to show a modal or dropdown)
+        console.log('Multiple files found:', filePaths);
       } else {
         setToast({ text: `File "${filename}" not found`, type: 'error' });
       }
@@ -63,11 +44,15 @@ function App() {
     }
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <GeistProvider themeType={themeType}>
+    <GeistProvider themeType={settings.theme}>
       <CssBaseline />
       <Page>
-        <Header currentTheme={themeType} onThemeChange={handleThemeChange} />
+        <Header />
         <Page.Content className="page-content">
           <MainContent
             content={content}
@@ -87,6 +72,14 @@ function App() {
         </Page.Content>
       </Page>
     </GeistProvider>
+  );
+}
+
+function App() {
+  return (
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
   );
 }
 

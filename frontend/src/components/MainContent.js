@@ -16,6 +16,7 @@ import CommitMessageModal from './modals/CommitMessageModal';
 import ContentView from './ContentView';
 import { commitAndPush, saveFileContent, deleteFile } from '../services/api';
 import { isImageFile } from '../utils/fileHelpers';
+import { useSettings } from '../contexts/SettingsContext';
 
 const MainContent = ({
   content,
@@ -25,7 +26,6 @@ const MainContent = ({
   onFileSelect,
   onContentChange,
   onSave,
-  settings,
   pullLatestChanges,
   onLinkClick,
   lookupFileByName,
@@ -33,6 +33,7 @@ const MainContent = ({
   const [activeTab, setActiveTab] = useState('source');
   const { type: themeType } = useTheme();
   const { setToast } = useToasts();
+  const { settings } = useSettings();
   const [newFileModalVisible, setNewFileModalVisible] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [deleteFileModalVisible, setDeleteFileModalVisible] = useState(false);

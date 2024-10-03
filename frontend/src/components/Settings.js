@@ -1,75 +1,88 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useReducer, useEffect, useCallback, useRef } from 'react';
 import { Modal, Spacer, useTheme, Dot, useToasts } from '@geist-ui/core';
-import { saveUserSettings, fetchUserSettings } from '../services/api';
+import { useSettings } from '../contexts/SettingsContext';
 import AppearanceSettings from './settings/AppearanceSettings';
 import EditorSettings from './settings/EditorSettings';
 import GitSettings from './settings/GitSettings';
 
-const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
-  const theme = useTheme();
-  const { setToast } = useToasts();
-  const [settings, setSettings] = useState({
-    autoSave: false,
-    gitEnabled: false,
-    gitUrl: '',
-    gitUser: '',
-    gitToken: '',
-    gitAutoCommit: false,
-    gitCommitMsgTemplate: '',
-  });
-  const [themeSettings, setThemeSettings] = useState(currentTheme);
-  const [originalSettings, setOriginalSettings] = useState({});
-  const [originalTheme, setOriginalTheme] = useState(currentTheme);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+const initialState = {
+  localSettings: {},
+  initialSettings: {},
+  hasUnsavedChanges: false,
+};
 
-  const loadSettings = useCallback(async () => {
-    try {
-      const userSettings = await fetchUserSettings(1); // Assuming user ID 1 for now
-      const { theme, ...otherSettings } = userSettings.settings;
-      setSettings(otherSettings);
-      setThemeSettings(theme);
-      setOriginalSettings(otherSettings);
-      setOriginalTheme(theme);
-      setHasUnsavedChanges(false);
-      setIsInitialized(true);
-    } catch (error) {
-      console.error('Failed to load user settings:', error);
+function settingsReducer(state, action) {
+  console.log('Reducer action:', action.type, action.payload); // Debug log
+  switch (action.type) {
+    case 'INIT_SETTINGS':
+      return {
+        ...state,
+        localSettings: action.payload,
+        initialSettings: action.payload,
+        hasUnsavedChanges: false,
+      };
+    case 'UPDATE_LOCAL_SETTINGS':
+      const newLocalSettings = { ...state.localSettings, ...action.payload };
+      const hasChanges =
+        JSON.stringify(newLocalSettings) !==
+        JSON.stringify(state.initialSettings);
+      return {
+        ...state,
+        localSettings: newLocalSettings,
+        hasUnsavedChanges: hasChanges,
+      };
+    case 'MARK_SAVED':
+      return {
+        ...state,
+        initialSettings: state.localSettings,
+        hasUnsavedChanges: false,
+      };
+    case 'RESET':
+      return {
+        ...state,
+        localSettings: state.initialSettings,
+        hasUnsavedChanges: false,
+      };
+    default:
+      return state;
+  }
+}
+
+const Settings = ({ visible, onClose }) => {
+  const { settings, updateSettings, updateTheme } = useSettings();
+  const { setToast } = useToasts();
+  const [state, dispatch] = useReducer(settingsReducer, initialState);
+  const isInitialMount = useRef(true);
+  const updateThemeTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      dispatch({ type: 'INIT_SETTINGS', payload: settings });
     }
+  }, [settings]);
+
+  const handleInputChange = useCallback((key, value) => {
+    dispatch({ type: 'UPDATE_LOCAL_SETTINGS', payload: { [key]: value } });
   }, []);
 
-  useEffect(() => {
-    if (!isInitialized) {
-      loadSettings();
+  const handleThemeChange = useCallback(() => {
+    const newTheme = state.localSettings.theme === 'dark' ? 'light' : 'dark';
+    dispatch({ type: 'UPDATE_LOCAL_SETTINGS', payload: { theme: newTheme } });
+
+    // Debounce the theme update
+    if (updateThemeTimeoutRef.current) {
+      clearTimeout(updateThemeTimeoutRef.current);
     }
-  }, [isInitialized, loadSettings]);
-
-  useEffect(() => {
-    const settingsChanged =
-      JSON.stringify(settings) !== JSON.stringify(originalSettings);
-    const themeChanged = themeSettings !== originalTheme;
-    setHasUnsavedChanges(settingsChanged || themeChanged);
-  }, [settings, themeSettings, originalSettings, originalTheme]);
-
-  const handleInputChange = (key, value) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleThemeChange = () => {
-    const newTheme = themeSettings === 'dark' ? 'light' : 'dark';
-    setThemeSettings(newTheme);
-    onThemeChange(newTheme);
-  };
+    updateThemeTimeoutRef.current = setTimeout(() => {
+      updateTheme(newTheme);
+    }, 0);
+  }, [state.localSettings.theme, updateTheme]);
 
   const handleSubmit = async () => {
     try {
-      await saveUserSettings({
-        userId: 1, // Assuming user ID 1 for now
-        settings: { ...settings, theme: themeSettings },
-      });
-      setOriginalSettings(settings);
-      setOriginalTheme(themeSettings);
-      setHasUnsavedChanges(false);
+      await updateSettings(state.localSettings);
+      dispatch({ type: 'MARK_SAVED' });
       setToast({ text: 'Settings saved successfully', type: 'success' });
       onClose();
     } catch (error) {
@@ -81,36 +94,66 @@ const Settings = ({ visible, onClose, currentTheme, onThemeChange }) => {
     }
   };
 
+  const handleClose = useCallback(() => {
+    if (state.hasUnsavedChanges) {
+      const confirmClose = window.confirm(
+        'You have unsaved changes. Are you sure you want to close without saving?'
+      );
+      if (confirmClose) {
+        updateTheme(state.initialSettings.theme); // Revert theme if not saved
+        dispatch({ type: 'RESET' });
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }, [
+    state.hasUnsavedChanges,
+    state.initialSettings.theme,
+    updateTheme,
+    onClose,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (updateThemeTimeoutRef.current) {
+        clearTimeout(updateThemeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  console.log('State:', state); // Debugging log
+
   return (
-    <Modal visible={visible} onClose={onClose}>
+    <Modal visible={visible} onClose={handleClose}>
       <Modal.Title>
         Settings
-        {hasUnsavedChanges && (
+        {state.hasUnsavedChanges && (
           <Dot type="warning" style={{ marginLeft: '8px' }} />
         )}
       </Modal.Title>
       <Modal.Content>
         <AppearanceSettings
-          themeSettings={themeSettings}
+          themeSettings={state.localSettings.theme}
           onThemeChange={handleThemeChange}
         />
         <Spacer h={1} />
         <EditorSettings
-          autoSave={settings.autoSave}
+          autoSave={state.localSettings.autoSave}
           onAutoSaveChange={(value) => handleInputChange('autoSave', value)}
         />
         <Spacer h={1} />
         <GitSettings
-          gitEnabled={settings.gitEnabled}
-          gitUrl={settings.gitUrl}
-          gitUser={settings.gitUser}
-          gitToken={settings.gitToken}
-          gitAutoCommit={settings.gitAutoCommit}
-          gitCommitMsgTemplate={settings.gitCommitMsgTemplate}
+          gitEnabled={state.localSettings.gitEnabled}
+          gitUrl={state.localSettings.gitUrl}
+          gitUser={state.localSettings.gitUser}
+          gitToken={state.localSettings.gitToken}
+          gitAutoCommit={state.localSettings.gitAutoCommit}
+          gitCommitMsgTemplate={state.localSettings.gitCommitMsgTemplate}
           onInputChange={handleInputChange}
         />
       </Modal.Content>
-      <Modal.Action passive onClick={onClose}>
+      <Modal.Action passive onClick={handleClose}>
         Cancel
       </Modal.Action>
       <Modal.Action onClick={handleSubmit}>Save Changes</Modal.Action>
