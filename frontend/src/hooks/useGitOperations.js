@@ -3,7 +3,7 @@ import { pullChanges, commitAndPush } from '../services/api';
 
 export const useGitOperations = (gitEnabled) => {
   const pullLatestChanges = useCallback(async () => {
-    if (!gitEnabled) return;
+    if (!gitEnabled) return false;
     try {
       await pullChanges();
       return true;
@@ -15,7 +15,7 @@ export const useGitOperations = (gitEnabled) => {
 
   const handleCommitAndPush = useCallback(
     async (message) => {
-      if (!gitEnabled) return;
+      if (!gitEnabled) return false;
       try {
         await commitAndPush(message);
         return true;
