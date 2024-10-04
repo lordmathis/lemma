@@ -1,13 +1,5 @@
-// components/MainContent.js
 import React from 'react';
-import {
-  Grid,
-  Breadcrumbs,
-  Tabs,
-  Dot,
-  useTheme,
-  useToasts,
-} from '@geist-ui/core';
+import { Grid, Breadcrumbs, Tabs, Dot } from '@geist-ui/core';
 import { Code, Eye } from '@geist-ui/icons';
 import FileTree from './FileTree';
 import FileActions from './FileActions';
@@ -15,60 +7,19 @@ import ContentView from './ContentView';
 import CreateFileModal from './modals/CreateFileModal';
 import DeleteFileModal from './modals/DeleteFileModal';
 import CommitMessageModal from './modals/CommitMessageModal';
-import { useFileListContext } from '../contexts/FileListContext';
 import { useFileContentContext } from '../contexts/FileContentContext';
-import { useGitOperationsContext } from '../contexts/GitOperationsContext';
 import { useUIStateContext } from '../contexts/UIStateContext';
-import { useFileNavigation } from '../hooks/useFileNavigation';
 
 const MainContent = () => {
-  const { files } = useFileListContext();
   const { selectedFile, hasUnsavedChanges } = useFileContentContext();
-  const { pullLatestChanges } = useGitOperationsContext();
-  const {
-    activeTab,
-    setActiveTab,
-    newFileModalVisible,
-    setNewFileModalVisible,
-    deleteFileModalVisible,
-    setDeleteFileModalVisible,
-    commitMessageModalVisible,
-    setCommitMessageModalVisible,
-  } = useUIStateContext();
-  const { handleLinkClick } = useFileNavigation();
-  const { type: themeType } = useTheme();
-  const { setToast } = useToasts();
+  const { activeTab, setActiveTab } = useUIStateContext();
 
   const handleTabChange = (value) => {
     setActiveTab(value);
   };
 
-  const handlePull = async () => {
-    try {
-      await pullLatestChanges();
-      setToast({ text: 'Successfully pulled latest changes', type: 'success' });
-    } catch (error) {
-      setToast({
-        text: 'Failed to pull changes: ' + error.message,
-        type: 'error',
-      });
-    }
-  };
-
-  const handleCreateFile = () => {
-    setNewFileModalVisible(true);
-  };
-
-  const handleDeleteFile = () => {
-    setDeleteFileModalVisible(true);
-  };
-
-  const handleCommitAndPush = () => {
-    setCommitMessageModalVisible(true);
-  };
-
   const renderBreadcrumbs = () => {
-    if (!selectedFile) return null;
+    if (!selectedFile) return <div className="breadcrumbs-container"></div>;
     const pathParts = selectedFile.split('/');
     return (
       <div className="breadcrumbs-container">
@@ -89,13 +40,8 @@ const MainContent = () => {
       <Grid.Container gap={1} height="calc(100vh - 64px)">
         <Grid xs={24} sm={6} md={5} lg={4} height="100%" className="sidebar">
           <div className="file-tree-container">
-            <FileActions
-              onPull={handlePull}
-              onCommitAndPush={handleCommitAndPush}
-              onCreateFile={handleCreateFile}
-              onDeleteFile={handleDeleteFile}
-            />
-            <FileTree files={files} />
+            <FileActions />
+            <FileTree />
           </div>
         </Grid>
         <Grid
@@ -114,17 +60,13 @@ const MainContent = () => {
             </Tabs>
           </div>
           <div className="content-body">
-            <ContentView
-              activeTab={activeTab}
-              themeType={themeType}
-              onLinkClick={handleLinkClick}
-            />
+            <ContentView />
           </div>
         </Grid>
       </Grid.Container>
-      <CreateFileModal visible={newFileModalVisible} />
-      <DeleteFileModal visible={deleteFileModalVisible} />
-      <CommitMessageModal visible={commitMessageModalVisible} />
+      <CreateFileModal />
+      <DeleteFileModal />
+      <CommitMessageModal />
     </>
   );
 };
