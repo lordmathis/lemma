@@ -1,24 +1,15 @@
-import React, { createContext, useContext, useMemo } from 'react';
-import { useFileContent } from '../hooks/useFileContent';
+import React, { createContext, useContext } from 'react';
+import { useFileManagementContext } from './FileManagementContext';
 
 const FileSelectionContext = createContext();
 
 export const FileSelectionProvider = ({ children }) => {
-  const { selectedFile, isNewFile, hasUnsavedChanges, handleFileSelect } =
-    useFileContent();
+  const { selectedFile, handleFileSelect } = useFileManagementContext();
 
-  const value = useMemo(
-    () => ({
-      selectedFile,
-      isNewFile,
-      hasUnsavedChanges,
-      handleFileSelect,
-    }),
-    [selectedFile, isNewFile, hasUnsavedChanges, handleFileSelect]
-  );
+  console.log('FileSelectionProvider rendering', { selectedFile });
 
   return (
-    <FileSelectionContext.Provider value={value}>
+    <FileSelectionContext.Provider value={{ selectedFile, handleFileSelect }}>
       {children}
     </FileSelectionContext.Provider>
   );

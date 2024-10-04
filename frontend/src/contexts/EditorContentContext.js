@@ -1,22 +1,23 @@
-import React, { createContext, useContext, useMemo } from 'react';
-import { useFileContent } from '../hooks/useFileContent';
+import React, { createContext, useContext, useEffect } from 'react';
+import { useFileManagementContext } from './FileManagementContext';
 
 const EditorContentContext = createContext();
 
 export const EditorContentProvider = ({ children }) => {
-  const { content, handleContentChange, handleSave } = useFileContent();
+  const { content, handleContentChange, handleSave, selectedFile } =
+    useFileManagementContext();
 
-  const value = useMemo(
-    () => ({
+  useEffect(() => {
+    console.log('EditorContentProvider: content or selectedFile updated', {
       content,
-      handleContentChange,
-      handleSave,
-    }),
-    [content, handleContentChange, handleSave]
-  );
+      selectedFile,
+    });
+  }, [content, selectedFile]);
 
   return (
-    <EditorContentContext.Provider value={value}>
+    <EditorContentContext.Provider
+      value={{ content, handleContentChange, handleSave }}
+    >
       {children}
     </EditorContentContext.Provider>
   );

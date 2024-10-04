@@ -1,34 +1,47 @@
-import { useFileList } from './useFileList';
+import { useEffect, useCallback } from 'react';
+import { useFileSelection } from './useFileSelection';
 import { useFileContent } from './useFileContent';
-import { useGitOperations } from './useGitOperations';
+import { useFileOperations } from './useFileOperations';
 
-export const useFileManagement = (gitEnabled) => {
-  const { files, error: fileListError, loadFileList } = useFileList(gitEnabled);
+export const useFileManagement = () => {
+  const { selectedFile, isNewFile, handleFileSelect } = useFileSelection();
   const {
     content,
-    selectedFile,
-    isNewFile,
+    isLoading,
+    error,
     hasUnsavedChanges,
-    error: fileContentError,
-    handleFileSelect,
+    loadFileContent,
     handleContentChange,
-    handleSave,
+    setHasUnsavedChanges,
   } = useFileContent();
-  const { pullLatestChanges, handleCommitAndPush } =
-    useGitOperations(gitEnabled);
+  const { handleSave, handleDelete, handleCreateNewFile } =
+    useFileOperations(setHasUnsavedChanges);
+
+  useEffect(() => {
+    if (selectedFile) {
+      loadFileContent(selectedFile);
+    }
+  }, [selectedFile, loadFileContent]);
+
+  const handleFileSelectAndLoad = useCallback(
+    async (filePath) => {
+      await handleFileSelect(filePath);
+      await loadFileContent(filePath);
+    },
+    [handleFileSelect, loadFileContent]
+  );
 
   return {
-    files,
-    content,
     selectedFile,
     isNewFile,
+    content,
+    isLoading,
+    error,
     hasUnsavedChanges,
-    error: fileListError || fileContentError,
-    handleFileSelect,
+    handleFileSelect: handleFileSelectAndLoad,
     handleContentChange,
-    handleSave,
-    pullLatestChanges,
-    handleCommitAndPush,
-    loadFileList,
+    handleSave: (filePath) => handleSave(filePath, content),
+    handleDelete,
+    handleCreateNewFile,
   };
 };

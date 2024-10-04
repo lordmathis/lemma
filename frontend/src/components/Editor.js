@@ -77,7 +77,13 @@ const Editor = () => {
   }, [selectedFile, settings.theme, handleContentChange, handleSave]);
 
   useEffect(() => {
+    console.log('Editor: content or selectedFile changed', {
+      content,
+      selectedFile,
+    });
+
     if (viewRef.current && content !== viewRef.current.state.doc.toString()) {
+      console.log('Editor: updating content in CodeMirror');
       viewRef.current.dispatch({
         changes: {
           from: 0,

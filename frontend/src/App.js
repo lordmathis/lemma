@@ -11,6 +11,7 @@ import { FileListProvider } from './contexts/FileListContext';
 import { FileSelectionProvider } from './contexts/FileSelectionContext';
 import { FileOperationsProvider } from './contexts/FileOperationsContext';
 import { EditorContentProvider } from './contexts/EditorContentContext';
+import { FileManagementProvider } from './contexts/FileManagementContext';
 import './App.scss';
 
 function AppContent() {
@@ -40,13 +41,15 @@ function App() {
         <TabProvider>
           <GitOperationsProvider>
             <FileListProvider>
-              <FileSelectionProvider>
-                <FileOperationsProvider>
-                  <EditorContentProvider>
-                    <AppContent />
-                  </EditorContentProvider>
-                </FileOperationsProvider>
-              </FileSelectionProvider>
+              <FileManagementProvider>
+                <FileSelectionProvider>
+                  <FileOperationsProvider>
+                    <EditorContentProvider>
+                      <AppContent />
+                    </EditorContentProvider>
+                  </FileOperationsProvider>
+                </FileSelectionProvider>
+              </FileManagementProvider>
             </FileListProvider>
           </GitOperationsProvider>
         </TabProvider>
