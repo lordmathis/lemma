@@ -5,14 +5,15 @@ import rehypeKatex from 'rehype-katex';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import 'katex/dist/katex.min.css';
+import { useFileContentContext } from '../contexts/FileContentContext';
+import { useFileNavigation } from '../hooks/useFileNavigation';
+import { lookupFileByName } from '../services/api';
 
-const MarkdownPreview = ({
-  content,
-  baseUrl,
-  onLinkClick,
-  lookupFileByName,
-}) => {
+const MarkdownPreview = () => {
+  const { content } = useFileContentContext();
+  const { handleLinkClick } = useFileNavigation();
   const [processedContent, setProcessedContent] = useState(content);
+  const baseUrl = window.API_BASE_URL;
 
   useEffect(() => {
     const processContent = async (rawContent) => {
@@ -82,7 +83,7 @@ const MarkdownPreview = ({
     };
 
     processContent(content).then(setProcessedContent);
-  }, [content, baseUrl, lookupFileByName]);
+  }, [content, baseUrl]);
 
   const handleImageError = (event) => {
     console.error('Failed to load image:', event.target.src);
@@ -125,7 +126,7 @@ const MarkdownPreview = ({
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    onLinkClick(filePath, heading);
+                    handleLinkClick(filePath, heading);
                   }}
                 >
                   {children}
@@ -141,7 +142,7 @@ const MarkdownPreview = ({
                   style={{ color: 'red', textDecoration: 'underline' }}
                   onClick={(e) => {
                     e.preventDefault();
-                    onLinkClick(fileName);
+                    handleLinkClick(fileName);
                   }}
                 >
                   {children}

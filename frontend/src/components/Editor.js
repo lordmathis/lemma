@@ -5,14 +5,19 @@ import { EditorView, keymap } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { defaultKeymap } from '@codemirror/commands';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { useFileContentContext } from '../contexts/FileContentContext';
+import { useSettings } from '../contexts/SettingsContext';
 
-const Editor = ({ content, onChange, onSave, filePath, themeType }) => {
+const Editor = () => {
+  const { content, selectedFile, handleContentChange, handleSave } =
+    useFileContentContext();
+  const { settings } = useSettings();
   const editorRef = useRef();
   const viewRef = useRef();
 
   useEffect(() => {
-    const handleSave = (view) => {
-      onSave(filePath, view.state.doc.toString());
+    const handleEditorSave = (view) => {
+      handleSave(selectedFile, view.state.doc.toString());
       return true;
     };
 
@@ -25,12 +30,12 @@ const Editor = ({ content, onChange, onSave, filePath, themeType }) => {
         overflow: 'auto',
       },
       '.cm-gutters': {
-        backgroundColor: themeType === 'dark' ? '#1e1e1e' : '#f5f5f5',
-        color: themeType === 'dark' ? '#858585' : '#999',
+        backgroundColor: settings.theme === 'dark' ? '#1e1e1e' : '#f5f5f5',
+        color: settings.theme === 'dark' ? '#858585' : '#999',
         border: 'none',
       },
       '.cm-activeLineGutter': {
-        backgroundColor: themeType === 'dark' ? '#2c313a' : '#e8e8e8',
+        backgroundColor: settings.theme === 'dark' ? '#2c313a' : '#e8e8e8',
       },
     });
 
@@ -44,17 +49,17 @@ const Editor = ({ content, onChange, onSave, filePath, themeType }) => {
         keymap.of([
           {
             key: 'Ctrl-s',
-            run: handleSave,
+            run: handleEditorSave,
             preventDefault: true,
           },
         ]),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
-            onChange(update.state.doc.toString());
+            handleContentChange(update.state.doc.toString());
           }
         }),
         theme,
-        themeType === 'dark' ? oneDark : [],
+        settings.theme === 'dark' ? oneDark : [],
       ],
     });
 
@@ -68,7 +73,7 @@ const Editor = ({ content, onChange, onSave, filePath, themeType }) => {
     return () => {
       view.destroy();
     };
-  }, [filePath, themeType]);
+  }, [selectedFile, settings.theme, handleContentChange, handleSave]);
 
   useEffect(() => {
     if (viewRef.current && content !== viewRef.current.state.doc.toString()) {
