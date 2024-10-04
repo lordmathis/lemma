@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
-import { fetchFileContent, saveFileContent } from '../services/api';
+import { fetchFileContent, saveFileContent, deleteFile } from '../services/api';
 import { isImageFile } from '../utils/fileHelpers';
+import { useToasts } from '@geist-ui/core';
+import { useFileListContext } from '../contexts/FileListContext';
 
 const DEFAULT_FILE = {
   name: 'New File.md',
@@ -14,16 +16,12 @@ export const useFileContent = () => {
   const [isNewFile, setIsNewFile] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [error, setError] = useState(null);
+  const { setToast } = useToasts();
+  const { loadFileList } = useFileListContext();
 
   const handleFileSelect = useCallback(
     async (filePath) => {
-      if (hasUnsavedChanges) {
-        const confirmSwitch = window.confirm(
-          'You have unsaved changes. Are you sure you want to switch files?'
-        );
-        if (!confirmSwitch) return;
-      }
-
+      console.log('handleFileSelect', filePath);
       try {
         if (filePath === DEFAULT_FILE.path) {
           setContent(DEFAULT_FILE.content);
@@ -67,13 +65,38 @@ export const useFileContent = () => {
     }
   }, []);
 
-  const createNewFile = useCallback(() => {
-    setContent(DEFAULT_FILE.content);
-    setSelectedFile(DEFAULT_FILE.path);
-    setIsNewFile(true);
-    setHasUnsavedChanges(false);
-    setError(null);
-  }, []);
+  const handleCreateNewFile = useCallback(
+    async (fileName, initialContent = '') => {
+      try {
+        await saveFileContent(fileName, initialContent);
+        setToast({ text: 'New file created successfully', type: 'success' });
+        await loadFileList(); // Refresh the file list
+        handleFileSelect(fileName);
+      } catch (error) {
+        setToast({
+          text: 'Failed to create new file: ' + error.message,
+          type: 'error',
+        });
+      }
+    },
+    [setToast, loadFileList, handleFileSelect]
+  );
+
+  const handleDeleteFile = useCallback(async () => {
+    if (!selectedFile) return;
+    try {
+      await deleteFile(selectedFile);
+      setToast({ text: 'File deleted successfully', type: 'success' });
+      await loadFileList(); // Refresh the file list
+      setSelectedFile(null);
+      setContent('');
+    } catch (error) {
+      setToast({
+        text: 'Failed to delete file: ' + error.message,
+        type: 'error',
+      });
+    }
+  }, [selectedFile, setToast, loadFileList]);
 
   return {
     content,
@@ -84,7 +107,8 @@ export const useFileContent = () => {
     handleFileSelect,
     handleContentChange,
     handleSave,
-    createNewFile,
+    handleCreateNewFile,
+    handleDeleteFile,
     DEFAULT_FILE,
   };
 };

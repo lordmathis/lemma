@@ -1,16 +1,25 @@
 import React from 'react';
 import { Button, Tooltip, ButtonGroup, Spacer } from '@geist-ui/core';
 import { Plus, Trash, GitPullRequest, GitCommit } from '@geist-ui/icons';
+import { useFileContentContext } from '../contexts/FileContentContext';
+import { useGitOperationsContext } from '../contexts/GitOperationsContext';
+import { useSettings } from '../contexts/SettingsContext';
+import { useUIStateContext } from '../contexts/UIStateContext';
 
-const FileActions = ({
-  selectedFile,
-  gitEnabled,
-  gitAutoCommit,
-  onPull,
-  onCommitAndPush,
-  onCreateFile,
-  onDeleteFile,
-}) => {
+const FileActions = () => {
+  const { selectedFile } = useFileContentContext();
+  const { pullLatestChanges } = useGitOperationsContext();
+  const { settings } = useSettings();
+  const {
+    setNewFileModalVisible,
+    setDeleteFileModalVisible,
+    setCommitMessageModalVisible,
+  } = useUIStateContext();
+
+  const handleCreateFile = () => setNewFileModalVisible(true);
+  const handleDeleteFile = () => setDeleteFileModalVisible(true);
+  const handleCommitAndPush = () => setCommitMessageModalVisible(true);
+
   return (
     <ButtonGroup className="file-actions">
       <Tooltip text="Create new file" type="dark">
@@ -18,7 +27,7 @@ const FileActions = ({
           icon={<Plus />}
           auto
           scale={2 / 3}
-          onClick={onCreateFile}
+          onClick={handleCreateFile}
           px={0.6}
         />
       </Tooltip>
@@ -31,7 +40,7 @@ const FileActions = ({
           icon={<Trash />}
           auto
           scale={2 / 3}
-          onClick={onDeleteFile}
+          onClick={handleDeleteFile}
           disabled={!selectedFile}
           type="error"
           px={0.6}
@@ -39,24 +48,28 @@ const FileActions = ({
       </Tooltip>
       <Spacer w={0.5} />
       <Tooltip
-        text={gitEnabled ? 'Pull changes from remote' : 'Git is not enabled'}
+        text={
+          settings.gitEnabled
+            ? 'Pull changes from remote'
+            : 'Git is not enabled'
+        }
         type="dark"
       >
         <Button
           icon={<GitPullRequest />}
           auto
           scale={2 / 3}
-          onClick={onPull}
-          disabled={!gitEnabled}
+          onClick={pullLatestChanges}
+          disabled={!settings.gitEnabled}
           px={0.6}
         />
       </Tooltip>
       <Spacer w={0.5} />
       <Tooltip
         text={
-          !gitEnabled
+          !settings.gitEnabled
             ? 'Git is not enabled'
-            : gitAutoCommit
+            : settings.gitAutoCommit
             ? 'Auto-commit is enabled'
             : 'Commit and push changes'
         }
@@ -66,8 +79,8 @@ const FileActions = ({
           icon={<GitCommit />}
           auto
           scale={2 / 3}
-          onClick={onCommitAndPush}
-          disabled={!gitEnabled || gitAutoCommit}
+          onClick={handleCommitAndPush}
+          disabled={!settings.gitEnabled || settings.gitAutoCommit}
           px={0.6}
         />
       </Tooltip>

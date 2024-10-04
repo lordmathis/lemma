@@ -3,17 +3,17 @@ import Editor from './Editor';
 import MarkdownPreview from './MarkdownPreview';
 import { getFileUrl } from '../services/api';
 import { isImageFile } from '../utils/fileHelpers';
+import { useFileContentContext } from '../contexts/FileContentContext';
 
 const ContentView = ({
   activeTab,
-  content,
-  selectedFile,
-  onContentChange,
-  onSave,
   themeType,
   onLinkClick,
   lookupFileByName,
 }) => {
+  const { content, selectedFile, handleContentChange, handleSave } =
+    useFileContentContext();
+
   if (isImageFile(selectedFile)) {
     return (
       <div className="image-preview">
@@ -33,8 +33,8 @@ const ContentView = ({
   return activeTab === 'source' ? (
     <Editor
       content={content}
-      onChange={onContentChange}
-      onSave={onSave}
+      onChange={handleContentChange}
+      onSave={handleSave}
       filePath={selectedFile}
       themeType={themeType}
     />
