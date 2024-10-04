@@ -1,6 +1,7 @@
 import React, { useReducer, useEffect, useCallback, useRef } from 'react';
 import { Modal, Spacer, useTheme, Dot, useToasts } from '@geist-ui/core';
 import { useSettings } from '../contexts/SettingsContext';
+import { useUIStateContext } from '../contexts/UIStateContext';
 import AppearanceSettings from './settings/AppearanceSettings';
 import EditorSettings from './settings/EditorSettings';
 import GitSettings from './settings/GitSettings';
@@ -12,7 +13,6 @@ const initialState = {
 };
 
 function settingsReducer(state, action) {
-  console.log('Reducer action:', action.type, action.payload); // Debug log
   switch (action.type) {
     case 'INIT_SETTINGS':
       return {
@@ -48,8 +48,9 @@ function settingsReducer(state, action) {
   }
 }
 
-const Settings = ({ visible, onClose }) => {
+const Settings = () => {
   const { settings, updateSettings, updateTheme } = useSettings();
+  const { settingsModalVisible, setSettingsModalVisible } = useUIStateContext();
   const { setToast } = useToasts();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
   const isInitialMount = useRef(true);
@@ -84,7 +85,7 @@ const Settings = ({ visible, onClose }) => {
       await updateSettings(state.localSettings);
       dispatch({ type: 'MARK_SAVED' });
       setToast({ text: 'Settings saved successfully', type: 'success' });
-      onClose();
+      setSettingsModalVisible(false);
     } catch (error) {
       console.error('Failed to save settings:', error);
       setToast({
@@ -98,15 +99,13 @@ const Settings = ({ visible, onClose }) => {
     if (state.hasUnsavedChanges) {
       updateTheme(state.initialSettings.theme); // Revert theme if not saved
       dispatch({ type: 'RESET' });
-      onClose();
-    } else {
-      onClose();
     }
+    setSettingsModalVisible(false);
   }, [
     state.hasUnsavedChanges,
     state.initialSettings.theme,
     updateTheme,
-    onClose,
+    setSettingsModalVisible,
   ]);
 
   useEffect(() => {
@@ -117,10 +116,8 @@ const Settings = ({ visible, onClose }) => {
     };
   }, []);
 
-  console.log('State:', state); // Debugging log
-
   return (
-    <Modal visible={visible} onClose={handleClose}>
+    <Modal visible={settingsModalVisible} onClose={handleClose}>
       <Modal.Title>
         Settings
         {state.hasUnsavedChanges && (

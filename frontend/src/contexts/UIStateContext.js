@@ -8,6 +8,7 @@ export const UIStateProvider = ({ children }) => {
   const [deleteFileModalVisible, setDeleteFileModalVisible] = useState(false);
   const [commitMessageModalVisible, setCommitMessageModalVisible] =
     useState(false);
+  const [settingsModalVisible, setSettingsModalVisible] = useState(false);
 
   const value = {
     activeTab,
@@ -18,6 +19,8 @@ export const UIStateProvider = ({ children }) => {
     setDeleteFileModalVisible,
     commitMessageModalVisible,
     setCommitMessageModalVisible,
+    settingsModalVisible,
+    setSettingsModalVisible,
   };
 
   return (
