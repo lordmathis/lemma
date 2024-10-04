@@ -7,12 +7,14 @@ import ContentView from './ContentView';
 import CreateFileModal from './modals/CreateFileModal';
 import DeleteFileModal from './modals/DeleteFileModal';
 import CommitMessageModal from './modals/CommitMessageModal';
-import { useFileContentContext } from '../contexts/FileContentContext';
-import { useUIStateContext } from '../contexts/UIStateContext';
+import { useTabContext } from '../contexts/TabContext';
+import { useEditorContent } from '../contexts/EditorContentContext';
+import { useFileSelection } from '../contexts/FileSelectionContext';
 
 const MainContent = () => {
-  const { selectedFile, hasUnsavedChanges } = useFileContentContext();
-  const { activeTab, setActiveTab } = useUIStateContext();
+  const { hasUnsavedChanges } = useEditorContent();
+  const { selectedFile } = useFileSelection();
+  const { activeTab, setActiveTab } = useTabContext();
 
   const handleTabChange = (value) => {
     setActiveTab(value);

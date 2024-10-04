@@ -1,10 +1,10 @@
 import React, { useReducer, useEffect, useCallback, useRef } from 'react';
-import { Modal, Spacer, useTheme, Dot, useToasts } from '@geist-ui/core';
+import { Modal, Spacer, Dot, useToasts } from '@geist-ui/core';
 import { useSettings } from '../contexts/SettingsContext';
-import { useUIStateContext } from '../contexts/UIStateContext';
 import AppearanceSettings from './settings/AppearanceSettings';
 import EditorSettings from './settings/EditorSettings';
 import GitSettings from './settings/GitSettings';
+import { useModalContext } from '../contexts/ModalContext';
 
 const initialState = {
   localSettings: {},
@@ -50,7 +50,7 @@ function settingsReducer(state, action) {
 
 const Settings = () => {
   const { settings, updateSettings, updateTheme } = useSettings();
-  const { settingsModalVisible, setSettingsModalVisible } = useUIStateContext();
+  const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
   const { setToast } = useToasts();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
   const isInitialMount = useRef(true);

@@ -5,12 +5,13 @@ import { EditorView, keymap } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { defaultKeymap } from '@codemirror/commands';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { useFileContentContext } from '../contexts/FileContentContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useFileSelection } from '../contexts/FileSelectionContext';
+import { useEditorContent } from '../contexts/EditorContentContext';
 
 const Editor = () => {
-  const { content, selectedFile, handleContentChange, handleSave } =
-    useFileContentContext();
+  const { content, handleContentChange, handleSave } = useEditorContent();
+  const { selectedFile } = useFileSelection();
   const { settings } = useSettings();
   const editorRef = useRef();
   const viewRef = useRef();

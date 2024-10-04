@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Modal, Input } from '@geist-ui/core';
 import { useGitOperationsContext } from '../../contexts/GitOperationsContext';
-import { useUIStateContext } from '../../contexts/UIStateContext';
+import { useModalContext } from '../../contexts/ModalContext';
 
 const CommitMessageModal = () => {
   const [message, setMessage] = useState('');
   const { handleCommitAndPush } = useGitOperationsContext();
   const { commitMessageModalVisible, setCommitMessageModalVisible } =
-    useUIStateContext();
+    useModalContext();
 
   const handleSubmit = async () => {
     if (message) {

@@ -1,12 +1,12 @@
 import React from 'react';
 import { Modal, Text } from '@geist-ui/core';
-import { useFileContentContext } from '../../contexts/FileContentContext';
-import { useUIStateContext } from '../../contexts/UIStateContext';
+import { useModalContext } from '../../contexts/ModalContext';
+import { useFileSelection } from '../../contexts/FileSelectionContext';
 
 const DeleteFileModal = () => {
-  const { selectedFile, handleDeleteFile } = useFileContentContext();
+  const { selectedFile, handleDeleteFile } = useFileSelection();
   const { deleteFileModalVisible, setDeleteFileModalVisible } =
-    useUIStateContext();
+    useModalContext();
 
   const handleConfirm = async () => {
     await handleDeleteFile();

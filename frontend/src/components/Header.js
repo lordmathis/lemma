@@ -2,10 +2,10 @@ import React from 'react';
 import { Page, Text, User, Button, Spacer } from '@geist-ui/core';
 import { Settings as SettingsIcon } from '@geist-ui/icons';
 import Settings from './Settings';
-import { useUIStateContext } from '../contexts/UIStateContext';
+import { useModalContext } from '../contexts/ModalContext';
 
 const Header = () => {
-  const { setSettingsModalVisible } = useUIStateContext();
+  const { setSettingsModalVisible } = useModalContext();
 
   const openSettings = () => setSettingsModalVisible(true);
 

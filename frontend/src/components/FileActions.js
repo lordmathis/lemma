@@ -1,20 +1,20 @@
 import React from 'react';
 import { Button, Tooltip, ButtonGroup, Spacer } from '@geist-ui/core';
 import { Plus, Trash, GitPullRequest, GitCommit } from '@geist-ui/icons';
-import { useFileContentContext } from '../contexts/FileContentContext';
 import { useGitOperationsContext } from '../contexts/GitOperationsContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { useUIStateContext } from '../contexts/UIStateContext';
+import { useFileSelection } from '../contexts/FileSelectionContext';
+import { useModalContext } from '../contexts/ModalContext';
 
 const FileActions = () => {
-  const { selectedFile } = useFileContentContext();
+  const { selectedFile } = useFileSelection();
   const { pullLatestChanges } = useGitOperationsContext();
   const { settings } = useSettings();
   const {
     setNewFileModalVisible,
     setDeleteFileModalVisible,
     setCommitMessageModalVisible,
-  } = useUIStateContext();
+  } = useModalContext();
 
   const handleCreateFile = () => setNewFileModalVisible(true);
   const handleDeleteFile = () => setDeleteFileModalVisible(true);

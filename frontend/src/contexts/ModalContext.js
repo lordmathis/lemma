@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState } from 'react';
 
-const UIStateContext = createContext();
+const ModalContext = createContext();
 
-export const UIStateProvider = ({ children }) => {
-  const [activeTab, setActiveTab] = useState('source');
+export const ModalProvider = ({ children }) => {
   const [newFileModalVisible, setNewFileModalVisible] = useState(false);
   const [deleteFileModalVisible, setDeleteFileModalVisible] = useState(false);
   const [commitMessageModalVisible, setCommitMessageModalVisible] =
@@ -11,8 +10,6 @@ export const UIStateProvider = ({ children }) => {
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
 
   const value = {
-    activeTab,
-    setActiveTab,
     newFileModalVisible,
     setNewFileModalVisible,
     deleteFileModalVisible,
@@ -24,14 +21,8 @@ export const UIStateProvider = ({ children }) => {
   };
 
   return (
-    <UIStateContext.Provider value={value}>{children}</UIStateContext.Provider>
+    <ModalContext.Provider value={value}>{children}</ModalContext.Provider>
   );
 };
 
-export const useUIStateContext = () => {
-  const context = useContext(UIStateContext);
-  if (!context) {
-    throw new Error('useUIStateContext must be used within a UIStateProvider');
-  }
-  return context;
-};
+export const useModalContext = () => useContext(ModalContext);

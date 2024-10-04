@@ -4,10 +4,13 @@ import { GeistProvider, CssBaseline, Page } from '@geist-ui/core';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
-import { FileContentProvider } from './contexts/FileContentContext';
-import { FileListProvider } from './contexts/FileListContext';
+import { ModalProvider } from './contexts/ModalContext';
+import { TabProvider } from './contexts/TabContext';
 import { GitOperationsProvider } from './contexts/GitOperationsContext';
-import { UIStateProvider } from './contexts/UIStateContext';
+import { FileListProvider } from './contexts/FileListContext';
+import { FileSelectionProvider } from './contexts/FileSelectionContext';
+import { FileOperationsProvider } from './contexts/FileOperationsContext';
+import { EditorContentProvider } from './contexts/EditorContentContext';
 import './App.scss';
 
 function AppContent() {
@@ -33,15 +36,21 @@ function AppContent() {
 function App() {
   return (
     <SettingsProvider>
-      <FileListProvider>
-        <FileContentProvider>
+      <ModalProvider>
+        <TabProvider>
           <GitOperationsProvider>
-            <UIStateProvider>
-              <AppContent />
-            </UIStateProvider>
+            <FileListProvider>
+              <FileSelectionProvider>
+                <FileOperationsProvider>
+                  <EditorContentProvider>
+                    <AppContent />
+                  </EditorContentProvider>
+                </FileOperationsProvider>
+              </FileSelectionProvider>
+            </FileListProvider>
           </GitOperationsProvider>
-        </FileContentProvider>
-      </FileListProvider>
+        </TabProvider>
+      </ModalProvider>
     </SettingsProvider>
   );
 }

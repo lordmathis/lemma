@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Modal, Input } from '@geist-ui/core';
-import { useFileContentContext } from '../../contexts/FileContentContext';
-import { useUIStateContext } from '../../contexts/UIStateContext';
+import { useFileOperations } from '../../contexts/FileOperationsContext';
+import { useModalContext } from '../../contexts/ModalContext';
 
 const CreateFileModal = () => {
   const [fileName, setFileName] = useState('');
-  const { newFileModalVisible, setNewFileModalVisible } = useUIStateContext();
-  const { handleCreateNewFile } = useFileContentContext();
+  const { newFileModalVisible, setNewFileModalVisible } = useModalContext();
+  const { handleCreateNewFile } = useFileOperations();
 
   const handleSubmit = async () => {
     if (fileName) {

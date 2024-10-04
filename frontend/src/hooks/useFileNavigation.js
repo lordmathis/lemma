@@ -2,11 +2,11 @@
 import { useCallback } from 'react';
 import { useToasts } from '@geist-ui/core';
 import { lookupFileByName } from '../services/api';
-import { useFileContentContext } from '../contexts/FileContentContext';
+import { useFileSelection } from '../contexts/FileSelectionContext';
 
 export const useFileNavigation = () => {
   const { setToast } = useToasts();
-  const { handleFileSelect } = useFileContentContext();
+  const { handleFileSelect } = useFileSelection();
 
   const handleLinkClick = useCallback(
     async (filename) => {

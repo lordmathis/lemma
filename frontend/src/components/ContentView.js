@@ -4,12 +4,12 @@ import MarkdownPreview from './MarkdownPreview';
 import { Text } from '@geist-ui/core';
 import { getFileUrl } from '../services/api';
 import { isImageFile } from '../utils/fileHelpers';
-import { useFileContentContext } from '../contexts/FileContentContext';
-import { useUIStateContext } from '../contexts/UIStateContext';
+import { useFileSelection } from '../contexts/FileSelectionContext';
+import { useTabContext } from '../contexts/TabContext';
 
 const ContentView = () => {
-  const { selectedFile } = useFileContentContext();
-  const { activeTab } = useUIStateContext();
+  const { selectedFile } = useFileSelection();
+  const { activeTab } = useTabContext();
 
   if (!selectedFile) {
     return (
