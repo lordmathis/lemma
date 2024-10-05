@@ -1,7 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useFileSelection } from './useFileSelection';
 import { useFileContent } from './useFileContent';
-import { useFileOperations } from './useFileOperations';
 
 export const useFileManagement = () => {
   const { selectedFile, isNewFile, handleFileSelect } = useFileSelection();
@@ -12,10 +11,7 @@ export const useFileManagement = () => {
     hasUnsavedChanges,
     loadFileContent,
     handleContentChange,
-    setHasUnsavedChanges,
   } = useFileContent();
-  const { handleSave, handleDelete, handleCreateNewFile } =
-    useFileOperations(setHasUnsavedChanges);
 
   useEffect(() => {
     if (selectedFile) {
@@ -40,8 +36,5 @@ export const useFileManagement = () => {
     hasUnsavedChanges,
     handleFileSelect: handleFileSelectAndLoad,
     handleContentChange,
-    handleSave: (filePath) => handleSave(filePath, content),
-    handleDelete,
-    handleCreateNewFile,
   };
 };

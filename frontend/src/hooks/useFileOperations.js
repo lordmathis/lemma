@@ -32,19 +32,16 @@ export const useFileOperations = (setHasUnsavedChanges) => {
     }
   }, []);
 
-  const handleCreateNewFile = useCallback(
-    async (fileName, initialContent = '') => {
-      try {
-        await saveFileContent(fileName, initialContent);
-        return true;
-      } catch (error) {
-        setToast({ text: `Error creating new file`, type: 'error' });
-        console.error('Error creating new file:', error);
-        return false;
-      }
-    },
-    []
-  );
+  const handleCreate = useCallback(async (fileName, initialContent = '') => {
+    try {
+      await saveFileContent(fileName, initialContent);
+      return true;
+    } catch (error) {
+      setToast({ text: `Error creating new file`, type: 'error' });
+      console.error('Error creating new file:', error);
+      return false;
+    }
+  }, []);
 
-  return { handleSave, handleDelete, handleCreateNewFile };
+  return { handleSave, handleDelete, handleCreate };
 };

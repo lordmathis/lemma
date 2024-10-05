@@ -1,12 +1,10 @@
 import React from 'react';
 import { Tree } from '@geist-ui/core';
 import { File, Folder, Image } from '@geist-ui/icons';
-import { useFileListContext } from '../contexts/FileListContext';
 import { isImageFile } from '../utils/fileHelpers';
 import { useFileSelection } from '../contexts/FileSelectionContext';
 
-const FileTree = () => {
-  const { files } = useFileListContext();
+const FileTree = ({ files }) => {
   const { selectedFile, handleFileSelect } = useFileSelection();
 
   if (files.length === 0) {

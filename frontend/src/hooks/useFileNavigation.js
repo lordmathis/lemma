@@ -16,7 +16,6 @@ export const useFileNavigation = () => {
           handleFileSelect(filePaths[0]);
         } else if (filePaths.length > 1) {
           // Handle multiple file options (you may want to show a modal or dropdown)
-          console.log('Multiple files found:', filePaths);
           setToast({
             text: 'Multiple files found with the same name. Please specify the full path.',
             type: 'warning',

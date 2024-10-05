@@ -1,14 +1,10 @@
-// App.js
 import React from 'react';
 import { GeistProvider, CssBaseline, Page } from '@geist-ui/core';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { ModalProvider } from './contexts/ModalContext';
-import { GitOperationsProvider } from './contexts/GitOperationsContext';
-import { FileListProvider } from './contexts/FileListContext';
 import { FileSelectionProvider } from './contexts/FileSelectionContext';
-import { FileOperationsProvider } from './contexts/FileOperationsContext';
 import { EditorContentProvider } from './contexts/EditorContentContext';
 import { FileManagementProvider } from './contexts/FileManagementContext';
 import './App.scss';
@@ -37,19 +33,13 @@ function App() {
   return (
     <SettingsProvider>
       <ModalProvider>
-        <GitOperationsProvider>
-          <FileListProvider>
-            <FileManagementProvider>
-              <FileSelectionProvider>
-                <FileOperationsProvider>
-                  <EditorContentProvider>
-                    <AppContent />
-                  </EditorContentProvider>
-                </FileOperationsProvider>
-              </FileSelectionProvider>
-            </FileManagementProvider>
-          </FileListProvider>
-        </GitOperationsProvider>
+        <FileManagementProvider>
+          <FileSelectionProvider>
+            <EditorContentProvider>
+              <AppContent />
+            </EditorContentProvider>
+          </FileSelectionProvider>
+        </FileManagementProvider>
       </ModalProvider>
     </SettingsProvider>
   );

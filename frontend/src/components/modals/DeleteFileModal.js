@@ -3,13 +3,13 @@ import { Modal, Text } from '@geist-ui/core';
 import { useModalContext } from '../../contexts/ModalContext';
 import { useFileSelection } from '../../contexts/FileSelectionContext';
 
-const DeleteFileModal = () => {
-  const { selectedFile, handleDeleteFile } = useFileSelection();
+const DeleteFileModal = ({ onDeleteFile }) => {
+  const { selectedFile } = useFileSelection();
   const { deleteFileModalVisible, setDeleteFileModalVisible } =
     useModalContext();
 
   const handleConfirm = async () => {
-    await handleDeleteFile();
+    await onDeleteFile(selectedFile);
     setDeleteFileModalVisible(false);
   };
 

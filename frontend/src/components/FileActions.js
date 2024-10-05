@@ -1,14 +1,17 @@
 import React from 'react';
 import { Button, Tooltip, ButtonGroup, Spacer } from '@geist-ui/core';
 import { Plus, Trash, GitPullRequest, GitCommit } from '@geist-ui/icons';
-import { useGitOperationsContext } from '../contexts/GitOperationsContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useFileSelection } from '../contexts/FileSelectionContext';
 import { useModalContext } from '../contexts/ModalContext';
 
-const FileActions = () => {
+const FileActions = ({
+  onCreateFile,
+  onDeleteFile,
+  onPullChanges,
+  onCommitAndPush,
+}) => {
   const { selectedFile } = useFileSelection();
-  const { pullLatestChanges } = useGitOperationsContext();
   const { settings } = useSettings();
   const {
     setNewFileModalVisible,
@@ -59,7 +62,7 @@ const FileActions = () => {
           icon={<GitPullRequest />}
           auto
           scale={2 / 3}
-          onClick={pullLatestChanges}
+          onClick={onPullChanges}
           disabled={!settings.gitEnabled}
           px={0.6}
         />
