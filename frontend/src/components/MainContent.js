@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useCallback, useEffect } from 'react';
-import { Breadcrumbs, Grid, Tabs } from '@geist-ui/core';
+import { Breadcrumbs, Dot, Grid, Tabs } from '@geist-ui/core';
 import { Code, Eye } from '@geist-ui/icons';
 
 import FileActions from './FileActions';
@@ -18,7 +18,7 @@ import { useFileNavigation } from '../hooks/useFileNavigation';
 
 const MainContent = () => {
   const [activeTab, setActiveTab] = useState('source');
-  const [files, loadFileList] = useFileList();
+  const { files, loadFileList } = useFileList();
   const { content, hasUnsavedChanges, handleContentChange } = useFileContent();
   const { handleSave, handleCreate, handleDelete } = useFileOperations();
   const { handleCommitAndPush, handlePull } = useGitOperations();
@@ -38,7 +38,7 @@ const MainContent = () => {
       await handleCreate(fileName);
       await loadFileList();
     },
-    [handleCreate]
+    [handleCreate, loadFileList]
   );
 
   const handleDeleteFile = useCallback(
@@ -46,7 +46,7 @@ const MainContent = () => {
       await handleDelete(filePath);
       await loadFileList();
     },
-    [handleDelete]
+    [handleDelete, loadFileList]
   );
 
   const renderBreadcrumbs = () => {

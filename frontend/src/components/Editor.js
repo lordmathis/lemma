@@ -7,10 +7,12 @@ import { defaultKeymap } from '@codemirror/commands';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { useSettings } from '../contexts/SettingsContext';
 
-const Editor = (content, handleContentChange, handleSave, selectedFile) => {
+const Editor = ({ content, handleContentChange, handleSave, selectedFile }) => {
   const { settings } = useSettings();
   const editorRef = useRef();
   const viewRef = useRef();
+
+  console.log('Editor content:', content);
 
   useEffect(() => {
     const handleEditorSave = (view) => {

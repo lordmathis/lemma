@@ -1,14 +1,18 @@
-// hooks/useFileNavigation.js
 import { useState, useCallback } from 'react';
 import { useToasts } from '@geist-ui/core';
 import { lookupFileByName } from '../services/api';
-import { DEFAULT_FILE } from '../utils/constants'; // Assuming you have this constant defined
+import { DEFAULT_FILE } from '../utils/constants';
 
 export const useFileNavigation = () => {
   const { setToast } = useToasts();
 
   const [selectedFile, setSelectedFile] = useState(DEFAULT_FILE.path);
   const [isNewFile, setIsNewFile] = useState(true);
+
+  const handleFileSelect = useCallback((filePath) => {
+    setSelectedFile(filePath);
+    setIsNewFile(filePath === DEFAULT_FILE.path);
+  }, []);
 
   const handleLinkClick = useCallback(
     async (filename) => {
@@ -27,13 +31,8 @@ export const useFileNavigation = () => {
         });
       }
     },
-    [handleFileSelect]
+    [handleFileSelect, setToast]
   );
-
-  const handleFileSelect = useCallback(async (filePath) => {
-    setSelectedFile(filePath);
-    setIsNewFile(filePath === DEFAULT_FILE.path);
-  }, []);
 
   return { handleLinkClick, selectedFile, isNewFile, handleFileSelect };
 };

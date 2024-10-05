@@ -7,7 +7,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import 'katex/dist/katex.min.css';
 import { lookupFileByName } from '../services/api';
 
-const MarkdownPreview = (content, handleLinkClick) => {
+const MarkdownPreview = ({ content, handleLinkClick }) => {
   const [processedContent, setProcessedContent] = useState(content);
   const baseUrl = window.API_BASE_URL;
 

@@ -44,6 +44,8 @@ const ContentView = ({
     );
   }
 
+  console.log('ContentView content', content);
+
   return activeTab === 'source' ? (
     <Editor
       content={content}
