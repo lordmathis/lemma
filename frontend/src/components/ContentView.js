@@ -5,11 +5,9 @@ import { Text } from '@geist-ui/core';
 import { getFileUrl } from '../services/api';
 import { isImageFile } from '../utils/fileHelpers';
 import { useFileSelection } from '../contexts/FileSelectionContext';
-import { useTabContext } from '../contexts/TabContext';
 
-const ContentView = () => {
+const ContentView = ({ activeTab }) => {
   const { selectedFile } = useFileSelection();
-  const { activeTab } = useTabContext();
 
   if (!selectedFile) {
     return (

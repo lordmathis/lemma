@@ -5,7 +5,6 @@ import Header from './components/Header';
 import MainContent from './components/MainContent';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { ModalProvider } from './contexts/ModalContext';
-import { TabProvider } from './contexts/TabContext';
 import { GitOperationsProvider } from './contexts/GitOperationsContext';
 import { FileListProvider } from './contexts/FileListContext';
 import { FileSelectionProvider } from './contexts/FileSelectionContext';
@@ -38,21 +37,19 @@ function App() {
   return (
     <SettingsProvider>
       <ModalProvider>
-        <TabProvider>
-          <GitOperationsProvider>
-            <FileListProvider>
-              <FileManagementProvider>
-                <FileSelectionProvider>
-                  <FileOperationsProvider>
-                    <EditorContentProvider>
-                      <AppContent />
-                    </EditorContentProvider>
-                  </FileOperationsProvider>
-                </FileSelectionProvider>
-              </FileManagementProvider>
-            </FileListProvider>
-          </GitOperationsProvider>
-        </TabProvider>
+        <GitOperationsProvider>
+          <FileListProvider>
+            <FileManagementProvider>
+              <FileSelectionProvider>
+                <FileOperationsProvider>
+                  <EditorContentProvider>
+                    <AppContent />
+                  </EditorContentProvider>
+                </FileOperationsProvider>
+              </FileSelectionProvider>
+            </FileManagementProvider>
+          </FileListProvider>
+        </GitOperationsProvider>
       </ModalProvider>
     </SettingsProvider>
   );

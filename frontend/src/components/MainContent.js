@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Grid, Breadcrumbs, Tabs, Dot } from '@geist-ui/core';
 import { Code, Eye } from '@geist-ui/icons';
 import FileTree from './FileTree';
@@ -7,14 +7,13 @@ import ContentView from './ContentView';
 import CreateFileModal from './modals/CreateFileModal';
 import DeleteFileModal from './modals/DeleteFileModal';
 import CommitMessageModal from './modals/CommitMessageModal';
-import { useTabContext } from '../contexts/TabContext';
 import { useEditorContent } from '../contexts/EditorContentContext';
 import { useFileSelection } from '../contexts/FileSelectionContext';
 
 const MainContent = () => {
+  const [activeTab, setActiveTab] = useState('source');
   const { hasUnsavedChanges } = useEditorContent();
   const { selectedFile } = useFileSelection();
-  const { activeTab, setActiveTab } = useTabContext();
 
   const handleTabChange = (value) => {
     setActiveTab(value);
@@ -62,7 +61,7 @@ const MainContent = () => {
             </Tabs>
           </div>
           <div className="content-body">
-            <ContentView />
+            <ContentView activeTab={activeTab} />
           </div>
         </Grid>
       </Grid.Container>
