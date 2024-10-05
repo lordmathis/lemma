@@ -1,13 +1,16 @@
 import { useCallback } from 'react';
 import { saveFileContent, deleteFile } from '../services/api';
+import { useToasts } from '@geist-ui/core';
 
 export const useFileOperations = (setHasUnsavedChanges) => {
+  const { setToast } = useToasts();
+
   const handleSave = useCallback(
     async (filePath, content) => {
       try {
         await saveFileContent(filePath, content);
         setHasUnsavedChanges(false);
-        console.log('File saved successfully');
+        setToast({ text: 'File saved successfully', type: 'success' });
         return true;
       } catch (error) {
         console.error('Error saving file:', error);
@@ -20,9 +23,10 @@ export const useFileOperations = (setHasUnsavedChanges) => {
   const handleDelete = useCallback(async (filePath) => {
     try {
       await deleteFile(filePath);
-      console.log('File deleted successfully');
+      setToast({ text: 'File deleted successfully', type: 'success' });
       return true;
     } catch (error) {
+      setToast({ text: `Error deleting file`, type: 'error' });
       console.error('Error deleting file:', error);
       return false;
     }
@@ -32,9 +36,9 @@ export const useFileOperations = (setHasUnsavedChanges) => {
     async (fileName, initialContent = '') => {
       try {
         await saveFileContent(fileName, initialContent);
-        console.log('New file created successfully');
         return true;
       } catch (error) {
+        setToast({ text: `Error creating new file`, type: 'error' });
         console.error('Error creating new file:', error);
         return false;
       }

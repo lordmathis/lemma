@@ -7,13 +7,6 @@ export const EditorContentProvider = ({ children }) => {
   const { content, handleContentChange, handleSave, selectedFile } =
     useFileManagementContext();
 
-  useEffect(() => {
-    console.log('EditorContentProvider: content or selectedFile updated', {
-      content,
-      selectedFile,
-    });
-  }, [content, selectedFile]);
-
   return (
     <EditorContentContext.Provider
       value={{ content, handleContentChange, handleSave }}

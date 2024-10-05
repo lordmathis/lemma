@@ -6,8 +6,6 @@ const FileSelectionContext = createContext();
 export const FileSelectionProvider = ({ children }) => {
   const { selectedFile, handleFileSelect } = useFileManagementContext();
 
-  console.log('FileSelectionProvider rendering', { selectedFile });
-
   return (
     <FileSelectionContext.Provider value={{ selectedFile, handleFileSelect }}>
       {children}

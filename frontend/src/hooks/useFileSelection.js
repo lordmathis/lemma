@@ -6,7 +6,6 @@ export const useFileSelection = () => {
   const [isNewFile, setIsNewFile] = useState(true);
 
   const handleFileSelect = useCallback(async (filePath) => {
-    console.log('File selected:', filePath);
     setSelectedFile(filePath);
     setIsNewFile(filePath === DEFAULT_FILE.path);
   }, []);
