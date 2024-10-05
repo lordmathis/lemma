@@ -3,7 +3,6 @@ import { fetchFileList } from '../services/api';
 
 export const useFileList = (gitEnabled) => {
   const [files, setFiles] = useState([]);
-  const [error, setError] = useState(null);
 
   const loadFileList = useCallback(async () => {
     try {
@@ -15,13 +14,12 @@ export const useFileList = (gitEnabled) => {
       }
     } catch (error) {
       console.error('Failed to load file list:', error);
-      setError('Failed to load file list. Please try again later.');
     }
   }, []);
 
   useEffect(() => {
     loadFileList();
-  }, [loadFileList, gitEnabled]);
+  }, [gitEnabled]);
 
-  return { files, error, loadFileList };
+  return { files, loadFileList };
 };

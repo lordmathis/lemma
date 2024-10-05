@@ -5,20 +5,17 @@ import { useToasts } from '@geist-ui/core';
 export const useFileOperations = (setHasUnsavedChanges) => {
   const { setToast } = useToasts();
 
-  const handleSave = useCallback(
-    async (filePath, content) => {
-      try {
-        await saveFileContent(filePath, content);
-        setHasUnsavedChanges(false);
-        setToast({ text: 'File saved successfully', type: 'success' });
-        return true;
-      } catch (error) {
-        console.error('Error saving file:', error);
-        return false;
-      }
-    },
-    [setHasUnsavedChanges]
-  );
+  const handleSave = useCallback(async (filePath, content) => {
+    try {
+      await saveFileContent(filePath, content);
+      setHasUnsavedChanges(false);
+      setToast({ text: 'File saved successfully', type: 'success' });
+      return true;
+    } catch (error) {
+      console.error('Error saving file:', error);
+      return false;
+    }
+  }, []);
 
   const handleDelete = useCallback(async (filePath) => {
     try {

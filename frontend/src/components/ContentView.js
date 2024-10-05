@@ -4,11 +4,15 @@ import MarkdownPreview from './MarkdownPreview';
 import { Text } from '@geist-ui/core';
 import { getFileUrl } from '../services/api';
 import { isImageFile } from '../utils/fileHelpers';
-import { useFileSelection } from '../contexts/FileSelectionContext';
 
-const ContentView = ({ activeTab }) => {
-  const { selectedFile } = useFileSelection();
-
+const ContentView = ({
+  activeTab,
+  selectedFile,
+  content,
+  handleContentChange,
+  handleSave,
+  handleLinkClick,
+}) => {
   if (!selectedFile) {
     return (
       <div
@@ -40,7 +44,16 @@ const ContentView = ({ activeTab }) => {
     );
   }
 
-  return activeTab === 'source' ? <Editor /> : <MarkdownPreview />;
+  return activeTab === 'source' ? (
+    <Editor
+      content={content}
+      handleContentChange={handleContentChange}
+      handleSave={handleSave}
+      selectedFile={selectedFile}
+    />
+  ) : (
+    <MarkdownPreview content={content} handleLinkClick={handleLinkClick} />
+  );
 };
 
 export default ContentView;

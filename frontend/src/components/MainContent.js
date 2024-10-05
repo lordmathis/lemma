@@ -1,89 +1,52 @@
+import React from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { Breadcrumbs, Grid, Tabs } from '@geist-ui/core';
+import { Code, Eye } from '@geist-ui/icons';
+
 import FileActions from './FileActions';
 import FileTree from './FileTree';
 import ContentView from './ContentView';
 import CreateFileModal from './modals/CreateFileModal';
 import DeleteFileModal from './modals/DeleteFileModal';
 import CommitMessageModal from './modals/CommitMessageModal';
-import { useEditorContent } from '../contexts/EditorContentContext';
-import { useFileSelection } from '../contexts/FileSelectionContext';
-import { useSettings } from '../contexts/SettingsContext';
+
+import { useFileContent } from '../hooks/useFileContent';
+import { useFileList } from '../hooks/useFileList';
 import { useFileOperations } from '../hooks/useFileOperations';
-import { pullChanges, commitAndPush, fetchFileList } from '../services/api';
-import { Breadcrumbs, Grid, Tabs, useToasts } from '@geist-ui/core';
-import { Code, Eye } from '@geist-ui/icons';
-import { useState, useCallback, useEffect } from 'react';
-import React from 'react';
+import { useGitOperations } from '../hooks/useGitOperations';
+import { useFileNavigation } from '../hooks/useFileNavigation';
 
 const MainContent = () => {
   const [activeTab, setActiveTab] = useState('source');
-  const [files, setFiles] = useState([]);
-  const { hasUnsavedChanges } = useEditorContent();
-  const { selectedFile } = useFileSelection();
-  const { settings } = useSettings();
-  const { handleCreate, handleDelete } = useFileOperations();
-  const { setToast } = useToasts();
-
-  const refreshFileList = useCallback(async () => {
-    try {
-      const fileList = await fetchFileList();
-      setFiles(fileList);
-    } catch (error) {
-      console.error('Failed to fetch file list:', error);
-      setToast({ text: 'Failed to refresh file list', type: 'error' });
-    }
-  }, [setToast]);
+  const [files, loadFileList] = useFileList();
+  const { content, hasUnsavedChanges, handleContentChange } = useFileContent();
+  const { handleSave, handleCreate, handleDelete } = useFileOperations();
+  const { handleCommitAndPush, handlePull } = useGitOperations();
+  const { handleLinkClick, selectedFile, isNewFile, handleFileSelect } =
+    useFileNavigation();
 
   useEffect(() => {
-    refreshFileList();
+    loadFileList();
   }, []);
 
   const handleTabChange = (value) => {
     setActiveTab(value);
   };
 
-  const pullLatestChanges = useCallback(async () => {
-    if (!settings.gitEnabled) return;
-    try {
-      await pullChanges();
-      await refreshFileList();
-      setToast({ text: 'Successfully pulled latest changes', type: 'success' });
-    } catch (error) {
-      console.error('Failed to pull latest changes:', error);
-      setToast({ text: 'Failed to pull latest changes', type: 'error' });
-    }
-  }, [settings.gitEnabled, setToast, refreshFileList]);
-
-  const handleCommitAndPush = useCallback(
-    async (message) => {
-      if (!settings.gitEnabled) return;
-      try {
-        await commitAndPush(message);
-        setToast({
-          text: 'Successfully committed and pushed changes',
-          type: 'success',
-        });
-      } catch (error) {
-        console.error('Failed to commit and push changes:', error);
-        setToast({ text: 'Failed to commit and push changes', type: 'error' });
-      }
-    },
-    [settings.gitEnabled, setToast]
-  );
-
   const handleCreateFile = useCallback(
     async (fileName) => {
       await handleCreate(fileName);
-      await refreshFileList();
+      await loadFileList();
     },
-    [handleCreate, refreshFileList]
+    [handleCreate]
   );
 
   const handleDeleteFile = useCallback(
     async (filePath) => {
       await handleDelete(filePath);
-      await refreshFileList();
+      await loadFileList();
     },
-    [handleDelete, refreshFileList]
+    [handleDelete]
   );
 
   const renderBreadcrumbs = () => {
@@ -109,12 +72,14 @@ const MainContent = () => {
         <Grid xs={24} sm={6} md={5} lg={4} height="100%" className="sidebar">
           <div className="file-tree-container">
             <FileActions
-              onCreateFile={handleCreateFile}
-              onDeleteFile={handleDeleteFile}
-              onPullChanges={pullLatestChanges}
-              onCommitAndPush={handleCommitAndPush}
+              handlePullChanges={handlePull}
+              selectedFile={selectedFile}
             />
-            <FileTree files={files} />
+            <FileTree
+              files={files}
+              selectedFile={selectedFile}
+              handleFileSelect={handleFileSelect}
+            />
           </div>
         </Grid>
         <Grid
@@ -133,12 +98,22 @@ const MainContent = () => {
             </Tabs>
           </div>
           <div className="content-body">
-            <ContentView activeTab={activeTab} />
+            <ContentView
+              activeTab={activeTab}
+              selectedFile={selectedFile}
+              content={content}
+              handleContentChange={handleContentChange}
+              handleSave={handleSave}
+              handleLinkClick={handleLinkClick}
+            />
           </div>
         </Grid>
       </Grid.Container>
       <CreateFileModal onCreateFile={handleCreateFile} />
-      <DeleteFileModal onDeleteFile={handleDeleteFile} />
+      <DeleteFileModal
+        onDeleteFile={handleDeleteFile}
+        selectedFile={selectedFile}
+      />
       <CommitMessageModal onCommitAndPush={handleCommitAndPush} />
     </>
   );

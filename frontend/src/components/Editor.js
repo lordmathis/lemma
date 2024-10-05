@@ -6,12 +6,8 @@ import { markdown } from '@codemirror/lang-markdown';
 import { defaultKeymap } from '@codemirror/commands';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { useSettings } from '../contexts/SettingsContext';
-import { useFileSelection } from '../contexts/FileSelectionContext';
-import { useEditorContent } from '../contexts/EditorContentContext';
 
-const Editor = () => {
-  const { content, handleContentChange, handleSave } = useEditorContent();
-  const { selectedFile } = useFileSelection();
+const Editor = (content, handleContentChange, handleSave, selectedFile) => {
   const { settings } = useSettings();
   const editorRef = useRef();
   const viewRef = useRef();

@@ -5,13 +5,9 @@ import { DEFAULT_FILE } from '../utils/constants';
 
 export const useFileContent = () => {
   const [content, setContent] = useState(DEFAULT_FILE.content);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const loadFileContent = useCallback(async (filePath) => {
-    setIsLoading(true);
-    setError(null);
     try {
       if (filePath === DEFAULT_FILE.path) {
         setContent(DEFAULT_FILE.content);
@@ -23,10 +19,7 @@ export const useFileContent = () => {
       }
       setHasUnsavedChanges(false);
     } catch (err) {
-      setError('Failed to load file content');
       console.error(err);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
@@ -38,9 +31,8 @@ export const useFileContent = () => {
   return {
     content,
     setContent,
-    isLoading,
-    error,
     hasUnsavedChanges,
+    setHasUnsavedChanges,
     loadFileContent,
     handleContentChange,
   };

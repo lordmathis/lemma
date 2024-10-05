@@ -4,9 +4,6 @@ import Header from './components/Header';
 import MainContent from './components/MainContent';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { ModalProvider } from './contexts/ModalContext';
-import { FileSelectionProvider } from './contexts/FileSelectionContext';
-import { EditorContentProvider } from './contexts/EditorContentContext';
-import { FileManagementProvider } from './contexts/FileManagementContext';
 import './App.scss';
 
 function AppContent() {
@@ -33,13 +30,7 @@ function App() {
   return (
     <SettingsProvider>
       <ModalProvider>
-        <FileManagementProvider>
-          <FileSelectionProvider>
-            <EditorContentProvider>
-              <AppContent />
-            </EditorContentProvider>
-          </FileSelectionProvider>
-        </FileManagementProvider>
+        <AppContent />
       </ModalProvider>
     </SettingsProvider>
   );

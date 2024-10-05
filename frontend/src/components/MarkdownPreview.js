@@ -5,13 +5,9 @@ import rehypeKatex from 'rehype-katex';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import 'katex/dist/katex.min.css';
-import { useFileNavigation } from '../hooks/useFileNavigation';
 import { lookupFileByName } from '../services/api';
-import { useEditorContent } from '../contexts/EditorContentContext';
 
-const MarkdownPreview = () => {
-  const { content } = useEditorContent();
-  const { handleLinkClick } = useFileNavigation();
+const MarkdownPreview = (content, handleLinkClick) => {
   const [processedContent, setProcessedContent] = useState(content);
   const baseUrl = window.API_BASE_URL;
 
