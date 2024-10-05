@@ -1,32 +1,47 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { fetchFileContent } from '../services/api';
 import { isImageFile } from '../utils/fileHelpers';
 import { DEFAULT_FILE } from '../utils/constants';
 
-export const useFileContent = () => {
+export const useFileContent = (selectedFile) => {
   const [content, setContent] = useState(DEFAULT_FILE.content);
+  const [originalContent, setOriginalContent] = useState(DEFAULT_FILE.content);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const loadFileContent = useCallback(async (filePath) => {
     try {
+      let newContent;
       if (filePath === DEFAULT_FILE.path) {
-        setContent(DEFAULT_FILE.content);
+        newContent = DEFAULT_FILE.content;
       } else if (!isImageFile(filePath)) {
-        const fileContent = await fetchFileContent(filePath);
-        setContent(fileContent);
+        newContent = await fetchFileContent(filePath);
       } else {
-        setContent(''); // Set empty content for image files
+        newContent = ''; // Set empty content for image files
       }
+      setContent(newContent);
+      setOriginalContent(newContent);
       setHasUnsavedChanges(false);
     } catch (err) {
-      console.error(err);
+      console.error('Error loading file content:', err);
+      setContent(''); // Set empty content on error
+      setOriginalContent('');
+      setHasUnsavedChanges(false);
     }
   }, []);
 
-  const handleContentChange = useCallback((newContent) => {
-    setContent(newContent);
-    setHasUnsavedChanges(true);
-  }, []);
+  useEffect(() => {
+    if (selectedFile) {
+      loadFileContent(selectedFile);
+    }
+  }, [selectedFile, loadFileContent]);
+
+  const handleContentChange = useCallback(
+    (newContent) => {
+      setContent(newContent);
+      setHasUnsavedChanges(newContent !== originalContent);
+    },
+    [originalContent]
+  );
 
   return {
     content,

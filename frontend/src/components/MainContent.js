@@ -1,6 +1,5 @@
-import React from 'react';
-import { useState, useCallback, useEffect } from 'react';
-import { Breadcrumbs, Dot, Grid, Tabs } from '@geist-ui/core';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Breadcrumbs, Grid, Tabs, Dot } from '@geist-ui/core';
 import { Code, Eye } from '@geist-ui/icons';
 
 import FileActions from './FileActions';
@@ -19,34 +18,56 @@ import { useFileNavigation } from '../hooks/useFileNavigation';
 const MainContent = () => {
   const [activeTab, setActiveTab] = useState('source');
   const { files, loadFileList } = useFileList();
-  const { content, hasUnsavedChanges, handleContentChange } = useFileContent();
+  const { handleLinkClick, selectedFile, handleFileSelect } =
+    useFileNavigation();
+  const {
+    content,
+    hasUnsavedChanges,
+    setHasUnsavedChanges,
+    handleContentChange,
+  } = useFileContent(selectedFile);
   const { handleSave, handleCreate, handleDelete } = useFileOperations();
   const { handleCommitAndPush, handlePull } = useGitOperations();
-  const { handleLinkClick, selectedFile, isNewFile, handleFileSelect } =
-    useFileNavigation();
 
   useEffect(() => {
     loadFileList();
-  }, []);
+  }, [loadFileList]);
 
   const handleTabChange = (value) => {
     setActiveTab(value);
   };
 
+  const handleSaveFile = useCallback(
+    async (filePath, content) => {
+      const success = await handleSave(filePath, content);
+      if (success) {
+        setHasUnsavedChanges(false);
+      }
+      return success;
+    },
+    [handleSave, setHasUnsavedChanges]
+  );
+
   const handleCreateFile = useCallback(
     async (fileName) => {
-      await handleCreate(fileName);
-      await loadFileList();
+      const success = await handleCreate(fileName);
+      if (success) {
+        await loadFileList();
+        handleFileSelect(fileName);
+      }
     },
-    [handleCreate, loadFileList]
+    [handleCreate, loadFileList, handleFileSelect]
   );
 
   const handleDeleteFile = useCallback(
     async (filePath) => {
-      await handleDelete(filePath);
-      await loadFileList();
+      const success = await handleDelete(filePath);
+      if (success) {
+        await loadFileList();
+        handleFileSelect(null);
+      }
     },
-    [handleDelete, loadFileList]
+    [handleDelete, loadFileList, handleFileSelect]
   );
 
   const renderBreadcrumbs = () => {
@@ -103,7 +124,7 @@ const MainContent = () => {
               selectedFile={selectedFile}
               content={content}
               handleContentChange={handleContentChange}
-              handleSave={handleSave}
+              handleSave={handleSaveFile}
               handleLinkClick={handleLinkClick}
             />
           </div>

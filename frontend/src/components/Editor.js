@@ -12,8 +12,6 @@ const Editor = ({ content, handleContentChange, handleSave, selectedFile }) => {
   const editorRef = useRef();
   const viewRef = useRef();
 
-  console.log('Editor content:', content);
-
   useEffect(() => {
     const handleEditorSave = (view) => {
       handleSave(selectedFile, view.state.doc.toString());
@@ -72,7 +70,7 @@ const Editor = ({ content, handleContentChange, handleSave, selectedFile }) => {
     return () => {
       view.destroy();
     };
-  }, [selectedFile, settings.theme, handleContentChange, handleSave]);
+  }, [settings.theme, handleContentChange]);
 
   useEffect(() => {
     if (viewRef.current && content !== viewRef.current.state.doc.toString()) {
