@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchFileList } from '../services/api';
 
-export const useFileList = (gitEnabled) => {
+export const useFileList = () => {
   const [files, setFiles] = useState([]);
 
   const loadFileList = useCallback(async () => {
@@ -16,10 +16,6 @@ export const useFileList = (gitEnabled) => {
       console.error('Failed to load file list:', error);
     }
   }, []);
-
-  useEffect(() => {
-    loadFileList();
-  }, [gitEnabled]);
 
   return { files, loadFileList };
 };

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { fetchUserSettings, saveUserSettings } from '../services/api';
+import { DEFAULT_SETTINGS } from '../utils/constants';
 
 const SettingsContext = createContext();
 
@@ -8,17 +9,7 @@ export const useSettings = () => {
 };
 
 export const SettingsProvider = ({ children }) => {
-  const [settings, setSettings] = useState({
-    theme: 'light',
-    autoSave: false,
-    gitEnabled: false,
-    gitUrl: '',
-    gitUser: '',
-    gitToken: '',
-    gitAutoCommit: false,
-    gitCommitMsgTemplate: '',
-  });
-
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

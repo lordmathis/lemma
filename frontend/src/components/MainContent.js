@@ -14,9 +14,11 @@ import { useFileList } from '../hooks/useFileList';
 import { useFileOperations } from '../hooks/useFileOperations';
 import { useGitOperations } from '../hooks/useGitOperations';
 import { useFileNavigation } from '../hooks/useFileNavigation';
+import { useSettings } from '../contexts/SettingsContext';
 
 const MainContent = () => {
   const [activeTab, setActiveTab] = useState('source');
+  const { settings } = useSettings();
   const { files, loadFileList } = useFileList();
   const { handleLinkClick, selectedFile, handleFileSelect } =
     useFileNavigation();
@@ -31,7 +33,7 @@ const MainContent = () => {
 
   useEffect(() => {
     loadFileList();
-  }, [loadFileList]);
+  }, [settings.gitEnabled]);
 
   const handleTabChange = (value) => {
     setActiveTab(value);
