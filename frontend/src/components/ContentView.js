@@ -1,19 +1,33 @@
 import React from 'react';
 import Editor from './Editor';
 import MarkdownPreview from './MarkdownPreview';
+import { Text } from '@geist-ui/core';
 import { getFileUrl } from '../services/api';
 import { isImageFile } from '../utils/fileHelpers';
 
 const ContentView = ({
   activeTab,
-  content,
   selectedFile,
-  onContentChange,
-  onSave,
-  themeType,
-  onLinkClick,
-  lookupFileByName,
+  content,
+  handleContentChange,
+  handleSave,
+  handleLinkClick,
 }) => {
+  if (!selectedFile) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100%',
+        }}
+      >
+        <Text h3>No file selected.</Text>
+      </div>
+    );
+  }
+
   if (isImageFile(selectedFile)) {
     return (
       <div className="image-preview">
@@ -33,18 +47,12 @@ const ContentView = ({
   return activeTab === 'source' ? (
     <Editor
       content={content}
-      onChange={onContentChange}
-      onSave={onSave}
-      filePath={selectedFile}
-      themeType={themeType}
+      handleContentChange={handleContentChange}
+      handleSave={handleSave}
+      selectedFile={selectedFile}
     />
   ) : (
-    <MarkdownPreview
-      content={content}
-      baseUrl={window.API_BASE_URL}
-      onLinkClick={onLinkClick}
-      lookupFileByName={lookupFileByName}
-    />
+    <MarkdownPreview content={content} handleLinkClick={handleLinkClick} />
   );
 };
 

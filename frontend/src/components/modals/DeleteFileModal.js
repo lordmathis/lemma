@@ -1,17 +1,29 @@
 import React from 'react';
 import { Modal, Text } from '@geist-ui/core';
+import { useModalContext } from '../../contexts/ModalContext';
 
-const DeleteFileModal = ({ visible, onClose, onConfirm, fileName }) => {
+const DeleteFileModal = ({ onDeleteFile, selectedFile }) => {
+  const { deleteFileModalVisible, setDeleteFileModalVisible } =
+    useModalContext();
+
+  const handleConfirm = async () => {
+    await onDeleteFile(selectedFile);
+    setDeleteFileModalVisible(false);
+  };
+
   return (
-    <Modal visible={visible} onClose={onClose}>
+    <Modal
+      visible={deleteFileModalVisible}
+      onClose={() => setDeleteFileModalVisible(false)}
+    >
       <Modal.Title>Delete File</Modal.Title>
       <Modal.Content>
-        <Text>Are you sure you want to delete "{fileName}"?</Text>
+        <Text>Are you sure you want to delete "{selectedFile}"?</Text>
       </Modal.Content>
-      <Modal.Action passive onClick={onClose}>
+      <Modal.Action passive onClick={() => setDeleteFileModalVisible(false)}>
         Cancel
       </Modal.Action>
-      <Modal.Action onClick={onConfirm}>Delete</Modal.Action>
+      <Modal.Action onClick={handleConfirm}>Delete</Modal.Action>
     </Modal>
   );
 };

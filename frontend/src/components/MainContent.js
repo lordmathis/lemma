@@ -1,132 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Grid,
-  Breadcrumbs,
-  Tabs,
-  Dot,
-  useTheme,
-  useToasts,
-} from '@geist-ui/core';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Breadcrumbs, Grid, Tabs, Dot } from '@geist-ui/core';
 import { Code, Eye } from '@geist-ui/icons';
-import FileTree from './FileTree';
+
 import FileActions from './FileActions';
+import FileTree from './FileTree';
+import ContentView from './ContentView';
 import CreateFileModal from './modals/CreateFileModal';
 import DeleteFileModal from './modals/DeleteFileModal';
 import CommitMessageModal from './modals/CommitMessageModal';
-import ContentView from './ContentView';
-import { commitAndPush, saveFileContent, deleteFile } from '../services/api';
-import { isImageFile } from '../utils/fileHelpers';
 
-const MainContent = ({
-  content,
-  files,
-  selectedFile,
-  hasUnsavedChanges,
-  onFileSelect,
-  onContentChange,
-  onSave,
-  settings,
-  pullLatestChanges,
-  onLinkClick,
-  lookupFileByName,
-}) => {
+import { useFileContent } from '../hooks/useFileContent';
+import { useFileList } from '../hooks/useFileList';
+import { useFileOperations } from '../hooks/useFileOperations';
+import { useGitOperations } from '../hooks/useGitOperations';
+import { useFileNavigation } from '../hooks/useFileNavigation';
+import { useSettings } from '../contexts/SettingsContext';
+
+const MainContent = () => {
   const [activeTab, setActiveTab] = useState('source');
-  const { type: themeType } = useTheme();
-  const { setToast } = useToasts();
-  const [newFileModalVisible, setNewFileModalVisible] = useState(false);
-  const [newFileName, setNewFileName] = useState('');
-  const [deleteFileModalVisible, setDeleteFileModalVisible] = useState(false);
-  const [commitMessageModalVisible, setCommitMessageModalVisible] =
-    useState(false);
+  const { settings } = useSettings();
+  const { files, loadFileList } = useFileList();
+  const { handleLinkClick, selectedFile, handleFileSelect } =
+    useFileNavigation();
+  const {
+    content,
+    hasUnsavedChanges,
+    setHasUnsavedChanges,
+    handleContentChange,
+  } = useFileContent(selectedFile);
+  const { handleSave, handleCreate, handleDelete } = useFileOperations();
+  const { handleCommitAndPush, handlePull } = useGitOperations();
 
   useEffect(() => {
-    if (isImageFile(selectedFile)) {
-      setActiveTab('preview');
-    }
-  }, [selectedFile]);
+    loadFileList();
+  }, [settings.gitEnabled]);
 
   const handleTabChange = (value) => {
-    if (!isImageFile(selectedFile) || value === 'preview') {
-      setActiveTab(value);
-    }
+    setActiveTab(value);
   };
 
-  const handlePull = async () => {
-    try {
-      await pullLatestChanges();
-      setToast({ text: 'Successfully pulled latest changes', type: 'success' });
-    } catch (error) {
-      setToast({
-        text: 'Failed to pull changes: ' + error.message,
-        type: 'error',
-      });
-    }
-  };
-
-  const handleCreateFile = () => {
-    setNewFileModalVisible(true);
-  };
-
-  const handleNewFileSubmit = async () => {
-    if (newFileName) {
-      try {
-        await saveFileContent(newFileName, '');
-        setToast({ text: 'New file created successfully', type: 'success' });
-        await pullLatestChanges();
-        onFileSelect(newFileName);
-      } catch (error) {
-        setToast({
-          text: 'Failed to create new file: ' + error.message,
-          type: 'error',
-        });
+  const handleSaveFile = useCallback(
+    async (filePath, content) => {
+      const success = await handleSave(filePath, content);
+      if (success) {
+        setHasUnsavedChanges(false);
       }
-    }
-    setNewFileModalVisible(false);
-    setNewFileName('');
-  };
+      return success;
+    },
+    [handleSave, setHasUnsavedChanges]
+  );
 
-  const handleDeleteFile = () => {
-    setDeleteFileModalVisible(true);
-  };
+  const handleCreateFile = useCallback(
+    async (fileName) => {
+      const success = await handleCreate(fileName);
+      if (success) {
+        await loadFileList();
+        handleFileSelect(fileName);
+      }
+    },
+    [handleCreate, loadFileList, handleFileSelect]
+  );
 
-  const confirmDeleteFile = async () => {
-    try {
-      await deleteFile(selectedFile);
-      setToast({ text: 'File deleted successfully', type: 'success' });
-      await pullLatestChanges();
-      onFileSelect(null);
-    } catch (error) {
-      setToast({
-        text: 'Failed to delete file: ' + error.message,
-        type: 'error',
-      });
-    }
-    setDeleteFileModalVisible(false);
-  };
-
-  const handleCommitAndPush = () => {
-    setCommitMessageModalVisible(true);
-  };
-
-  const confirmCommitAndPush = async (message) => {
-    try {
-      await commitAndPush(message);
-      setToast({
-        text: 'Changes committed and pushed successfully',
-        type: 'success',
-      });
-      await pullLatestChanges();
-    } catch (error) {
-      setToast({
-        text: 'Failed to commit and push changes: ' + error.message,
-        type: 'error',
-      });
-    }
-    setCommitMessageModalVisible(false);
-  };
+  const handleDeleteFile = useCallback(
+    async (filePath) => {
+      const success = await handleDelete(filePath);
+      if (success) {
+        await loadFileList();
+        handleFileSelect(null);
+      }
+    },
+    [handleDelete, loadFileList, handleFileSelect]
+  );
 
   const renderBreadcrumbs = () => {
-    if (!selectedFile) return null;
+    if (!selectedFile) return <div className="breadcrumbs-container"></div>;
     const pathParts = selectedFile.split('/');
     return (
       <div className="breadcrumbs-container">
@@ -148,18 +95,13 @@ const MainContent = ({
         <Grid xs={24} sm={6} md={5} lg={4} height="100%" className="sidebar">
           <div className="file-tree-container">
             <FileActions
+              handlePullChanges={handlePull}
               selectedFile={selectedFile}
-              gitEnabled={settings.gitEnabled}
-              gitAutoCommit={settings.gitAutoCommit}
-              onPull={handlePull}
-              onCommitAndPush={handleCommitAndPush}
-              onCreateFile={handleCreateFile}
-              onDeleteFile={handleDeleteFile}
             />
             <FileTree
               files={files}
-              onFileSelect={onFileSelect}
               selectedFile={selectedFile}
+              handleFileSelect={handleFileSelect}
             />
           </div>
         </Grid>
@@ -174,46 +116,28 @@ const MainContent = ({
           <div className="content-header">
             {renderBreadcrumbs()}
             <Tabs value={activeTab} onChange={handleTabChange}>
-              <Tabs.Item
-                label={<Code />}
-                value="source"
-                disabled={isImageFile(selectedFile)}
-              />
+              <Tabs.Item label={<Code />} value="source" />
               <Tabs.Item label={<Eye />} value="preview" />
             </Tabs>
           </div>
           <div className="content-body">
             <ContentView
               activeTab={activeTab}
-              content={content}
               selectedFile={selectedFile}
-              onContentChange={onContentChange}
-              onSave={onSave}
-              themeType={themeType}
-              onLinkClick={onLinkClick}
-              lookupFileByName={lookupFileByName}
+              content={content}
+              handleContentChange={handleContentChange}
+              handleSave={handleSaveFile}
+              handleLinkClick={handleLinkClick}
             />
           </div>
         </Grid>
       </Grid.Container>
-      <CreateFileModal
-        visible={newFileModalVisible}
-        onClose={() => setNewFileModalVisible(false)}
-        onSubmit={handleNewFileSubmit}
-        fileName={newFileName}
-        setFileName={setNewFileName}
-      />
+      <CreateFileModal onCreateFile={handleCreateFile} />
       <DeleteFileModal
-        visible={deleteFileModalVisible}
-        onClose={() => setDeleteFileModalVisible(false)}
-        onConfirm={confirmDeleteFile}
-        fileName={selectedFile}
+        onDeleteFile={handleDeleteFile}
+        selectedFile={selectedFile}
       />
-      <CommitMessageModal
-        visible={commitMessageModalVisible}
-        onClose={() => setCommitMessageModalVisible(false)}
-        onSubmit={confirmCommitAndPush}
-      />
+      <CommitMessageModal onCommitAndPush={handleCommitAndPush} />
     </>
   );
 };

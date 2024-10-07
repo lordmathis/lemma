@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Page, Text, User, Button, Spacer } from '@geist-ui/core';
 import { Settings as SettingsIcon } from '@geist-ui/icons';
 import Settings from './Settings';
+import { useModalContext } from '../contexts/ModalContext';
 
-const Header = ({ currentTheme, onThemeChange }) => {
-  const [settingsVisible, setSettingsVisible] = useState(false);
+const Header = () => {
+  const { setSettingsModalVisible } = useModalContext();
 
-  const openSettings = () => setSettingsVisible(true);
-  const closeSettings = () => setSettingsVisible(false);
+  const openSettings = () => setSettingsModalVisible(true);
 
   return (
     <Page.Header className="custom-navbar">
@@ -16,12 +16,7 @@ const Header = ({ currentTheme, onThemeChange }) => {
       <User src="https://via.placeholder.com/40" name="User" />
       <Spacer w={0.5} />
       <Button auto icon={<SettingsIcon />} onClick={openSettings} />
-      <Settings
-        visible={settingsVisible}
-        onClose={closeSettings}
-        currentTheme={currentTheme}
-        onThemeChange={onThemeChange}
-      />
+      <Settings />
     </Page.Header>
   );
 };
