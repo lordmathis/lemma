@@ -1,12 +1,16 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useMemo,
+} from 'react';
 import { fetchUserSettings, saveUserSettings } from '../services/api';
 import { DEFAULT_SETTINGS } from '../utils/constants';
 
 const SettingsContext = createContext();
 
-export const useSettings = () => {
-  return useContext(SettingsContext);
-};
+export const useSettings = () => useContext(SettingsContext);
 
 export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -15,7 +19,7 @@ export const SettingsProvider = ({ children }) => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const userSettings = await fetchUserSettings(1); // Assuming user ID 1 for now
+        const userSettings = await fetchUserSettings(1);
         setSettings(userSettings.settings);
       } catch (error) {
         console.error('Failed to load user settings:', error);
@@ -30,7 +34,7 @@ export const SettingsProvider = ({ children }) => {
   const updateSettings = async (newSettings) => {
     try {
       await saveUserSettings({
-        userId: 1, // Assuming user ID 1 for now
+        userId: 1,
         settings: newSettings,
       });
       setSettings(newSettings);
@@ -47,10 +51,18 @@ export const SettingsProvider = ({ children }) => {
     }));
   };
 
+  const contextValue = useMemo(
+    () => ({
+      settings,
+      updateSettings,
+      updateTheme,
+      loading,
+    }),
+    [settings, loading]
+  );
+
   return (
-    <SettingsContext.Provider
-      value={{ settings, updateSettings, updateTheme, loading }}
-    >
+    <SettingsContext.Provider value={contextValue}>
       {children}
     </SettingsContext.Provider>
   );
