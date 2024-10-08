@@ -1,6 +1,6 @@
 import React from 'react';
-import { Page, Text, User, Button, Spacer } from '@geist-ui/core';
-import { Settings as SettingsIcon } from '@geist-ui/icons';
+import { Group, Text, ActionIcon, Avatar } from '@mantine/core';
+import { IconSettings } from '@tabler/icons-react';
 import Settings from './Settings';
 import { useModalContext } from '../contexts/ModalContext';
 
@@ -10,14 +10,18 @@ const Header = () => {
   const openSettings = () => setSettingsModalVisible(true);
 
   return (
-    <Page.Header className="custom-navbar">
-      <Text b>NovaMD</Text>
-      <Spacer w={1} />
-      <User src="https://via.placeholder.com/40" name="User" />
-      <Spacer w={0.5} />
-      <Button auto icon={<SettingsIcon />} onClick={openSettings} />
+    <Group justify="space-between" h={60} px="md">
+      <Text fw={700} size="lg">
+        NovaMD
+      </Text>
+      <Group>
+        <Avatar src="https://via.placeholder.com/40" radius="xl" />
+        <ActionIcon variant="subtle" onClick={openSettings} size="lg">
+          <IconSettings size={24} />
+        </ActionIcon>
+      </Group>
       <Settings />
-    </Page.Header>
+    </Group>
   );
 };
 
