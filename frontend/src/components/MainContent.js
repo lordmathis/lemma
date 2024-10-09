@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Breadcrumbs, Grid, Tabs, Dot } from '@geist-ui/core';
-import { Code, Eye } from '@geist-ui/icons';
+import { Tabs, Breadcrumbs, Group, Box, Text, Flex } from '@mantine/core';
+import { IconCode, IconEye, IconPointFilled } from '@tabler/icons-react';
 
 import FileActions from './FileActions';
 import FileTree from './FileTree';
@@ -73,72 +73,81 @@ const MainContent = () => {
   );
 
   const renderBreadcrumbs = () => {
-    if (!selectedFile) return <div className="breadcrumbs-container"></div>;
+    if (!selectedFile) return null;
     const pathParts = selectedFile.split('/');
+    const items = pathParts.map((part, index) => (
+      <Text key={index} size="sm">
+        {part}
+      </Text>
+    ));
+
     return (
-      <div className="breadcrumbs-container">
-        <Breadcrumbs>
-          {pathParts.map((part, index) => (
-            <Breadcrumbs.Item key={index}>{part}</Breadcrumbs.Item>
-          ))}
-        </Breadcrumbs>
+      <Group>
+        <Breadcrumbs separator="/">{items}</Breadcrumbs>
         {hasUnsavedChanges && (
-          <Dot type="warning" className="unsaved-indicator" />
+          <IconPointFilled
+            size={16}
+            style={{ color: 'var(--mantine-color-yellow-filled)' }}
+          />
         )}
-      </div>
+      </Group>
     );
   };
 
   return (
-    <>
-      <Grid.Container gap={1} height="calc(100vh - 64px)">
-        <Grid xs={24} sm={6} md={5} lg={4} height="100%" className="sidebar">
-          <div className="file-tree-container">
-            <FileActions
-              handlePullChanges={handlePull}
-              selectedFile={selectedFile}
-            />
-            <FileTree
-              files={files}
-              selectedFile={selectedFile}
-              handleFileSelect={handleFileSelect}
-            />
-          </div>
-        </Grid>
-        <Grid
-          xs={24}
-          sm={18}
-          md={19}
-          lg={20}
-          height="100%"
-          className="main-content"
-        >
-          <div className="content-header">
-            {renderBreadcrumbs()}
-            <Tabs value={activeTab} onChange={handleTabChange}>
-              <Tabs.Item label={<Code />} value="source" />
-              <Tabs.Item label={<Eye />} value="preview" />
-            </Tabs>
-          </div>
-          <div className="content-body">
-            <ContentView
-              activeTab={activeTab}
-              selectedFile={selectedFile}
-              content={content}
-              handleContentChange={handleContentChange}
-              handleSave={handleSaveFile}
-              handleLinkClick={handleLinkClick}
-            />
-          </div>
-        </Grid>
-      </Grid.Container>
+    <Box style={{ height: 'calc(100vh - 60px)', display: 'flex' }}>
+      <Box
+        style={{
+          width: '300px',
+          borderRight: '1px solid var(--mantine-color-gray-3)',
+          overflow: 'hidden',
+        }}
+      >
+        <FileActions
+          handlePullChanges={handlePull}
+          selectedFile={selectedFile}
+        />
+        <FileTree files={files} handleFileSelect={handleFileSelect} />
+      </Box>
+      <Box
+        style={{
+          flex: 1,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Flex justify="space-between" align="center" p="md">
+          {renderBreadcrumbs()}
+          <Tabs value={activeTab} onChange={handleTabChange}>
+            <Tabs.List>
+              <Tabs.Tab value="source" leftSection={<IconCode size="0.8rem" />}>
+                Source
+              </Tabs.Tab>
+              <Tabs.Tab value="preview" leftSection={<IconEye size="0.8rem" />}>
+                Preview
+              </Tabs.Tab>
+            </Tabs.List>
+          </Tabs>
+        </Flex>
+        <Box style={{ flex: 1, overflow: 'auto' }}>
+          <ContentView
+            activeTab={activeTab}
+            selectedFile={selectedFile}
+            content={content}
+            handleContentChange={handleContentChange}
+            handleSave={handleSaveFile}
+            handleLinkClick={handleLinkClick}
+          />
+        </Box>
+      </Box>
       <CreateFileModal onCreateFile={handleCreateFile} />
       <DeleteFileModal
         onDeleteFile={handleDeleteFile}
         selectedFile={selectedFile}
       />
       <CommitMessageModal onCommitAndPush={handleCommitAndPush} />
-    </>
+    </Box>
   );
 };
 
