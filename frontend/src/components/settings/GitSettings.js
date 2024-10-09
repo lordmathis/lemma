@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, Toggle, Input, Spacer } from '@geist-ui/core';
+import { Text, Switch, TextInput, Stack, PasswordInput } from '@mantine/core';
 
 const GitSettings = ({
   gitEnabled,
@@ -11,60 +11,56 @@ const GitSettings = ({
   onInputChange,
 }) => {
   return (
-    <div className="setting-group">
-      <Text h4>Git Integration</Text>
-      <div className="setting-item">
-        <Text>Enable Git</Text>
-        <Toggle
-          checked={gitEnabled}
-          onChange={(e) => onInputChange('gitEnabled', e.target.checked)}
-        />
-      </div>
-      <div className={gitEnabled ? '' : 'disabled'}>
-        <Input
-          width="100%"
-          label="Git URL"
-          value={gitUrl}
-          onChange={(e) => onInputChange('gitUrl', e.target.value)}
-          disabled={!gitEnabled}
-        />
-        <Spacer h={0.5} />
-        <Input
-          width="100%"
-          label="Git Username"
-          value={gitUser}
-          onChange={(e) => onInputChange('gitUser', e.target.value)}
-          disabled={!gitEnabled}
-        />
-        <Spacer h={0.5} />
-        <Input.Password
-          width="100%"
-          label="Git Token"
-          value={gitToken}
-          onChange={(e) => onInputChange('gitToken', e.target.value)}
-          disabled={!gitEnabled}
-        />
-        <Spacer h={0.5} />
-        <div className="setting-item">
-          <Text>Auto Commit</Text>
-          <Toggle
-            checked={gitAutoCommit}
-            onChange={(e) => onInputChange('gitAutoCommit', e.target.checked)}
-            disabled={!gitEnabled}
-          />
-        </div>
-        <Spacer h={0.5} />
-        <Input
-          width="100%"
-          label="Commit Message Template"
-          value={gitCommitMsgTemplate}
-          onChange={(e) =>
-            onInputChange('gitCommitMsgTemplate', e.target.value)
-          }
-          disabled={!gitEnabled}
-        />
-      </div>
-    </div>
+    <Stack spacing="xs" mt="md">
+      <Text fw={500} size="lg">
+        Git Integration
+      </Text>
+      <Switch
+        label="Enable Git"
+        checked={gitEnabled}
+        onChange={(event) =>
+          onInputChange('gitEnabled', event.currentTarget.checked)
+        }
+      />
+      <TextInput
+        label="Git URL"
+        value={gitUrl}
+        onChange={(event) => onInputChange('gitUrl', event.currentTarget.value)}
+        disabled={!gitEnabled}
+      />
+      <TextInput
+        label="Git Username"
+        value={gitUser}
+        onChange={(event) =>
+          onInputChange('gitUser', event.currentTarget.value)
+        }
+        disabled={!gitEnabled}
+      />
+      <PasswordInput
+        label="Git Token"
+        value={gitToken}
+        onChange={(event) =>
+          onInputChange('gitToken', event.currentTarget.value)
+        }
+        disabled={!gitEnabled}
+      />
+      <Switch
+        label="Auto Commit"
+        checked={gitAutoCommit}
+        onChange={(event) =>
+          onInputChange('gitAutoCommit', event.currentTarget.checked)
+        }
+        disabled={!gitEnabled}
+      />
+      <TextInput
+        label="Commit Message Template"
+        value={gitCommitMsgTemplate}
+        onChange={(event) =>
+          onInputChange('gitCommitMsgTemplate', event.currentTarget.value)
+        }
+        disabled={!gitEnabled}
+      />
+    </Stack>
   );
 };
 
