@@ -34,6 +34,7 @@
     "@mantine/hooks": "^7.13.2",
     "@mantine/modals": "^7.13.2",
     "@mantine/notifications": "^7.13.2",
+    "@react-hook/resize-observer": "^2.0.2",
     "@tabler/icons-react": "^3.19.0",
     "codemirror": "^6.0.1",
     "katex": "^0.16.11",
