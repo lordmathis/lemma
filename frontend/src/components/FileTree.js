@@ -1,28 +1,65 @@
-import React, { useMemo } from 'react';
-import { Tree } from '@geist-ui/core';
-import { File, Folder, Image } from '@geist-ui/icons';
+import React from 'react';
+import { Tree } from 'react-arborist';
+import { Group, Text } from '@mantine/core';
+import { IconFile, IconFolder, IconFolderOpen } from '@tabler/icons-react';
 import { isImageFile } from '../utils/fileHelpers';
 
-const FileTree = ({ files, handleFileSelect }) => {
-  if (files.length === 0) {
-    return <div>No files to display</div>;
+const FileIcon = ({ isFolder, isOpen }) => {
+  if (isFolder) {
+    return isOpen ? (
+      <IconFolderOpen size={16} color="var(--mantine-color-yellow-filled)" />
+    ) : (
+      <IconFolder size={16} color="var(--mantine-color-yellow-filled)" />
+    );
   }
+  return <IconFile size={16} />;
+};
 
-  const renderIcon = useMemo(
-    () =>
-      ({ type, name }) => {
-        if (type === 'directory') return <Folder />;
-        return isImageFile(name) ? <Image /> : <File />;
-      },
-    []
+const Node = ({ node, style, dragHandle }) => {
+  const isFolder = Array.isArray(node.data.children);
+
+  return (
+    <Group
+      ref={dragHandle}
+      style={style}
+      pl={node.level * 20}
+      py={4}
+      onClick={() => node.toggle()}
+      sx={(theme) => ({
+        cursor: 'pointer',
+        '&:hover': {
+          backgroundColor:
+            theme.colorScheme === 'dark'
+              ? theme.colors.dark[6]
+              : theme.colors.gray[0],
+        },
+      })}
+    >
+      <FileIcon isFolder={isFolder} isOpen={node.isOpen} />
+      <Text size="sm">{node.data.name}</Text>
+    </Group>
   );
+};
+
+const FileTree = ({ files, handleFileSelect }) => {
+  const handleNodeClick = (node) => {
+    if (!node.isInternal) {
+      handleFileSelect(node.data.path);
+    }
+  };
 
   return (
     <Tree
-      value={files}
-      onClick={(filePath) => handleFileSelect(filePath)}
-      renderIcon={renderIcon}
-    />
+      data={files}
+      openByDefault={false}
+      width="100%"
+      height={400} // Adjust this value as needed
+      indent={24}
+      rowHeight={28}
+      onActivate={handleNodeClick}
+    >
+      {Node}
+    </Tree>
   );
 };
 

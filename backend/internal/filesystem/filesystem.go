@@ -7,6 +7,7 @@ import (
 	"novamd/internal/models"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -17,9 +18,10 @@ type FileSystem struct {
 }
 
 type FileNode struct {
-	Type  string     `json:"type"`
-	Name  string     `json:"name"`
-	Files []FileNode `json:"files,omitempty"`
+	ID       string     `json:"id"`
+	Name     string     `json:"name"`
+	Path     string     `json:"path"`
+	Children []FileNode `json:"children,omitempty"`
 }
 
 func New(rootDir string, settings *models.Settings) *FileSystem {
@@ -73,39 +75,51 @@ func (fs *FileSystem) validatePath(path string) (string, error) {
 }
 
 func (fs *FileSystem) ListFilesRecursively() ([]FileNode, error) {
-	return fs.walkDirectory(fs.RootDir)
+	return fs.walkDirectory(fs.RootDir, "")
 }
 
-func (fs *FileSystem) walkDirectory(dir string) ([]FileNode, error) {
-	var nodes []FileNode
-
+func (fs *FileSystem) walkDirectory(dir, prefix string) ([]FileNode, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
 
+	var folders []FileNode
+	var files []FileNode
+
 	for _, entry := range entries {
+		name := entry.Name()
+		path := filepath.Join(prefix, name)
+		fullPath := filepath.Join(dir, name)
+
 		if entry.IsDir() {
-			subdir := filepath.Join(dir, entry.Name())
-			subFiles, err := fs.walkDirectory(subdir)
+			children, err := fs.walkDirectory(fullPath, path)
 			if err != nil {
 				return nil, err
 			}
-			nodes = append(nodes, FileNode{
-				Type:  "directory",
-				Name:  entry.Name(),
-				Files: subFiles,
+			folders = append(folders, FileNode{
+				ID:       path, // Using path as ID ensures uniqueness
+				Name:     name,
+				Path:     path,
+				Children: children,
 			})
 		} else {
-			nodes = append(nodes, FileNode{
-				Type: "file",
-				Name: entry.Name(),
+			files = append(files, FileNode{
+				ID:   path, // Using path as ID ensures uniqueness
+				Name: name,
+				Path: path,
 			})
 		}
 	}
 
-	return nodes, nil
+	// Sort folders and files alphabetically
+	sort.Slice(folders, func(i, j int) bool { return folders[i].Name < folders[j].Name })
+	sort.Slice(files, func(i, j int) bool { return files[i].Name < files[i].Name })
+
+	// Combine folders and files, with folders first
+	return append(folders, files...), nil
 }
+
 
 func (fs *FileSystem) FindFileByName(filenameOrPath string) ([]string, error) {
 	var foundPaths []string
