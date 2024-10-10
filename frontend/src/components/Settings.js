@@ -1,6 +1,5 @@
 import React, { useReducer, useEffect, useCallback, useRef } from 'react';
-import { Modal, Badge, Button, Group } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { Modal, Badge, Button, Group, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useSettings } from '../contexts/SettingsContext';
 import AppearanceSettings from './settings/AppearanceSettings';
@@ -51,11 +50,10 @@ function settingsReducer(state, action) {
 }
 
 const Settings = () => {
-  const { settings, updateSettings, updateTheme } = useSettings();
+  const { settings, updateSettings, colorScheme } = useSettings();
   const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
   const isInitialMount = useRef(true);
-  const updateThemeTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (isInitialMount.current) {
@@ -64,21 +62,16 @@ const Settings = () => {
     }
   }, [settings]);
 
+  useEffect(() => {
+    dispatch({
+      type: 'UPDATE_LOCAL_SETTINGS',
+      payload: { theme: colorScheme },
+    });
+  }, [colorScheme]);
+
   const handleInputChange = useCallback((key, value) => {
     dispatch({ type: 'UPDATE_LOCAL_SETTINGS', payload: { [key]: value } });
   }, []);
-
-  const handleThemeChange = useCallback(() => {
-    const newTheme = state.localSettings.theme === 'dark' ? 'light' : 'dark';
-    dispatch({ type: 'UPDATE_LOCAL_SETTINGS', payload: { theme: newTheme } });
-
-    if (updateThemeTimeoutRef.current) {
-      clearTimeout(updateThemeTimeoutRef.current);
-    }
-    updateThemeTimeoutRef.current = setTimeout(() => {
-      updateTheme(newTheme);
-    }, 0);
-  }, [state.localSettings.theme, updateTheme]);
 
   const handleSubmit = async () => {
     try {
@@ -100,30 +93,16 @@ const Settings = () => {
 
   const handleClose = useCallback(() => {
     if (state.hasUnsavedChanges) {
-      updateTheme(state.initialSettings.theme);
       dispatch({ type: 'RESET' });
     }
     setSettingsModalVisible(false);
-  }, [
-    state.hasUnsavedChanges,
-    state.initialSettings.theme,
-    updateTheme,
-    setSettingsModalVisible,
-  ]);
-
-  useEffect(() => {
-    return () => {
-      if (updateThemeTimeoutRef.current) {
-        clearTimeout(updateThemeTimeoutRef.current);
-      }
-    };
-  }, []);
+  }, [state.hasUnsavedChanges, setSettingsModalVisible]);
 
   return (
     <Modal
       opened={settingsModalVisible}
       onClose={handleClose}
-      title="Settings"
+      title={<Title order={2}>Settings</Title>}
       centered
       size="lg"
     >
@@ -134,7 +113,7 @@ const Settings = () => {
       )}
       <AppearanceSettings
         themeSettings={state.localSettings.theme}
-        onThemeChange={handleThemeChange}
+        onThemeChange={(newTheme) => handleInputChange('theme', newTheme)}
       />
       <EditorSettings
         autoSave={state.localSettings.autoSave}

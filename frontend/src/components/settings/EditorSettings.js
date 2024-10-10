@@ -1,21 +1,23 @@
 import React from 'react';
-import { Text, Switch, Stack, Tooltip } from '@mantine/core';
+import { Text, Switch, Tooltip, Group, Box, Title } from '@mantine/core';
 
 const EditorSettings = ({ autoSave, onAutoSaveChange }) => {
   return (
-    <Stack spacing="xs" mt="md">
-      <Text fw={500} size="lg">
+    <Box mb="md">
+      <Title order={3} mb="md">
         Editor
-      </Text>
+      </Title>
       <Tooltip label="Auto Save feature is coming soon!" position="left">
-        <Switch
-          label="Auto Save"
-          checked={autoSave}
-          onChange={(event) => onAutoSaveChange(event.currentTarget.checked)}
-          disabled
-        />
+        <Group justify="space-between" align="center">
+          <Text size="sm">Auto Save</Text>
+          <Switch
+            checked={autoSave}
+            onChange={(event) => onAutoSaveChange(event.currentTarget.checked)}
+            disabled
+          />
+        </Group>
       </Tooltip>
-    </Stack>
+    </Box>
   );
 };
 

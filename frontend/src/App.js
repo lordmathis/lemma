@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   MantineProvider,
-  createTheme,
+  ColorSchemeScript,
   AppShell,
   Container,
 } from '@mantine/core';
@@ -15,44 +15,42 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import './App.scss';
 
-const mantineTheme = createTheme({
-  /** You can add your Mantine theme overrides here */
-});
-
 function AppContent() {
-  const { settings, loading } = useSettings();
-  const [opened, setOpened] = useState(false);
+  const { loading } = useSettings();
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
   return (
-    <MantineProvider theme={mantineTheme} defaultColorScheme={settings.theme}>
-      <Notifications />
-      <ModalsProvider>
-        <AppShell header={{ height: 60 }} padding="md">
-          <AppShell.Header>
-            <Header />
-          </AppShell.Header>
-          <AppShell.Main>
-            <Container size="xl">
-              <MainContent />
-            </Container>
-          </AppShell.Main>
-        </AppShell>
-      </ModalsProvider>
-    </MantineProvider>
+    <AppShell header={{ height: 60 }} padding="md">
+      <AppShell.Header>
+        <Header />
+      </AppShell.Header>
+      <AppShell.Main>
+        <Container size="xl">
+          <MainContent />
+        </Container>
+      </AppShell.Main>
+    </AppShell>
   );
 }
 
 function App() {
   return (
-    <SettingsProvider>
-      <ModalProvider>
-        <AppContent />
-      </ModalProvider>
-    </SettingsProvider>
+    <>
+      <ColorSchemeScript defaultColorScheme="light" />
+      <MantineProvider defaultColorScheme="light">
+        <Notifications />
+        <ModalsProvider>
+          <SettingsProvider>
+            <ModalProvider>
+              <AppContent />
+            </ModalProvider>
+          </SettingsProvider>
+        </ModalsProvider>
+      </MantineProvider>
+    </>
   );
 }
 

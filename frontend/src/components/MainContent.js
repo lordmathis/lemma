@@ -121,12 +121,14 @@ const MainContent = () => {
           {renderBreadcrumbs()}
           <Tabs value={activeTab} onChange={handleTabChange}>
             <Tabs.List>
-              <Tabs.Tab value="source" leftSection={<IconCode size="0.8rem" />}>
-                Source
-              </Tabs.Tab>
-              <Tabs.Tab value="preview" leftSection={<IconEye size="0.8rem" />}>
-                Preview
-              </Tabs.Tab>
+              <Tabs.Tab
+                value="source"
+                leftSection={<IconCode size="0.8rem" />}
+              />
+              <Tabs.Tab
+                value="preview"
+                leftSection={<IconEye size="0.8rem" />}
+              />
             </Tabs.List>
           </Tabs>
         </Flex>
