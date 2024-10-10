@@ -108,26 +108,3 @@ $navbar-height: 64px;
 .tree {
   padding-top: $padding;
 }
-
-// Geist UI Tree component customization
-:global {
-  .file-tree {
-    .label {
-      display: flex;
-      align-items: center;
-    }
-
-    .icon {
-      margin-right: 8px;
-    }
-
-    .name {
-      font-size: 14px;
-    }
-
-    .selected {
-      color: #0070f3;
-      font-weight: bold;
-    }
-  }
-}

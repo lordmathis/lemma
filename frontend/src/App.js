@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { GeistProvider, CssBaseline } from '@geist-ui/core';
 import {
   MantineProvider,
   createTheme,
@@ -29,24 +28,21 @@ function AppContent() {
   }
 
   return (
-    <GeistProvider themeType={settings.theme}>
-      <CssBaseline />
-      <MantineProvider theme={mantineTheme} defaultColorScheme={settings.theme}>
-        <Notifications />
-        <ModalsProvider>
-          <AppShell header={{ height: 60 }} padding="md">
-            <AppShell.Header>
-              <Header />
-            </AppShell.Header>
-            <AppShell.Main>
-              <Container size="xl">
-                <MainContent />
-              </Container>
-            </AppShell.Main>
-          </AppShell>
-        </ModalsProvider>
-      </MantineProvider>
-    </GeistProvider>
+    <MantineProvider theme={mantineTheme} defaultColorScheme={settings.theme}>
+      <Notifications />
+      <ModalsProvider>
+        <AppShell header={{ height: 60 }} padding="md">
+          <AppShell.Header>
+            <Header />
+          </AppShell.Header>
+          <AppShell.Main>
+            <Container size="xl">
+              <MainContent />
+            </Container>
+          </AppShell.Main>
+        </AppShell>
+      </ModalsProvider>
+    </MantineProvider>
   );
 }
 

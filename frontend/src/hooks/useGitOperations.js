@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { notifications } from '@mantine/notifications';
 import { pullChanges, commitAndPush } from '../services/api';
 
 export const useGitOperations = (gitEnabled) => {
@@ -6,11 +7,19 @@ export const useGitOperations = (gitEnabled) => {
     if (!gitEnabled) return false;
     try {
       await pullChanges();
-      setToast({ text: 'Successfully pulled latest changes', type: 'success' });
+      notifications.show({
+        title: 'Success',
+        message: 'Successfully pulled latest changes',
+        color: 'green',
+      });
       return true;
     } catch (error) {
       console.error('Failed to pull latest changes:', error);
-      setToast({ text: 'Failed to pull latest changes', type: 'error' });
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to pull latest changes',
+        color: 'red',
+      });
       return false;
     }
   }, [gitEnabled]);
@@ -20,14 +29,19 @@ export const useGitOperations = (gitEnabled) => {
       if (!gitEnabled) return false;
       try {
         await commitAndPush(message);
-        setToast({
-          text: 'Successfully committed and pushed changes',
-          type: 'success',
+        notifications.show({
+          title: 'Success',
+          message: 'Successfully committed and pushed changes',
+          color: 'green',
         });
         return true;
       } catch (error) {
         console.error('Failed to commit and push changes:', error);
-        setToast({ text: 'Failed to commit and push changes', type: 'error' });
+        notifications.show({
+          title: 'Error',
+          message: 'Failed to commit and push changes',
+          color: 'red',
+        });
         return false;
       }
     },
