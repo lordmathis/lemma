@@ -6,8 +6,8 @@ import {
   Stack,
   PasswordInput,
   Group,
-  Box,
   Title,
+  Grid,
 } from '@mantine/core';
 
 const GitSettings = ({
@@ -22,77 +22,92 @@ const GitSettings = ({
   return (
     <Stack spacing="md">
       <Title order={3}>Git Integration</Title>
-      <Group justify="space-between" align="center">
-        <Text size="sm">Enable Git</Text>
-        <Switch
-          checked={gitEnabled}
-          onChange={(event) =>
-            onInputChange('gitEnabled', event.currentTarget.checked)
-          }
-        />
-      </Group>
-      <Box>
-        <Text size="sm" mb="xs">
-          Git URL
-        </Text>
-        <TextInput
-          value={gitUrl}
-          onChange={(event) =>
-            onInputChange('gitUrl', event.currentTarget.value)
-          }
-          disabled={!gitEnabled}
-          placeholder="Enter Git URL"
-        />
-      </Box>
-      <Box>
-        <Text size="sm" mb="xs">
-          Git Username
-        </Text>
-        <TextInput
-          value={gitUser}
-          onChange={(event) =>
-            onInputChange('gitUser', event.currentTarget.value)
-          }
-          disabled={!gitEnabled}
-          placeholder="Enter Git username"
-        />
-      </Box>
-      <Box>
-        <Text size="sm" mb="xs">
-          Git Token
-        </Text>
-        <PasswordInput
-          value={gitToken}
-          onChange={(event) =>
-            onInputChange('gitToken', event.currentTarget.value)
-          }
-          disabled={!gitEnabled}
-          placeholder="Enter Git token"
-        />
-      </Box>
-      <Group justify="space-between" align="center">
-        <Text size="sm">Auto Commit</Text>
-        <Switch
-          checked={gitAutoCommit}
-          onChange={(event) =>
-            onInputChange('gitAutoCommit', event.currentTarget.checked)
-          }
-          disabled={!gitEnabled}
-        />
-      </Group>
-      <Box>
-        <Text size="sm" mb="xs">
-          Commit Message Template
-        </Text>
-        <TextInput
-          value={gitCommitMsgTemplate}
-          onChange={(event) =>
-            onInputChange('gitCommitMsgTemplate', event.currentTarget.value)
-          }
-          disabled={!gitEnabled}
-          placeholder="Enter commit message template"
-        />
-      </Box>
+      <Grid gutter="md" align="center">
+        <Grid.Col span={6}>
+          <Text size="sm">Enable Git</Text>
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <Group justify="flex-end">
+            <Switch
+              checked={gitEnabled}
+              onChange={(event) =>
+                onInputChange('gitEnabled', event.currentTarget.checked)
+              }
+            />
+          </Group>
+        </Grid.Col>
+
+        <Grid.Col span={6}>
+          <Text size="sm">Git URL</Text>
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <TextInput
+            value={gitUrl}
+            onChange={(event) =>
+              onInputChange('gitUrl', event.currentTarget.value)
+            }
+            disabled={!gitEnabled}
+            placeholder="Enter Git URL"
+          />
+        </Grid.Col>
+
+        <Grid.Col span={6}>
+          <Text size="sm">Git Username</Text>
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <TextInput
+            value={gitUser}
+            onChange={(event) =>
+              onInputChange('gitUser', event.currentTarget.value)
+            }
+            disabled={!gitEnabled}
+            placeholder="Enter Git username"
+          />
+        </Grid.Col>
+
+        <Grid.Col span={6}>
+          <Text size="sm">Git Token</Text>
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <PasswordInput
+            value={gitToken}
+            onChange={(event) =>
+              onInputChange('gitToken', event.currentTarget.value)
+            }
+            disabled={!gitEnabled}
+            placeholder="Enter Git token"
+          />
+        </Grid.Col>
+
+        <Grid.Col span={6}>
+          <Text size="sm">Auto Commit</Text>
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <Group justify="flex-end">
+            <Switch
+              checked={gitAutoCommit}
+              onChange={(event) =>
+                onInputChange('gitAutoCommit', event.currentTarget.checked)
+              }
+              disabled={!gitEnabled}
+            />
+          </Group>
+        </Grid.Col>
+
+        <Grid.Col span={6}>
+          <Text size="sm">Commit Message Template</Text>
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <TextInput
+            value={gitCommitMsgTemplate}
+            onChange={(event) =>
+              onInputChange('gitCommitMsgTemplate', event.currentTarget.value)
+            }
+            disabled={!gitEnabled}
+            placeholder="Enter commit message template"
+          />
+        </Grid.Col>
+      </Grid>
     </Stack>
   );
 };
