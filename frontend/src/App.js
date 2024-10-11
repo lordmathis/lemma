@@ -1,14 +1,8 @@
 import React from 'react';
-import {
-  MantineProvider,
-  ColorSchemeScript,
-  AppShell,
-  Container,
-} from '@mantine/core';
+import { MantineProvider, ColorSchemeScript } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { ModalsProvider } from '@mantine/modals';
-import Header from './components/Header';
-import MainContent from './components/MainContent';
+import Layout from './components/Layout';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { ModalProvider } from './contexts/ModalContext';
 import '@mantine/core/styles.css';
@@ -22,18 +16,7 @@ function AppContent() {
     return <div>Loading...</div>;
   }
 
-  return (
-    <AppShell header={{ height: 60 }} padding="md">
-      <AppShell.Header>
-        <Header />
-      </AppShell.Header>
-      <AppShell.Main>
-        <Container size="xl">
-          <MainContent />
-        </Container>
-      </AppShell.Main>
-    </AppShell>
-  );
+  return <Layout />;
 }
 
 function App() {

@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useCallback,
+  useState,
+} from 'react';
 import { useMantineColorScheme } from '@mantine/core';
 import { fetchUserSettings, saveUserSettings } from '../services/api';
 import { DEFAULT_SETTINGS } from '../utils/constants';
@@ -9,8 +16,8 @@ export const useSettings = () => useContext(SettingsContext);
 
 export const SettingsProvider = ({ children }) => {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
-  const [settings, setSettings] = React.useState(DEFAULT_SETTINGS);
-  const [loading, setLoading] = React.useState(true);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -26,30 +33,32 @@ export const SettingsProvider = ({ children }) => {
     };
 
     loadSettings();
-  }, [setColorScheme]);
+  }, []);
 
-  const updateSettings = async (newSettings) => {
-    try {
-      await saveUserSettings({
-        userId: 1,
-        settings: newSettings,
-      });
-      setSettings(newSettings);
-      // Ensure the color scheme is updated when settings are saved
-      if (newSettings.theme) {
-        setColorScheme(newSettings.theme);
+  const updateSettings = useCallback(
+    async (newSettings) => {
+      try {
+        await saveUserSettings({
+          userId: 1,
+          settings: newSettings,
+        });
+        setSettings(newSettings);
+        if (newSettings.theme) {
+          setColorScheme(newSettings.theme);
+        }
+      } catch (error) {
+        console.error('Failed to save settings:', error);
+        throw error;
       }
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      throw error;
-    }
-  };
+    },
+    [setColorScheme]
+  );
 
-  const toggleColorScheme = () => {
+  const toggleColorScheme = useCallback(() => {
     const newTheme = colorScheme === 'dark' ? 'light' : 'dark';
     setColorScheme(newTheme);
     updateSettings({ ...settings, theme: newTheme });
-  };
+  }, [colorScheme, settings, setColorScheme, updateSettings]);
 
   const contextValue = useMemo(
     () => ({
@@ -59,7 +68,7 @@ export const SettingsProvider = ({ children }) => {
       loading,
       colorScheme,
     }),
-    [settings, loading, colorScheme]
+    [settings, updateSettings, toggleColorScheme, loading, colorScheme]
   );
 
   return (
