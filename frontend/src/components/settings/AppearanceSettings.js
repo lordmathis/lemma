@@ -1,15 +1,25 @@
 import React from 'react';
-import { Text, Toggle } from '@geist-ui/core';
+import { Text, Switch, Group, Box, Title } from '@mantine/core';
+import { useSettings } from '../../contexts/SettingsContext';
 
-const AppearanceSettings = ({ themeSettings, onThemeChange }) => {
+const AppearanceSettings = ({ onThemeChange }) => {
+  const { colorScheme, toggleColorScheme } = useSettings();
+
+  const handleThemeChange = () => {
+    toggleColorScheme();
+    onThemeChange(colorScheme === 'dark' ? 'light' : 'dark');
+  };
+
   return (
-    <div className="setting-group">
-      <Text h4>Appearance</Text>
-      <div className="setting-item">
-        <Text>Dark Mode</Text>
-        <Toggle checked={themeSettings === 'dark'} onChange={onThemeChange} />
-      </div>
-    </div>
+    <Box mb="md">
+      <Title order={3} mb="md">
+        Appearance
+      </Title>
+      <Group justify="space-between" align="center">
+        <Text size="sm">Dark Mode</Text>
+        <Switch checked={colorScheme === 'dark'} onChange={handleThemeChange} />
+      </Group>
+    </Box>
   );
 };
 

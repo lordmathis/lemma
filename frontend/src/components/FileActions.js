@@ -1,6 +1,11 @@
 import React from 'react';
-import { Button, Tooltip, ButtonGroup, Spacer } from '@geist-ui/core';
-import { Plus, Trash, GitPullRequest, GitCommit } from '@geist-ui/icons';
+import { ActionIcon, Tooltip, Group } from '@mantine/core';
+import {
+  IconPlus,
+  IconTrash,
+  IconGitPullRequest,
+  IconGitCommit,
+} from '@tabler/icons-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useModalContext } from '../contexts/ModalContext';
 
@@ -17,70 +22,63 @@ const FileActions = ({ handlePullChanges, selectedFile }) => {
   const handleCommitAndPush = () => setCommitMessageModalVisible(true);
 
   return (
-    <ButtonGroup className="file-actions">
-      <Tooltip text="Create new file" type="dark">
-        <Button
-          icon={<Plus />}
-          auto
-          scale={2 / 3}
-          onClick={handleCreateFile}
-          px={0.6}
-        />
+    <Group gap="xs">
+      <Tooltip label="Create new file">
+        <ActionIcon variant="default" size="md" onClick={handleCreateFile}>
+          <IconPlus size={16} />
+        </ActionIcon>
       </Tooltip>
-      <Spacer w={0.5} />
+
       <Tooltip
-        text={selectedFile ? 'Delete current file' : 'No file selected'}
-        type="dark"
+        label={selectedFile ? 'Delete current file' : 'No file selected'}
       >
-        <Button
-          icon={<Trash />}
-          auto
-          scale={2 / 3}
+        <ActionIcon
+          variant="default"
+          size="md"
           onClick={handleDeleteFile}
           disabled={!selectedFile}
-          type="error"
-          px={0.6}
-        />
+          color="red"
+        >
+          <IconTrash size={16} />
+        </ActionIcon>
       </Tooltip>
-      <Spacer w={0.5} />
+
       <Tooltip
-        text={
+        label={
           settings.gitEnabled
             ? 'Pull changes from remote'
             : 'Git is not enabled'
         }
-        type="dark"
       >
-        <Button
-          icon={<GitPullRequest />}
-          auto
-          scale={2 / 3}
+        <ActionIcon
+          variant="default"
+          size="md"
           onClick={handlePullChanges}
           disabled={!settings.gitEnabled}
-          px={0.6}
-        />
+        >
+          <IconGitPullRequest size={16} />
+        </ActionIcon>
       </Tooltip>
-      <Spacer w={0.5} />
+
       <Tooltip
-        text={
+        label={
           !settings.gitEnabled
             ? 'Git is not enabled'
             : settings.gitAutoCommit
             ? 'Auto-commit is enabled'
             : 'Commit and push changes'
         }
-        type="dark"
       >
-        <Button
-          icon={<GitCommit />}
-          auto
-          scale={2 / 3}
+        <ActionIcon
+          variant="default"
+          size="md"
           onClick={handleCommitAndPush}
           disabled={!settings.gitEnabled || settings.gitAutoCommit}
-          px={0.6}
-        />
+        >
+          <IconGitCommit size={16} />
+        </ActionIcon>
       </Tooltip>
-    </ButtonGroup>
+    </Group>
   );
 };
 

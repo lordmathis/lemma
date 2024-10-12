@@ -1,25 +1,23 @@
 import React from 'react';
-import { Text, Toggle, Tooltip } from '@geist-ui/core';
+import { Text, Switch, Tooltip, Group, Box, Title } from '@mantine/core';
 
 const EditorSettings = ({ autoSave, onAutoSaveChange }) => {
   return (
-    <div className="setting-group">
-      <Text h4>Editor</Text>
-      <div className="setting-item">
-        <Text>Auto Save</Text>
-        <Tooltip
-          text="Auto Save feature is coming soon!"
-          type="dark"
-          placement="left"
-        >
-          <Toggle
+    <Box mb="md">
+      <Title order={3} mb="md">
+        Editor
+      </Title>
+      <Tooltip label="Auto Save feature is coming soon!" position="left">
+        <Group justify="space-between" align="center">
+          <Text size="sm">Auto Save</Text>
+          <Switch
             checked={autoSave}
-            onChange={(e) => onAutoSaveChange(e.target.checked)}
+            onChange={(event) => onAutoSaveChange(event.currentTarget.checked)}
             disabled
           />
-        </Tooltip>
-      </div>
-    </div>
+        </Group>
+      </Tooltip>
+    </Box>
   );
 };
 

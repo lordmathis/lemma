@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Input } from '@geist-ui/core';
+import { Modal, TextInput, Button, Group, Box } from '@mantine/core';
 import { useModalContext } from '../../contexts/ModalContext';
 
 const CreateFileModal = ({ onCreateFile }) => {
@@ -16,22 +16,31 @@ const CreateFileModal = ({ onCreateFile }) => {
 
   return (
     <Modal
-      visible={newFileModalVisible}
+      opened={newFileModalVisible}
       onClose={() => setNewFileModalVisible(false)}
+      title="Create New File"
+      centered
+      size="sm"
     >
-      <Modal.Title>Create New File</Modal.Title>
-      <Modal.Content>
-        <Input
-          width="100%"
+      <Box maw={400} mx="auto">
+        <TextInput
+          label="File Name"
           placeholder="Enter file name"
           value={fileName}
-          onChange={(e) => setFileName(e.target.value)}
+          onChange={(event) => setFileName(event.currentTarget.value)}
+          mb="md"
+          w="100%"
         />
-      </Modal.Content>
-      <Modal.Action passive onClick={() => setNewFileModalVisible(false)}>
-        Cancel
-      </Modal.Action>
-      <Modal.Action onClick={handleSubmit}>Create</Modal.Action>
+        <Group justify="flex-end" mt="md">
+          <Button
+            variant="default"
+            onClick={() => setNewFileModalVisible(false)}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit}>Create</Button>
+        </Group>
+      </Box>
     </Modal>
   );
 };

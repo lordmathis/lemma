@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Text } from '@geist-ui/core';
+import { Modal, Text, Button, Group } from '@mantine/core';
 import { useModalContext } from '../../contexts/ModalContext';
 
 const DeleteFileModal = ({ onDeleteFile, selectedFile }) => {
@@ -13,17 +13,23 @@ const DeleteFileModal = ({ onDeleteFile, selectedFile }) => {
 
   return (
     <Modal
-      visible={deleteFileModalVisible}
+      opened={deleteFileModalVisible}
       onClose={() => setDeleteFileModalVisible(false)}
+      title="Delete File"
+      centered
     >
-      <Modal.Title>Delete File</Modal.Title>
-      <Modal.Content>
-        <Text>Are you sure you want to delete "{selectedFile}"?</Text>
-      </Modal.Content>
-      <Modal.Action passive onClick={() => setDeleteFileModalVisible(false)}>
-        Cancel
-      </Modal.Action>
-      <Modal.Action onClick={handleConfirm}>Delete</Modal.Action>
+      <Text>Are you sure you want to delete "{selectedFile}"?</Text>
+      <Group justify="flex-end" mt="xl">
+        <Button
+          variant="default"
+          onClick={() => setDeleteFileModalVisible(false)}
+        >
+          Cancel
+        </Button>
+        <Button color="red" onClick={handleConfirm}>
+          Delete
+        </Button>
+      </Group>
     </Modal>
   );
 };

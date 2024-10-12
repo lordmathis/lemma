@@ -1,7 +1,7 @@
 import React from 'react';
+import { Text, Center } from '@mantine/core';
 import Editor from './Editor';
 import MarkdownPreview from './MarkdownPreview';
-import { Text } from '@geist-ui/core';
 import { getFileUrl } from '../services/api';
 import { isImageFile } from '../utils/fileHelpers';
 
@@ -15,22 +15,17 @@ const ContentView = ({
 }) => {
   if (!selectedFile) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100%',
-        }}
-      >
-        <Text h3>No file selected.</Text>
-      </div>
+      <Center style={{ height: '100%' }}>
+        <Text size="xl" weight={500}>
+          No file selected.
+        </Text>
+      </Center>
     );
   }
 
   if (isImageFile(selectedFile)) {
     return (
-      <div className="image-preview">
+      <Center className="image-preview">
         <img
           src={getFileUrl(selectedFile)}
           alt={selectedFile}
@@ -40,7 +35,7 @@ const ContentView = ({
             objectFit: 'contain',
           }}
         />
-      </div>
+      </Center>
     );
   }
 

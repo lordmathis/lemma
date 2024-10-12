@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Input } from '@geist-ui/core';
+import { Modal, TextInput, Button, Group, Box } from '@mantine/core';
 import { useModalContext } from '../../contexts/ModalContext';
 
 const CommitMessageModal = ({ onCommitAndPush }) => {
@@ -17,22 +17,31 @@ const CommitMessageModal = ({ onCommitAndPush }) => {
 
   return (
     <Modal
-      visible={commitMessageModalVisible}
+      opened={commitMessageModalVisible}
       onClose={() => setCommitMessageModalVisible(false)}
+      title="Enter Commit Message"
+      centered
+      size="sm"
     >
-      <Modal.Title>Enter Commit Message</Modal.Title>
-      <Modal.Content>
-        <Input
-          width="100%"
+      <Box maw={400} mx="auto">
+        <TextInput
+          label="Commit Message"
           placeholder="Enter commit message"
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(event) => setMessage(event.currentTarget.value)}
+          mb="md"
+          w="100%"
         />
-      </Modal.Content>
-      <Modal.Action passive onClick={() => setCommitMessageModalVisible(false)}>
-        Cancel
-      </Modal.Action>
-      <Modal.Action onClick={handleSubmit}>Commit</Modal.Action>
+        <Group justify="flex-end" mt="md">
+          <Button
+            variant="default"
+            onClick={() => setCommitMessageModalVisible(false)}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit}>Commit</Button>
+        </Group>
+      </Box>
     </Modal>
   );
 };

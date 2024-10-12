@@ -1,5 +1,6 @@
 import React, { useReducer, useEffect, useCallback, useRef } from 'react';
-import { Modal, Spacer, Dot, useToasts } from '@geist-ui/core';
+import { Modal, Badge, Button, Group, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useSettings } from '../contexts/SettingsContext';
 import AppearanceSettings from './settings/AppearanceSettings';
 import EditorSettings from './settings/EditorSettings';
@@ -49,12 +50,10 @@ function settingsReducer(state, action) {
 }
 
 const Settings = () => {
-  const { settings, updateSettings, updateTheme } = useSettings();
+  const { settings, updateSettings, colorScheme } = useSettings();
   const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
-  const { setToast } = useToasts();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
   const isInitialMount = useRef(true);
-  const updateThemeTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (isInitialMount.current) {
@@ -63,92 +62,78 @@ const Settings = () => {
     }
   }, [settings]);
 
+  useEffect(() => {
+    dispatch({
+      type: 'UPDATE_LOCAL_SETTINGS',
+      payload: { theme: colorScheme },
+    });
+  }, [colorScheme]);
+
   const handleInputChange = useCallback((key, value) => {
     dispatch({ type: 'UPDATE_LOCAL_SETTINGS', payload: { [key]: value } });
   }, []);
-
-  const handleThemeChange = useCallback(() => {
-    const newTheme = state.localSettings.theme === 'dark' ? 'light' : 'dark';
-    dispatch({ type: 'UPDATE_LOCAL_SETTINGS', payload: { theme: newTheme } });
-
-    // Debounce the theme update
-    if (updateThemeTimeoutRef.current) {
-      clearTimeout(updateThemeTimeoutRef.current);
-    }
-    updateThemeTimeoutRef.current = setTimeout(() => {
-      updateTheme(newTheme);
-    }, 0);
-  }, [state.localSettings.theme, updateTheme]);
 
   const handleSubmit = async () => {
     try {
       await updateSettings(state.localSettings);
       dispatch({ type: 'MARK_SAVED' });
-      setToast({ text: 'Settings saved successfully', type: 'success' });
+      notifications.show({
+        message: 'Settings saved successfully',
+        color: 'green',
+      });
       setSettingsModalVisible(false);
     } catch (error) {
       console.error('Failed to save settings:', error);
-      setToast({
-        text: 'Failed to save settings: ' + error.message,
-        type: 'error',
+      notifications.show({
+        message: 'Failed to save settings: ' + error.message,
+        color: 'red',
       });
     }
   };
 
   const handleClose = useCallback(() => {
     if (state.hasUnsavedChanges) {
-      updateTheme(state.initialSettings.theme); // Revert theme if not saved
       dispatch({ type: 'RESET' });
     }
     setSettingsModalVisible(false);
-  }, [
-    state.hasUnsavedChanges,
-    state.initialSettings.theme,
-    updateTheme,
-    setSettingsModalVisible,
-  ]);
-
-  useEffect(() => {
-    return () => {
-      if (updateThemeTimeoutRef.current) {
-        clearTimeout(updateThemeTimeoutRef.current);
-      }
-    };
-  }, []);
+  }, [state.hasUnsavedChanges, setSettingsModalVisible]);
 
   return (
-    <Modal visible={settingsModalVisible} onClose={handleClose}>
-      <Modal.Title>
-        Settings
-        {state.hasUnsavedChanges && (
-          <Dot type="warning" style={{ marginLeft: '8px' }} />
-        )}
-      </Modal.Title>
-      <Modal.Content>
-        <AppearanceSettings
-          themeSettings={state.localSettings.theme}
-          onThemeChange={handleThemeChange}
-        />
-        <Spacer h={1} />
-        <EditorSettings
-          autoSave={state.localSettings.autoSave}
-          onAutoSaveChange={(value) => handleInputChange('autoSave', value)}
-        />
-        <Spacer h={1} />
-        <GitSettings
-          gitEnabled={state.localSettings.gitEnabled}
-          gitUrl={state.localSettings.gitUrl}
-          gitUser={state.localSettings.gitUser}
-          gitToken={state.localSettings.gitToken}
-          gitAutoCommit={state.localSettings.gitAutoCommit}
-          gitCommitMsgTemplate={state.localSettings.gitCommitMsgTemplate}
-          onInputChange={handleInputChange}
-        />
-      </Modal.Content>
-      <Modal.Action passive onClick={handleClose}>
-        Cancel
-      </Modal.Action>
-      <Modal.Action onClick={handleSubmit}>Save Changes</Modal.Action>
+    <Modal
+      opened={settingsModalVisible}
+      onClose={handleClose}
+      title={<Title order={2}>Settings</Title>}
+      centered
+      size="lg"
+    >
+      {state.hasUnsavedChanges && (
+        <Badge color="yellow" variant="light" mb="md">
+          Unsaved Changes
+        </Badge>
+      )}
+      <AppearanceSettings
+        themeSettings={state.localSettings.theme}
+        onThemeChange={(newTheme) => handleInputChange('theme', newTheme)}
+      />
+      <EditorSettings
+        autoSave={state.localSettings.autoSave}
+        onAutoSaveChange={(value) => handleInputChange('autoSave', value)}
+      />
+      <GitSettings
+        gitEnabled={state.localSettings.gitEnabled}
+        gitUrl={state.localSettings.gitUrl}
+        gitUser={state.localSettings.gitUser}
+        gitToken={state.localSettings.gitToken}
+        gitAutoCommit={state.localSettings.gitAutoCommit}
+        gitCommitMsgTemplate={state.localSettings.gitCommitMsgTemplate}
+        onInputChange={handleInputChange}
+      />
+      <Group justify="flex-end" mt="xl">
+        <Button variant="default" onClick={handleClose}>
+          Cancel
+        </Button>
+        <Button onClick={handleSubmit}>Save Changes</Button>
+      </Group>
     </Modal>
   );
 };
