@@ -34,7 +34,7 @@ export const useFileOperations = () => {
           message: 'File saved successfully',
           color: 'green',
         });
-        await autoCommit(filePath, 'update');
+        autoCommit(filePath, 'update');
         return true;
       } catch (error) {
         console.error('Error saving file:', error);
@@ -58,7 +58,7 @@ export const useFileOperations = () => {
           message: 'File deleted successfully',
           color: 'green',
         });
-        await autoCommit(filePath, 'delete');
+        autoCommit(filePath, 'delete');
         return true;
       } catch (error) {
         console.error('Error deleting file:', error);
@@ -82,7 +82,7 @@ export const useFileOperations = () => {
           message: 'File created successfully',
           color: 'green',
         });
-        await autoCommit(fileName, 'create');
+        autoCommit(fileName, 'create');
         return true;
       } catch (error) {
         console.error('Error creating new file:', error);
