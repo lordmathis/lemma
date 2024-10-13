@@ -157,3 +157,4 @@ go.work.sum
 
 main
 *.db
+data
