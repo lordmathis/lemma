@@ -4,10 +4,12 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import MainContent from './MainContent';
 import { useFileNavigation } from '../hooks/useFileNavigation';
+import { useFileList } from '../hooks/useFileList';
 
 const Layout = () => {
   const { selectedFile, handleFileSelect, handleLinkClick } =
     useFileNavigation();
+  const { files, loadFileList } = useFileList();
 
   return (
     <AppShell header={{ height: 60 }} padding="md">
@@ -27,11 +29,14 @@ const Layout = () => {
           <Sidebar
             selectedFile={selectedFile}
             handleFileSelect={handleFileSelect}
+            files={files}
+            loadFileList={loadFileList}
           />
           <MainContent
             selectedFile={selectedFile}
             handleFileSelect={handleFileSelect}
             handleLinkClick={handleLinkClick}
+            loadFileList={loadFileList}
           />
         </Container>
       </AppShell.Main>

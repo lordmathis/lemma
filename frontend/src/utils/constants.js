@@ -34,7 +34,7 @@ export const DEFAULT_SETTINGS = {
   gitUser: '',
   gitToken: '',
   gitAutoCommit: false,
-  gitCommitMsgTemplate: 'Update ${filename}',
+  gitCommitMsgTemplate: '${action} ${filename}',
 };
 
 export const DEFAULT_FILE = {
