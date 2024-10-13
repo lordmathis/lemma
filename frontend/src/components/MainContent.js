@@ -30,13 +30,21 @@ const MainContent = ({ selectedFile, handleFileSelect, handleLinkClick }) => {
 
   const handleSaveFile = useCallback(
     async (filePath, content) => {
-      const success = await handleSave(filePath, content);
+      let success = await handleSave(filePath, content);
       if (success) {
         setHasUnsavedChanges(false);
+
+        if (settings.gitAutoCommit && settings.gitEnabled) {
+          const commitMessage = settings.gitCommitMsgTemplate.replace(
+            '${filename}',
+            filePath
+          );
+          success = await handleCommitAndPush(commitMessage);
+        }
       }
       return success;
     },
-    [handleSave, setHasUnsavedChanges]
+    [handleSave, setHasUnsavedChanges, settings, handleCommitAndPush]
   );
 
   const handleCreateFile = useCallback(

@@ -11,7 +11,7 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem) {
 	r.Route("/", func(r chi.Router) {
 		r.Route("/settings", func(r chi.Router) {
 			r.Get("/", GetSettings(db))
-			r.Post("/", UpdateSettings(db))
+			r.Post("/", UpdateSettings(db, fs))
 		})
 		r.Route("/files", func(r chi.Router) {
 			r.Get("/", ListFiles(fs))

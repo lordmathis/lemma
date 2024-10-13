@@ -97,9 +97,9 @@ func SaveFile(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("File saved successfully")); err != nil {
-			http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(map[string]string{"message": "File saved successfully"}); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 		}
 	}
 }
@@ -144,7 +144,7 @@ func GetSettings(db *db.DB) http.HandlerFunc {
 	}
 }
 
-func UpdateSettings(db *db.DB) http.HandlerFunc {
+func UpdateSettings(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var settings models.Settings
 		if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
@@ -163,6 +163,15 @@ func UpdateSettings(db *db.DB) http.HandlerFunc {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		}
+
+		if settings.Settings.GitEnabled {
+			err := fs.SetupGitRepo(settings.Settings.GitURL, settings.Settings.GitUser, settings.Settings.GitToken)
+			if err != nil {
+				http.Error(w, "Failed to setup git repo", http.StatusInternalServerError)
+			}
+		} else {
+			fs.DisableGitRepo()
 		}
 
 		// Fetch the saved settings to return
@@ -203,9 +212,9 @@ func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("Changes staged, committed, and pushed successfully")); err != nil {
-			http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(map[string]string{"message": "Changes staged, committed, and pushed successfully"}); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 		}
 	}
 }

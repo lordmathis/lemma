@@ -42,6 +42,15 @@ func New(rootDir string, settings *models.Settings) *FileSystem {
 	return fs
 }
 
+func (fs *FileSystem) SetupGitRepo(gitURL string, gitUser string, gitToken string) error {
+	fs.GitRepo = gitutils.New(gitURL, gitUser, gitToken, fs.RootDir)
+	return fs.InitializeGitRepo()
+}
+
+func (fs *FileSystem) DisableGitRepo() {
+	fs.GitRepo = nil;
+}
+
 func (fs *FileSystem) InitializeGitRepo() error {
 	if fs.GitRepo == nil {
 		return errors.New("git settings not configured")
