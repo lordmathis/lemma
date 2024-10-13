@@ -190,11 +190,6 @@ func (fs *FileSystem) SaveFile(filePath string, content []byte) error {
 		return err
 	}
 
-	if fs.Settings.Settings.GitAutoCommit && fs.GitRepo != nil {
-		message := strings.Replace(fs.Settings.Settings.GitCommitMsgTemplate, "${filename}", filePath, -1)
-		return fs.StageCommitAndPush(message)
-	}
-
 	return os.WriteFile(fullPath, content, 0644)
 }
 
