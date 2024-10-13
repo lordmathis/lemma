@@ -2,18 +2,16 @@ import React, { useEffect } from 'react';
 import { Box } from '@mantine/core';
 import FileActions from './FileActions';
 import FileTree from './FileTree';
-import { useFileList } from '../hooks/useFileList';
 import { useGitOperations } from '../hooks/useGitOperations';
 import { useSettings } from '../contexts/SettingsContext';
 
-const Sidebar = ({ selectedFile, handleFileSelect }) => {
+const Sidebar = ({ selectedFile, handleFileSelect, files, loadFileList }) => {
   const { settings } = useSettings();
-  const { files, loadFileList } = useFileList();
   const { handlePull } = useGitOperations(settings.gitEnabled);
 
   useEffect(() => {
     loadFileList();
-  }, [settings.gitEnabled, loadFileList]);
+  }, [loadFileList]);
 
   return (
     <Box

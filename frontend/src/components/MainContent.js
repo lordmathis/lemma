@@ -12,7 +12,12 @@ import { useFileOperations } from '../hooks/useFileOperations';
 import { useGitOperations } from '../hooks/useGitOperations';
 import { useSettings } from '../contexts/SettingsContext';
 
-const MainContent = ({ selectedFile, handleFileSelect, handleLinkClick }) => {
+const MainContent = ({
+  selectedFile,
+  handleFileSelect,
+  handleLinkClick,
+  loadFileList,
+}) => {
   const [activeTab, setActiveTab] = useState('source');
   const { settings } = useSettings();
   const {
@@ -43,20 +48,22 @@ const MainContent = ({ selectedFile, handleFileSelect, handleLinkClick }) => {
     async (fileName) => {
       const success = await handleCreate(fileName);
       if (success) {
+        loadFileList();
         handleFileSelect(fileName);
       }
     },
-    [handleCreate, handleFileSelect]
+    [handleCreate, handleFileSelect, loadFileList]
   );
 
   const handleDeleteFile = useCallback(
     async (filePath) => {
       const success = await handleDelete(filePath);
       if (success) {
+        loadFileList();
         handleFileSelect(null);
       }
     },
-    [handleDelete, handleFileSelect]
+    [handleDelete, handleFileSelect, loadFileList]
   );
 
   const renderBreadcrumbs = useMemo(() => {
