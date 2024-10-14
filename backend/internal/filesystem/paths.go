@@ -21,9 +21,3 @@ func GetWorkspacePath(workspace *models.Workspace) string {
 func GetFilePath(workspace *models.Workspace, relativeFilePath string) string {
 	return filepath.Join(GetWorkspacePath(workspace), relativeFilePath)
 }
-
-// EnsureWorkspaceDirectory creates the workspace directory if it doesn't exist
-func EnsureWorkspaceDirectory(workspace *models.Workspace) error {
-	dir := GetWorkspacePath(workspace)
-	return os.MkdirAll(dir, 0755)
-}
