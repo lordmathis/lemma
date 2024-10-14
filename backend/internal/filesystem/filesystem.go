@@ -10,8 +10,8 @@ import (
 )
 
 type FileSystem struct {
-	RootDir string
-	GitRepos map[int]*gitutils.GitRepo
+	RootDir  string
+	GitRepos map[int]map[int]*gitutils.GitRepo // map[userID]map[workspaceID]*gitutils.GitRepo
 }
 
 type FileNode struct {
@@ -24,16 +24,16 @@ type FileNode struct {
 func New(rootDir string) *FileSystem {
 	return &FileSystem{
 		RootDir:  rootDir,
-		GitRepos: make(map[int]*gitutils.GitRepo),
+		GitRepos: make(map[int]map[int]*gitutils.GitRepo),
 	}
 }
 
-func (fs *FileSystem) GetWorkspacePath(workspaceID int) string {
-	return filepath.Join(fs.RootDir, fmt.Sprintf("%d", workspaceID))
+func (fs *FileSystem) GetWorkspacePath(userID, workspaceID int) string {
+	return filepath.Join(fs.RootDir, fmt.Sprintf("%d", userID), fmt.Sprintf("%d", workspaceID))
 }
 
-func (fs *FileSystem) ValidatePath(workspaceID int, path string) (string, error) {
-	workspacePath := fs.GetWorkspacePath(workspaceID)
+func (fs *FileSystem) ValidatePath(userID, workspaceID int, path string) (string, error) {
+	workspacePath := fs.GetWorkspacePath(userID, workspaceID)
 	fullPath := filepath.Join(workspacePath, path)
 	cleanPath := filepath.Clean(fullPath)
 
@@ -44,8 +44,8 @@ func (fs *FileSystem) ValidatePath(workspaceID int, path string) (string, error)
 	return cleanPath, nil
 }
 
-func (fs *FileSystem) ListFilesRecursively(workspaceID int) ([]FileNode, error) {
-	workspacePath := fs.GetWorkspacePath(workspaceID)
+func (fs *FileSystem) ListFilesRecursively(userID, workspaceID int) ([]FileNode, error) {
+	workspacePath := fs.GetWorkspacePath(userID, workspaceID)
 	return fs.walkDirectory(workspacePath, "")
 }
 
@@ -81,9 +81,9 @@ func (fs *FileSystem) walkDirectory(dir, prefix string) ([]FileNode, error) {
 	return nodes, nil
 }
 
-func (fs *FileSystem) FindFileByName(workspaceID int, filename string) ([]string, error) {
+func (fs *FileSystem) FindFileByName(userID, workspaceID int, filename string) ([]string, error) {
 	var foundPaths []string
-	workspacePath := fs.GetWorkspacePath(workspaceID)
+	workspacePath := fs.GetWorkspacePath(userID, workspaceID)
 
 	err := filepath.Walk(workspacePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -112,16 +112,16 @@ func (fs *FileSystem) FindFileByName(workspaceID int, filename string) ([]string
 	return foundPaths, nil
 }
 
-func (fs *FileSystem) GetFileContent(workspaceID int, filePath string) ([]byte, error) {
-	fullPath, err := fs.ValidatePath(workspaceID, filePath)
+func (fs *FileSystem) GetFileContent(userID, workspaceID int, filePath string) ([]byte, error) {
+	fullPath, err := fs.ValidatePath(userID, workspaceID, filePath)
 	if err != nil {
 		return nil, err
 	}
 	return os.ReadFile(fullPath)
 }
 
-func (fs *FileSystem) SaveFile(workspaceID int, filePath string, content []byte) error {
-	fullPath, err := fs.ValidatePath(workspaceID, filePath)
+func (fs *FileSystem) SaveFile(userID, workspaceID int, filePath string, content []byte) error {
+	fullPath, err := fs.ValidatePath(userID, workspaceID, filePath)
 	if err != nil {
 		return err
 	}
@@ -134,31 +134,39 @@ func (fs *FileSystem) SaveFile(workspaceID int, filePath string, content []byte)
 	return os.WriteFile(fullPath, content, 0644)
 }
 
-func (fs *FileSystem) DeleteFile(workspaceID int, filePath string) error {
-	fullPath, err := fs.ValidatePath(workspaceID, filePath)
+func (fs *FileSystem) DeleteFile(userID, workspaceID int, filePath string) error {
+	fullPath, err := fs.ValidatePath(userID, workspaceID, filePath)
 	if err != nil {
 		return err
 	}
 	return os.Remove(fullPath)
 }
 
-func (fs *FileSystem) CreateWorkspaceDirectory(workspaceID int) error {
-	dir := fs.GetWorkspacePath(workspaceID)
+func (fs *FileSystem) CreateWorkspaceDirectory(userID, workspaceID int) error {
+	dir := fs.GetWorkspacePath(userID, workspaceID)
 	return os.MkdirAll(dir, 0755)
 }
 
-func (fs *FileSystem) SetupGitRepo(workspaceID int, gitURL, gitUser, gitToken string) error {
-	workspacePath := fs.GetWorkspacePath(workspaceID)
-	fs.GitRepos[workspaceID] = gitutils.New(gitURL, gitUser, gitToken, workspacePath)
-	return fs.GitRepos[workspaceID].EnsureRepo()
+func (fs *FileSystem) SetupGitRepo(userID, workspaceID int, gitURL, gitUser, gitToken string) error {
+	workspacePath := fs.GetWorkspacePath(userID, workspaceID)
+	if _, ok := fs.GitRepos[userID]; !ok {
+		fs.GitRepos[userID] = make(map[int]*gitutils.GitRepo)
+	}
+	fs.GitRepos[userID][workspaceID] = gitutils.New(gitURL, gitUser, gitToken, workspacePath)
+	return fs.GitRepos[userID][workspaceID].EnsureRepo()
 }
 
-func (fs *FileSystem) DisableGitRepo(workspaceID int) {
-	delete(fs.GitRepos, workspaceID)
+func (fs *FileSystem) DisableGitRepo(userID, workspaceID int) {
+	if userRepos, ok := fs.GitRepos[userID]; ok {
+		delete(userRepos, workspaceID)
+		if len(userRepos) == 0 {
+			delete(fs.GitRepos, userID)
+		}
+	}
 }
 
-func (fs *FileSystem) StageCommitAndPush(workspaceID int, message string) error {
-	repo, ok := fs.GitRepos[workspaceID]
+func (fs *FileSystem) StageCommitAndPush(userID, workspaceID int, message string) error {
+	repo, ok := fs.getGitRepo(userID, workspaceID)
 	if !ok {
 		return errors.New("git settings not configured for this workspace")
 	}
@@ -170,11 +178,20 @@ func (fs *FileSystem) StageCommitAndPush(workspaceID int, message string) error 
 	return repo.Push()
 }
 
-func (fs *FileSystem) Pull(workspaceID int) error {
-	repo, ok := fs.GitRepos[workspaceID]
+func (fs *FileSystem) Pull(userID, workspaceID int) error {
+	repo, ok := fs.getGitRepo(userID, workspaceID)
 	if !ok {
 		return errors.New("git settings not configured for this workspace")
 	}
 
 	return repo.Pull()
+}
+
+func (fs *FileSystem) getGitRepo(userID, workspaceID int) (*gitutils.GitRepo, bool) {
+	userRepos, ok := fs.GitRepos[userID]
+	if !ok {
+		return nil, false
+	}
+	repo, ok := userRepos[workspaceID]
+	return repo, ok
 }
