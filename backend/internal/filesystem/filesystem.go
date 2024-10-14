@@ -3,14 +3,17 @@ package filesystem
 import (
 	"errors"
 	"fmt"
+	"novamd/internal/gitutils"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"novamd/internal/models"
 )
 
-// FileNode represents a file or directory in the file system
+type FileSystem struct {
+	RootDir string
+	GitRepos map[int]*gitutils.GitRepo
+}
+
 type FileNode struct {
 	ID       string     `json:"id"`
 	Name     string     `json:"name"`
@@ -18,9 +21,19 @@ type FileNode struct {
 	Children []FileNode `json:"children,omitempty"`
 }
 
-// ValidatePath ensures the given path is within the workspace
-func ValidatePath(workspace *models.Workspace, path string) (string, error) {
-	workspacePath := GetWorkspacePath(workspace)
+func New(rootDir string) *FileSystem {
+	return &FileSystem{
+		RootDir:  rootDir,
+		GitRepos: make(map[int]*gitutils.GitRepo),
+	}
+}
+
+func (fs *FileSystem) GetWorkspacePath(workspaceID int) string {
+	return filepath.Join(fs.RootDir, fmt.Sprintf("%d", workspaceID))
+}
+
+func (fs *FileSystem) ValidatePath(workspaceID int, path string) (string, error) {
+	workspacePath := fs.GetWorkspacePath(workspaceID)
 	fullPath := filepath.Join(workspacePath, path)
 	cleanPath := filepath.Clean(fullPath)
 
@@ -31,13 +44,12 @@ func ValidatePath(workspace *models.Workspace, path string) (string, error) {
 	return cleanPath, nil
 }
 
-// ListFilesRecursively returns a list of all files in the workspace
-func ListFilesRecursively(workspace *models.Workspace) ([]FileNode, error) {
-	workspacePath := GetWorkspacePath(workspace)
-	return walkDirectory(workspacePath, "")
+func (fs *FileSystem) ListFilesRecursively(workspaceID int) ([]FileNode, error) {
+	workspacePath := fs.GetWorkspacePath(workspaceID)
+	return fs.walkDirectory(workspacePath, "")
 }
 
-func walkDirectory(dir, prefix string) ([]FileNode, error) {
+func (fs *FileSystem) walkDirectory(dir, prefix string) ([]FileNode, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -56,7 +68,7 @@ func walkDirectory(dir, prefix string) ([]FileNode, error) {
 		}
 
 		if entry.IsDir() {
-			children, err := walkDirectory(fullPath, path)
+			children, err := fs.walkDirectory(fullPath, path)
 			if err != nil {
 				return nil, err
 			}
@@ -69,10 +81,9 @@ func walkDirectory(dir, prefix string) ([]FileNode, error) {
 	return nodes, nil
 }
 
-// FindFileByName searches for a file in the workspace by name
-func FindFileByName(workspace *models.Workspace, filename string) ([]string, error) {
+func (fs *FileSystem) FindFileByName(workspaceID int, filename string) ([]string, error) {
 	var foundPaths []string
-	workspacePath := GetWorkspacePath(workspace)
+	workspacePath := fs.GetWorkspacePath(workspaceID)
 
 	err := filepath.Walk(workspacePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -101,18 +112,16 @@ func FindFileByName(workspace *models.Workspace, filename string) ([]string, err
 	return foundPaths, nil
 }
 
-// GetFileContent retrieves the content of a file in the workspace
-func GetFileContent(workspace *models.Workspace, filePath string) ([]byte, error) {
-	fullPath, err := ValidatePath(workspace, filePath)
+func (fs *FileSystem) GetFileContent(workspaceID int, filePath string) ([]byte, error) {
+	fullPath, err := fs.ValidatePath(workspaceID, filePath)
 	if err != nil {
 		return nil, err
 	}
 	return os.ReadFile(fullPath)
 }
 
-// SaveFile saves content to a file in the workspace
-func SaveFile(workspace *models.Workspace, filePath string, content []byte) error {
-	fullPath, err := ValidatePath(workspace, filePath)
+func (fs *FileSystem) SaveFile(workspaceID int, filePath string, content []byte) error {
+	fullPath, err := fs.ValidatePath(workspaceID, filePath)
 	if err != nil {
 		return err
 	}
@@ -125,17 +134,47 @@ func SaveFile(workspace *models.Workspace, filePath string, content []byte) erro
 	return os.WriteFile(fullPath, content, 0644)
 }
 
-// DeleteFile removes a file from the workspace
-func DeleteFile(workspace *models.Workspace, filePath string) error {
-	fullPath, err := ValidatePath(workspace, filePath)
+func (fs *FileSystem) DeleteFile(workspaceID int, filePath string) error {
+	fullPath, err := fs.ValidatePath(workspaceID, filePath)
 	if err != nil {
 		return err
 	}
 	return os.Remove(fullPath)
 }
 
-// CreateWorkspaceDirectory creates the directory for a new workspace
-func CreateWorkspaceDirectory(workspace *models.Workspace) error {
-	dir := GetWorkspacePath(workspace)
+func (fs *FileSystem) CreateWorkspaceDirectory(workspaceID int) error {
+	dir := fs.GetWorkspacePath(workspaceID)
 	return os.MkdirAll(dir, 0755)
+}
+
+func (fs *FileSystem) SetupGitRepo(workspaceID int, gitURL, gitUser, gitToken string) error {
+	workspacePath := fs.GetWorkspacePath(workspaceID)
+	fs.GitRepos[workspaceID] = gitutils.New(gitURL, gitUser, gitToken, workspacePath)
+	return fs.GitRepos[workspaceID].EnsureRepo()
+}
+
+func (fs *FileSystem) DisableGitRepo(workspaceID int) {
+	delete(fs.GitRepos, workspaceID)
+}
+
+func (fs *FileSystem) StageCommitAndPush(workspaceID int, message string) error {
+	repo, ok := fs.GitRepos[workspaceID]
+	if !ok {
+		return errors.New("git settings not configured for this workspace")
+	}
+
+	if err := repo.Commit(message); err != nil {
+		return err
+	}
+
+	return repo.Push()
+}
+
+func (fs *FileSystem) Pull(workspaceID int) error {
+	repo, ok := fs.GitRepos[workspaceID]
+	if !ok {
+		return errors.New("git settings not configured for this workspace")
+	}
+
+	return repo.Pull()
 }
