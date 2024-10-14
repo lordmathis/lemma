@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -14,62 +15,56 @@ import (
 
 func ListFiles(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		workspaceID, err := strconv.Atoi(r.URL.Query().Get("workspaceId"))
+		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
-			http.Error(w, "Invalid workspaceId", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		files, err := fs.ListFilesRecursively(workspaceID)
+		files, err := fs.ListFilesRecursively(userID, workspaceID)
 		if err != nil {
 			http.Error(w, "Failed to list files", http.StatusInternalServerError)
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(files); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		}
+		respondJSON(w, files)
 	}
 }
 
 func LookupFileByName(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		workspaceID, err := strconv.Atoi(r.URL.Query().Get("workspaceId"))
+		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
-			http.Error(w, "Invalid workspaceId", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		filenameOrPath := r.URL.Query().Get("filename")
-		if filenameOrPath == "" {
-			http.Error(w, "Filename or path is required", http.StatusBadRequest)
+		filename := r.URL.Query().Get("filename")
+		if filename == "" {
+			http.Error(w, "Filename is required", http.StatusBadRequest)
 			return
 		}
 
-		filePaths, err := fs.FindFileByName(workspaceID, filenameOrPath)
+		filePaths, err := fs.FindFileByName(userID, workspaceID, filename)
 		if err != nil {
 			http.Error(w, "File not found", http.StatusNotFound)
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(map[string][]string{"paths": filePaths}); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		}
+		respondJSON(w, map[string][]string{"paths": filePaths})
 	}
 }
 
 func GetFileContent(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		workspaceID, err := strconv.Atoi(r.URL.Query().Get("workspaceId"))
+		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
-			http.Error(w, "Invalid workspaceId", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		filePath := strings.TrimPrefix(r.URL.Path, "/api/v1/files/")
-		content, err := fs.GetFileContent(workspaceID, filePath)
+		content, err := fs.GetFileContent(userID, workspaceID, filePath)
 		if err != nil {
 			http.Error(w, "Failed to read file", http.StatusNotFound)
 			return
@@ -82,9 +77,9 @@ func GetFileContent(fs *filesystem.FileSystem) http.HandlerFunc {
 
 func SaveFile(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		workspaceID, err := strconv.Atoi(r.URL.Query().Get("workspaceId"))
+		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
-			http.Error(w, "Invalid workspaceId", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -95,29 +90,26 @@ func SaveFile(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		err = fs.SaveFile(workspaceID, filePath, content)
+		err = fs.SaveFile(userID, workspaceID, filePath, content)
 		if err != nil {
 			http.Error(w, "Failed to save file", http.StatusInternalServerError)
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(map[string]string{"message": "File saved successfully"}); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		}
+		respondJSON(w, map[string]string{"message": "File saved successfully"})
 	}
 }
 
 func DeleteFile(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		workspaceID, err := strconv.Atoi(r.URL.Query().Get("workspaceId"))
+		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
-			http.Error(w, "Invalid workspaceId", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		filePath := strings.TrimPrefix(r.URL.Path, "/api/v1/files/")
-		err = fs.DeleteFile(workspaceID, filePath)
+		err = fs.DeleteFile(userID, workspaceID, filePath)
 		if err != nil {
 			http.Error(w, "Failed to delete file", http.StatusInternalServerError)
 			return
@@ -130,9 +122,9 @@ func DeleteFile(fs *filesystem.FileSystem) http.HandlerFunc {
 
 func GetSettings(db *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		workspaceID, err := strconv.Atoi(r.URL.Query().Get("workspaceId"))
+		_, workspaceID, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
-			http.Error(w, "Invalid workspaceId", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -142,55 +134,50 @@ func GetSettings(db *db.DB) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(settings); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		}
+		respondJSON(w, settings)
 	}
 }
 
 func UpdateSettings(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		var settings models.WorkspaceSettings
 		if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		if err := settings.Validate(); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+		settings.WorkspaceID = workspaceID
 
-		err := db.SaveWorkspaceSettings(settings)
-		if err != nil {
+		if err := db.SaveWorkspaceSettings(&settings); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		if settings.Settings.GitEnabled {
-			err := fs.SetupGitRepo(settings.WorkspaceID, settings.Settings.GitURL, settings.Settings.GitUser, settings.Settings.GitToken)
+			err := fs.SetupGitRepo(userID, workspaceID, settings.Settings.GitURL, settings.Settings.GitUser, settings.Settings.GitToken)
 			if err != nil {
 				http.Error(w, "Failed to setup git repo", http.StatusInternalServerError)
 				return
 			}
 		} else {
-			fs.DisableGitRepo(settings.WorkspaceID)
+			fs.DisableGitRepo(userID, workspaceID)
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(settings); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		}
+		respondJSON(w, settings)
 	}
 }
 
 func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		workspaceID, err := strconv.Atoi(r.URL.Query().Get("workspaceId"))
+		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
-			http.Error(w, "Invalid workspaceId", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -198,8 +185,7 @@ func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
 			Message string `json:"message"`
 		}
 
-		err = json.NewDecoder(r.Body).Decode(&requestBody)
-		if err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
@@ -209,36 +195,49 @@ func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		err = fs.StageCommitAndPush(workspaceID, requestBody.Message)
+		err = fs.StageCommitAndPush(userID, workspaceID, requestBody.Message)
 		if err != nil {
 			http.Error(w, "Failed to stage, commit, and push changes: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(map[string]string{"message": "Changes staged, committed, and pushed successfully"}); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		}
+		respondJSON(w, map[string]string{"message": "Changes staged, committed, and pushed successfully"})
 	}
 }
 
 func PullChanges(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		workspaceID, err := strconv.Atoi(r.URL.Query().Get("workspaceId"))
+		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
-			http.Error(w, "Invalid workspaceId", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		err = fs.Pull(workspaceID)
+		err = fs.Pull(userID, workspaceID)
 		if err != nil {
 			http.Error(w, "Failed to pull changes: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(map[string]string{"message": "Pulled changes from remote"}); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		}
+		respondJSON(w, map[string]string{"message": "Pulled changes from remote"})
 	}
+}
+
+func getUserAndWorkspaceIDs(r *http.Request) (int, int, error) {
+	userID, err := strconv.Atoi(r.URL.Query().Get("userId"))
+	if err != nil {
+		return 0, 0, errors.New("invalid userId")
+	}
+
+	workspaceID, err := strconv.Atoi(r.URL.Query().Get("workspaceId"))
+	if err != nil {
+		return 0, 0, errors.New("invalid workspaceId")
+	}
+
+	return userID, workspaceID, nil
+}
+
+func respondJSON(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
 }
