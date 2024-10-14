@@ -7,39 +7,37 @@ import (
 	"novamd/internal/models"
 )
 
-func (db *DB) GetSettings(userID int) (models.Settings, error) {
-	var settings models.Settings
+func (db *DB) GetWorkspaceSettings(workspaceID int) (*models.WorkspaceSettings, error) {
+	var settings models.WorkspaceSettings
 	var settingsJSON []byte
 
-	err := db.QueryRow("SELECT user_id, settings FROM settings WHERE user_id = ?", userID).Scan(&settings.UserID, &settingsJSON)
+	err := db.QueryRow("SELECT workspace_id, settings FROM workspace_settings WHERE workspace_id = ?", workspaceID).
+		Scan(&settings.WorkspaceID, &settingsJSON)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// If no settings found, return default settings
-			settings.UserID = userID
+			settings.WorkspaceID = workspaceID
 			settings.Settings = models.UserSettings{} // This will be filled with defaults later
-			return settings, nil
+			return &settings, nil
 		}
-		return settings, err
+		return nil, err
 	}
 
 	err = json.Unmarshal(settingsJSON, &settings.Settings)
 	if err != nil {
-		return settings, err
+		return nil, err
 	}
 
-	return settings, nil
+	return &settings, nil
 }
 
-func (db *DB) SaveSettings(settings models.Settings) error {
-	if err := settings.Validate(); err != nil {
-		return err
-	}
-
+func (db *DB) SaveWorkspaceSettings(settings *models.WorkspaceSettings) error {
 	settingsJSON, err := json.Marshal(settings.Settings)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec("INSERT OR REPLACE INTO settings (user_id, settings) VALUES (?, json(?))", settings.UserID, string(settingsJSON))
+	_, err = db.Exec("INSERT OR REPLACE INTO workspace_settings (workspace_id, settings) VALUES (?, ?)",
+		settings.WorkspaceID, settingsJSON)
 	return err
 }
