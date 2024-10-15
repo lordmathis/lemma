@@ -32,11 +32,10 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem) {
 						r.Put("/last", UpdateLastOpenedFile(db, fs))
 						r.Get("/lookup", LookupFileByName(fs)) // Moved here
 
-						r.Route("/*", func(r chi.Router) {
-							r.Post("/", SaveFile(fs))
-							r.Get("/", GetFileContent(fs))
-							r.Delete("/", DeleteFile(fs))
-						})
+						r.Post("/*", SaveFile(fs))
+						r.Get("/*", GetFileContent(fs))
+						r.Delete("/*", DeleteFile(fs))
+
 					})
 
 					// Settings routes
