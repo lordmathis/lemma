@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -36,17 +37,7 @@ func main() {
 		workdir = "./data"
 	}
 
-	settings, err := database.GetSettings(1) // Assuming user ID 1 for now
-	if err != nil {
-		log.Print("Settings not found, using default settings")
-	}
-	fs := filesystem.New(workdir, &settings)
-
-	if settings.Settings.GitEnabled {
-		if err := fs.InitializeGitRepo(); err != nil {
-			log.Fatal(err)
-		}
-	}
+	fs := filesystem.New(workdir)
 
 	// Set up router
 	r := chi.NewRouter()
@@ -64,21 +55,27 @@ func main() {
 		staticPath = "../frontend/dist"
 	}
 	fileServer := http.FileServer(http.Dir(staticPath))
-	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		requestedPath := r.URL.Path
-		validatedPath, err := filesystem.ValidatePath(staticPath, requestedPath)
-		if err != nil {
-			http.Error(w, "Invalid path", http.StatusBadRequest)
-			return
-		}
+	r.Get(
+		"/*",
+		func(w http.ResponseWriter, r *http.Request) {
+			requestedPath := r.URL.Path
 
-		_, err = os.Stat(validatedPath)
-		if os.IsNotExist(err) {
-			http.ServeFile(w, r, filepath.Join(staticPath, "index.html"))
-			return
-		}
-		http.StripPrefix("/", fileServer).ServeHTTP(w, r)
-	})
+			fullPath := filepath.Join(staticPath, requestedPath)
+			cleanPath := filepath.Clean(fullPath)
+
+			if !strings.HasPrefix(cleanPath, staticPath) {
+				http.Error(w, "Invalid path", http.StatusBadRequest)
+				return
+			}
+
+			_, err = os.Stat(cleanPath)
+			if os.IsNotExist(err) {
+				http.ServeFile(w, r, filepath.Join(staticPath, "index.html"))
+				return
+			}
+			http.StripPrefix("/", fileServer).ServeHTTP(w, r)
+		},
+	)
 
 	// Start server
 	port := os.Getenv("NOVAMD_PORT")
