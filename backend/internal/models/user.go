@@ -5,11 +5,13 @@ import (
 )
 
 type User struct {
-	ID           int       `json:"id" validate:"required,min=1"`
-	Username     string    `json:"username" validate:"required"`
-	Email        string    `json:"email" validate:"required,email"`
-	PasswordHash string    `json:"-"`
-	CreatedAt    time.Time `json:"createdAt"`
+	ID                 int       `json:"id" validate:"required,min=1"`
+	Email              string    `json:"email" validate:"required,email"`
+	DisplayName        string    `json:"displayName"`
+	PasswordHash       string    `json:"-"`
+	CreatedAt          time.Time `json:"createdAt"`
+	LastWorkspaceID    int       `json:"lastWorkspaceId"`
+	LastOpenedFilePath string    `json:"lastOpenedFilePath"`
 }
 
 func (u *User) Validate() error {

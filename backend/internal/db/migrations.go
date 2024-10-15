@@ -13,21 +13,16 @@ type Migration struct {
 var migrations = []Migration{
 	{
 		Version: 1,
-		SQL: `CREATE TABLE IF NOT EXISTS settings (
-			user_id INTEGER PRIMARY KEY,
-			settings JSON NOT NULL
-		)`,
-	},
-	{
-		Version: 2,
 		SQL: `
 		-- Create users table
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			username TEXT NOT NULL UNIQUE,
 			email TEXT NOT NULL UNIQUE,
+			display_name TEXT,
 			password_hash TEXT NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			last_workspace_id INTEGER,
+			last_opened_file_path TEXT
 		);
 
 		-- Create workspaces table
@@ -39,30 +34,16 @@ var migrations = []Migration{
 			FOREIGN KEY (user_id) REFERENCES users (id)
 		);
 
+		-- Add foreign key constraint to users table
+		ALTER TABLE users ADD CONSTRAINT fk_last_workspace
+		FOREIGN KEY (last_workspace_id) REFERENCES workspaces (id);
+
 		-- Create workspace_settings table
 		CREATE TABLE IF NOT EXISTS workspace_settings (
 			workspace_id INTEGER PRIMARY KEY,
 			settings JSON NOT NULL,
 			FOREIGN KEY (workspace_id) REFERENCES workspaces (id)
 		);
-
-		-- Migrate existing settings to a default user and workspace
-		INSERT INTO users (username, email, password_hash) 
-		VALUES ('default_user', 'default@example.com', 'placeholder_hash');
-
-		INSERT INTO workspaces (user_id, name, root_path) 
-		SELECT 1, 'Default Workspace'
-		WHERE NOT EXISTS (SELECT 1 FROM workspaces);
-
-		INSERT INTO workspace_settings (workspace_id, settings)
-		SELECT w.id, s.settings
-		FROM workspaces w
-		CROSS JOIN settings s
-		WHERE w.name = 'Default Workspace'
-		  AND NOT EXISTS (SELECT 1 FROM workspace_settings);
-
-		-- Drop the old settings table
-		DROP TABLE IF EXISTS settings;
 		`,
 	},
 }
