@@ -34,10 +34,6 @@ var migrations = []Migration{
 			FOREIGN KEY (user_id) REFERENCES users (id)
 		);
 
-		-- Add foreign key constraint to users table
-		ALTER TABLE users ADD CONSTRAINT fk_last_workspace
-		FOREIGN KEY (last_workspace_id) REFERENCES workspaces (id);
-
 		-- Create workspace_settings table
 		CREATE TABLE IF NOT EXISTS workspace_settings (
 			workspace_id INTEGER PRIMARY KEY,
