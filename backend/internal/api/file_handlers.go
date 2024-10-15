@@ -2,15 +2,13 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"novamd/internal/db"
 	"novamd/internal/filesystem"
-	"novamd/internal/models"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func ListFiles(fs *filesystem.FileSystem) http.HandlerFunc {
@@ -63,7 +61,7 @@ func GetFileContent(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		filePath := strings.TrimPrefix(r.URL.Path, "/api/v1/files/")
+		filePath := chi.URLParam(r, "*")
 		content, err := fs.GetFileContent(userID, workspaceID, filePath)
 		if err != nil {
 			http.Error(w, "Failed to read file", http.StatusNotFound)
@@ -83,7 +81,7 @@ func SaveFile(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		filePath := strings.TrimPrefix(r.URL.Path, "/api/v1/files/")
+		filePath := chi.URLParam(r, "*")
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Failed to read request body", http.StatusBadRequest)
@@ -108,7 +106,7 @@ func DeleteFile(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		filePath := strings.TrimPrefix(r.URL.Path, "/api/v1/files/")
+		filePath := chi.URLParam(r, "*")
 		err = fs.DeleteFile(userID, workspaceID, filePath)
 		if err != nil {
 			http.Error(w, "Failed to delete file", http.StatusInternalServerError)
@@ -120,60 +118,25 @@ func DeleteFile(fs *filesystem.FileSystem) http.HandlerFunc {
 	}
 }
 
-func GetSettings(db *db.DB) http.HandlerFunc {
+func GetLastOpenedFile(db *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, workspaceID, err := getUserAndWorkspaceIDs(r)
+		userID, _, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		settings, err := db.GetWorkspaceSettings(workspaceID)
+		user, err := db.GetUserByID(userID)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to get user", http.StatusInternalServerError)
 			return
 		}
 
-		respondJSON(w, settings)
+		respondJSON(w, map[string]string{"lastOpenedFile": user.LastOpenedFilePath})
 	}
 }
 
-func UpdateSettings(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		var settings models.WorkspaceSettings
-		if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		settings.WorkspaceID = workspaceID
-
-		if err := db.SaveWorkspaceSettings(&settings); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if settings.Settings.GitEnabled {
-			err := fs.SetupGitRepo(userID, workspaceID, settings.Settings.GitURL, settings.Settings.GitUser, settings.Settings.GitToken)
-			if err != nil {
-				http.Error(w, "Failed to setup git repo", http.StatusInternalServerError)
-				return
-			}
-		} else {
-			fs.DisableGitRepo(userID, workspaceID)
-		}
-
-		respondJSON(w, settings)
-	}
-}
-
-func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
+func UpdateLastOpenedFile(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
@@ -182,7 +145,7 @@ func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
 		}
 
 		var requestBody struct {
-			Message string `json:"message"`
+			FilePath string `json:"filePath"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
@@ -190,54 +153,18 @@ func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		if requestBody.Message == "" {
-			http.Error(w, "Commit message is required", http.StatusBadRequest)
-			return
-		}
-
-		err = fs.StageCommitAndPush(userID, workspaceID, requestBody.Message)
+		// Validate that the file path is valid within the workspace
+		_, err = fs.ValidatePath(userID, workspaceID, requestBody.FilePath)
 		if err != nil {
-			http.Error(w, "Failed to stage, commit, and push changes: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Invalid file path", http.StatusBadRequest)
 			return
 		}
 
-		respondJSON(w, map[string]string{"message": "Changes staged, committed, and pushed successfully"})
-	}
-}
-
-func PullChanges(fs *filesystem.FileSystem) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		if err := db.UpdateLastOpenedFile(userID, requestBody.FilePath); err != nil {
+			http.Error(w, "Failed to update last opened file", http.StatusInternalServerError)
 			return
 		}
 
-		err = fs.Pull(userID, workspaceID)
-		if err != nil {
-			http.Error(w, "Failed to pull changes: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		respondJSON(w, map[string]string{"message": "Pulled changes from remote"})
+		respondJSON(w, map[string]string{"message": "Last opened file updated successfully"})
 	}
-}
-
-func getUserAndWorkspaceIDs(r *http.Request) (int, int, error) {
-	userID, err := strconv.Atoi(r.URL.Query().Get("userId"))
-	if err != nil {
-		return 0, 0, errors.New("invalid userId")
-	}
-
-	workspaceID, err := strconv.Atoi(r.URL.Query().Get("workspaceId"))
-	if err != nil {
-		return 0, 0, errors.New("invalid workspaceId")
-	}
-
-	return userID, workspaceID, nil
-}
-
-func respondJSON(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(data)
 }

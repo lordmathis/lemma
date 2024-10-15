@@ -46,3 +46,14 @@ func (db *DB) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
 	}
 	return workspaces, nil
 }
+
+func (db *DB) UpdateWorkspace(workspace *models.Workspace) error {
+	_, err := db.Exec("UPDATE workspaces SET name = ? WHERE id = ? AND user_id = ?",
+		workspace.Name, workspace.ID, workspace.UserID)
+	return err
+}
+
+func (db *DB) DeleteWorkspace(id int) error {
+	_, err := db.Exec("DELETE FROM workspaces WHERE id = ?", id)
+	return err
+}
