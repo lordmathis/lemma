@@ -8,7 +8,7 @@ import (
 )
 
 func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem) {
-	r.Route("/api/v1", func(r chi.Router) {
+	r.Route("/", func(r chi.Router) {
 		// User routes
 		r.Route("/users/{userId}", func(r chi.Router) {
 			r.Get("/", GetUser(db))
