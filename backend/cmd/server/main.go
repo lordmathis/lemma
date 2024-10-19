@@ -13,6 +13,7 @@ import (
 	"novamd/internal/api"
 	"novamd/internal/db"
 	"novamd/internal/filesystem"
+	"novamd/internal/user"
 )
 
 func main() {
@@ -38,6 +39,12 @@ func main() {
 	}
 
 	fs := filesystem.New(workdir)
+
+	// User service
+	userService := user.NewUserService(database, fs)
+
+	// Admin user
+	userService.SetupAdminUser()
 
 	// Set up router
 	r := chi.NewRouter()

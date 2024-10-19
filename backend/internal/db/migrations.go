@@ -20,6 +20,7 @@ var migrations = []Migration{
 			email TEXT NOT NULL UNIQUE,
 			display_name TEXT,
 			password_hash TEXT NOT NULL,
+			role TEXT NOT NULL CHECK(role IN ('admin', 'editor', 'viewer')),
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			last_workspace_id INTEGER,
 			last_opened_file_path TEXT
