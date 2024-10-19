@@ -3,10 +3,10 @@ import { Box } from '@mantine/core';
 import FileActions from './FileActions';
 import FileTree from './FileTree';
 import { useGitOperations } from '../hooks/useGitOperations';
-import { useSettings } from '../contexts/SettingsContext';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 
 const Sidebar = ({ selectedFile, handleFileSelect, files, loadFileList }) => {
-  const { settings } = useSettings();
+  const { settings } = useWorkspace();
   const { handlePull } = useGitOperations(settings.gitEnabled);
 
   useEffect(() => {

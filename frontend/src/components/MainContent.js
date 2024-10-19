@@ -10,7 +10,7 @@ import CommitMessageModal from './modals/CommitMessageModal';
 import { useFileContent } from '../hooks/useFileContent';
 import { useFileOperations } from '../hooks/useFileOperations';
 import { useGitOperations } from '../hooks/useGitOperations';
-import { useSettings } from '../contexts/SettingsContext';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 
 const MainContent = ({
   selectedFile,
@@ -19,7 +19,7 @@ const MainContent = ({
   loadFileList,
 }) => {
   const [activeTab, setActiveTab] = useState('source');
-  const { settings } = useSettings();
+  const { settings } = useWorkspace();
   const {
     content,
     hasUnsavedChanges,

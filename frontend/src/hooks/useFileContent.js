@@ -2,38 +2,45 @@ import { useState, useCallback, useEffect } from 'react';
 import { fetchFileContent } from '../services/api';
 import { isImageFile } from '../utils/fileHelpers';
 import { DEFAULT_FILE } from '../utils/constants';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 
 export const useFileContent = (selectedFile) => {
+  const { currentWorkspace } = useWorkspace();
   const [content, setContent] = useState(DEFAULT_FILE.content);
   const [originalContent, setOriginalContent] = useState(DEFAULT_FILE.content);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  const loadFileContent = useCallback(async (filePath) => {
-    try {
-      let newContent;
-      if (filePath === DEFAULT_FILE.path) {
-        newContent = DEFAULT_FILE.content;
-      } else if (!isImageFile(filePath)) {
-        newContent = await fetchFileContent(filePath);
-      } else {
-        newContent = ''; // Set empty content for image files
+  const loadFileContent = useCallback(
+    async (filePath) => {
+      if (!currentWorkspace) return;
+
+      try {
+        let newContent;
+        if (filePath === DEFAULT_FILE.path) {
+          newContent = DEFAULT_FILE.content;
+        } else if (!isImageFile(filePath)) {
+          newContent = await fetchFileContent(currentWorkspace.id, filePath);
+        } else {
+          newContent = ''; // Set empty content for image files
+        }
+        setContent(newContent);
+        setOriginalContent(newContent);
+        setHasUnsavedChanges(false);
+      } catch (err) {
+        console.error('Error loading file content:', err);
+        setContent(''); // Set empty content on error
+        setOriginalContent('');
+        setHasUnsavedChanges(false);
       }
-      setContent(newContent);
-      setOriginalContent(newContent);
-      setHasUnsavedChanges(false);
-    } catch (err) {
-      console.error('Error loading file content:', err);
-      setContent(''); // Set empty content on error
-      setOriginalContent('');
-      setHasUnsavedChanges(false);
-    }
-  }, []);
+    },
+    [currentWorkspace]
+  );
 
   useEffect(() => {
-    if (selectedFile) {
+    if (selectedFile && currentWorkspace) {
       loadFileContent(selectedFile);
     }
-  }, [selectedFile, loadFileContent]);
+  }, [selectedFile, currentWorkspace, loadFileContent]);
 
   const handleContentChange = useCallback(
     (newContent) => {

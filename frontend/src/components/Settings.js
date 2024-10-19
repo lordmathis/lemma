@@ -1,7 +1,7 @@
 import React, { useReducer, useEffect, useCallback, useRef } from 'react';
 import { Modal, Badge, Button, Group, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useSettings } from '../contexts/SettingsContext';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 import AppearanceSettings from './settings/AppearanceSettings';
 import EditorSettings from './settings/EditorSettings';
 import GitSettings from './settings/GitSettings';
@@ -50,7 +50,7 @@ function settingsReducer(state, action) {
 }
 
 const Settings = () => {
-  const { settings, updateSettings, colorScheme } = useSettings();
+  const { settings, updateSettings, colorScheme } = useWorkspace();
   const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
   const isInitialMount = useRef(true);

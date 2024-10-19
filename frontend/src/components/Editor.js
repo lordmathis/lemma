@@ -5,10 +5,10 @@ import { EditorView, keymap } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { defaultKeymap } from '@codemirror/commands';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { useSettings } from '../contexts/SettingsContext';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 
 const Editor = ({ content, handleContentChange, handleSave, selectedFile }) => {
-  const { settings } = useSettings();
+  const { settings } = useWorkspace();
   const editorRef = useRef();
   const viewRef = useRef();
 

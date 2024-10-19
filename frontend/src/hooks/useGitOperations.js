@@ -1,12 +1,16 @@
 import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
 import { pullChanges, commitAndPush } from '../services/api';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 
-export const useGitOperations = (gitEnabled) => {
+export const useGitOperations = () => {
+  const { currentWorkspace, settings } = useWorkspace();
+
   const handlePull = useCallback(async () => {
-    if (!gitEnabled) return false;
+    if (!currentWorkspace || !settings.gitEnabled) return false;
+
     try {
-      await pullChanges();
+      await pullChanges(currentWorkspace.id);
       notifications.show({
         title: 'Success',
         message: 'Successfully pulled latest changes',
@@ -22,13 +26,14 @@ export const useGitOperations = (gitEnabled) => {
       });
       return false;
     }
-  }, [gitEnabled]);
+  }, [currentWorkspace, settings.gitEnabled]);
 
   const handleCommitAndPush = useCallback(
     async (message) => {
-      if (!gitEnabled) return false;
+      if (!currentWorkspace || !settings.gitEnabled) return false;
+
       try {
-        await commitAndPush(message);
+        await commitAndPush(currentWorkspace.id, message);
         notifications.show({
           title: 'Success',
           message: 'Successfully committed and pushed changes',
@@ -45,7 +50,7 @@ export const useGitOperations = (gitEnabled) => {
         return false;
       }
     },
-    [gitEnabled]
+    [currentWorkspace, settings.gitEnabled]
   );
 
   return { handlePull, handleCommitAndPush };
