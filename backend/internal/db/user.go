@@ -80,13 +80,19 @@ func (db *DB) GetUserByID(id int) (*models.User, error) {
 
 func (db *DB) GetUserByEmail(email string) (*models.User, error) {
 	user := &models.User{}
+	var lastOpenedFilePath sql.NullString
 	err := db.QueryRow(`
 		SELECT id, email, display_name, password_hash, role, created_at, last_workspace_id, last_opened_file_path
 		FROM users WHERE email = ?`, email).
 		Scan(&user.ID, &user.Email, &user.DisplayName, &user.PasswordHash, &user.Role, &user.CreatedAt,
-			&user.LastWorkspaceID, &user.LastOpenedFilePath)
+			&user.LastWorkspaceID, &lastOpenedFilePath)
 	if err != nil {
 		return nil, err
+	}
+	if lastOpenedFilePath.Valid {
+		user.LastOpenedFilePath = lastOpenedFilePath.String
+	} else {
+		user.LastOpenedFilePath = ""
 	}
 	return user, nil
 }

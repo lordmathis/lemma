@@ -44,7 +44,10 @@ func main() {
 	userService := user.NewUserService(database, fs)
 
 	// Admin user
-	userService.SetupAdminUser()
+	_, err = userService.SetupAdminUser()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Set up router
 	r := chi.NewRouter()

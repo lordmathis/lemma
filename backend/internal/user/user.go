@@ -34,7 +34,7 @@ func (s *UserService) SetupAdminUser() (*models.User, error) {
 
 	// Check if admin user exists
 	adminUser, err := s.DB.GetUserByEmail(adminEmail)
-	if err == nil {
+	if adminUser != nil {
 		return adminUser, nil // Admin user already exists
 	}
 
