@@ -1,23 +1,76 @@
 package db
 
 import (
+	"database/sql"
 	"novamd/internal/models"
 )
 
 func (db *DB) CreateUser(user *models.User) error {
-	_, err := db.Exec(`
-		INSERT INTO users (email, display_name, password_hash)
-		VALUES (?, ?, ?)`,
-		user.Email, user.DisplayName, user.PasswordHash)
-	return err
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	result, err := tx.Exec(`
+		INSERT INTO users (email, display_name, password_hash, role)
+		VALUES (?, ?, ?, ?)`,
+		user.Email, user.DisplayName, user.PasswordHash, user.Role)
+	if err != nil {
+		return err
+	}
+
+	userID, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	user.ID = int(userID)
+
+	// Create default workspace
+	defaultWorkspace := &models.Workspace{
+		UserID: user.ID,
+		Name:   "Main",
+	}
+	err = db.createWorkspaceTx(tx, defaultWorkspace)
+	if err != nil {
+		return err
+	}
+
+	// Update user's last workspace ID
+	_, err = tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", defaultWorkspace.ID, user.ID)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	user.LastWorkspaceID = defaultWorkspace.ID
+	return nil
+}
+
+func (db *DB) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
+	result, err := tx.Exec("INSERT INTO workspaces (user_id, name) VALUES (?, ?)",
+		workspace.UserID, workspace.Name)
+	if err != nil {
+		return err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	workspace.ID = int(id)
+	return nil
 }
 
 func (db *DB) GetUserByID(id int) (*models.User, error) {
 	user := &models.User{}
 	err := db.QueryRow(`
-		SELECT id, email, display_name, created_at, last_workspace_id, last_opened_file_path
+		SELECT id, email, display_name, role, created_at, last_workspace_id, last_opened_file_path
 		FROM users WHERE id = ?`, id).
-		Scan(&user.ID, &user.Email, &user.DisplayName, &user.CreatedAt,
+		Scan(&user.ID, &user.Email, &user.DisplayName, &user.Role, &user.CreatedAt,
 			&user.LastWorkspaceID, &user.LastOpenedFilePath)
 	if err != nil {
 		return nil, err
@@ -28,9 +81,9 @@ func (db *DB) GetUserByID(id int) (*models.User, error) {
 func (db *DB) GetUserByEmail(email string) (*models.User, error) {
 	user := &models.User{}
 	err := db.QueryRow(`
-		SELECT id, email, display_name, password_hash, created_at, last_workspace_id, last_opened_file_path
+		SELECT id, email, display_name, password_hash, role, created_at, last_workspace_id, last_opened_file_path
 		FROM users WHERE email = ?`, email).
-		Scan(&user.ID, &user.Email, &user.DisplayName, &user.PasswordHash, &user.CreatedAt,
+		Scan(&user.ID, &user.Email, &user.DisplayName, &user.PasswordHash, &user.Role, &user.CreatedAt,
 			&user.LastWorkspaceID, &user.LastOpenedFilePath)
 	if err != nil {
 		return nil, err
@@ -41,9 +94,9 @@ func (db *DB) GetUserByEmail(email string) (*models.User, error) {
 func (db *DB) UpdateUser(user *models.User) error {
 	_, err := db.Exec(`
 		UPDATE users
-		SET email = ?, display_name = ?, last_workspace_id = ?, last_opened_file_path = ?
+		SET email = ?, display_name = ?, role = ?, last_workspace_id = ?, last_opened_file_path = ?
 		WHERE id = ?`,
-		user.Email, user.DisplayName, user.LastWorkspaceID, user.LastOpenedFilePath, user.ID)
+		user.Email, user.DisplayName, user.Role, user.LastWorkspaceID, user.LastOpenedFilePath, user.ID)
 	return err
 }
 

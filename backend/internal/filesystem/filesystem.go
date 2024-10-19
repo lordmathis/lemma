@@ -32,6 +32,33 @@ func (fs *FileSystem) GetWorkspacePath(userID, workspaceID int) string {
 	return filepath.Join(fs.RootDir, fmt.Sprintf("%d", userID), fmt.Sprintf("%d", workspaceID))
 }
 
+func (fs *FileSystem) InitializeUserWorkspace(userID, workspaceID int) error {
+	workspacePath := fs.GetWorkspacePath(userID, workspaceID)
+	err := os.MkdirAll(workspacePath, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create workspace directory: %w", err)
+	}
+	// Optionally, create a welcome file in the new workspace
+	// welcomeFilePath := filepath.Join(workspacePath, "Welcome.md")
+	// welcomeContent := []byte("# Welcome to Your Main Workspace\n\nThis is your default workspace in NovaMD. You can start creating and editing files right away!")
+	// err = os.WriteFile(welcomeFilePath, welcomeContent, 0644)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to create welcome file: %w", err)
+	// }
+
+	return nil
+}
+
+func (fs *FileSystem) DeleteUserWorkspace(userID, workspaceID int) error {
+	workspacePath := fs.GetWorkspacePath(userID, workspaceID)
+	err := os.RemoveAll(workspacePath)
+	if err != nil {
+		return fmt.Errorf("failed to delete workspace directory: %w", err)
+	}
+
+	return nil
+}
+
 func (fs *FileSystem) ValidatePath(userID, workspaceID int, path string) (string, error) {
 	workspacePath := fs.GetWorkspacePath(userID, workspaceID)
 	fullPath := filepath.Join(workspacePath, path)
