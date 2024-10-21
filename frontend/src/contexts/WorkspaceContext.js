@@ -7,9 +7,10 @@ import React, {
 } from 'react';
 import { useMantineColorScheme } from '@mantine/core';
 import {
-  fetchLastWorkspace,
+  fetchLastWorkspaceId,
   fetchWorkspaceSettings,
   saveWorkspaceSettings,
+  getWorkspace,
 } from '../services/api';
 import { DEFAULT_SETTINGS } from '../utils/constants';
 
@@ -22,25 +23,30 @@ export const WorkspaceProvider = ({ children }) => {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
 
   useEffect(() => {
-    const loadWorkspaceAndSettings = async () => {
+    const loadWorkspace = async () => {
       try {
-        const workspace = await fetchLastWorkspace();
-        setCurrentWorkspace(workspace);
-
-        if (workspace) {
-          const workspaceSettings = await fetchWorkspaceSettings(workspace.id);
+        const { lastWorkspaceId } = await fetchLastWorkspaceId();
+        if (lastWorkspaceId) {
+          const workspace = await getWorkspace(lastWorkspaceId);
+          console.log('Workspace: ', workspace);
+          setCurrentWorkspace(workspace);
+          const workspaceSettings = await fetchWorkspaceSettings(
+            lastWorkspaceId
+          );
           setSettings(workspaceSettings.settings);
           setColorScheme(workspaceSettings.settings.theme);
+        } else {
+          console.warn('No last workspace found');
         }
       } catch (error) {
-        console.error('Failed to load workspace or settings:', error);
+        console.error('Failed to initialize workspace:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadWorkspaceAndSettings();
-  }, [setColorScheme]);
+    loadWorkspace();
+  }, []);
 
   const updateSettings = useCallback(
     async (newSettings) => {
@@ -68,12 +74,11 @@ export const WorkspaceProvider = ({ children }) => {
 
   const value = {
     currentWorkspace,
-    setCurrentWorkspace,
     settings,
     updateSettings,
-    toggleColorScheme,
     loading,
     colorScheme,
+    toggleColorScheme,
   };
 
   return (

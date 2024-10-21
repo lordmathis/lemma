@@ -82,7 +82,7 @@ func (fs *FileSystem) walkDirectory(dir, prefix string) ([]FileNode, error) {
 		return nil, err
 	}
 
-	var nodes []FileNode
+	nodes := make([]FileNode, 0)
 	for _, entry := range entries {
 		name := entry.Name()
 		path := filepath.Join(prefix, name)
