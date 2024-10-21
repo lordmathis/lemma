@@ -77,7 +77,7 @@ func GetWorkspace(db *db.DB) http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, map[string]string{"name": workspace.Name})
+		respondJSON(w, workspace)
 	}
 }
 

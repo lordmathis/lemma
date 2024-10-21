@@ -16,7 +16,7 @@ const apiCall = async (url, options = {}) => {
   }
 };
 
-export const fetchLastWorkspace = async () => {
+export const fetchLastWorkspaceId = async () => {
   const response = await apiCall(`${API_BASE_URL}/users/1/workspaces/last`);
   return response.json();
 };
@@ -57,6 +57,13 @@ export const deleteFile = async (workspaceId, filePath) => {
     }
   );
   return response.text();
+};
+
+export const getWorkspace = async (workspaceId) => {
+  const response = await apiCall(
+    `${API_BASE_URL}/users/1/workspaces/${workspaceId}`
+  );
+  return response.json();
 };
 
 export const fetchWorkspaceSettings = async (workspaceId) => {

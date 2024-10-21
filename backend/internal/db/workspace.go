@@ -20,7 +20,7 @@ func (db *DB) CreateWorkspace(workspace *models.Workspace) error {
 
 func (db *DB) GetWorkspaceByID(id int) (*models.Workspace, error) {
 	workspace := &models.Workspace{}
-	err := db.QueryRow("SELECT id, user_id, name, root_path, created_at FROM workspaces WHERE id = ?", id).
+	err := db.QueryRow("SELECT id, user_id, name, created_at FROM workspaces WHERE id = ?", id).
 		Scan(&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func (db *DB) GetWorkspaceByID(id int) (*models.Workspace, error) {
 }
 
 func (db *DB) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
-	rows, err := db.Query("SELECT id, user_id, name, root_path, created_at FROM workspaces WHERE user_id = ?", userID)
+	rows, err := db.Query("SELECT id, user_id, name, created_at FROM workspaces WHERE user_id = ?", userID)
 	if err != nil {
 		return nil, err
 	}
