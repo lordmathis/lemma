@@ -36,8 +36,8 @@ const Layout = () => {
           p={0}
           style={{
             display: 'flex',
-            height: 'calc(100vh - 60px - 2rem)',
-            overflow: 'hidden',
+            height: 'calc(100vh - 60px - 2rem)', // Subtracting header height and vertical padding
+            overflow: 'hidden', // Prevent scrolling in the container
           }}
         >
           <Sidebar

@@ -81,7 +81,7 @@ export const saveWorkspaceSettings = async (workspaceId, settings) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ settings }),
+      body: JSON.stringify(settings),
     }
   );
   return response.json();

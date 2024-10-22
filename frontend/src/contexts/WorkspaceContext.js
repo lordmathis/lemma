@@ -54,9 +54,7 @@ export const WorkspaceProvider = ({ children }) => {
       try {
         await saveWorkspaceSettings(currentWorkspace.id, newSettings);
         setSettings(newSettings);
-        if (newSettings.theme) {
-          setColorScheme(newSettings.theme);
-        }
+        setColorScheme(newSettings.theme);
       } catch (error) {
         console.error('Failed to save settings:', error);
         throw error;
@@ -65,11 +63,13 @@ export const WorkspaceProvider = ({ children }) => {
     [currentWorkspace, setColorScheme]
   );
 
-  const toggleColorScheme = useCallback(() => {
-    const newTheme = colorScheme === 'dark' ? 'light' : 'dark';
-    setColorScheme(newTheme);
-    updateSettings({ ...settings, theme: newTheme });
-  }, [colorScheme, settings, setColorScheme, updateSettings]);
+  // Update just the color scheme without saving to backend
+  const updateColorScheme = useCallback(
+    (newTheme) => {
+      setColorScheme(newTheme);
+    },
+    [setColorScheme]
+  );
 
   const value = {
     currentWorkspace,
@@ -77,7 +77,7 @@ export const WorkspaceProvider = ({ children }) => {
     updateSettings,
     loading,
     colorScheme,
-    toggleColorScheme,
+    updateColorScheme,
   };
 
   return (

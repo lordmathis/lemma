@@ -38,19 +38,13 @@ function settingsReducer(state, action) {
         initialSettings: state.localSettings,
         hasUnsavedChanges: false,
       };
-    case 'RESET':
-      return {
-        ...state,
-        localSettings: state.initialSettings,
-        hasUnsavedChanges: false,
-      };
     default:
       return state;
   }
 }
 
 const Settings = () => {
-  const { settings, updateSettings, colorScheme } = useWorkspace();
+  const { settings, updateSettings } = useWorkspace();
   const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
   const isInitialMount = useRef(true);
@@ -61,13 +55,6 @@ const Settings = () => {
       dispatch({ type: 'INIT_SETTINGS', payload: settings });
     }
   }, [settings]);
-
-  useEffect(() => {
-    dispatch({
-      type: 'UPDATE_LOCAL_SETTINGS',
-      payload: { theme: colorScheme },
-    });
-  }, [colorScheme]);
 
   const handleInputChange = useCallback((key, value) => {
     dispatch({ type: 'UPDATE_LOCAL_SETTINGS', payload: { [key]: value } });
@@ -92,11 +79,8 @@ const Settings = () => {
   };
 
   const handleClose = useCallback(() => {
-    if (state.hasUnsavedChanges) {
-      dispatch({ type: 'RESET' });
-    }
     setSettingsModalVisible(false);
-  }, [state.hasUnsavedChanges, setSettingsModalVisible]);
+  }, [setSettingsModalVisible]);
 
   return (
     <Modal

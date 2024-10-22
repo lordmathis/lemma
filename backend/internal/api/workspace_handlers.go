@@ -218,21 +218,29 @@ func UpdateWorkspaceSettings(db *db.DB, fs *filesystem.FileSystem) http.HandlerF
 			return
 		}
 
-		var settings models.WorkspaceSettings
-		if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
+		var userSettings models.UserSettings
+		if err := json.NewDecoder(r.Body).Decode(&userSettings); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if err := userSettings.Validate(); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		settings.WorkspaceID = workspaceID
+		workspaceSettings := &models.WorkspaceSettings{
+			WorkspaceID: workspaceID,
+			Settings:    userSettings,
+		}
 
-		if err := db.SaveWorkspaceSettings(&settings); err != nil {
+		if err := db.SaveWorkspaceSettings(workspaceSettings); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		if settings.Settings.GitEnabled {
-			err := fs.SetupGitRepo(userID, workspaceID, settings.Settings.GitURL, settings.Settings.GitUser, settings.Settings.GitToken)
+		if userSettings.GitEnabled {
+			err := fs.SetupGitRepo(userID, workspaceID, userSettings.GitURL, userSettings.GitUser, userSettings.GitToken)
 			if err != nil {
 				http.Error(w, "Failed to setup git repo", http.StatusInternalServerError)
 				return
@@ -241,6 +249,6 @@ func UpdateWorkspaceSettings(db *db.DB, fs *filesystem.FileSystem) http.HandlerF
 			fs.DisableGitRepo(userID, workspaceID)
 		}
 
-		respondJSON(w, settings)
+		respondJSON(w, workspaceSettings)
 	}
 }
