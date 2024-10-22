@@ -28,7 +28,6 @@ export const WorkspaceProvider = ({ children }) => {
         const { lastWorkspaceId } = await fetchLastWorkspaceId();
         if (lastWorkspaceId) {
           const workspace = await getWorkspace(lastWorkspaceId);
-          console.log('Workspace: ', workspace);
           setCurrentWorkspace(workspace);
           const workspaceSettings = await fetchWorkspaceSettings(
             lastWorkspaceId
