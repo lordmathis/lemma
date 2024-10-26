@@ -38,7 +38,7 @@ export const useFileNavigation = () => {
         });
       }
     },
-    [currentWorkspace, handleFileSelect]
+    [currentWorkspace]
   );
 
   return { handleLinkClick, selectedFile, isNewFile, handleFileSelect };

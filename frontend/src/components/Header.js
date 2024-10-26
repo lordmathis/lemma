@@ -1,6 +1,6 @@
 import React from 'react';
 import { Group, Text, Avatar } from '@mantine/core';
-import WorkspaceMenu from './WorkspaceMenu';
+import WorkspaceSwitcher from './WorkspaceSwitcher';
 import Settings from './Settings';
 
 const Header = () => {
@@ -10,8 +10,8 @@ const Header = () => {
         NovaMD
       </Text>
       <Group>
+        <WorkspaceSwitcher />
         <Avatar src="https://via.placeholder.com/40" radius="xl" />
-        <WorkspaceMenu />
       </Group>
       <Settings />
     </Group>

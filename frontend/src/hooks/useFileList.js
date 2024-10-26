@@ -20,7 +20,7 @@ export const useFileList = () => {
       console.error('Failed to load file list:', error);
       setFiles([]);
     }
-  }, [currentWorkspace, workspaceLoading]);
+  }, [currentWorkspace]);
 
   return { files, loadFileList };
 };

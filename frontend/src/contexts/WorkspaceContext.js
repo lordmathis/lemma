@@ -6,6 +6,7 @@ import React, {
   useCallback,
 } from 'react';
 import { useMantineColorScheme } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
   fetchLastWorkspaceId,
   fetchWorkspaceSettings,
@@ -22,18 +23,29 @@ export const WorkspaceProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const { colorScheme, setColorScheme } = useMantineColorScheme();
 
+  const loadWorkspaceData = useCallback(async (workspaceId) => {
+    try {
+      const workspace = await getWorkspace(workspaceId);
+      setCurrentWorkspace(workspace);
+      const workspaceSettings = await fetchWorkspaceSettings(workspaceId);
+      setSettings(workspaceSettings.settings);
+      setColorScheme(workspaceSettings.settings.theme);
+    } catch (error) {
+      console.error('Failed to load workspace data:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to load workspace data',
+        color: 'red',
+      });
+    }
+  }, []);
+
   useEffect(() => {
-    const loadWorkspace = async () => {
+    const initializeWorkspace = async () => {
       try {
         const { lastWorkspaceId } = await fetchLastWorkspaceId();
         if (lastWorkspaceId) {
-          const workspace = await getWorkspace(lastWorkspaceId);
-          setCurrentWorkspace(workspace);
-          const workspaceSettings = await fetchWorkspaceSettings(
-            lastWorkspaceId
-          );
-          setSettings(workspaceSettings.settings);
-          setColorScheme(workspaceSettings.settings.theme);
+          await loadWorkspaceData(lastWorkspaceId);
         } else {
           console.warn('No last workspace found');
         }
@@ -44,7 +56,29 @@ export const WorkspaceProvider = ({ children }) => {
       }
     };
 
-    loadWorkspace();
+    initializeWorkspace();
+  }, []);
+
+  const switchWorkspace = useCallback(async (workspaceId) => {
+    try {
+      setLoading(true);
+      await updateLastWorkspace(workspaceId);
+      await loadWorkspaceData(workspaceId);
+      notifications.show({
+        title: 'Success',
+        message: 'Workspace switched successfully',
+        color: 'green',
+      });
+    } catch (error) {
+      console.error('Failed to switch workspace:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to switch workspace',
+        color: 'red',
+      });
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const updateSettings = useCallback(
@@ -78,6 +112,7 @@ export const WorkspaceProvider = ({ children }) => {
     loading,
     colorScheme,
     updateColorScheme,
+    switchWorkspace,
   };
 
   return (

@@ -21,7 +21,7 @@ export const useFileOperations = () => {
         await handleCommitAndPush(commitMessage);
       }
     },
-    [settings, handleCommitAndPush]
+    [settings]
   );
 
   const handleSave = useCallback(
