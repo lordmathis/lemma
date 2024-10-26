@@ -10,6 +10,8 @@ export const ModalProvider = ({ children }) => {
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
   const [switchWorkspaceModalVisible, setSwitchWorkspaceModalVisible] =
     useState(false);
+  const [createWorkspaceModalVisible, setCreateWorkspaceModalVisible] =
+    useState(false);
 
   const value = {
     newFileModalVisible,
@@ -22,6 +24,8 @@ export const ModalProvider = ({ children }) => {
     setSettingsModalVisible,
     switchWorkspaceModalVisible,
     setSwitchWorkspaceModalVisible,
+    createWorkspaceModalVisible,
+    setCreateWorkspaceModalVisible,
   };
 
   return (
