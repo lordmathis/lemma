@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"novamd/internal/models"
 )
 
@@ -147,5 +148,15 @@ func (db *DB) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 
 func (db *DB) DeleteWorkspace(id int) error {
 	_, err := db.Exec("DELETE FROM workspaces WHERE id = ?", id)
+	return err
+}
+
+func (db *DB) DeleteWorkspaceTx(tx *sql.Tx, id int) error {
+	_, err := tx.Exec("DELETE FROM workspaces WHERE id = ?", id)
+	return err
+}
+
+func (db *DB) UpdateLastWorkspaceTx(tx *sql.Tx, userID, workspaceID int) error {
+	_, err := tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", workspaceID, userID)
 	return err
 }

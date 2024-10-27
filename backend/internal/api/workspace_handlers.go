@@ -143,24 +143,57 @@ func DeleteWorkspace(db *db.DB) http.HandlerFunc {
 			return
 		}
 
-		workspace, err := db.GetWorkspaceByID(workspaceID)
+		// Check if this is the user's last workspace
+		workspaces, err := db.GetWorkspacesByUserID(userID)
 		if err != nil {
-			http.Error(w, "Workspace not found", http.StatusNotFound)
+			http.Error(w, "Failed to get workspaces", http.StatusInternalServerError)
 			return
 		}
 
-		if workspace.UserID != userID {
-			http.Error(w, "Unauthorized access to workspace", http.StatusForbidden)
+		if len(workspaces) <= 1 {
+			http.Error(w, "Cannot delete the last workspace", http.StatusBadRequest)
 			return
 		}
 
-		if err := db.DeleteWorkspace(workspaceID); err != nil {
+		// Find another workspace to set as last
+		var nextWorkspaceID int
+		for _, ws := range workspaces {
+			if ws.ID != workspaceID {
+				nextWorkspaceID = ws.ID
+				break
+			}
+		}
+
+		// Start transaction
+		tx, err := db.Begin()
+		if err != nil {
+			http.Error(w, "Failed to start transaction", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback()
+
+		// Update last workspace ID first
+		err = db.UpdateLastWorkspaceTx(tx, userID, nextWorkspaceID)
+		if err != nil {
+			http.Error(w, "Failed to update last workspace", http.StatusInternalServerError)
+			return
+		}
+
+		// Delete the workspace
+		err = db.DeleteWorkspaceTx(tx, workspaceID)
+		if err != nil {
 			http.Error(w, "Failed to delete workspace", http.StatusInternalServerError)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Workspace deleted successfully"))
+		// Commit transaction
+		if err = tx.Commit(); err != nil {
+			http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
+			return
+		}
+
+		// Return the next workspace ID in the response so frontend knows where to redirect
+		respondJSON(w, map[string]int{"nextWorkspaceId": nextWorkspaceID})
 	}
 }
 
