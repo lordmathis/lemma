@@ -1,11 +1,21 @@
 import React, { useReducer, useEffect, useCallback, useRef } from 'react';
-import { Modal, Badge, Button, Group, Title } from '@mantine/core';
+import {
+  Modal,
+  Badge,
+  Button,
+  Group,
+  Title,
+  Stack,
+  Divider,
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import AppearanceSettings from './settings/AppearanceSettings';
 import EditorSettings from './settings/EditorSettings';
 import GitSettings from './settings/GitSettings';
+import GeneralSettings from './settings/GeneralSettings';
 import { useModalContext } from '../contexts/ModalContext';
+import DangerZoneSettings from './settings/DangerZoneSettings';
 
 const initialState = {
   localSettings: {},
@@ -100,34 +110,47 @@ const Settings = () => {
       centered
       size="lg"
     >
-      {state.hasUnsavedChanges && (
-        <Badge color="yellow" variant="light" mb="md">
-          Unsaved Changes
-        </Badge>
-      )}
-      <AppearanceSettings
-        themeSettings={state.localSettings.theme}
-        onThemeChange={(newTheme) => handleInputChange('theme', newTheme)}
-      />
-      <EditorSettings
-        autoSave={state.localSettings.autoSave}
-        onAutoSaveChange={(value) => handleInputChange('autoSave', value)}
-      />
-      <GitSettings
-        gitEnabled={state.localSettings.gitEnabled}
-        gitUrl={state.localSettings.gitUrl}
-        gitUser={state.localSettings.gitUser}
-        gitToken={state.localSettings.gitToken}
-        gitAutoCommit={state.localSettings.gitAutoCommit}
-        gitCommitMsgTemplate={state.localSettings.gitCommitMsgTemplate}
-        onInputChange={handleInputChange}
-      />
-      <Group justify="flex-end" mt="xl">
-        <Button variant="default" onClick={handleClose}>
-          Cancel
-        </Button>
-        <Button onClick={handleSubmit}>Save Changes</Button>
-      </Group>
+      <Stack spacing="xl">
+        {state.hasUnsavedChanges && (
+          <Badge color="yellow" variant="light">
+            Unsaved Changes
+          </Badge>
+        )}
+
+        <GeneralSettings />
+        <Divider />
+
+        <AppearanceSettings
+          themeSettings={state.localSettings.theme}
+          onThemeChange={(newTheme) => handleInputChange('theme', newTheme)}
+        />
+        <Divider />
+
+        <EditorSettings
+          autoSave={state.localSettings.autoSave}
+          onAutoSaveChange={(value) => handleInputChange('autoSave', value)}
+        />
+        <Divider />
+
+        <GitSettings
+          gitEnabled={state.localSettings.gitEnabled}
+          gitUrl={state.localSettings.gitUrl}
+          gitUser={state.localSettings.gitUser}
+          gitToken={state.localSettings.gitToken}
+          gitAutoCommit={state.localSettings.gitAutoCommit}
+          gitCommitMsgTemplate={state.localSettings.gitCommitMsgTemplate}
+          onInputChange={handleInputChange}
+        />
+
+        <DangerZoneSettings />
+
+        <Group justify="flex-end">
+          <Button variant="default" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit}>Save Changes</Button>
+        </Group>
+      </Stack>
     </Modal>
   );
 };

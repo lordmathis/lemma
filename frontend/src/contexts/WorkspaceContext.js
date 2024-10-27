@@ -61,11 +61,6 @@ export const WorkspaceProvider = ({ children }) => {
       setLoading(true);
       await updateLastWorkspace(workspaceId);
       await loadWorkspaceData(workspaceId);
-      notifications.show({
-        title: 'Success',
-        message: 'Workspace switched successfully',
-        color: 'green',
-      });
     } catch (error) {
       console.error('Failed to switch workspace:', error);
       notifications.show({
