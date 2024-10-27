@@ -10,8 +10,9 @@ import {
   Text,
   Loader,
   Center,
-  Button,
   ActionIcon,
+  Tooltip,
+  useMantineTheme,
 } from '@mantine/core';
 import { IconFolders, IconSettings, IconFolderPlus } from '@tabler/icons-react';
 import { useWorkspace } from '../contexts/WorkspaceContext';
@@ -26,6 +27,7 @@ const WorkspaceSwitcher = () => {
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(false);
   const [popoverOpened, setPopoverOpened] = useState(false);
+  const theme = useMantineTheme();
 
   const loadWorkspaces = async () => {
     setLoading(true);
@@ -77,71 +79,114 @@ const WorkspaceSwitcher = () => {
           </UnstyledButton>
         </Popover.Target>
 
-        <Popover.Dropdown>
-          <Text size="sm" fw={600} mb="md">
-            Switch Workspace
-          </Text>
-          <ScrollArea.Autosize mah={400} mb="md" offsetScrollbars>
+        <Popover.Dropdown p="xs">
+          <Group justify="space-between" mb="md" px="xs">
+            <Text size="sm" fw={600}>
+              Workspaces
+            </Text>
+            <Tooltip label="Create New Workspace">
+              <ActionIcon
+                variant="default"
+                size="md"
+                onClick={handleCreateWorkspace}
+              >
+                <IconFolderPlus size={16} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+          <ScrollArea.Autosize mah={400} offsetScrollbars>
             <Stack gap="xs">
               {loading ? (
                 <Center p="md">
                   <Loader size="sm" />
                 </Center>
               ) : (
-                workspaces.map((workspace) => (
-                  <UnstyledButton
-                    key={workspace.id}
-                    onClick={() => {
-                      switchWorkspace(workspace.id);
-                      setPopoverOpened(false);
-                    }}
-                  >
+                workspaces.map((workspace) => {
+                  const isSelected = workspace.id === currentWorkspace?.id;
+                  return (
                     <Paper
+                      key={workspace.id}
                       p="xs"
-                      withBorder={workspace.id === currentWorkspace?.id}
-                      bg={
-                        workspace.id === currentWorkspace?.id
-                          ? 'var(--mantine-color-blue-light)'
-                          : undefined
-                      }
+                      withBorder
+                      style={{
+                        backgroundColor: isSelected
+                          ? theme.colors.blue[
+                              theme.colorScheme === 'dark' ? 8 : 1
+                            ]
+                          : undefined,
+                        borderColor: isSelected
+                          ? theme.colors.blue[
+                              theme.colorScheme === 'dark' ? 7 : 5
+                            ]
+                          : undefined,
+                      }}
                     >
                       <Group justify="space-between" wrap="nowrap">
-                        <Box>
-                          <Text size="sm" fw={500} truncate>
-                            {workspace.name}
-                          </Text>
-                          <Text size="xs" c="dimmed">
-                            {new Date(workspace.createdAt).toLocaleDateString()}
-                          </Text>
-                        </Box>
-                        {workspace.id === currentWorkspace?.id && (
-                          <ActionIcon
-                            variant="subtle"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSettingsModalVisible(true);
-                              setPopoverOpened(false);
-                            }}
-                          >
-                            <IconSettings size={14} />
-                          </ActionIcon>
+                        <UnstyledButton
+                          style={{ flex: 1 }}
+                          onClick={() => {
+                            switchWorkspace(workspace.id);
+                            setPopoverOpened(false);
+                          }}
+                        >
+                          <Box>
+                            <Text
+                              size="sm"
+                              fw={500}
+                              truncate
+                              c={
+                                isSelected
+                                  ? theme.colors.blue[
+                                      theme.colorScheme === 'dark' ? 0 : 9
+                                    ]
+                                  : undefined
+                              }
+                            >
+                              {workspace.name}
+                            </Text>
+                            <Text
+                              size="xs"
+                              c={
+                                isSelected
+                                  ? theme.colorScheme === 'dark'
+                                    ? theme.colors.blue[2]
+                                    : theme.colors.blue[7]
+                                  : 'dimmed'
+                              }
+                            >
+                              {new Date(
+                                workspace.createdAt
+                              ).toLocaleDateString()}
+                            </Text>
+                          </Box>
+                        </UnstyledButton>
+                        {isSelected && (
+                          <Tooltip label="Workspace Settings">
+                            <ActionIcon
+                              variant="subtle"
+                              size="lg"
+                              color={
+                                theme.colorScheme === 'dark'
+                                  ? 'blue.2'
+                                  : 'blue.7'
+                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSettingsModalVisible(true);
+                                setPopoverOpened(false);
+                              }}
+                            >
+                              <IconSettings size={18} />
+                            </ActionIcon>
+                          </Tooltip>
                         )}
                       </Group>
                     </Paper>
-                  </UnstyledButton>
-                ))
+                  );
+                })
               )}
             </Stack>
           </ScrollArea.Autosize>
-          <Button
-            variant="light"
-            leftSection={<IconFolderPlus size={14} />}
-            fullWidth
-            onClick={handleCreateWorkspace}
-          >
-            Create Workspace
-          </Button>
         </Popover.Dropdown>
       </Popover>
       <CreateWorkspaceModal onWorkspaceCreated={handleWorkspaceCreated} />
