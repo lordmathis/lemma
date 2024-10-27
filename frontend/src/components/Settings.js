@@ -44,7 +44,7 @@ function settingsReducer(state, action) {
 }
 
 const Settings = () => {
-  const { settings, updateSettings } = useWorkspace();
+  const { currentWorkspace, updateSettings } = useWorkspace();
   const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
   const isInitialMount = useRef(true);
@@ -52,9 +52,19 @@ const Settings = () => {
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
+      const settings = {
+        theme: currentWorkspace.theme,
+        autoSave: currentWorkspace.autoSave,
+        gitEnabled: currentWorkspace.gitEnabled,
+        gitUrl: currentWorkspace.gitUrl,
+        gitUser: currentWorkspace.gitUser,
+        gitToken: currentWorkspace.gitToken,
+        gitAutoCommit: currentWorkspace.gitAutoCommit,
+        gitCommitMsgTemplate: currentWorkspace.gitCommitMsgTemplate,
+      };
       dispatch({ type: 'INIT_SETTINGS', payload: settings });
     }
-  }, [settings]);
+  }, [currentWorkspace]);
 
   const handleInputChange = useCallback((key, value) => {
     dispatch({ type: 'UPDATE_LOCAL_SETTINGS', payload: { [key]: value } });

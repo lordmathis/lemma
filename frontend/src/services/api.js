@@ -66,22 +66,16 @@ export const getWorkspace = async (workspaceId) => {
   return response.json();
 };
 
-export const fetchWorkspaceSettings = async (workspaceId) => {
+// Combined function to update workspace data including settings
+export const updateWorkspace = async (workspaceId, workspaceData) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}/settings`
-  );
-  return response.json();
-};
-
-export const saveWorkspaceSettings = async (workspaceId, settings) => {
-  const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}/settings`,
+    `${API_BASE_URL}/users/1/workspaces/${workspaceId}`,
     {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(settings),
+      body: JSON.stringify(workspaceData),
     }
   );
   return response.json();
@@ -159,20 +153,6 @@ export const createWorkspace = async (name) => {
     },
     body: JSON.stringify({ name }),
   });
-  return response.json();
-};
-
-export const updateWorkspace = async (workspaceId, name) => {
-  const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}`,
-    {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name }),
-    }
-  );
   return response.json();
 };
 
