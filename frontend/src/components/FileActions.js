@@ -6,11 +6,11 @@ import {
   IconGitPullRequest,
   IconGitCommit,
 } from '@tabler/icons-react';
-import { useSettings } from '../contexts/SettingsContext';
 import { useModalContext } from '../contexts/ModalContext';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 
 const FileActions = ({ handlePullChanges, selectedFile }) => {
-  const { settings } = useSettings();
+  const { settings } = useWorkspace();
   const {
     setNewFileModalVisible,
     setDeleteFileModalVisible,

@@ -5,10 +5,10 @@ import { EditorView, keymap } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { defaultKeymap } from '@codemirror/commands';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { useSettings } from '../contexts/SettingsContext';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 
 const Editor = ({ content, handleContentChange, handleSave, selectedFile }) => {
-  const { settings } = useSettings();
+  const { colorScheme } = useWorkspace();
   const editorRef = useRef();
   const viewRef = useRef();
 
@@ -27,12 +27,12 @@ const Editor = ({ content, handleContentChange, handleSave, selectedFile }) => {
         overflow: 'auto',
       },
       '.cm-gutters': {
-        backgroundColor: settings.theme === 'dark' ? '#1e1e1e' : '#f5f5f5',
-        color: settings.theme === 'dark' ? '#858585' : '#999',
+        backgroundColor: colorScheme === 'dark' ? '#1e1e1e' : '#f5f5f5',
+        color: colorScheme === 'dark' ? '#858585' : '#999',
         border: 'none',
       },
       '.cm-activeLineGutter': {
-        backgroundColor: settings.theme === 'dark' ? '#2c313a' : '#e8e8e8',
+        backgroundColor: colorScheme === 'dark' ? '#2c313a' : '#e8e8e8',
       },
     });
 
@@ -56,7 +56,7 @@ const Editor = ({ content, handleContentChange, handleSave, selectedFile }) => {
           }
         }),
         theme,
-        settings.theme === 'dark' ? oneDark : [],
+        colorScheme === 'dark' ? oneDark : [],
       ],
     });
 
@@ -70,7 +70,7 @@ const Editor = ({ content, handleContentChange, handleSave, selectedFile }) => {
     return () => {
       view.destroy();
     };
-  }, [settings.theme, handleContentChange]);
+  }, [colorScheme, handleContentChange]);
 
   useEffect(() => {
     if (viewRef.current && content !== viewRef.current.state.doc.toString()) {

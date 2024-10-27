@@ -1,12 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { fetchFileList } from '../services/api';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 
 export const useFileList = () => {
   const [files, setFiles] = useState([]);
+  const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
 
   const loadFileList = useCallback(async () => {
+    if (!currentWorkspace || workspaceLoading) return;
+
     try {
-      const fileList = await fetchFileList();
+      const fileList = await fetchFileList(currentWorkspace.id);
       if (Array.isArray(fileList)) {
         setFiles(fileList);
       } else {
@@ -14,8 +18,9 @@ export const useFileList = () => {
       }
     } catch (error) {
       console.error('Failed to load file list:', error);
+      setFiles([]);
     }
-  }, []);
+  }, [currentWorkspace]);
 
   return { files, loadFileList };
 };

@@ -26,7 +26,8 @@ export const IMAGE_EXTENSIONS = [
   '.svg',
 ];
 
-export const DEFAULT_SETTINGS = {
+// Renamed from DEFAULT_SETTINGS to be more specific
+export const DEFAULT_WORKSPACE_SETTINGS = {
   theme: THEMES.LIGHT,
   autoSave: false,
   gitEnabled: false,
@@ -35,6 +36,12 @@ export const DEFAULT_SETTINGS = {
   gitToken: '',
   gitAutoCommit: false,
   gitCommitMsgTemplate: '${action} ${filename}',
+};
+
+// Template for creating new workspaces
+export const DEFAULT_WORKSPACE = {
+  name: '',
+  ...DEFAULT_WORKSPACE_SETTINGS,
 };
 
 export const DEFAULT_FILE = {

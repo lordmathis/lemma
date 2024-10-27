@@ -2,10 +2,12 @@ import { useState, useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
 import { lookupFileByName } from '../services/api';
 import { DEFAULT_FILE } from '../utils/constants';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 
 export const useFileNavigation = () => {
   const [selectedFile, setSelectedFile] = useState(DEFAULT_FILE.path);
   const [isNewFile, setIsNewFile] = useState(true);
+  const { currentWorkspace } = useWorkspace();
 
   const handleFileSelect = useCallback((filePath) => {
     setSelectedFile(filePath);
@@ -14,8 +16,10 @@ export const useFileNavigation = () => {
 
   const handleLinkClick = useCallback(
     async (filename) => {
+      if (!currentWorkspace) return;
+
       try {
-        const filePaths = await lookupFileByName(filename);
+        const filePaths = await lookupFileByName(currentWorkspace.id, filename);
         if (filePaths.length >= 1) {
           handleFileSelect(filePaths[0]);
         } else {
@@ -34,7 +38,7 @@ export const useFileNavigation = () => {
         });
       }
     },
-    [handleFileSelect]
+    [currentWorkspace]
   );
 
   return { handleLinkClick, selectedFile, isNewFile, handleFileSelect };

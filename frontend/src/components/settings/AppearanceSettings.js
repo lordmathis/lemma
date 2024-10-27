@@ -1,20 +1,18 @@
 import React from 'react';
 import { Text, Switch, Group, Box, Title } from '@mantine/core';
-import { useSettings } from '../../contexts/SettingsContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 
-const AppearanceSettings = ({ onThemeChange }) => {
-  const { colorScheme, toggleColorScheme } = useSettings();
+const AppearanceSettings = ({ themeSettings, onThemeChange }) => {
+  const { colorScheme, updateColorScheme } = useWorkspace();
 
   const handleThemeChange = () => {
-    toggleColorScheme();
-    onThemeChange(colorScheme === 'dark' ? 'light' : 'dark');
+    const newTheme = colorScheme === 'dark' ? 'light' : 'dark';
+    updateColorScheme(newTheme);
+    onThemeChange(newTheme);
   };
 
   return (
     <Box mb="md">
-      <Title order={3} mb="md">
-        Appearance
-      </Title>
       <Group justify="space-between" align="center">
         <Text size="sm">Dark Mode</Text>
         <Switch checked={colorScheme === 'dark'} onChange={handleThemeChange} />

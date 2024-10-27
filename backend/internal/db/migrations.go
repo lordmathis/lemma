@@ -13,10 +13,37 @@ type Migration struct {
 var migrations = []Migration{
 	{
 		Version: 1,
-		SQL: `CREATE TABLE IF NOT EXISTS settings (
-			user_id INTEGER PRIMARY KEY,
-			settings JSON NOT NULL
-		)`,
+		SQL: `
+		-- Create users table
+		CREATE TABLE IF NOT EXISTS users (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			email TEXT NOT NULL UNIQUE,
+			display_name TEXT,
+			password_hash TEXT NOT NULL,
+			role TEXT NOT NULL CHECK(role IN ('admin', 'editor', 'viewer')),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			last_workspace_id INTEGER,
+			last_opened_file_path TEXT
+		);
+
+		-- Create workspaces table with integrated settings
+		CREATE TABLE IF NOT EXISTS workspaces (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			name TEXT NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			-- Settings fields
+			theme TEXT NOT NULL DEFAULT 'light' CHECK(theme IN ('light', 'dark')),
+			auto_save BOOLEAN NOT NULL DEFAULT 0,
+			git_enabled BOOLEAN NOT NULL DEFAULT 0,
+			git_url TEXT,
+			git_user TEXT,
+			git_token TEXT,
+			git_auto_commit BOOLEAN NOT NULL DEFAULT 0,
+			git_commit_msg_template TEXT DEFAULT '${action} ${filename}',
+			FOREIGN KEY (user_id) REFERENCES users (id)
+		);
+		`,
 	},
 }
 

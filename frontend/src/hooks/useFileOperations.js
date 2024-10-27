@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
 import { saveFileContent, deleteFile } from '../services/api';
-import { useSettings } from '../contexts/SettingsContext';
+import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useGitOperations } from './useGitOperations';
 
 export const useFileOperations = () => {
-  const { settings } = useSettings();
-  const { handleCommitAndPush } = useGitOperations(settings.gitEnabled);
+  const { currentWorkspace, settings } = useWorkspace();
+  const { handleCommitAndPush } = useGitOperations();
 
   const autoCommit = useCallback(
     async (filePath, action) => {
@@ -15,20 +15,21 @@ export const useFileOperations = () => {
           .replace('${filename}', filePath)
           .replace('${action}', action);
 
-        // Capitalize the first letter of the commit message
         commitMessage =
           commitMessage.charAt(0).toUpperCase() + commitMessage.slice(1);
 
         await handleCommitAndPush(commitMessage);
       }
     },
-    [settings, handleCommitAndPush]
+    [settings]
   );
 
   const handleSave = useCallback(
     async (filePath, content) => {
+      if (!currentWorkspace) return false;
+
       try {
-        await saveFileContent(filePath, content);
+        await saveFileContent(currentWorkspace.id, filePath, content);
         notifications.show({
           title: 'Success',
           message: 'File saved successfully',
@@ -46,13 +47,15 @@ export const useFileOperations = () => {
         return false;
       }
     },
-    [autoCommit]
+    [currentWorkspace, autoCommit]
   );
 
   const handleDelete = useCallback(
     async (filePath) => {
+      if (!currentWorkspace) return false;
+
       try {
-        await deleteFile(filePath);
+        await deleteFile(currentWorkspace.id, filePath);
         notifications.show({
           title: 'Success',
           message: 'File deleted successfully',
@@ -70,13 +73,15 @@ export const useFileOperations = () => {
         return false;
       }
     },
-    [autoCommit]
+    [currentWorkspace, autoCommit]
   );
 
   const handleCreate = useCallback(
     async (fileName, initialContent = '') => {
+      if (!currentWorkspace) return false;
+
       try {
-        await saveFileContent(fileName, initialContent);
+        await saveFileContent(currentWorkspace.id, fileName, initialContent);
         notifications.show({
           title: 'Success',
           message: 'File created successfully',
@@ -94,7 +99,7 @@ export const useFileOperations = () => {
         return false;
       }
     },
-    [autoCommit]
+    [currentWorkspace, autoCommit]
   );
 
   return { handleSave, handleDelete, handleCreate };
