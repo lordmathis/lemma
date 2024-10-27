@@ -26,11 +26,14 @@ func (db *DB) CreateUser(user *models.User) error {
 	}
 	user.ID = int(userID)
 
-	// Create default workspace
+	// Create default workspace with default settings
 	defaultWorkspace := &models.Workspace{
 		UserID: user.ID,
 		Name:   "Main",
 	}
+	defaultWorkspace.GetDefaultSettings() // Initialize default settings
+
+	// Create workspace with settings
 	err = db.createWorkspaceTx(tx, defaultWorkspace)
 	if err != nil {
 		return err
@@ -52,8 +55,18 @@ func (db *DB) CreateUser(user *models.User) error {
 }
 
 func (db *DB) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
-	result, err := tx.Exec("INSERT INTO workspaces (user_id, name) VALUES (?, ?)",
-		workspace.UserID, workspace.Name)
+	result, err := tx.Exec(`
+		INSERT INTO workspaces (
+			user_id, name,
+			theme, auto_save,
+			git_enabled, git_url, git_user, git_token,
+			git_auto_commit, git_commit_msg_template
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		workspace.UserID, workspace.Name,
+		workspace.Theme, workspace.AutoSave,
+		workspace.GitEnabled, workspace.GitURL, workspace.GitUser, workspace.GitToken,
+		workspace.GitAutoCommit, workspace.GitCommitMsgTemplate,
+	)
 	if err != nil {
 		return err
 	}
@@ -68,10 +81,15 @@ func (db *DB) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
 func (db *DB) GetUserByID(id int) (*models.User, error) {
 	user := &models.User{}
 	err := db.QueryRow(`
-		SELECT id, email, display_name, role, created_at, last_workspace_id, last_opened_file_path
-		FROM users WHERE id = ?`, id).
+		SELECT 
+			u.id, u.email, u.display_name, u.role, u.created_at, 
+			u.last_workspace_id, u.last_opened_file_path,
+			COALESCE(w.id, 0) as workspace_id
+		FROM users u
+		LEFT JOIN workspaces w ON w.id = u.last_workspace_id
+		WHERE u.id = ?`, id).
 		Scan(&user.ID, &user.Email, &user.DisplayName, &user.Role, &user.CreatedAt,
-			&user.LastWorkspaceID, &user.LastOpenedFilePath)
+			&user.LastWorkspaceID, &user.LastOpenedFilePath, &user.LastWorkspaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +100,15 @@ func (db *DB) GetUserByEmail(email string) (*models.User, error) {
 	user := &models.User{}
 	var lastOpenedFilePath sql.NullString
 	err := db.QueryRow(`
-		SELECT id, email, display_name, password_hash, role, created_at, last_workspace_id, last_opened_file_path
-		FROM users WHERE email = ?`, email).
+		SELECT 
+			u.id, u.email, u.display_name, u.password_hash, u.role, u.created_at, 
+			u.last_workspace_id, u.last_opened_file_path,
+			COALESCE(w.id, 0) as workspace_id
+		FROM users u
+		LEFT JOIN workspaces w ON w.id = u.last_workspace_id
+		WHERE u.email = ?`, email).
 		Scan(&user.ID, &user.Email, &user.DisplayName, &user.PasswordHash, &user.Role, &user.CreatedAt,
-			&user.LastWorkspaceID, &lastOpenedFilePath)
+			&user.LastWorkspaceID, &lastOpenedFilePath, &user.LastWorkspaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -117,8 +140,25 @@ func (db *DB) UpdateLastOpenedFile(userID int, filePath string) error {
 }
 
 func (db *DB) DeleteUser(id int) error {
-	_, err := db.Exec("DELETE FROM users WHERE id = ?", id)
-	return err
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Delete all user's workspaces first
+	_, err = tx.Exec("DELETE FROM workspaces WHERE user_id = ?", id)
+	if err != nil {
+		return err
+	}
+
+	// Delete the user
+	_, err = tx.Exec("DELETE FROM users WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (db *DB) GetLastWorkspaceID(userID int) (int, error) {

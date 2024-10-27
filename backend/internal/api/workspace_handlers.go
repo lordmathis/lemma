@@ -35,38 +35,15 @@ func CreateWorkspace(db *db.DB) http.HandlerFunc {
 			return
 		}
 
-		var requestBody struct {
-			Name string `json:"name"`
-		}
-
-		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		var workspace models.Workspace
+		if err := json.NewDecoder(r.Body).Decode(&workspace); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		workspace := &models.Workspace{
-			UserID: userID,
-			Name:   requestBody.Name,
-		}
-
-		if err := db.CreateWorkspace(workspace); err != nil {
+		workspace.UserID = userID
+		if err := db.CreateWorkspace(&workspace); err != nil {
 			http.Error(w, "Failed to create workspace", http.StatusInternalServerError)
-			return
-		}
-
-		defaultSettings := &models.WorkspaceSettings{
-			WorkspaceID: workspace.ID,
-			Settings: models.UserSettings{
-				Theme:                "light",
-				AutoSave:             false,
-				GitEnabled:           false,
-				GitAutoCommit:        false,
-				GitCommitMsgTemplate: "${action} ${filename}",
-			},
-		}
-
-		if err := db.SaveWorkspaceSettings(defaultSettings); err != nil {
-			http.Error(w, "Failed to initialize workspace settings", http.StatusInternalServerError)
 			return
 		}
 
@@ -97,7 +74,7 @@ func GetWorkspace(db *db.DB) http.HandlerFunc {
 	}
 }
 
-func UpdateWorkspace(db *db.DB) http.HandlerFunc {
+func UpdateWorkspace(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
@@ -105,33 +82,56 @@ func UpdateWorkspace(db *db.DB) http.HandlerFunc {
 			return
 		}
 
-		var requestBody struct {
-			Name string `json:"name"`
-		}
-
-		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		var workspace models.Workspace
+		if err := json.NewDecoder(r.Body).Decode(&workspace); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		workspace, err := db.GetWorkspaceByID(workspaceID)
+		// Set IDs from the request
+		workspace.ID = workspaceID
+		workspace.UserID = userID
+
+		// Validate the workspace
+		if err := workspace.Validate(); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Get current workspace for comparison
+		currentWorkspace, err := db.GetWorkspaceByID(workspaceID)
 		if err != nil {
 			http.Error(w, "Workspace not found", http.StatusNotFound)
 			return
 		}
 
-		if workspace.UserID != userID {
+		if currentWorkspace.UserID != userID {
 			http.Error(w, "Unauthorized access to workspace", http.StatusForbidden)
 			return
 		}
 
-		workspace.Name = requestBody.Name
-		if err := db.UpdateWorkspace(workspace); err != nil {
+		// Handle Git repository setup/teardown if Git settings changed
+		if workspace.GitEnabled != currentWorkspace.GitEnabled ||
+			(workspace.GitEnabled && (workspace.GitURL != currentWorkspace.GitURL ||
+				workspace.GitUser != currentWorkspace.GitUser ||
+				workspace.GitToken != currentWorkspace.GitToken)) {
+			if workspace.GitEnabled {
+				err = fs.SetupGitRepo(userID, workspaceID, workspace.GitURL, workspace.GitUser, workspace.GitToken)
+				if err != nil {
+					http.Error(w, "Failed to setup git repo: "+err.Error(), http.StatusInternalServerError)
+					return
+				}
+			} else {
+				fs.DisableGitRepo(userID, workspaceID)
+			}
+		}
+
+		if err := db.UpdateWorkspace(&workspace); err != nil {
 			http.Error(w, "Failed to update workspace", http.StatusInternalServerError)
 			return
 		}
 
-		respondJSON(w, map[string]string{"name": workspace.Name})
+		respondJSON(w, workspace)
 	}
 }
 
@@ -205,66 +205,5 @@ func UpdateLastWorkspace(db *db.DB) http.HandlerFunc {
 		}
 
 		respondJSON(w, map[string]string{"message": "Last workspace updated successfully"})
-	}
-}
-
-func GetWorkspaceSettings(db *db.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		_, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		settings, err := db.GetWorkspaceSettings(workspaceID)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		respondJSON(w, settings)
-	}
-}
-
-func UpdateWorkspaceSettings(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		var userSettings models.UserSettings
-		if err := json.NewDecoder(r.Body).Decode(&userSettings); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
-			return
-		}
-
-		if err := userSettings.Validate(); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		workspaceSettings := &models.WorkspaceSettings{
-			WorkspaceID: workspaceID,
-			Settings:    userSettings,
-		}
-
-		if err := db.SaveWorkspaceSettings(workspaceSettings); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if userSettings.GitEnabled {
-			err := fs.SetupGitRepo(userID, workspaceID, userSettings.GitURL, userSettings.GitUser, userSettings.GitToken)
-			if err != nil {
-				http.Error(w, "Failed to setup git repo", http.StatusInternalServerError)
-				return
-			}
-		} else {
-			fs.DisableGitRepo(userID, workspaceID)
-		}
-
-		respondJSON(w, workspaceSettings)
 	}
 }

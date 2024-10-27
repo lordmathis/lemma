@@ -17,17 +17,6 @@ type UserService struct {
 	FS *filesystem.FileSystem
 }
 
-// Default settings for new workspaces
-var defaultWorkspaceSettings = models.WorkspaceSettings{
-	Settings: models.UserSettings{
-		Theme:                "light",
-		AutoSave:             false,
-		GitEnabled:           false,
-		GitAutoCommit:        false,
-		GitCommitMsgTemplate: "${action} ${filename}",
-	},
-}
-
 func NewUserService(database *db.DB, fs *filesystem.FileSystem) *UserService {
 	return &UserService{
 		DB: database,
@@ -68,16 +57,10 @@ func (s *UserService) SetupAdminUser() (*models.User, error) {
 		return nil, fmt.Errorf("failed to create admin user: %w", err)
 	}
 
+	// Initialize workspace directory
 	err = s.FS.InitializeUserWorkspace(adminUser.ID, adminUser.LastWorkspaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize admin workspace: %w", err)
-	}
-
-	// Save default settings for the admin workspace
-	defaultWorkspaceSettings.WorkspaceID = adminUser.LastWorkspaceID
-	err = s.DB.SaveWorkspaceSettings(&defaultWorkspaceSettings)
-	if err != nil {
-		return nil, fmt.Errorf("failed to save default workspace settings: %w", err)
 	}
 
 	log.Printf("Created admin user with ID: %d and default workspace with ID: %d", adminUser.ID, adminUser.LastWorkspaceID)
@@ -96,14 +79,6 @@ func (s *UserService) CreateUser(user *models.User) error {
 		return fmt.Errorf("failed to initialize user workspace: %w", err)
 	}
 
-	// Save default settings for the user's workspace
-	settings := defaultWorkspaceSettings
-	settings.WorkspaceID = user.LastWorkspaceID
-	err = s.DB.SaveWorkspaceSettings(&settings)
-	if err != nil {
-		return fmt.Errorf("failed to save default workspace settings: %w", err)
-	}
-
 	return nil
 }
 
@@ -120,29 +95,26 @@ func (s *UserService) UpdateUser(user *models.User) error {
 }
 
 func (s *UserService) DeleteUser(id int) error {
-	// First, get the user to check if they exist and to get their workspaces
+	// First, get the user to check if they exist
 	user, err := s.DB.GetUserByID(id)
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// Delete user's workspaces
+	// Get user's workspaces
 	workspaces, err := s.DB.GetWorkspacesByUserID(id)
 	if err != nil {
 		return fmt.Errorf("failed to get user's workspaces: %w", err)
 	}
 
+	// Delete workspace directories
 	for _, workspace := range workspaces {
-		err = s.DB.DeleteWorkspace(workspace.ID)
-		if err != nil {
-			return fmt.Errorf("failed to delete workspace: %w", err)
-		}
 		err = s.FS.DeleteUserWorkspace(user.ID, workspace.ID)
 		if err != nil {
 			return fmt.Errorf("failed to delete workspace files: %w", err)
 		}
 	}
 
-	// Finally, delete the user
+	// Delete user from database (this will cascade delete workspaces)
 	return s.DB.DeleteUser(id)
 }

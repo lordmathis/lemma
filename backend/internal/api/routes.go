@@ -22,7 +22,7 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem) {
 
 				r.Route("/{workspaceId}", func(r chi.Router) {
 					r.Get("/", GetWorkspace(db))
-					r.Put("/", UpdateWorkspace(db))
+					r.Put("/", UpdateWorkspace(db, fs))
 					r.Delete("/", DeleteWorkspace(db))
 
 					// File routes
@@ -36,12 +36,6 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem) {
 						r.Get("/*", GetFileContent(fs))
 						r.Delete("/*", DeleteFile(fs))
 
-					})
-
-					// Settings routes
-					r.Route("/settings", func(r chi.Router) {
-						r.Get("/", GetWorkspaceSettings(db))
-						r.Put("/", UpdateWorkspaceSettings(db, fs))
 					})
 
 					// Git routes

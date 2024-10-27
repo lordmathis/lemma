@@ -2,7 +2,11 @@ package models
 
 import (
 	"time"
+
+	"github.com/go-playground/validator/v10"
 )
+
+var validate = validator.New()
 
 type UserRole string
 
