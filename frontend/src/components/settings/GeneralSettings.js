@@ -1,10 +1,7 @@
 import React from 'react';
 import { Title, Box, TextInput, Text, Grid } from '@mantine/core';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
 
-const GeneralSettings = ({ onInputChange }) => {
-  const { currentWorkspace } = useWorkspace();
-
+const GeneralSettings = ({ name, onInputChange }) => {
   return (
     <Box mb="md">
       <Title order={3} mb="md">
@@ -17,11 +14,12 @@ const GeneralSettings = ({ onInputChange }) => {
         </Grid.Col>
         <Grid.Col span={6}>
           <TextInput
-            value={currentWorkspace?.name || ''}
+            value={name || ''}
             onChange={(event) =>
               onInputChange('name', event.currentTarget.value)
             }
             placeholder="Enter workspace name"
+            required
           />
         </Grid.Col>
       </Grid>

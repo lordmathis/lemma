@@ -63,6 +63,7 @@ const Settings = () => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       const settings = {
+        name: currentWorkspace.name,
         theme: currentWorkspace.theme,
         autoSave: currentWorkspace.autoSave,
         gitEnabled: currentWorkspace.gitEnabled,
@@ -82,6 +83,14 @@ const Settings = () => {
 
   const handleSubmit = async () => {
     try {
+      if (!state.localSettings.name?.trim()) {
+        notifications.show({
+          message: 'Workspace name cannot be empty',
+          color: 'red',
+        });
+        return;
+      }
+
       await updateSettings(state.localSettings);
       dispatch({ type: 'MARK_SAVED' });
       notifications.show({
@@ -117,7 +126,10 @@ const Settings = () => {
           </Badge>
         )}
 
-        <GeneralSettings />
+        <GeneralSettings
+          name={state.localSettings.name}
+          onInputChange={handleInputChange}
+        />
         <Divider />
 
         <AppearanceSettings
