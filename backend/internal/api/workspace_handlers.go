@@ -54,6 +54,22 @@ func CreateWorkspace(db *db.DB) http.HandlerFunc {
 			return
 		}
 
+		defaultSettings := &models.WorkspaceSettings{
+			WorkspaceID: workspace.ID,
+			Settings: models.UserSettings{
+				Theme:                "light",
+				AutoSave:             false,
+				GitEnabled:           false,
+				GitAutoCommit:        false,
+				GitCommitMsgTemplate: "${action} ${filename}",
+			},
+		}
+
+		if err := db.SaveWorkspaceSettings(defaultSettings); err != nil {
+			http.Error(w, "Failed to initialize workspace settings", http.StatusInternalServerError)
+			return
+		}
+
 		respondJSON(w, workspace)
 	}
 }

@@ -12,6 +12,7 @@ import {
   fetchWorkspaceSettings,
   saveWorkspaceSettings,
   getWorkspace,
+  updateLastWorkspace,
 } from '../services/api';
 import { DEFAULT_SETTINGS } from '../utils/constants';
 
@@ -61,8 +62,10 @@ export const WorkspaceProvider = ({ children }) => {
 
   const switchWorkspace = useCallback(async (workspaceId) => {
     try {
+      console.log(workspaceId);
       setLoading(true);
       await updateLastWorkspace(workspaceId);
+      console.log('Hello');
       await loadWorkspaceData(workspaceId);
       notifications.show({
         title: 'Success',

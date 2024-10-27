@@ -5,7 +5,7 @@ import (
 )
 
 func (db *DB) CreateWorkspace(workspace *models.Workspace) error {
-	result, err := db.Exec("INSERT INTO workspaces (user_id, name) VALUES (?, ?, ?)",
+	result, err := db.Exec("INSERT INTO workspaces (user_id, name) VALUES (?, ?)",
 		workspace.UserID, workspace.Name)
 	if err != nil {
 		return err
