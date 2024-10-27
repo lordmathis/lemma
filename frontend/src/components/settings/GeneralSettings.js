@@ -4,10 +4,6 @@ import { Title, Box, TextInput, Text, Grid } from '@mantine/core';
 const GeneralSettings = ({ name, onInputChange }) => {
   return (
     <Box mb="md">
-      <Title order={3} mb="md">
-        General
-      </Title>
-
       <Grid gutter="md" align="center">
         <Grid.Col span={6}>
           <Text size="sm">Workspace Name</Text>

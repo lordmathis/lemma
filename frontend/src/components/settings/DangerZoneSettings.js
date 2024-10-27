@@ -18,10 +18,6 @@ const DangerZoneSettings = () => {
 
   return (
     <Box mb="md">
-      <Title order={3} mb="md">
-        Danger Zone
-      </Title>
-
       <Button
         color="red"
         variant="light"

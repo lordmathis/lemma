@@ -21,7 +21,6 @@ const GitSettings = ({
 }) => {
   return (
     <Stack spacing="md">
-      <Title order={3}>Git Integration</Title>
       <Grid gutter="md" align="center">
         <Grid.Col span={6}>
           <Text size="sm">Enable Git</Text>

@@ -6,7 +6,7 @@ import {
   Group,
   Title,
   Stack,
-  Divider,
+  Accordion,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useWorkspace } from '../contexts/WorkspaceContext';
@@ -52,6 +52,12 @@ function settingsReducer(state, action) {
       return state;
   }
 }
+
+const AccordionControl = ({ children }) => (
+  <Accordion.Control>
+    <Title order={4}>{children}</Title>
+  </Accordion.Control>
+);
 
 const Settings = () => {
   const { currentWorkspace, updateSettings } = useWorkspace();
@@ -126,35 +132,90 @@ const Settings = () => {
           </Badge>
         )}
 
-        <GeneralSettings
-          name={state.localSettings.name}
-          onInputChange={handleInputChange}
-        />
-        <Divider />
+        <Accordion
+          defaultValue={['general', 'appearance', 'editor', 'git', 'danger']}
+          multiple
+          styles={(theme) => ({
+            control: {
+              paddingTop: theme.spacing.md,
+              paddingBottom: theme.spacing.md,
+            },
+            item: {
+              borderBottom: `1px solid ${
+                theme.colorScheme === 'dark'
+                  ? theme.colors.dark[4]
+                  : theme.colors.gray[3]
+              }`,
+              '&[data-active]': {
+                backgroundColor:
+                  theme.colorScheme === 'dark'
+                    ? theme.colors.dark[7]
+                    : theme.colors.gray[0],
+              },
+            },
+            chevron: {
+              '&[data-rotate]': {
+                transform: 'rotate(180deg)',
+              },
+            },
+          })}
+        >
+          <Accordion.Item value="general">
+            <AccordionControl>General</AccordionControl>
+            <Accordion.Panel>
+              <GeneralSettings
+                name={state.localSettings.name}
+                onInputChange={handleInputChange}
+              />
+            </Accordion.Panel>
+          </Accordion.Item>
 
-        <AppearanceSettings
-          themeSettings={state.localSettings.theme}
-          onThemeChange={(newTheme) => handleInputChange('theme', newTheme)}
-        />
-        <Divider />
+          <Accordion.Item value="appearance">
+            <AccordionControl>Appearance</AccordionControl>
+            <Accordion.Panel>
+              <AppearanceSettings
+                themeSettings={state.localSettings.theme}
+                onThemeChange={(newTheme) =>
+                  handleInputChange('theme', newTheme)
+                }
+              />
+            </Accordion.Panel>
+          </Accordion.Item>
 
-        <EditorSettings
-          autoSave={state.localSettings.autoSave}
-          onAutoSaveChange={(value) => handleInputChange('autoSave', value)}
-        />
-        <Divider />
+          <Accordion.Item value="editor">
+            <AccordionControl>Editor</AccordionControl>
+            <Accordion.Panel>
+              <EditorSettings
+                autoSave={state.localSettings.autoSave}
+                onAutoSaveChange={(value) =>
+                  handleInputChange('autoSave', value)
+                }
+              />
+            </Accordion.Panel>
+          </Accordion.Item>
 
-        <GitSettings
-          gitEnabled={state.localSettings.gitEnabled}
-          gitUrl={state.localSettings.gitUrl}
-          gitUser={state.localSettings.gitUser}
-          gitToken={state.localSettings.gitToken}
-          gitAutoCommit={state.localSettings.gitAutoCommit}
-          gitCommitMsgTemplate={state.localSettings.gitCommitMsgTemplate}
-          onInputChange={handleInputChange}
-        />
+          <Accordion.Item value="git">
+            <AccordionControl>Git Integration</AccordionControl>
+            <Accordion.Panel>
+              <GitSettings
+                gitEnabled={state.localSettings.gitEnabled}
+                gitUrl={state.localSettings.gitUrl}
+                gitUser={state.localSettings.gitUser}
+                gitToken={state.localSettings.gitToken}
+                gitAutoCommit={state.localSettings.gitAutoCommit}
+                gitCommitMsgTemplate={state.localSettings.gitCommitMsgTemplate}
+                onInputChange={handleInputChange}
+              />
+            </Accordion.Panel>
+          </Accordion.Item>
 
-        <DangerZoneSettings />
+          <Accordion.Item value="danger">
+            <AccordionControl>Danger Zone</AccordionControl>
+            <Accordion.Panel>
+              <DangerZoneSettings />
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
 
         <Group justify="flex-end">
           <Button variant="default" onClick={handleClose}>

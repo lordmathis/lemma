@@ -13,9 +13,6 @@ const AppearanceSettings = ({ themeSettings, onThemeChange }) => {
 
   return (
     <Box mb="md">
-      <Title order={3} mb="md">
-        Appearance
-      </Title>
       <Group justify="space-between" align="center">
         <Text size="sm">Dark Mode</Text>
         <Switch checked={colorScheme === 'dark'} onChange={handleThemeChange} />
