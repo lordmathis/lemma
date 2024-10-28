@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import postcssPresetMantine from 'postcss-preset-mantine';
 import postcssSimpleVars from 'postcss-simple-vars';
+import { compression } from 'vite-plugin-compression2';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -10,6 +11,7 @@ export default defineConfig(({ mode }) => ({
     react({
       include: ['**/*.jsx', '**/*.js'],
     }),
+    compression(),
   ],
 
   root: 'src',
