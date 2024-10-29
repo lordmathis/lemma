@@ -27,7 +27,7 @@ func ListWorkspaces(db *db.DB) http.HandlerFunc {
 	}
 }
 
-func CreateWorkspace(db *db.DB) http.HandlerFunc {
+func CreateWorkspace(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := getUserID(r)
 		if err != nil {
@@ -44,6 +44,11 @@ func CreateWorkspace(db *db.DB) http.HandlerFunc {
 		workspace.UserID = userID
 		if err := db.CreateWorkspace(&workspace); err != nil {
 			http.Error(w, "Failed to create workspace", http.StatusInternalServerError)
+			return
+		}
+
+		if err := fs.InitializeUserWorkspace(workspace.UserID, workspace.ID); err != nil {
+			http.Error(w, "Failed to initialize workspace directory", http.StatusInternalServerError)
 			return
 		}
 

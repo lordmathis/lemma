@@ -39,13 +39,6 @@ func (fs *FileSystem) InitializeUserWorkspace(userID, workspaceID int) error {
 	if err != nil {
 		return fmt.Errorf("failed to create workspace directory: %w", err)
 	}
-	// Optionally, create a welcome file in the new workspace
-	// welcomeFilePath := filepath.Join(workspacePath, "Welcome.md")
-	// welcomeContent := []byte("# Welcome to Your Main Workspace\n\nThis is your default workspace in NovaMD. You can start creating and editing files right away!")
-	// err = os.WriteFile(welcomeFilePath, welcomeContent, 0644)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to create welcome file: %w", err)
-	// }
 
 	return nil
 }
