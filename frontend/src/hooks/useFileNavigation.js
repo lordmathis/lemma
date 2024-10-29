@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react'; // Added useEffect
 import { notifications } from '@mantine/notifications';
 import { lookupFileByName } from '../services/api';
 import { DEFAULT_FILE } from '../utils/constants';
@@ -10,8 +10,8 @@ export const useFileNavigation = () => {
   const { currentWorkspace } = useWorkspace();
 
   const handleFileSelect = useCallback((filePath) => {
-    setSelectedFile(filePath);
-    setIsNewFile(filePath === DEFAULT_FILE.path);
+    setSelectedFile(filePath || DEFAULT_FILE.path);
+    setIsNewFile(filePath ? false : true);
   }, []);
 
   const handleLinkClick = useCallback(
@@ -38,8 +38,13 @@ export const useFileNavigation = () => {
         });
       }
     },
-    [currentWorkspace]
+    [currentWorkspace, handleFileSelect]
   );
+
+  // Reset to default file when workspace changes
+  useEffect(() => {
+    handleFileSelect(null);
+  }, [currentWorkspace, handleFileSelect]);
 
   return { handleLinkClick, selectedFile, isNewFile, handleFileSelect };
 };
