@@ -39,7 +39,13 @@ func main() {
 
 	// Initialize user service
 	userService := user.NewUserService(database, fs)
-	if _, err := userService.SetupAdminUser(); err != nil {
+
+	adminEmail := os.Getenv("NOVAMD_ADMIN_EMAIL")
+	adminPassword := os.Getenv("NOVAMD_ADMIN_PASSWORD")
+	if adminEmail == "" || adminPassword == "" {
+		log.Fatal("NOVAMD_ADMIN_EMAIL and NOVAMD_ADMIN_PASSWORD environment variables must be set")
+	}
+	if _, err := userService.SetupAdminUser(adminEmail, adminPassword); err != nil {
 		log.Fatal(err)
 	}
 
