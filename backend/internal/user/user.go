@@ -3,7 +3,6 @@ package user
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -24,18 +23,13 @@ func NewUserService(database *db.DB, fs *filesystem.FileSystem) *UserService {
 	}
 }
 
-func (s *UserService) SetupAdminUser() (*models.User, error) {
-	// Get admin email and password from environment variables
-	adminEmail := os.Getenv("NOVAMD_ADMIN_EMAIL")
-	adminPassword := os.Getenv("NOVAMD_ADMIN_PASSWORD")
-	if adminEmail == "" || adminPassword == "" {
-		return nil, fmt.Errorf("NOVAMD_ADMIN_EMAIL and NOVAMD_ADMIN_PASSWORD environment variables must be set")
-	}
-
+func (s *UserService) SetupAdminUser(adminEmail, adminPassword string) (*models.User, error) {
 	// Check if admin user exists
 	adminUser, err := s.DB.GetUserByEmail(adminEmail)
 	if adminUser != nil {
 		return adminUser, nil // Admin user already exists
+	} else if err != nil {
+		return nil, err
 	}
 
 	// Hash the password

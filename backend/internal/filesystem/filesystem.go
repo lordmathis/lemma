@@ -6,6 +6,7 @@ import (
 	"novamd/internal/gitutils"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -38,13 +39,6 @@ func (fs *FileSystem) InitializeUserWorkspace(userID, workspaceID int) error {
 	if err != nil {
 		return fmt.Errorf("failed to create workspace directory: %w", err)
 	}
-	// Optionally, create a welcome file in the new workspace
-	// welcomeFilePath := filepath.Join(workspacePath, "Welcome.md")
-	// welcomeContent := []byte("# Welcome to Your Main Workspace\n\nThis is your default workspace in NovaMD. You can start creating and editing files right away!")
-	// err = os.WriteFile(welcomeFilePath, welcomeContent, 0644)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to create welcome file: %w", err)
-	// }
 
 	return nil
 }
@@ -82,26 +76,57 @@ func (fs *FileSystem) walkDirectory(dir, prefix string) ([]FileNode, error) {
 		return nil, err
 	}
 
-	nodes := make([]FileNode, 0)
+	// Split entries into directories and files
+	var dirs, files []os.DirEntry
 	for _, entry := range entries {
+		if entry.IsDir() {
+			dirs = append(dirs, entry)
+		} else {
+			files = append(files, entry)
+		}
+	}
+
+	// Sort directories and files separately
+	sort.Slice(dirs, func(i, j int) bool {
+		return strings.ToLower(dirs[i].Name()) < strings.ToLower(dirs[j].Name())
+	})
+	sort.Slice(files, func(i, j int) bool {
+		return strings.ToLower(files[i].Name()) < strings.ToLower(files[j].Name())
+	})
+
+	// Create combined slice with directories first, then files
+	nodes := make([]FileNode, 0, len(entries))
+
+	// Add directories first
+	for _, entry := range dirs {
 		name := entry.Name()
 		path := filepath.Join(prefix, name)
 		fullPath := filepath.Join(dir, name)
+
+		children, err := fs.walkDirectory(fullPath, path)
+		if err != nil {
+			return nil, err
+		}
+
+		node := FileNode{
+			ID:       path,
+			Name:     name,
+			Path:     path,
+			Children: children,
+		}
+		nodes = append(nodes, node)
+	}
+
+	// Then add files
+	for _, entry := range files {
+		name := entry.Name()
+		path := filepath.Join(prefix, name)
 
 		node := FileNode{
 			ID:   path,
 			Name: name,
 			Path: path,
 		}
-
-		if entry.IsDir() {
-			children, err := fs.walkDirectory(fullPath, path)
-			if err != nil {
-				return nil, err
-			}
-			node.Children = children
-		}
-
 		nodes = append(nodes, node)
 	}
 

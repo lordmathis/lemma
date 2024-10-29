@@ -16,7 +16,7 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem) {
 			// Workspace routes
 			r.Route("/workspaces", func(r chi.Router) {
 				r.Get("/", ListWorkspaces(db))
-				r.Post("/", CreateWorkspace(db))
+				r.Post("/", CreateWorkspace(db, fs))
 				r.Get("/last", GetLastWorkspace(db))
 				r.Put("/last", UpdateLastWorkspace(db))
 

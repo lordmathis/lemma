@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { fetchFileList } from '../services/api';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 
@@ -20,7 +20,7 @@ export const useFileList = () => {
       console.error('Failed to load file list:', error);
       setFiles([]);
     }
-  }, [currentWorkspace]);
+  }, [currentWorkspace, workspaceLoading]);
 
   return { files, loadFileList };
 };
