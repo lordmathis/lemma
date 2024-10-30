@@ -5,10 +5,11 @@ import (
 )
 
 type Workspace struct {
-	ID        int       `json:"id" validate:"required,min=1"`
-	UserID    int       `json:"userId" validate:"required,min=1"`
-	Name      string    `json:"name" validate:"required"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID                 int       `json:"id" validate:"required,min=1"`
+	UserID             int       `json:"userId" validate:"required,min=1"`
+	Name               string    `json:"name" validate:"required"`
+	CreatedAt          time.Time `json:"createdAt"`
+	LastOpenedFilePath string    `json:"lastOpenedFilePath"`
 
 	// Integrated settings
 	Theme                string `json:"theme" validate:"oneof=light dark"`

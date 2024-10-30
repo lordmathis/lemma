@@ -120,19 +120,19 @@ func DeleteFile(fs *filesystem.FileSystem) http.HandlerFunc {
 
 func GetLastOpenedFile(db *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, _, err := getUserAndWorkspaceIDs(r)
+		_, workspaceID, err := getUserAndWorkspaceIDs(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		user, err := db.GetUserByID(userID)
+		filePath, err := db.GetLastOpenedFile(workspaceID)
 		if err != nil {
-			http.Error(w, "Failed to get user", http.StatusInternalServerError)
+			http.Error(w, "Failed to get last opened file", http.StatusInternalServerError)
 			return
 		}
 
-		respondJSON(w, map[string]string{"lastOpenedFile": user.LastOpenedFilePath})
+		respondJSON(w, map[string]string{"lastOpenedFilePath": filePath})
 	}
 }
 
@@ -153,14 +153,15 @@ func UpdateLastOpenedFile(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc
 			return
 		}
 
-		// Validate that the file path is valid within the workspace
-		_, err = fs.ValidatePath(userID, workspaceID, requestBody.FilePath)
-		if err != nil {
-			http.Error(w, "Invalid file path", http.StatusBadRequest)
-			return
+		// Validate the file path exists in the workspace
+		if requestBody.FilePath != "" {
+			if _, err := fs.ValidatePath(userID, workspaceID, requestBody.FilePath); err != nil {
+				http.Error(w, "Invalid file path", http.StatusBadRequest)
+				return
+			}
 		}
 
-		if err := db.UpdateLastOpenedFile(userID, requestBody.FilePath); err != nil {
+		if err := db.UpdateLastOpenedFile(workspaceID, requestBody.FilePath); err != nil {
 			http.Error(w, "Failed to update last opened file", http.StatusInternalServerError)
 			return
 		}

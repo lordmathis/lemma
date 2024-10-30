@@ -81,15 +81,13 @@ func (db *DB) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
 func (db *DB) GetUserByID(id int) (*models.User, error) {
 	user := &models.User{}
 	err := db.QueryRow(`
-		SELECT 
-			u.id, u.email, u.display_name, u.role, u.created_at, 
-			u.last_workspace_id, u.last_opened_file_path,
-			COALESCE(w.id, 0) as workspace_id
-		FROM users u
-		LEFT JOIN workspaces w ON w.id = u.last_workspace_id
-		WHERE u.id = ?`, id).
+        SELECT 
+            id, email, display_name, role, created_at, 
+            last_workspace_id
+        FROM users
+        WHERE id = ?`, id).
 		Scan(&user.ID, &user.Email, &user.DisplayName, &user.Role, &user.CreatedAt,
-			&user.LastWorkspaceID, &user.LastOpenedFilePath, &user.LastWorkspaceID)
+			&user.LastWorkspaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -98,44 +96,32 @@ func (db *DB) GetUserByID(id int) (*models.User, error) {
 
 func (db *DB) GetUserByEmail(email string) (*models.User, error) {
 	user := &models.User{}
-	var lastOpenedFilePath sql.NullString
 	err := db.QueryRow(`
-		SELECT 
-			u.id, u.email, u.display_name, u.password_hash, u.role, u.created_at, 
-			u.last_workspace_id, u.last_opened_file_path,
-			COALESCE(w.id, 0) as workspace_id
-		FROM users u
-		LEFT JOIN workspaces w ON w.id = u.last_workspace_id
-		WHERE u.email = ?`, email).
+        SELECT 
+            id, email, display_name, password_hash, role, created_at, 
+            last_workspace_id
+        FROM users
+        WHERE email = ?`, email).
 		Scan(&user.ID, &user.Email, &user.DisplayName, &user.PasswordHash, &user.Role, &user.CreatedAt,
-			&user.LastWorkspaceID, &lastOpenedFilePath, &user.LastWorkspaceID)
+			&user.LastWorkspaceID)
 	if err != nil {
 		return nil, err
 	}
-	if lastOpenedFilePath.Valid {
-		user.LastOpenedFilePath = lastOpenedFilePath.String
-	} else {
-		user.LastOpenedFilePath = ""
-	}
+
 	return user, nil
 }
 
 func (db *DB) UpdateUser(user *models.User) error {
 	_, err := db.Exec(`
 		UPDATE users
-		SET email = ?, display_name = ?, role = ?, last_workspace_id = ?, last_opened_file_path = ?
+		SET email = ?, display_name = ?, role = ?, last_workspace_id = ?
 		WHERE id = ?`,
-		user.Email, user.DisplayName, user.Role, user.LastWorkspaceID, user.LastOpenedFilePath, user.ID)
+		user.Email, user.DisplayName, user.Role, user.LastWorkspaceID, user.ID)
 	return err
 }
 
 func (db *DB) UpdateLastWorkspace(userID, workspaceID int) error {
 	_, err := db.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", workspaceID, userID)
-	return err
-}
-
-func (db *DB) UpdateLastOpenedFile(userID int, filePath string) error {
-	_, err := db.Exec("UPDATE users SET last_opened_file_path = ? WHERE id = ?", filePath, userID)
 	return err
 }
 
