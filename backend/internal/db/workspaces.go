@@ -160,3 +160,20 @@ func (db *DB) UpdateLastWorkspaceTx(tx *sql.Tx, userID, workspaceID int) error {
 	_, err := tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", workspaceID, userID)
 	return err
 }
+
+func (db *DB) UpdateLastOpenedFile(workspaceID int, filePath string) error {
+	_, err := db.Exec("UPDATE workspaces SET last_opened_file_path = ? WHERE id = ?", filePath, workspaceID)
+	return err
+}
+
+func (db *DB) GetLastOpenedFile(workspaceID int) (string, error) {
+	var filePath sql.NullString
+	err := db.QueryRow("SELECT last_opened_file_path FROM workspaces WHERE id = ?", workspaceID).Scan(&filePath)
+	if err != nil {
+		return "", err
+	}
+	if !filePath.Valid {
+		return "", nil
+	}
+	return filePath.String, nil
+}
