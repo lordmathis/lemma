@@ -1,6 +1,7 @@
 package user
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 
@@ -28,7 +29,7 @@ func (s *UserService) SetupAdminUser(adminEmail, adminPassword string) (*models.
 	adminUser, err := s.DB.GetUserByEmail(adminEmail)
 	if adminUser != nil {
 		return adminUser, nil // Admin user already exists
-	} else if err != nil {
+	} else if err != sql.ErrNoRows {
 		return nil, err
 	}
 
