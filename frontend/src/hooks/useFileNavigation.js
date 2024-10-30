@@ -1,18 +1,28 @@
-import { useState, useCallback, useEffect } from 'react'; // Added useEffect
+import { useState, useCallback, useEffect } from 'react';
 import { notifications } from '@mantine/notifications';
 import { lookupFileByName } from '../services/api';
 import { DEFAULT_FILE } from '../utils/constants';
 import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useLastOpenedFile } from './useLastOpenedFile';
 
 export const useFileNavigation = () => {
   const [selectedFile, setSelectedFile] = useState(DEFAULT_FILE.path);
   const [isNewFile, setIsNewFile] = useState(true);
   const { currentWorkspace } = useWorkspace();
+  const { loadLastOpenedFile, saveLastOpenedFile } = useLastOpenedFile();
 
-  const handleFileSelect = useCallback((filePath) => {
-    setSelectedFile(filePath || DEFAULT_FILE.path);
-    setIsNewFile(filePath ? false : true);
-  }, []);
+  const handleFileSelect = useCallback(
+    async (filePath) => {
+      const newPath = filePath || DEFAULT_FILE.path;
+      setSelectedFile(newPath);
+      setIsNewFile(!filePath);
+
+      if (filePath) {
+        await saveLastOpenedFile(filePath);
+      }
+    },
+    [saveLastOpenedFile]
+  );
 
   const handleLinkClick = useCallback(
     async (filename) => {
@@ -41,10 +51,19 @@ export const useFileNavigation = () => {
     [currentWorkspace, handleFileSelect]
   );
 
-  // Reset to default file when workspace changes
+  // Load last opened file when workspace changes
   useEffect(() => {
-    handleFileSelect(null);
-  }, [currentWorkspace, handleFileSelect]);
+    const initializeFile = async () => {
+      const lastFile = await loadLastOpenedFile();
+      if (lastFile) {
+        handleFileSelect(lastFile);
+      } else {
+        handleFileSelect(null);
+      }
+    };
+
+    initializeFile();
+  }, [currentWorkspace, loadLastOpenedFile, handleFileSelect]);
 
   return { handleLinkClick, selectedFile, isNewFile, handleFileSelect };
 };
