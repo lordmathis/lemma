@@ -9,18 +9,22 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"novamd/internal/api"
+	"novamd/internal/config"
 	"novamd/internal/db"
 	"novamd/internal/filesystem"
 	"novamd/internal/user"
 )
 
 func main() {
-	// Initialize database
-	dbPath := os.Getenv("NOVAMD_DB_PATH")
-	if dbPath == "" {
-		dbPath = "./sqlite.db"
+
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal("Failed to load configuration:", err)
 	}
-	database, err := db.Init(dbPath)
+
+	// Initialize database
+	database, err := db.Init(cfg.DBPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,21 +35,13 @@ func main() {
 	}()
 
 	// Initialize filesystem
-	workdir := os.Getenv("NOVAMD_WORKDIR")
-	if workdir == "" {
-		workdir = "./data"
-	}
-	fs := filesystem.New(workdir)
+	fs := filesystem.New(cfg.WorkDir)
 
 	// Initialize user service
 	userService := user.NewUserService(database, fs)
 
-	adminEmail := os.Getenv("NOVAMD_ADMIN_EMAIL")
-	adminPassword := os.Getenv("NOVAMD_ADMIN_PASSWORD")
-	if adminEmail == "" || adminPassword == "" {
-		log.Fatal("NOVAMD_ADMIN_EMAIL and NOVAMD_ADMIN_PASSWORD environment variables must be set")
-	}
-	if _, err := userService.SetupAdminUser(adminEmail, adminPassword); err != nil {
+	// Create admin user
+	if _, err := userService.SetupAdminUser(cfg.AdminEmail, cfg.AdminPassword); err != nil {
 		log.Fatal(err)
 	}
 
@@ -59,14 +55,8 @@ func main() {
 		api.SetupRoutes(r, database, fs)
 	})
 
-	// Static file serving
-	staticPath := os.Getenv("NOVAMD_STATIC_PATH")
-	if staticPath == "" {
-		staticPath = "../frontend/dist"
-	}
-
 	// Handle all other routes with static file server
-	r.Get("/*", api.NewStaticHandler(staticPath).ServeHTTP)
+	r.Get("/*", api.NewStaticHandler(cfg.StaticPath).ServeHTTP)
 
 	// Start server
 	port := os.Getenv("NOVAMD_PORT")
