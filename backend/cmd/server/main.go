@@ -24,7 +24,7 @@ func main() {
 	}
 
 	// Initialize database
-	database, err := db.Init(cfg.DBPath)
+	database, err := db.Init(cfg.DBPath, cfg.EncryptionKey)
 	if err != nil {
 		log.Fatal(err)
 	}

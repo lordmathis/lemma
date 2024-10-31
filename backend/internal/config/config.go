@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"novamd/internal/crypto"
 )
 
 type Config struct {
@@ -13,6 +15,7 @@ type Config struct {
 	Port          string
 	AdminEmail    string
 	AdminPassword string
+	EncryptionKey string
 }
 
 func DefaultConfig() *Config {
@@ -22,6 +25,19 @@ func DefaultConfig() *Config {
 		StaticPath: "../frontend/dist",
 		Port:       "8080",
 	}
+}
+
+func (c *Config) Validate() error {
+	if c.AdminEmail == "" || c.AdminPassword == "" {
+		return fmt.Errorf("NOVAMD_ADMIN_EMAIL and NOVAMD_ADMIN_PASSWORD must be set")
+	}
+
+	// Validate encryption key
+	if err := crypto.ValidateKey(c.EncryptionKey); err != nil {
+		return fmt.Errorf("invalid NOVAMD_ENCRYPTION_KEY: %w", err)
+	}
+
+	return nil
 }
 
 // Load creates a new Config instance with values from environment variables
@@ -52,8 +68,11 @@ func Load() (*Config, error) {
 
 	config.AdminEmail = os.Getenv("NOVAMD_ADMIN_EMAIL")
 	config.AdminPassword = os.Getenv("NOVAMD_ADMIN_PASSWORD")
-	if config.AdminEmail == "" || config.AdminPassword == "" {
-		return nil, fmt.Errorf("NOVAMD_ADMIN_EMAIL and NOVAMD_ADMIN_PASSWORD must be set")
+	config.EncryptionKey = os.Getenv("NOVAMD_ENCRYPTION_KEY")
+
+	// Validate all settings
+	if err := config.Validate(); err != nil {
+		return nil, err
 	}
 
 	return config, nil
