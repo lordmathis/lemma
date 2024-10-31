@@ -9,8 +9,7 @@ import { useWorkspace } from '../contexts/WorkspaceContext';
 
 const Layout = () => {
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
-  const { selectedFile, handleFileSelect, handleLinkClick } =
-    useFileNavigation();
+  const { selectedFile, handleFileSelect } = useFileNavigation();
   const { files, loadFileList } = useFileList();
 
   if (workspaceLoading) {
@@ -49,7 +48,6 @@ const Layout = () => {
           <MainContent
             selectedFile={selectedFile}
             handleFileSelect={handleFileSelect}
-            handleLinkClick={handleLinkClick}
             loadFileList={loadFileList}
           />
         </Container>
