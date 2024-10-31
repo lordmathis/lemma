@@ -11,7 +11,7 @@ const ContentView = ({
   content,
   handleContentChange,
   handleSave,
-  handleLinkClick,
+  handleFileSelect,
 }) => {
   if (!selectedFile) {
     return (
@@ -47,7 +47,7 @@ const ContentView = ({
       selectedFile={selectedFile}
     />
   ) : (
-    <MarkdownPreview content={content} handleLinkClick={handleLinkClick} />
+    <MarkdownPreview content={content} handleFileSelect={handleFileSelect} />
   );
 };
 

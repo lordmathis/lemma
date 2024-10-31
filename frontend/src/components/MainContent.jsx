@@ -12,12 +12,7 @@ import { useFileOperations } from '../hooks/useFileOperations';
 import { useGitOperations } from '../hooks/useGitOperations';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 
-const MainContent = ({
-  selectedFile,
-  handleFileSelect,
-  handleLinkClick,
-  loadFileList,
-}) => {
+const MainContent = ({ selectedFile, handleFileSelect, loadFileList }) => {
   const [activeTab, setActiveTab] = useState('source');
   const { settings } = useWorkspace();
   const {
@@ -113,7 +108,7 @@ const MainContent = ({
           content={content}
           handleContentChange={handleContentChange}
           handleSave={handleSaveFile}
-          handleLinkClick={handleLinkClick}
+          handleFileSelect={handleFileSelect}
         />
       </Box>
       <CreateFileModal onCreateFile={handleCreateFile} />
