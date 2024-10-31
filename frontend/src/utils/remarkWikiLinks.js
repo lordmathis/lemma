@@ -1,5 +1,6 @@
 import { visit } from 'unist-util-visit';
 import { lookupFileByName, getFileUrl } from '../services/api';
+import { INLINE_CONTAINER_TYPES, MARKDOWN_REGEX } from './constants';
 
 function createNotFoundLink(fileName, displayText, baseUrl) {
   return {
@@ -53,8 +54,8 @@ export function remarkWikiLinks(workspaceId) {
     const replacements = new Map();
 
     // Find all wiki links
-    visit(tree, 'text', function (node) {
-      const regex = /(!?)\[\[(.*?)\]\]/g;
+    visit(tree, 'text', function (node, index, parent) {
+      const regex = MARKDOWN_REGEX.WIKILINK;
       let match;
       const matches = [];
 
@@ -62,7 +63,6 @@ export function remarkWikiLinks(workspaceId) {
         const [fullMatch, isImage, innerContent] = match;
         let fileName, displayText, heading;
 
-        // Parse the inner content
         const pipeIndex = innerContent.indexOf('|');
         const hashIndex = innerContent.indexOf('#');
 
@@ -90,26 +90,25 @@ export function remarkWikiLinks(workspaceId) {
       }
 
       if (matches.length > 0) {
-        replacements.set(node, matches);
+        replacements.set(node, { matches, parent, index });
       }
     });
 
     // Process all matches
-    for (const [node, matches] of replacements) {
-      const children = [];
+    for (const [node, { matches, parent }] of replacements) {
+      const newNodes = [];
       let lastIndex = 0;
 
       for (const match of matches) {
         // Add text before the match
         if (match.index > lastIndex) {
-          children.push({
+          newNodes.push({
             type: 'text',
             value: node.value.slice(lastIndex, match.index),
           });
         }
 
         try {
-          // Add .md extension for non-image files if they don't have an extension
           const lookupFileName = match.isImage
             ? match.fileName
             : addMarkdownExtension(match.fileName);
@@ -119,11 +118,11 @@ export function remarkWikiLinks(workspaceId) {
           if (paths && paths.length > 0) {
             const filePath = paths[0];
             if (match.isImage) {
-              children.push(
+              newNodes.push(
                 createImageNode(workspaceId, filePath, match.displayText)
               );
             } else {
-              children.push(
+              newNodes.push(
                 createFileLink(
                   filePath,
                   match.displayText,
@@ -133,14 +132,13 @@ export function remarkWikiLinks(workspaceId) {
               );
             }
           } else {
-            children.push(
+            newNodes.push(
               createNotFoundLink(match.fileName, match.displayText, baseUrl)
             );
           }
         } catch (error) {
-          // Handle both 404s and other errors by creating a "not found" link
           console.debug('File lookup failed:', match.fileName, error);
-          children.push(
+          newNodes.push(
             createNotFoundLink(match.fileName, match.displayText, baseUrl)
           );
         }
@@ -150,16 +148,30 @@ export function remarkWikiLinks(workspaceId) {
 
       // Add any remaining text
       if (lastIndex < node.value.length) {
-        children.push({
+        newNodes.push({
           type: 'text',
           value: node.value.slice(lastIndex),
         });
       }
 
-      // Replace the node with new children
-      node.type = 'paragraph';
-      node.children = children;
-      delete node.value;
+      // If the parent is a container that can have inline content,
+      // replace the text node directly with the new nodes
+      if (parent && INLINE_CONTAINER_TYPES.has(parent.type)) {
+        const nodeIndex = parent.children.indexOf(node);
+        if (nodeIndex !== -1) {
+          parent.children.splice(nodeIndex, 1, ...newNodes);
+        }
+      } else {
+        // For other types of parents, wrap the nodes in a paragraph
+        const paragraph = {
+          type: 'paragraph',
+          children: newNodes,
+        };
+        const nodeIndex = parent.children.indexOf(node);
+        if (nodeIndex !== -1) {
+          parent.children.splice(nodeIndex, 1, paragraph);
+        }
+      }
     }
   };
 }

@@ -3,12 +3,11 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMath from 'remark-math';
 import remarkRehype from 'remark-rehype';
-import rehypeKatex from 'rehype-katex';
+import rehypeMathjax from 'rehype-mathjax';
 import rehypeReact from 'rehype-react';
 import rehypePrism from 'rehype-prism';
 import * as prod from 'react/jsx-runtime';
 import { notifications } from '@mantine/notifications';
-import 'katex/dist/katex.min.css';
 import { remarkWikiLinks } from '../utils/remarkWikiLinks';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 
@@ -51,7 +50,7 @@ const MarkdownPreview = ({ content, handleFileSelect }) => {
         .use(remarkWikiLinks, currentWorkspace?.id)
         .use(remarkMath)
         .use(remarkRehype)
-        .use(rehypeKatex)
+        .use(rehypeMathjax)
         .use(rehypePrism)
         .use(rehypeReact, {
           production: true,

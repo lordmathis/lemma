@@ -53,3 +53,15 @@ export const DEFAULT_FILE = {
 export const MARKDOWN_REGEX = {
   WIKILINK: /(!?)\[\[(.*?)\]\]/g,
 };
+
+// List of element types that can contain inline content
+export const INLINE_CONTAINER_TYPES = new Set([
+  'paragraph',
+  'listItem',
+  'tableCell',
+  'blockquote',
+  'heading',
+  'emphasis',
+  'strong',
+  'delete',
+]);
