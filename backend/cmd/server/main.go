@@ -4,19 +4,19 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
 	"novamd/internal/api"
+	"novamd/internal/auth"
 	"novamd/internal/config"
 	"novamd/internal/db"
 	"novamd/internal/filesystem"
-	"novamd/internal/user"
 )
 
 func main() {
-
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
@@ -28,38 +28,56 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func() {
-		if err := database.Close(); err != nil {
-			log.Printf("Error closing database: %v", err)
+	defer database.Close()
+
+	// Get or generate JWT signing key
+	signingKey := cfg.JWTSigningKey
+	if signingKey == "" {
+		signingKey, err = database.EnsureJWTSecret()
+		if err != nil {
+			log.Fatal("Failed to ensure JWT secret:", err)
 		}
-	}()
+	}
 
 	// Initialize filesystem
 	fs := filesystem.New(cfg.WorkDir)
 
-	// Initialize user service
-	userService := user.NewUserService(database, fs)
-
-	// Create admin user
-	if _, err := userService.SetupAdminUser(cfg.AdminEmail, cfg.AdminPassword); err != nil {
-		log.Fatal(err)
+	// Initialize JWT service
+	jwtService, err := auth.NewJWTService(auth.JWTConfig{
+		SigningKey:         signingKey,
+		AccessTokenExpiry:  15 * time.Minute,
+		RefreshTokenExpiry: 7 * 24 * time.Hour,
+	})
+	if err != nil {
+		log.Fatal("Failed to initialize JWT service:", err)
 	}
+
+	// Initialize auth middleware
+	authMiddleware := auth.NewMiddleware(jwtService)
+
+	// Initialize session service
+	sessionService := auth.NewSessionService(database.DB, jwtService)
 
 	// Set up router
 	r := chi.NewRouter()
+
+	// Middleware
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Timeout(30 * time.Second))
 
-	// API routes
+	// Set up routes
 	r.Route("/api/v1", func(r chi.Router) {
-		api.SetupRoutes(r, database, fs)
+		api.SetupRoutes(r, database, fs, authMiddleware, sessionService)
 	})
 
 	// Handle all other routes with static file server
 	r.Get("/*", api.NewStaticHandler(cfg.StaticPath).ServeHTTP)
 
 	// Start server
-	port := os.Getenv("NOVAMD_PORT")
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}

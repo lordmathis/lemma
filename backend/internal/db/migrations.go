@@ -67,7 +67,14 @@ var migrations = []Migration{
 		ALTER TABLE workspaces ADD COLUMN created_by INTEGER REFERENCES users(id);
 		ALTER TABLE workspaces ADD COLUMN updated_by INTEGER REFERENCES users(id);
 		ALTER TABLE workspaces ADD COLUMN updated_at TIMESTAMP;
-		`,
+		
+		-- Create system_settings table for application settings
+		CREATE TABLE IF NOT EXISTS system_settings (
+			key TEXT PRIMARY KEY,
+			value TEXT NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);`,
 	},
 }
 
