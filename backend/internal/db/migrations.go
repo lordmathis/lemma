@@ -45,6 +45,30 @@ var migrations = []Migration{
 		);
 		`,
 	},
+	{
+		Version: 2,
+		SQL: `
+		-- Create sessions table for authentication
+		CREATE TABLE IF NOT EXISTS sessions (
+			id TEXT PRIMARY KEY,
+			user_id INTEGER NOT NULL,
+			refresh_token TEXT NOT NULL,
+			expires_at TIMESTAMP NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+		);
+
+		-- Add indexes for performance
+		CREATE INDEX idx_sessions_user_id ON sessions(user_id);
+		CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
+		CREATE INDEX idx_sessions_refresh_token ON sessions(refresh_token);
+
+		-- Add audit fields to workspaces
+		ALTER TABLE workspaces ADD COLUMN created_by INTEGER REFERENCES users(id);
+		ALTER TABLE workspaces ADD COLUMN updated_by INTEGER REFERENCES users(id);
+		ALTER TABLE workspaces ADD COLUMN updated_at TIMESTAMP;
+		`,
+	},
 }
 
 func (db *DB) Migrate() error {
