@@ -4,7 +4,6 @@ import (
 	"novamd/internal/auth"
 	"novamd/internal/db"
 	"novamd/internal/filesystem"
-	"novamd/internal/models"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -25,8 +24,20 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddlew
 		r.Post("/auth/logout", Logout(sessionService))
 		r.Get("/auth/me", GetCurrentUser(db))
 
-		// User routes
+		// Admin-only routes
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.RequireRole("admin"))
+
+			// TODO: Implement
+			// r.Get("/admin/users", ListUsers(db))
+			// r.Post("/admin/users", CreateUser(db))
+			// r.Delete("/admin/users/{userId}", DeleteUser(db))
+		})
+
+		// User routes - protected by resource ownership
 		r.Route("/users/{userId}", func(r chi.Router) {
+			r.Use(authMiddleware.RequireResourceOwnership)
+
 			r.Get("/", GetUser(db))
 
 			// Workspace routes
@@ -37,6 +48,9 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddlew
 				r.Put("/last", UpdateLastWorkspace(db))
 
 				r.Route("/{workspaceId}", func(r chi.Router) {
+					// Add workspace ownership check
+					r.Use(authMiddleware.RequireWorkspaceOwnership(db))
+
 					r.Get("/", GetWorkspace(db))
 					r.Put("/", UpdateWorkspace(db, fs))
 					r.Delete("/", DeleteWorkspace(db))
@@ -60,12 +74,6 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddlew
 					})
 				})
 			})
-		})
-
-		// Admin-only routes
-		r.Group(func(r chi.Router) {
-			r.Use(authMiddleware.RequireRole(string(models.RoleAdmin)))
-			// Admin-only endpoints
 		})
 	})
 }

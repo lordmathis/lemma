@@ -4,7 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"novamd/internal/db"
+	"strconv"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type contextKey string
@@ -84,6 +88,80 @@ func (m *Middleware) RequireRole(role string) func(http.Handler) http.Handler {
 
 			if claims.Role != role && claims.Role != "admin" {
 				http.Error(w, "Insufficient permissions", http.StatusForbidden)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// RequireResourceOwnership ensures users can only access their own resources
+func (m *Middleware) RequireResourceOwnership(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get requesting user from context (set by auth middleware)
+		claims, err := GetUserFromContext(r.Context())
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// Get requested user ID from URL
+		userIDStr := chi.URLParam(r, "userId")
+		requestedUserID, err := strconv.Atoi(userIDStr)
+		if err != nil {
+			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			return
+		}
+
+		// Allow if user is accessing their own resources or is an admin
+		if claims.UserID != requestedUserID && claims.Role != "admin" {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// RequireWorkspaceOwnership ensures users can only access workspaces they own
+type WorkspaceGetter interface {
+	GetWorkspaceByID(id int) (*Workspace, error)
+}
+
+type Workspace struct {
+	ID     int
+	UserID int
+}
+
+// RequireWorkspaceOwnership ensures users can only access workspaces they own
+func (m *Middleware) RequireWorkspaceOwnership(db *db.DB) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Get requesting user from context
+			claims, err := GetUserFromContext(r.Context())
+			if err != nil {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			// Get workspace ID from URL
+			workspaceID, err := strconv.Atoi(chi.URLParam(r, "workspaceId"))
+			if err != nil {
+				http.Error(w, "Invalid workspace ID", http.StatusBadRequest)
+				return
+			}
+
+			// Get workspace from database
+			workspace, err := db.GetWorkspaceByID(workspaceID)
+			if err != nil {
+				http.Error(w, "Workspace not found", http.StatusNotFound)
+				return
+			}
+
+			// Check if user owns the workspace or is admin
+			if workspace.UserID != claims.UserID && claims.Role != "admin" {
+				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
 			}
 
