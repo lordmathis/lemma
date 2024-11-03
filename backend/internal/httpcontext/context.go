@@ -10,7 +10,7 @@ import (
 type HandlerContext struct {
 	UserID    int
 	UserRole  string
-	Workspace *models.Workspace // Will be nil for non-workspace endpoints
+	Workspace *models.Workspace
 }
 
 type contextKey string

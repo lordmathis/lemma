@@ -27,7 +27,7 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddlew
 	r.Group(func(r chi.Router) {
 		// Apply authentication middleware to all routes in this group
 		r.Use(authMiddleware.Authenticate)
-		r.Use(middleware.WithHandlerContext(db))
+		r.Use(middleware.WithUserContext)
 
 		// Auth routes
 		r.Post("/auth/logout", handler.Logout(sessionService))
@@ -49,7 +49,8 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddlew
 			r.Put("/last", handler.UpdateLastWorkspace())
 
 			// Single workspace routes
-			r.Route("/{workspaceId}", func(r chi.Router) {
+			r.Route("/{workspaceName}", func(r chi.Router) {
+				r.Use(middleware.WithWorkspaceContext(db))
 				r.Use(authMiddleware.RequireWorkspaceAccess)
 
 				r.Get("/", handler.GetWorkspace())
