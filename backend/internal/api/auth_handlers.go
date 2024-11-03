@@ -127,17 +127,15 @@ func RefreshToken(authService *auth.SessionService) http.HandlerFunc {
 }
 
 // GetCurrentUser returns the currently authenticated user
-func GetCurrentUser(db *db.DB) http.HandlerFunc {
+func (h *BaseHandler) GetCurrentUser(db *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Get user claims from context (set by auth middleware)
-		claims, err := auth.GetUserFromContext(r.Context())
-		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		ctx, ok := h.getContext(w, r)
+		if !ok {
 			return
 		}
 
 		// Get user from database
-		user, err := db.GetUserByID(claims.UserID)
+		user, err := db.GetUserByID(ctx.UserID)
 		if err != nil {
 			http.Error(w, "User not found", http.StatusNotFound)
 			return

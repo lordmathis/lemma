@@ -11,15 +11,14 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func ListFiles(fs *filesystem.FileSystem) http.HandlerFunc {
+func (h *BaseHandler) ListFiles(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		ctx, ok := h.getContext(w, r)
+		if !ok {
 			return
 		}
 
-		files, err := fs.ListFilesRecursively(userID, workspaceID)
+		files, err := fs.ListFilesRecursively(ctx.UserID, ctx.Workspace.ID)
 		if err != nil {
 			http.Error(w, "Failed to list files", http.StatusInternalServerError)
 			return
@@ -29,11 +28,10 @@ func ListFiles(fs *filesystem.FileSystem) http.HandlerFunc {
 	}
 }
 
-func LookupFileByName(fs *filesystem.FileSystem) http.HandlerFunc {
+func (h *BaseHandler) LookupFileByName(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		ctx, ok := h.getContext(w, r)
+		if !ok {
 			return
 		}
 
@@ -43,7 +41,7 @@ func LookupFileByName(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		filePaths, err := fs.FindFileByName(userID, workspaceID, filename)
+		filePaths, err := fs.FindFileByName(ctx.UserID, ctx.Workspace.ID, filename)
 		if err != nil {
 			http.Error(w, "File not found", http.StatusNotFound)
 			return
@@ -53,16 +51,15 @@ func LookupFileByName(fs *filesystem.FileSystem) http.HandlerFunc {
 	}
 }
 
-func GetFileContent(fs *filesystem.FileSystem) http.HandlerFunc {
+func (h *BaseHandler) GetFileContent(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		ctx, ok := h.getContext(w, r)
+		if !ok {
 			return
 		}
 
 		filePath := chi.URLParam(r, "*")
-		content, err := fs.GetFileContent(userID, workspaceID, filePath)
+		content, err := fs.GetFileContent(ctx.UserID, ctx.Workspace.ID, filePath)
 		if err != nil {
 			http.Error(w, "Failed to read file", http.StatusNotFound)
 			return
@@ -73,11 +70,10 @@ func GetFileContent(fs *filesystem.FileSystem) http.HandlerFunc {
 	}
 }
 
-func SaveFile(fs *filesystem.FileSystem) http.HandlerFunc {
+func (h *BaseHandler) SaveFile(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		ctx, ok := h.getContext(w, r)
+		if !ok {
 			return
 		}
 
@@ -88,7 +84,7 @@ func SaveFile(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		err = fs.SaveFile(userID, workspaceID, filePath, content)
+		err = fs.SaveFile(ctx.UserID, ctx.Workspace.ID, filePath, content)
 		if err != nil {
 			http.Error(w, "Failed to save file", http.StatusInternalServerError)
 			return
@@ -98,16 +94,15 @@ func SaveFile(fs *filesystem.FileSystem) http.HandlerFunc {
 	}
 }
 
-func DeleteFile(fs *filesystem.FileSystem) http.HandlerFunc {
+func (h *BaseHandler) DeleteFile(fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		ctx, ok := h.getContext(w, r)
+		if !ok {
 			return
 		}
 
 		filePath := chi.URLParam(r, "*")
-		err = fs.DeleteFile(userID, workspaceID, filePath)
+		err := fs.DeleteFile(ctx.UserID, ctx.Workspace.ID, filePath)
 		if err != nil {
 			http.Error(w, "Failed to delete file", http.StatusInternalServerError)
 			return
@@ -118,17 +113,21 @@ func DeleteFile(fs *filesystem.FileSystem) http.HandlerFunc {
 	}
 }
 
-func GetLastOpenedFile(db *db.DB) http.HandlerFunc {
+func (h *BaseHandler) GetLastOpenedFile(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		ctx, ok := h.getContext(w, r)
+		if !ok {
 			return
 		}
 
-		filePath, err := db.GetLastOpenedFile(workspaceID)
+		filePath, err := db.GetLastOpenedFile(ctx.Workspace.ID)
 		if err != nil {
 			http.Error(w, "Failed to get last opened file", http.StatusInternalServerError)
+			return
+		}
+
+		if _, err := fs.ValidatePath(ctx.UserID, ctx.Workspace.ID, filePath); err != nil {
+			http.Error(w, "Invalid file path", http.StatusBadRequest)
 			return
 		}
 
@@ -136,11 +135,10 @@ func GetLastOpenedFile(db *db.DB) http.HandlerFunc {
 	}
 }
 
-func UpdateLastOpenedFile(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
+func (h *BaseHandler) UpdateLastOpenedFile(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		ctx, ok := h.getContext(w, r)
+		if !ok {
 			return
 		}
 
@@ -155,13 +153,13 @@ func UpdateLastOpenedFile(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc
 
 		// Validate the file path exists in the workspace
 		if requestBody.FilePath != "" {
-			if _, err := fs.ValidatePath(userID, workspaceID, requestBody.FilePath); err != nil {
+			if _, err := fs.ValidatePath(ctx.UserID, ctx.Workspace.ID, requestBody.FilePath); err != nil {
 				http.Error(w, "Invalid file path", http.StatusBadRequest)
 				return
 			}
 		}
 
-		if err := db.UpdateLastOpenedFile(workspaceID, requestBody.FilePath); err != nil {
+		if err := db.UpdateLastOpenedFile(ctx.Workspace.ID, requestBody.FilePath); err != nil {
 			http.Error(w, "Failed to update last opened file", http.StatusInternalServerError)
 			return
 		}
