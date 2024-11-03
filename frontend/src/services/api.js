@@ -1,20 +1,5 @@
-const API_BASE_URL = window.API_BASE_URL;
-
-const apiCall = async (url, options = {}) => {
-  try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.message || `HTTP error! status: ${response.status}`
-      );
-    }
-    return response;
-  } catch (error) {
-    console.error(`API call failed: ${error.message}`);
-    throw error;
-  }
-};
+import { API_BASE_URL } from '../utils/constants';
+import { apiCall } from './authApi';
 
 export const fetchLastWorkspaceId = async () => {
   const response = await apiCall(`${API_BASE_URL}/workspaces/last`);
