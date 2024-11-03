@@ -1,19 +1,19 @@
-package api
+package handlers
 
 import (
 	"net/http"
 
-	"novamd/internal/db"
+	"novamd/internal/httpcontext"
 )
 
-func (h *BaseHandler) GetUser(db *db.DB) http.HandlerFunc {
+func (h *Handler) GetUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := h.getContext(w, r)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
 
-		user, err := db.GetUserByID(ctx.UserID)
+		user, err := h.DB.GetUserByID(ctx.UserID)
 		if err != nil {
 			http.Error(w, "Failed to get user", http.StatusInternalServerError)
 			return

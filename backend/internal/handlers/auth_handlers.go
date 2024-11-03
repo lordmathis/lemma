@@ -1,10 +1,10 @@
-package api
+package handlers
 
 import (
 	"encoding/json"
 	"net/http"
 	"novamd/internal/auth"
-	"novamd/internal/db"
+	"novamd/internal/httpcontext"
 	"novamd/internal/models"
 
 	"golang.org/x/crypto/bcrypt"
@@ -31,7 +31,7 @@ type RefreshResponse struct {
 }
 
 // Login handles user authentication and returns JWT tokens
-func Login(authService *auth.SessionService, db *db.DB) http.HandlerFunc {
+func (h *Handler) Login(authService *auth.SessionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -46,7 +46,7 @@ func Login(authService *auth.SessionService, db *db.DB) http.HandlerFunc {
 		}
 
 		// Get user from database
-		user, err := db.GetUserByEmail(req.Email)
+		user, err := h.DB.GetUserByEmail(req.Email)
 		if err != nil {
 			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 			return
@@ -79,7 +79,7 @@ func Login(authService *auth.SessionService, db *db.DB) http.HandlerFunc {
 }
 
 // Logout invalidates the user's session
-func Logout(authService *auth.SessionService) http.HandlerFunc {
+func (h *Handler) Logout(authService *auth.SessionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionID := r.Header.Get("X-Session-ID")
 		if sessionID == "" {
@@ -98,7 +98,7 @@ func Logout(authService *auth.SessionService) http.HandlerFunc {
 }
 
 // RefreshToken generates a new access token using a refresh token
-func RefreshToken(authService *auth.SessionService) http.HandlerFunc {
+func (h *Handler) RefreshToken(authService *auth.SessionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RefreshRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -127,15 +127,15 @@ func RefreshToken(authService *auth.SessionService) http.HandlerFunc {
 }
 
 // GetCurrentUser returns the currently authenticated user
-func (h *BaseHandler) GetCurrentUser(db *db.DB) http.HandlerFunc {
+func (h *Handler) GetCurrentUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := h.getContext(w, r)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
 
 		// Get user from database
-		user, err := db.GetUserByID(ctx.UserID)
+		user, err := h.DB.GetUserByID(ctx.UserID)
 		if err != nil {
 			http.Error(w, "User not found", http.StatusNotFound)
 			return

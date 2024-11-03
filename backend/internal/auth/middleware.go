@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"novamd/internal/httpcontext"
 )
 
 type contextKey string
@@ -95,9 +97,8 @@ func (m *Middleware) RequireRole(role string) func(http.Handler) http.Handler {
 func (m *Middleware) RequireWorkspaceAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Get our handler context
-		ctx := context.GetHandlerContext(r)
-		if ctx == nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
+		if !ok {
 			return
 		}
 

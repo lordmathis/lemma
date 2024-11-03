@@ -1,22 +1,21 @@
-package api
+package handlers
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"novamd/internal/db"
-	"novamd/internal/filesystem"
+	"novamd/internal/httpcontext"
 	"novamd/internal/models"
 )
 
-func (h *BaseHandler) ListWorkspaces(db *db.DB) http.HandlerFunc {
+func (h *Handler) ListWorkspaces() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := h.getContext(w, r)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
 
-		workspaces, err := db.GetWorkspacesByUserID(ctx.UserID)
+		workspaces, err := h.DB.GetWorkspacesByUserID(ctx.UserID)
 		if err != nil {
 			http.Error(w, "Failed to list workspaces", http.StatusInternalServerError)
 			return
@@ -26,9 +25,9 @@ func (h *BaseHandler) ListWorkspaces(db *db.DB) http.HandlerFunc {
 	}
 }
 
-func (h *BaseHandler) CreateWorkspace(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
+func (h *Handler) CreateWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := h.getContext(w, r)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -40,12 +39,12 @@ func (h *BaseHandler) CreateWorkspace(db *db.DB, fs *filesystem.FileSystem) http
 		}
 
 		workspace.UserID = ctx.UserID
-		if err := db.CreateWorkspace(&workspace); err != nil {
+		if err := h.DB.CreateWorkspace(&workspace); err != nil {
 			http.Error(w, "Failed to create workspace", http.StatusInternalServerError)
 			return
 		}
 
-		if err := fs.InitializeUserWorkspace(workspace.UserID, workspace.ID); err != nil {
+		if err := h.FS.InitializeUserWorkspace(workspace.UserID, workspace.ID); err != nil {
 			http.Error(w, "Failed to initialize workspace directory", http.StatusInternalServerError)
 			return
 		}
@@ -54,9 +53,9 @@ func (h *BaseHandler) CreateWorkspace(db *db.DB, fs *filesystem.FileSystem) http
 	}
 }
 
-func (h *BaseHandler) GetWorkspace(db *db.DB) http.HandlerFunc {
+func (h *Handler) GetWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := h.getContext(w, r)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -81,9 +80,9 @@ func gitSettingsChanged(new, old *models.Workspace) bool {
 	return false
 }
 
-func (h *BaseHandler) UpdateWorkspace(db *db.DB, fs *filesystem.FileSystem) http.HandlerFunc {
+func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := h.getContext(w, r)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -107,7 +106,7 @@ func (h *BaseHandler) UpdateWorkspace(db *db.DB, fs *filesystem.FileSystem) http
 		// Handle Git repository setup/teardown if Git settings changed
 		if gitSettingsChanged(&workspace, ctx.Workspace) {
 			if workspace.GitEnabled {
-				if err := fs.SetupGitRepo(
+				if err := h.FS.SetupGitRepo(
 					ctx.UserID,
 					ctx.Workspace.ID,
 					workspace.GitURL,
@@ -119,11 +118,11 @@ func (h *BaseHandler) UpdateWorkspace(db *db.DB, fs *filesystem.FileSystem) http
 				}
 
 			} else {
-				fs.DisableGitRepo(ctx.UserID, ctx.Workspace.ID)
+				h.FS.DisableGitRepo(ctx.UserID, ctx.Workspace.ID)
 			}
 		}
 
-		if err := db.UpdateWorkspace(&workspace); err != nil {
+		if err := h.DB.UpdateWorkspace(&workspace); err != nil {
 			http.Error(w, "Failed to update workspace", http.StatusInternalServerError)
 			return
 		}
@@ -132,15 +131,15 @@ func (h *BaseHandler) UpdateWorkspace(db *db.DB, fs *filesystem.FileSystem) http
 	}
 }
 
-func (h *BaseHandler) DeleteWorkspace(db *db.DB) http.HandlerFunc {
+func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := h.getContext(w, r)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
 
 		// Check if this is the user's last workspace
-		workspaces, err := db.GetWorkspacesByUserID(ctx.UserID)
+		workspaces, err := h.DB.GetWorkspacesByUserID(ctx.UserID)
 		if err != nil {
 			http.Error(w, "Failed to get workspaces", http.StatusInternalServerError)
 			return
@@ -161,7 +160,7 @@ func (h *BaseHandler) DeleteWorkspace(db *db.DB) http.HandlerFunc {
 		}
 
 		// Start transaction
-		tx, err := db.Begin()
+		tx, err := h.DB.Begin()
 		if err != nil {
 			http.Error(w, "Failed to start transaction", http.StatusInternalServerError)
 			return
@@ -169,14 +168,14 @@ func (h *BaseHandler) DeleteWorkspace(db *db.DB) http.HandlerFunc {
 		defer tx.Rollback()
 
 		// Update last workspace ID first
-		err = db.UpdateLastWorkspaceTx(tx, ctx.UserID, nextWorkspaceID)
+		err = h.DB.UpdateLastWorkspaceTx(tx, ctx.UserID, nextWorkspaceID)
 		if err != nil {
 			http.Error(w, "Failed to update last workspace", http.StatusInternalServerError)
 			return
 		}
 
 		// Delete the workspace
-		err = db.DeleteWorkspaceTx(tx, ctx.Workspace.ID)
+		err = h.DB.DeleteWorkspaceTx(tx, ctx.Workspace.ID)
 		if err != nil {
 			http.Error(w, "Failed to delete workspace", http.StatusInternalServerError)
 			return
@@ -193,14 +192,14 @@ func (h *BaseHandler) DeleteWorkspace(db *db.DB) http.HandlerFunc {
 	}
 }
 
-func (h *BaseHandler) GetLastWorkspace(db *db.DB) http.HandlerFunc {
+func (h *Handler) GetLastWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := h.getContext(w, r)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
 
-		workspaceID, err := db.GetLastWorkspaceID(ctx.UserID)
+		workspaceID, err := h.DB.GetLastWorkspaceID(ctx.UserID)
 		if err != nil {
 			http.Error(w, "Failed to get last workspace", http.StatusInternalServerError)
 			return
@@ -210,9 +209,9 @@ func (h *BaseHandler) GetLastWorkspace(db *db.DB) http.HandlerFunc {
 	}
 }
 
-func (h *BaseHandler) UpdateLastWorkspace(db *db.DB) http.HandlerFunc {
+func (h *Handler) UpdateLastWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := h.getContext(w, r)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -226,7 +225,7 @@ func (h *BaseHandler) UpdateLastWorkspace(db *db.DB) http.HandlerFunc {
 			return
 		}
 
-		if err := db.UpdateLastWorkspace(ctx.UserID, requestBody.WorkspaceID); err != nil {
+		if err := h.DB.UpdateLastWorkspace(ctx.UserID, requestBody.WorkspaceID); err != nil {
 			http.Error(w, "Failed to update last workspace", http.StatusInternalServerError)
 			return
 		}

@@ -14,6 +14,7 @@ import (
 	"novamd/internal/config"
 	"novamd/internal/db"
 	"novamd/internal/filesystem"
+	"novamd/internal/handlers"
 )
 
 func main() {
@@ -74,7 +75,7 @@ func main() {
 	})
 
 	// Handle all other routes with static file server
-	r.Get("/*", api.NewStaticHandler(cfg.StaticPath).ServeHTTP)
+	r.Get("/*", handlers.NewStaticHandler(cfg.StaticPath).ServeHTTP)
 
 	// Start server
 	port := os.Getenv("PORT")
