@@ -1,28 +1,28 @@
 import { API_BASE_URL } from '../utils/constants';
 import { apiCall } from './authApi';
 
-export const fetchLastWorkspaceId = async () => {
+export const fetchLastWorkspaceName = async () => {
   const response = await apiCall(`${API_BASE_URL}/workspaces/last`);
   return response.json();
 };
 
-export const fetchFileList = async (workspaceId) => {
+export const fetchFileList = async (workspaceName) => {
   const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceId}/files`
+    `${API_BASE_URL}/workspaces/${workspaceName}/files`
   );
   return response.json();
 };
 
-export const fetchFileContent = async (workspaceId, filePath) => {
+export const fetchFileContent = async (workspaceName, filePath) => {
   const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceId}/files/${filePath}`
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`
   );
   return response.text();
 };
 
-export const saveFileContent = async (workspaceId, filePath, content) => {
+export const saveFileContent = async (workspaceName, filePath, content) => {
   const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceId}/files/${filePath}`,
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`,
     {
       method: 'POST',
       headers: {
@@ -34,9 +34,9 @@ export const saveFileContent = async (workspaceId, filePath, content) => {
   return response.text();
 };
 
-export const deleteFile = async (workspaceId, filePath) => {
+export const deleteFile = async (workspaceName, filePath) => {
   const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceId}/files/${filePath}`,
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`,
     {
       method: 'DELETE',
     }
@@ -44,26 +44,29 @@ export const deleteFile = async (workspaceId, filePath) => {
   return response.text();
 };
 
-export const getWorkspace = async (workspaceId) => {
-  const response = await apiCall(`${API_BASE_URL}/workspaces/${workspaceId}`);
+export const getWorkspace = async (workspaceName) => {
+  const response = await apiCall(`${API_BASE_URL}/workspaces/${workspaceName}`);
   return response.json();
 };
 
 // Combined function to update workspace data including settings
-export const updateWorkspace = async (workspaceId, workspaceData) => {
-  const response = await apiCall(`${API_BASE_URL}/workspaces/${workspaceId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(workspaceData),
-  });
+export const updateWorkspace = async (workspaceName, workspaceData) => {
+  const response = await apiCall(
+    `${API_BASE_URL}/workspaces/${workspaceName}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(workspaceData),
+    }
+  );
   return response.json();
 };
 
-export const pullChanges = async (workspaceId) => {
+export const pullChanges = async (workspaceName) => {
   const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceId}/git/pull`,
+    `${API_BASE_URL}/workspaces/${workspaceName}/git/pull`,
     {
       method: 'POST',
     }
@@ -71,9 +74,9 @@ export const pullChanges = async (workspaceId) => {
   return response.json();
 };
 
-export const commitAndPush = async (workspaceId, message) => {
+export const commitAndPush = async (workspaceName, message) => {
   const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceId}/git/commit`,
+    `${API_BASE_URL}/workspaces/${workspaceName}/git/commit`,
     {
       method: 'POST',
       headers: {
@@ -85,13 +88,13 @@ export const commitAndPush = async (workspaceId, message) => {
   return response.json();
 };
 
-export const getFileUrl = (workspaceId, filePath) => {
-  return `${API_BASE_URL}/workspaces/${workspaceId}/files/${filePath}`;
+export const getFileUrl = (workspaceName, filePath) => {
+  return `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`;
 };
 
-export const lookupFileByName = async (workspaceId, filename) => {
+export const lookupFileByName = async (workspaceName, filename) => {
   const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceId}/files/lookup?filename=${encodeURIComponent(
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/lookup?filename=${encodeURIComponent(
       filename
     )}`
   );
@@ -99,9 +102,9 @@ export const lookupFileByName = async (workspaceId, filename) => {
   return data.paths;
 };
 
-export const updateLastOpenedFile = async (workspaceId, filePath) => {
+export const updateLastOpenedFile = async (workspaceName, filePath) => {
   const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceId}/files/last`,
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/last`,
     {
       method: 'PUT',
       headers: {
@@ -113,9 +116,9 @@ export const updateLastOpenedFile = async (workspaceId, filePath) => {
   return response.json();
 };
 
-export const getLastOpenedFile = async (workspaceId) => {
+export const getLastOpenedFile = async (workspaceName) => {
   const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceId}/files/last`
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/last`
   );
   return response.json();
 };
@@ -136,20 +139,23 @@ export const createWorkspace = async (name) => {
   return response.json();
 };
 
-export const deleteWorkspace = async (workspaceId) => {
-  const response = await apiCall(`${API_BASE_URL}/workspaces/${workspaceId}`, {
-    method: 'DELETE',
-  });
+export const deleteWorkspace = async (workspaceName) => {
+  const response = await apiCall(
+    `${API_BASE_URL}/workspaces/${workspaceName}`,
+    {
+      method: 'DELETE',
+    }
+  );
   return response.json();
 };
 
-export const updateLastWorkspace = async (workspaceId) => {
+export const updateLastWorkspaceName = async (workspaceName) => {
   const response = await apiCall(`${API_BASE_URL}/workspaces/last`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ workspaceId }),
+    body: JSON.stringify({ workspaceName }),
   });
   return response.json();
 };

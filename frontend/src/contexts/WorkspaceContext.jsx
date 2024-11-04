@@ -8,10 +8,10 @@ import React, {
 import { useMantineColorScheme } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  fetchLastWorkspaceId,
+  fetchLastWorkspaceName,
   getWorkspace,
   updateWorkspace,
-  updateLastWorkspace,
+  updateLastWorkspaceName,
   deleteWorkspace,
   listWorkspaces,
 } from '../services/api';
@@ -41,9 +41,9 @@ export const WorkspaceProvider = ({ children }) => {
     }
   }, []);
 
-  const loadWorkspaceData = useCallback(async (workspaceId) => {
+  const loadWorkspaceData = useCallback(async (workspaceName) => {
     try {
-      const workspace = await getWorkspace(workspaceId);
+      const workspace = await getWorkspace(workspaceName);
       setCurrentWorkspace(workspace);
       setColorScheme(workspace.theme);
     } catch (error) {
@@ -61,8 +61,8 @@ export const WorkspaceProvider = ({ children }) => {
       const allWorkspaces = await listWorkspaces();
       if (allWorkspaces.length > 0) {
         const firstWorkspace = allWorkspaces[0];
-        await updateLastWorkspace(firstWorkspace.id);
-        await loadWorkspaceData(firstWorkspace.id);
+        await updateLastWorkspaceName(firstWorkspace.name);
+        await loadWorkspaceData(firstWorkspace.name);
       }
     } catch (error) {
       console.error('Failed to load first available workspace:', error);
@@ -77,9 +77,9 @@ export const WorkspaceProvider = ({ children }) => {
   useEffect(() => {
     const initializeWorkspace = async () => {
       try {
-        const { lastWorkspaceId } = await fetchLastWorkspaceId();
-        if (lastWorkspaceId) {
-          await loadWorkspaceData(lastWorkspaceId);
+        const { lastWorkspaceName } = await fetchLastWorkspaceName();
+        if (lastWorkspaceName) {
+          await loadWorkspaceData(lastWorkspaceName);
         } else {
           await loadFirstAvailableWorkspace();
         }
@@ -95,11 +95,11 @@ export const WorkspaceProvider = ({ children }) => {
     initializeWorkspace();
   }, []);
 
-  const switchWorkspace = useCallback(async (workspaceId) => {
+  const switchWorkspace = useCallback(async (workspaceName) => {
     try {
       setLoading(true);
-      await updateLastWorkspace(workspaceId);
-      await loadWorkspaceData(workspaceId);
+      await updateLastWorkspaceName(workspaceName);
+      await loadWorkspaceData(workspaceName);
       await loadWorkspaces();
     } catch (error) {
       console.error('Failed to switch workspace:', error);
@@ -129,10 +129,10 @@ export const WorkspaceProvider = ({ children }) => {
       }
 
       // Delete workspace and get the next workspace ID
-      const response = await deleteWorkspace(currentWorkspace.id);
+      const response = await deleteWorkspace(currentWorkspace.name);
 
       // Load the new workspace data
-      await loadWorkspaceData(response.nextWorkspaceId);
+      await loadWorkspaceData(response.nextWorkspaceName);
 
       notifications.show({
         title: 'Success',
@@ -162,7 +162,7 @@ export const WorkspaceProvider = ({ children }) => {
         };
 
         const response = await updateWorkspace(
-          currentWorkspace.id,
+          currentWorkspace.name,
           updatedWorkspace
         );
         setCurrentWorkspace(response);

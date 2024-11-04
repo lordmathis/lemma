@@ -45,8 +45,8 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddlew
 		r.Route("/workspaces", func(r chi.Router) {
 			r.Get("/", handler.ListWorkspaces())
 			r.Post("/", handler.CreateWorkspace())
-			r.Get("/last", handler.GetLastWorkspace())
-			r.Put("/last", handler.UpdateLastWorkspace())
+			r.Get("/last", handler.GetLastWorkspaceName())
+			r.Put("/last", handler.UpdateLastWorkspaceName())
 
 			// Single workspace routes
 			r.Route("/{workspaceName}", func(r chi.Router) {

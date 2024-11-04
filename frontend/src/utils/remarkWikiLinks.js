@@ -27,10 +27,10 @@ function createFileLink(filePath, displayText, heading, baseUrl) {
   };
 }
 
-function createImageNode(workspaceId, filePath, displayText) {
+function createImageNode(workspaceName, filePath, displayText) {
   return {
     type: 'image',
-    url: getFileUrl(workspaceId, filePath),
+    url: getFileUrl(workspaceName, filePath),
     alt: displayText,
     title: displayText,
   };
@@ -43,9 +43,9 @@ function addMarkdownExtension(fileName) {
   return `${fileName}.md`;
 }
 
-export function remarkWikiLinks(workspaceId) {
+export function remarkWikiLinks(workspaceName) {
   return async function transformer(tree) {
-    if (!workspaceId) {
+    if (!workspaceName) {
       console.warn('No workspace ID provided to remarkWikiLinks plugin');
       return;
     }
@@ -113,13 +113,13 @@ export function remarkWikiLinks(workspaceId) {
             ? match.fileName
             : addMarkdownExtension(match.fileName);
 
-          const paths = await lookupFileByName(workspaceId, lookupFileName);
+          const paths = await lookupFileByName(workspaceName, lookupFileName);
 
           if (paths && paths.length > 0) {
             const filePath = paths[0];
             if (match.isImage) {
               newNodes.push(
-                createImageNode(workspaceId, filePath, match.displayText)
+                createImageNode(workspaceName, filePath, match.displayText)
               );
             } else {
               newNodes.push(

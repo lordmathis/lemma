@@ -21,15 +21,10 @@ const MarkdownPreview = ({ content, handleFileSelect }) => {
 
     if (href.startsWith(`${baseUrl}/internal/`)) {
       // For existing files, extract the path and directly select it
-      const [filePath, heading] = decodeURIComponent(
+      const [filePath] = decodeURIComponent(
         href.replace(`${baseUrl}/internal/`, '')
       ).split('#');
       handleFileSelect(filePath);
-
-      // TODO: Handle heading navigation if needed
-      if (heading) {
-        console.debug('Heading navigation not implemented:', heading);
-      }
     } else if (href.startsWith(`${baseUrl}/notfound/`)) {
       // For non-existent files, show a notification
       const fileName = decodeURIComponent(
@@ -47,7 +42,7 @@ const MarkdownPreview = ({ content, handleFileSelect }) => {
     () =>
       unified()
         .use(remarkParse)
-        .use(remarkWikiLinks, currentWorkspace?.id)
+        .use(remarkWikiLinks, currentWorkspace?.name)
         .use(remarkMath)
         .use(remarkRehype)
         .use(rehypeMathjax)
@@ -90,7 +85,7 @@ const MarkdownPreview = ({ content, handleFileSelect }) => {
             },
           },
         }),
-    [baseUrl, handleFileSelect, currentWorkspace?.id]
+    [baseUrl, handleFileSelect, currentWorkspace?.name]
   );
 
   useEffect(() => {

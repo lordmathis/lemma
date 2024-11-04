@@ -10,7 +10,7 @@ export const useGitOperations = () => {
     if (!currentWorkspace || !settings.gitEnabled) return false;
 
     try {
-      await pullChanges(currentWorkspace.id);
+      await pullChanges(currentWorkspace.name);
       notifications.show({
         title: 'Success',
         message: 'Successfully pulled latest changes',
@@ -33,7 +33,7 @@ export const useGitOperations = () => {
       if (!currentWorkspace || !settings.gitEnabled) return false;
 
       try {
-        await commitAndPush(currentWorkspace.id, message);
+        await commitAndPush(currentWorkspace.name, message);
         notifications.show({
           title: 'Success',
           message: 'Successfully committed and pushed changes',

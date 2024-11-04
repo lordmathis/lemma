@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"novamd/internal/httpcontext"
@@ -151,10 +152,12 @@ func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 		}
 
 		// Find another workspace to set as last
+		var nextWorkspaceName string
 		var nextWorkspaceID int
 		for _, ws := range workspaces {
 			if ws.ID != ctx.Workspace.ID {
 				nextWorkspaceID = ws.ID
+				nextWorkspaceName = ws.Name
 				break
 			}
 		}
@@ -188,28 +191,28 @@ func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 		}
 
 		// Return the next workspace ID in the response so frontend knows where to redirect
-		respondJSON(w, map[string]int{"nextWorkspaceId": nextWorkspaceID})
+		respondJSON(w, map[string]string{"nextWorkspaceName": nextWorkspaceName})
 	}
 }
 
-func (h *Handler) GetLastWorkspace() http.HandlerFunc {
+func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := httpcontext.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
 
-		workspaceID, err := h.DB.GetLastWorkspaceID(ctx.UserID)
+		workspaceName, err := h.DB.GetLastWorkspaceName(ctx.UserID)
 		if err != nil {
 			http.Error(w, "Failed to get last workspace", http.StatusInternalServerError)
 			return
 		}
 
-		respondJSON(w, map[string]int{"lastWorkspaceId": workspaceID})
+		respondJSON(w, map[string]string{"lastWorkspaceName": workspaceName})
 	}
 }
 
-func (h *Handler) UpdateLastWorkspace() http.HandlerFunc {
+func (h *Handler) UpdateLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := httpcontext.GetRequestContext(w, r)
 		if !ok {
@@ -217,15 +220,17 @@ func (h *Handler) UpdateLastWorkspace() http.HandlerFunc {
 		}
 
 		var requestBody struct {
-			WorkspaceID int `json:"workspaceId"`
+			WorkspaceName string `json:"workspaceName"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+			fmt.Println(err)
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		if err := h.DB.UpdateLastWorkspace(ctx.UserID, requestBody.WorkspaceID); err != nil {
+		if err := h.DB.UpdateLastWorkspace(ctx.UserID, requestBody.WorkspaceName); err != nil {
+			fmt.Println(err)
 			http.Error(w, "Failed to update last workspace", http.StatusInternalServerError)
 			return
 		}
