@@ -8,7 +8,7 @@ import {
   Text,
   Divider,
 } from '@mantine/core';
-import { IconUser, IconLogout, IconUserCircle } from '@tabler/icons-react';
+import { IconUser, IconLogout, IconSettings } from '@tabler/icons-react';
 import { useAuth } from '../contexts/AuthContext';
 import AccountSettings from './AccountSettings';
 
@@ -76,7 +76,7 @@ const UserMenu = () => {
               })}
             >
               <Group>
-                <IconUserCircle size={16} />
+                <IconSettings size={16} />
                 <Text size="sm">Account Settings</Text>
               </Group>
             </UnstyledButton>

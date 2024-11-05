@@ -89,6 +89,15 @@ export const AuthProvider = ({ children }) => {
     }
   }, [logout]);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const userData = await authApi.getCurrentUser();
+      setUser(userData);
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+    }
+  }, []);
+
   const value = {
     user,
     loading,
@@ -96,6 +105,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     refreshToken,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,6 +1,22 @@
 import { API_BASE_URL } from '../utils/constants';
 import { apiCall } from './authApi';
 
+export const updateProfile = async (updates) => {
+  const response = await apiCall(`${API_BASE_URL}/profile`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+  return response.json();
+};
+
+export const deleteProfile = async (password) => {
+  const response = await apiCall(`${API_BASE_URL}/profile`, {
+    method: 'DELETE',
+    body: JSON.stringify({ password }),
+  });
+  return response.json();
+};
+
 export const fetchLastWorkspaceName = async () => {
   const response = await apiCall(`${API_BASE_URL}/workspaces/last`);
   return response.json();
