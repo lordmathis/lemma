@@ -33,6 +33,10 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddlew
 		r.Post("/auth/logout", handler.Logout(sessionService))
 		r.Get("/auth/me", handler.GetCurrentUser())
 
+		// User profile routes
+		r.Put("/profile", handler.UpdateProfile())
+		r.Delete("/profile", handler.DeleteAccount())
+
 		// Admin-only routes
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware.RequireRole("admin"))
