@@ -93,10 +93,6 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 				return
 			}
 			user.PasswordHash = string(hashedPassword)
-		} else if req.CurrentPassword != "" {
-			// If current password is provided but no new password, that's an error
-			http.Error(w, "New password is required when current password is provided", http.StatusBadRequest)
-			return
 		}
 
 		// Handle email update if requested

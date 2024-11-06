@@ -82,11 +82,11 @@ func (db *DB) GetUserByID(id int) (*models.User, error) {
 	user := &models.User{}
 	err := db.QueryRow(`
         SELECT 
-            id, email, display_name, role, created_at, 
+            id, email, display_name, password_hash, role, created_at, 
             last_workspace_id
         FROM users
         WHERE id = ?`, id).
-		Scan(&user.ID, &user.Email, &user.DisplayName, &user.Role, &user.CreatedAt,
+		Scan(&user.ID, &user.Email, &user.DisplayName, &user.PasswordHash, &user.Role, &user.CreatedAt,
 			&user.LastWorkspaceID)
 	if err != nil {
 		return nil, err
@@ -114,9 +114,9 @@ func (db *DB) GetUserByEmail(email string) (*models.User, error) {
 func (db *DB) UpdateUser(user *models.User) error {
 	_, err := db.Exec(`
 		UPDATE users
-		SET email = ?, display_name = ?, role = ?, last_workspace_id = ?
+		SET email = ?, display_name = ?, password_hash = ?, role = ?, last_workspace_id = ?
 		WHERE id = ?`,
-		user.Email, user.DisplayName, user.Role, user.LastWorkspaceID, user.ID)
+		user.Email, user.DisplayName, user.PasswordHash, user.Role, user.LastWorkspaceID, user.ID)
 	return err
 }
 
