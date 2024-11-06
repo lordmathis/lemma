@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, Switch, Group, Box, Title } from '@mantine/core';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useWorkspace } from '../../../contexts/WorkspaceContext';
 
 const AppearanceSettings = ({ themeSettings, onThemeChange }) => {
   const { colorScheme, updateColorScheme } = useWorkspace();

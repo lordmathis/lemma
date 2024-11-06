@@ -9,7 +9,7 @@ import {
   Text,
   Stack,
 } from '@mantine/core';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');

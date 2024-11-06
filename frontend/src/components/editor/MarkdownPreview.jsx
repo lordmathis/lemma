@@ -8,8 +8,8 @@ import rehypeReact from 'rehype-react';
 import rehypePrism from 'rehype-prism';
 import * as prod from 'react/jsx-runtime';
 import { notifications } from '@mantine/notifications';
-import { remarkWikiLinks } from '../utils/remarkWikiLinks';
-import { useWorkspace } from '../contexts/WorkspaceContext';
+import { remarkWikiLinks } from '../../utils/remarkWikiLinks';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 const MarkdownPreview = ({ content, handleFileSelect }) => {
   const [processedContent, setProcessedContent] = useState(null);

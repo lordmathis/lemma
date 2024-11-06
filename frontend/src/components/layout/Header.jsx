@@ -1,8 +1,8 @@
 import React from 'react';
 import { Group, Text } from '@mantine/core';
-import UserMenu from './UserMenu';
-import WorkspaceSwitcher from './WorkspaceSwitcher';
-import Settings from './Settings';
+import UserMenu from '../navigation/UserMenu';
+import WorkspaceSwitcher from '../navigation/WorkspaceSwitcher';
+import WorkspaceSettings from '../settings/workspace/WorkspaceSettings';
 
 const Header = () => {
   return (
@@ -14,7 +14,7 @@ const Header = () => {
         <WorkspaceSwitcher />
         <UserMenu />
       </Group>
-      <Settings />
+      <WorkspaceSettings />
     </Group>
   );
 };

@@ -6,8 +6,8 @@ import {
   IconGitPullRequest,
   IconGitCommit,
 } from '@tabler/icons-react';
-import { useModalContext } from '../contexts/ModalContext';
-import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useModalContext } from '../../contexts/ModalContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 const FileActions = ({ handlePullChanges, selectedFile }) => {
   const { settings } = useWorkspace();

@@ -2,15 +2,15 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Tabs, Breadcrumbs, Group, Box, Text, Flex } from '@mantine/core';
 import { IconCode, IconEye, IconPointFilled } from '@tabler/icons-react';
 
-import ContentView from './ContentView';
-import CreateFileModal from './modals/CreateFileModal';
-import DeleteFileModal from './modals/DeleteFileModal';
-import CommitMessageModal from './modals/CommitMessageModal';
+import ContentView from '../editor/ContentView';
+import CreateFileModal from '../modals/file/CreateFileModal';
+import DeleteFileModal from '../modals/file/DeleteFileModal';
+import CommitMessageModal from '../modals/git/CommitMessageModal';
 
-import { useFileContent } from '../hooks/useFileContent';
-import { useFileOperations } from '../hooks/useFileOperations';
-import { useGitOperations } from '../hooks/useGitOperations';
-import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useFileContent } from '../../hooks/useFileContent';
+import { useFileOperations } from '../../hooks/useFileOperations';
+import { useGitOperations } from '../../hooks/useGitOperations';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 const MainContent = ({ selectedFile, handleFileSelect, loadFileList }) => {
   const [activeTab, setActiveTab] = useState('source');

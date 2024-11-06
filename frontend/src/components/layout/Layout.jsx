@@ -3,9 +3,9 @@ import { AppShell, Container, Loader, Center } from '@mantine/core';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import MainContent from './MainContent';
-import { useFileNavigation } from '../hooks/useFileNavigation';
-import { useFileList } from '../hooks/useFileList';
-import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useFileNavigation } from '../../hooks/useFileNavigation';
+import { useFileList } from '../../hooks/useFileList';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 const Layout = () => {
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();

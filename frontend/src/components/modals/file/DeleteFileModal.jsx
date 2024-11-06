@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Text, Button, Group } from '@mantine/core';
-import { useModalContext } from '../../contexts/ModalContext';
+import { useModalContext } from '../../../contexts/ModalContext';
 
 const DeleteFileModal = ({ onDeleteFile, selectedFile }) => {
   const { deleteFileModalVisible, setDeleteFileModalVisible } =

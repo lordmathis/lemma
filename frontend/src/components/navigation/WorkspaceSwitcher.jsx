@@ -15,10 +15,10 @@ import {
   useMantineTheme,
 } from '@mantine/core';
 import { IconFolders, IconSettings, IconFolderPlus } from '@tabler/icons-react';
-import { useWorkspace } from '../contexts/WorkspaceContext';
-import { useModalContext } from '../contexts/ModalContext';
-import { listWorkspaces } from '../services/api';
-import CreateWorkspaceModal from './modals/CreateWorkspaceModal';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useModalContext } from '../../contexts/ModalContext';
+import { listWorkspaces } from '../../services/api';
+import CreateWorkspaceModal from '../modals/workspace/CreateWorkspaceModal';
 
 const WorkspaceSwitcher = () => {
   const { currentWorkspace, switchWorkspace } = useWorkspace();

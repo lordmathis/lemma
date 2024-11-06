@@ -9,8 +9,8 @@ import {
   Divider,
 } from '@mantine/core';
 import { IconUser, IconLogout, IconSettings } from '@tabler/icons-react';
-import { useAuth } from '../contexts/AuthContext';
-import AccountSettings from './AccountSettings';
+import { useAuth } from '../../contexts/AuthContext';
+import AccountSettings from '../settings/account/AccountSettings';
 
 const UserMenu = () => {
   const [accountSettingsOpened, setAccountSettingsOpened] = useState(false);

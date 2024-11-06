@@ -9,13 +9,13 @@ import {
   Accordion,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useWorkspace } from '../contexts/WorkspaceContext';
-import AppearanceSettings from './settings/AppearanceSettings';
-import EditorSettings from './settings/EditorSettings';
-import GitSettings from './settings/GitSettings';
-import GeneralSettings from './settings/GeneralSettings';
-import { useModalContext } from '../contexts/ModalContext';
-import DangerZoneSettings from './settings/DangerZoneSettings';
+import { useWorkspace } from '../../../contexts/WorkspaceContext';
+import AppearanceSettings from './AppearanceSettings';
+import EditorSettings from './EditorSettings';
+import GitSettings from './GitSettings';
+import GeneralSettings from './GeneralSettings';
+import { useModalContext } from '../../../contexts/ModalContext';
+import DangerZoneSettings from './DangerZoneSettings';
 
 const initialState = {
   localSettings: {},
@@ -59,7 +59,7 @@ const AccordionControl = ({ children }) => (
   </Accordion.Control>
 );
 
-const Settings = () => {
+const WorkspaceSettings = () => {
   const { currentWorkspace, updateSettings } = useWorkspace();
   const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
@@ -121,7 +121,7 @@ const Settings = () => {
     <Modal
       opened={settingsModalVisible}
       onClose={handleClose}
-      title={<Title order={2}>Settings</Title>}
+      title={<Title order={2}>Workspace Settings</Title>}
       centered
       size="lg"
     >
@@ -228,4 +228,4 @@ const Settings = () => {
   );
 };
 
-export default Settings;
+export default WorkspaceSettings;
