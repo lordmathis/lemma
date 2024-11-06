@@ -2,8 +2,8 @@ import React from 'react';
 import { Text, Center } from '@mantine/core';
 import Editor from './Editor';
 import MarkdownPreview from './MarkdownPreview';
-import { getFileUrl } from '../services/api';
-import { isImageFile } from '../utils/fileHelpers';
+import { getFileUrl } from '../../services/api';
+import { isImageFile } from '../../utils/fileHelpers';
 
 const ContentView = ({
   activeTab,

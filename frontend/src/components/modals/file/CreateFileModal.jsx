@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, TextInput, Button, Group, Box } from '@mantine/core';
-import { useModalContext } from '../../contexts/ModalContext';
+import { useModalContext } from '../../../contexts/ModalContext';
 
 const CreateFileModal = ({ onCreateFile }) => {
   const [fileName, setFileName] = useState('');
