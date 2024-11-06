@@ -10,7 +10,7 @@ export const useFileList = () => {
     if (!currentWorkspace || workspaceLoading) return;
 
     try {
-      const fileList = await fetchFileList(currentWorkspace.id);
+      const fileList = await fetchFileList(currentWorkspace.name);
       if (Array.isArray(fileList)) {
         setFiles(fileList);
       } else {

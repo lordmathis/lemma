@@ -29,7 +29,7 @@ export const useFileOperations = () => {
       if (!currentWorkspace) return false;
 
       try {
-        await saveFileContent(currentWorkspace.id, filePath, content);
+        await saveFileContent(currentWorkspace.name, filePath, content);
         notifications.show({
           title: 'Success',
           message: 'File saved successfully',
@@ -55,7 +55,7 @@ export const useFileOperations = () => {
       if (!currentWorkspace) return false;
 
       try {
-        await deleteFile(currentWorkspace.id, filePath);
+        await deleteFile(currentWorkspace.name, filePath);
         notifications.show({
           title: 'Success',
           message: 'File deleted successfully',
@@ -81,7 +81,7 @@ export const useFileOperations = () => {
       if (!currentWorkspace) return false;
 
       try {
-        await saveFileContent(currentWorkspace.id, fileName, initialContent);
+        await saveFileContent(currentWorkspace.name, fileName, initialContent);
         notifications.show({
           title: 'Success',
           message: 'File created successfully',

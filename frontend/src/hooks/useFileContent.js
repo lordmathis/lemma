@@ -19,7 +19,7 @@ export const useFileContent = (selectedFile) => {
         if (filePath === DEFAULT_FILE.path) {
           newContent = DEFAULT_FILE.content;
         } else if (!isImageFile(filePath)) {
-          newContent = await fetchFileContent(currentWorkspace.id, filePath);
+          newContent = await fetchFileContent(currentWorkspace.name, filePath);
         } else {
           newContent = ''; // Set empty content for image files
         }

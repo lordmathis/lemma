@@ -16,6 +16,7 @@ type Config struct {
 	AdminEmail    string
 	AdminPassword string
 	EncryptionKey string
+	JWTSigningKey string
 }
 
 func DefaultConfig() *Config {
@@ -69,6 +70,7 @@ func Load() (*Config, error) {
 	config.AdminEmail = os.Getenv("NOVAMD_ADMIN_EMAIL")
 	config.AdminPassword = os.Getenv("NOVAMD_ADMIN_PASSWORD")
 	config.EncryptionKey = os.Getenv("NOVAMD_ENCRYPTION_KEY")
+	config.JWTSigningKey = os.Getenv("NOVAMD_JWT_SIGNING_KEY")
 
 	// Validate all settings
 	if err := config.Validate(); err != nil {

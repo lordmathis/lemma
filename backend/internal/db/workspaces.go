@@ -72,6 +72,38 @@ func (db *DB) GetWorkspaceByID(id int) (*models.Workspace, error) {
 	return workspace, nil
 }
 
+func (db *DB) GetWorkspaceByName(userID int, workspaceName string) (*models.Workspace, error) {
+	workspace := &models.Workspace{}
+	var encryptedToken string
+
+	err := db.QueryRow(`
+		SELECT 
+			id, user_id, name, created_at, 
+			theme, auto_save, 
+			git_enabled, git_url, git_user, git_token, 
+			git_auto_commit, git_commit_msg_template
+		FROM workspaces 
+		WHERE user_id = ? AND name = ?`,
+		userID, workspaceName,
+	).Scan(
+		&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
+		&workspace.Theme, &workspace.AutoSave,
+		&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
+		&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Decrypt token
+	workspace.GitToken, err = db.decryptToken(encryptedToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt token: %w", err)
+	}
+
+	return workspace, nil
+}
+
 func (db *DB) UpdateWorkspace(workspace *models.Workspace) error {
 	// Encrypt token before storing
 	encryptedToken, err := db.encryptToken(workspace.GitToken)

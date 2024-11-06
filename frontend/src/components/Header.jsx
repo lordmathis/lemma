@@ -1,5 +1,6 @@
 import React from 'react';
-import { Group, Text, Avatar } from '@mantine/core';
+import { Group, Text } from '@mantine/core';
+import UserMenu from './UserMenu';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
 import Settings from './Settings';
 
@@ -11,7 +12,7 @@ const Header = () => {
       </Text>
       <Group>
         <WorkspaceSwitcher />
-        <Avatar src="https://via.placeholder.com/40" radius="xl" />
+        <UserMenu />
       </Group>
       <Settings />
     </Group>

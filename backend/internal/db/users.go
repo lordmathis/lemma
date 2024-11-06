@@ -82,11 +82,11 @@ func (db *DB) GetUserByID(id int) (*models.User, error) {
 	user := &models.User{}
 	err := db.QueryRow(`
         SELECT 
-            id, email, display_name, role, created_at, 
+            id, email, display_name, password_hash, role, created_at, 
             last_workspace_id
         FROM users
         WHERE id = ?`, id).
-		Scan(&user.ID, &user.Email, &user.DisplayName, &user.Role, &user.CreatedAt,
+		Scan(&user.ID, &user.Email, &user.DisplayName, &user.PasswordHash, &user.Role, &user.CreatedAt,
 			&user.LastWorkspaceID)
 	if err != nil {
 		return nil, err
@@ -114,15 +114,32 @@ func (db *DB) GetUserByEmail(email string) (*models.User, error) {
 func (db *DB) UpdateUser(user *models.User) error {
 	_, err := db.Exec(`
 		UPDATE users
-		SET email = ?, display_name = ?, role = ?, last_workspace_id = ?
+		SET email = ?, display_name = ?, password_hash = ?, role = ?, last_workspace_id = ?
 		WHERE id = ?`,
-		user.Email, user.DisplayName, user.Role, user.LastWorkspaceID, user.ID)
+		user.Email, user.DisplayName, user.PasswordHash, user.Role, user.LastWorkspaceID, user.ID)
 	return err
 }
 
-func (db *DB) UpdateLastWorkspace(userID, workspaceID int) error {
-	_, err := db.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", workspaceID, userID)
-	return err
+func (db *DB) UpdateLastWorkspace(userID int, workspaceName string) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var workspaceID int
+
+	err = tx.QueryRow("SELECT id FROM workspaces WHERE user_id = ? AND name = ?", userID, workspaceName).Scan(&workspaceID)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", workspaceID, userID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (db *DB) DeleteUser(id int) error {
@@ -147,8 +164,14 @@ func (db *DB) DeleteUser(id int) error {
 	return tx.Commit()
 }
 
-func (db *DB) GetLastWorkspaceID(userID int) (int, error) {
-	var workspaceID int
-	err := db.QueryRow("SELECT last_workspace_id FROM users WHERE id = ?", userID).Scan(&workspaceID)
-	return workspaceID, err
+func (db *DB) GetLastWorkspaceName(userID int) (string, error) {
+	var workspaceName string
+	err := db.QueryRow(`
+        SELECT 
+            w.name
+        FROM workspaces w
+        JOIN users u ON u.last_workspace_id = w.id
+        WHERE u.id = ?`, userID).
+		Scan(&workspaceName)
+	return workspaceName, err
 }

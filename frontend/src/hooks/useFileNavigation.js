@@ -25,6 +25,9 @@ export const useFileNavigation = () => {
   // Load last opened file when workspace changes
   useEffect(() => {
     const initializeFile = async () => {
+      setSelectedFile(DEFAULT_FILE.path);
+      setIsNewFile(true);
+
       const lastFile = await loadLastOpenedFile();
       if (lastFile) {
         handleFileSelect(lastFile);
@@ -33,7 +36,9 @@ export const useFileNavigation = () => {
       }
     };
 
-    initializeFile();
+    if (currentWorkspace) {
+      initializeFile();
+    }
   }, [currentWorkspace, loadLastOpenedFile, handleFileSelect]);
 
   return { selectedFile, isNewFile, handleFileSelect };

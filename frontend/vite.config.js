@@ -52,11 +52,16 @@ export default defineConfig(({ mode }) => ({
 
           // Markdown processing
           markdown: [
-            'react-markdown',
             'react-syntax-highlighter',
-            'rehype-katex',
+            'rehype-mathjax',
+            'rehype-prism',
+            'rehype-react',
+            'remark',
             'remark-math',
-            'katex',
+            'remark-parse',
+            'remark-rehype',
+            'unified',
+            'unist-util-visit',
           ],
 
           // Icons and utilities

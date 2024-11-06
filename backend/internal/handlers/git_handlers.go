@@ -1,17 +1,16 @@
-package api
+package handlers
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"novamd/internal/filesystem"
+	"novamd/internal/httpcontext"
 )
 
-func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
+func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
+		if !ok {
 			return
 		}
 
@@ -29,7 +28,7 @@ func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
 			return
 		}
 
-		err = fs.StageCommitAndPush(userID, workspaceID, requestBody.Message)
+		err := h.FS.StageCommitAndPush(ctx.UserID, ctx.Workspace.ID, requestBody.Message)
 		if err != nil {
 			http.Error(w, "Failed to stage, commit, and push changes: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -39,15 +38,14 @@ func StageCommitAndPush(fs *filesystem.FileSystem) http.HandlerFunc {
 	}
 }
 
-func PullChanges(fs *filesystem.FileSystem) http.HandlerFunc {
+func (h *Handler) PullChanges() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, workspaceID, err := getUserAndWorkspaceIDs(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		ctx, ok := httpcontext.GetRequestContext(w, r)
+		if !ok {
 			return
 		}
 
-		err = fs.Pull(userID, workspaceID)
+		err := h.FS.Pull(ctx.UserID, ctx.Workspace.ID)
 		if err != nil {
 			http.Error(w, "Failed to pull changes: "+err.Error(), http.StatusInternalServerError)
 			return

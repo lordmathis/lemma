@@ -47,7 +47,7 @@ const WorkspaceSwitcher = () => {
 
   const handleWorkspaceCreated = async (newWorkspace) => {
     await loadWorkspaces();
-    switchWorkspace(newWorkspace.id);
+    switchWorkspace(newWorkspace.name);
   };
 
   return (
@@ -102,10 +102,10 @@ const WorkspaceSwitcher = () => {
                 </Center>
               ) : (
                 workspaces.map((workspace) => {
-                  const isSelected = workspace.id === currentWorkspace?.id;
+                  const isSelected = workspace.name === currentWorkspace?.name;
                   return (
                     <Paper
-                      key={workspace.id}
+                      key={workspace.name}
                       p="xs"
                       withBorder
                       style={{
@@ -125,7 +125,7 @@ const WorkspaceSwitcher = () => {
                         <UnstyledButton
                           style={{ flex: 1 }}
                           onClick={() => {
-                            switchWorkspace(workspace.id);
+                            switchWorkspace(workspace.name);
                             setPopoverOpened(false);
                           }}
                         >

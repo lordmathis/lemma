@@ -9,7 +9,7 @@ export const useLastOpenedFile = () => {
     if (!currentWorkspace) return null;
 
     try {
-      const response = await getLastOpenedFile(currentWorkspace.id);
+      const response = await getLastOpenedFile(currentWorkspace.name);
       return response.lastOpenedFilePath || null;
     } catch (error) {
       console.error('Failed to load last opened file:', error);
@@ -22,7 +22,7 @@ export const useLastOpenedFile = () => {
       if (!currentWorkspace) return;
 
       try {
-        await updateLastOpenedFile(currentWorkspace.id, filePath);
+        await updateLastOpenedFile(currentWorkspace.name, filePath);
       } catch (error) {
         console.error('Failed to save last opened file:', error);
       }

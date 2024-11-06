@@ -1,43 +1,44 @@
-const API_BASE_URL = window.API_BASE_URL;
+import { API_BASE_URL } from '../utils/constants';
+import { apiCall } from './authApi';
 
-const apiCall = async (url, options = {}) => {
-  try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.message || `HTTP error! status: ${response.status}`
-      );
-    }
-    return response;
-  } catch (error) {
-    console.error(`API call failed: ${error.message}`);
-    throw error;
-  }
-};
-
-export const fetchLastWorkspaceId = async () => {
-  const response = await apiCall(`${API_BASE_URL}/users/1/workspaces/last`);
+export const updateProfile = async (updates) => {
+  const response = await apiCall(`${API_BASE_URL}/profile`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
   return response.json();
 };
 
-export const fetchFileList = async (workspaceId) => {
+export const deleteProfile = async (password) => {
+  const response = await apiCall(`${API_BASE_URL}/profile`, {
+    method: 'DELETE',
+    body: JSON.stringify({ password }),
+  });
+  return response.json();
+};
+
+export const fetchLastWorkspaceName = async () => {
+  const response = await apiCall(`${API_BASE_URL}/workspaces/last`);
+  return response.json();
+};
+
+export const fetchFileList = async (workspaceName) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}/files`
+    `${API_BASE_URL}/workspaces/${workspaceName}/files`
   );
   return response.json();
 };
 
-export const fetchFileContent = async (workspaceId, filePath) => {
+export const fetchFileContent = async (workspaceName, filePath) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}/files/${filePath}`
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`
   );
   return response.text();
 };
 
-export const saveFileContent = async (workspaceId, filePath, content) => {
+export const saveFileContent = async (workspaceName, filePath, content) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}/files/${filePath}`,
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`,
     {
       method: 'POST',
       headers: {
@@ -49,9 +50,9 @@ export const saveFileContent = async (workspaceId, filePath, content) => {
   return response.text();
 };
 
-export const deleteFile = async (workspaceId, filePath) => {
+export const deleteFile = async (workspaceName, filePath) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}/files/${filePath}`,
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`,
     {
       method: 'DELETE',
     }
@@ -59,17 +60,15 @@ export const deleteFile = async (workspaceId, filePath) => {
   return response.text();
 };
 
-export const getWorkspace = async (workspaceId) => {
-  const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}`
-  );
+export const getWorkspace = async (workspaceName) => {
+  const response = await apiCall(`${API_BASE_URL}/workspaces/${workspaceName}`);
   return response.json();
 };
 
 // Combined function to update workspace data including settings
-export const updateWorkspace = async (workspaceId, workspaceData) => {
+export const updateWorkspace = async (workspaceName, workspaceData) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}`,
+    `${API_BASE_URL}/workspaces/${workspaceName}`,
     {
       method: 'PUT',
       headers: {
@@ -81,9 +80,9 @@ export const updateWorkspace = async (workspaceId, workspaceData) => {
   return response.json();
 };
 
-export const pullChanges = async (workspaceId) => {
+export const pullChanges = async (workspaceName) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}/git/pull`,
+    `${API_BASE_URL}/workspaces/${workspaceName}/git/pull`,
     {
       method: 'POST',
     }
@@ -91,9 +90,9 @@ export const pullChanges = async (workspaceId) => {
   return response.json();
 };
 
-export const commitAndPush = async (workspaceId, message) => {
+export const commitAndPush = async (workspaceName, message) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}/git/commit`,
+    `${API_BASE_URL}/workspaces/${workspaceName}/git/commit`,
     {
       method: 'POST',
       headers: {
@@ -105,13 +104,13 @@ export const commitAndPush = async (workspaceId, message) => {
   return response.json();
 };
 
-export const getFileUrl = (workspaceId, filePath) => {
-  return `${API_BASE_URL}/users/1/workspaces/${workspaceId}/files/${filePath}`;
+export const getFileUrl = (workspaceName, filePath) => {
+  return `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`;
 };
 
-export const lookupFileByName = async (workspaceId, filename) => {
+export const lookupFileByName = async (workspaceName, filename) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}/files/lookup?filename=${encodeURIComponent(
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/lookup?filename=${encodeURIComponent(
       filename
     )}`
   );
@@ -119,9 +118,9 @@ export const lookupFileByName = async (workspaceId, filename) => {
   return data.paths;
 };
 
-export const updateLastOpenedFile = async (workspaceId, filePath) => {
+export const updateLastOpenedFile = async (workspaceName, filePath) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}/files/last`,
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/last`,
     {
       method: 'PUT',
       headers: {
@@ -133,20 +132,20 @@ export const updateLastOpenedFile = async (workspaceId, filePath) => {
   return response.json();
 };
 
-export const getLastOpenedFile = async (workspaceId) => {
+export const getLastOpenedFile = async (workspaceName) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}/files/last`
+    `${API_BASE_URL}/workspaces/${workspaceName}/files/last`
   );
   return response.json();
 };
 
 export const listWorkspaces = async () => {
-  const response = await apiCall(`${API_BASE_URL}/users/1/workspaces`);
+  const response = await apiCall(`${API_BASE_URL}/workspaces`);
   return response.json();
 };
 
 export const createWorkspace = async (name) => {
-  const response = await apiCall(`${API_BASE_URL}/users/1/workspaces`, {
+  const response = await apiCall(`${API_BASE_URL}/workspaces`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -156,9 +155,9 @@ export const createWorkspace = async (name) => {
   return response.json();
 };
 
-export const deleteWorkspace = async (workspaceId) => {
+export const deleteWorkspace = async (workspaceName) => {
   const response = await apiCall(
-    `${API_BASE_URL}/users/1/workspaces/${workspaceId}`,
+    `${API_BASE_URL}/workspaces/${workspaceName}`,
     {
       method: 'DELETE',
     }
@@ -166,13 +165,13 @@ export const deleteWorkspace = async (workspaceId) => {
   return response.json();
 };
 
-export const updateLastWorkspace = async (workspaceId) => {
-  const response = await apiCall(`${API_BASE_URL}/users/1/workspaces/last`, {
+export const updateLastWorkspaceName = async (workspaceName) => {
+  const response = await apiCall(`${API_BASE_URL}/workspaces/last`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ workspaceId }),
+    body: JSON.stringify({ workspaceName }),
   });
   return response.json();
 };

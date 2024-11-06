@@ -1,48 +1,82 @@
 package api
 
 import (
+	"novamd/internal/auth"
 	"novamd/internal/db"
 	"novamd/internal/filesystem"
+	"novamd/internal/handlers"
+	"novamd/internal/middleware"
 
 	"github.com/go-chi/chi/v5"
 )
 
-func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem) {
-	r.Route("/", func(r chi.Router) {
-		// User routes
-		r.Route("/users/{userId}", func(r chi.Router) {
-			r.Get("/", GetUser(db))
+func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddleware *auth.Middleware, sessionService *auth.SessionService) {
 
-			// Workspace routes
-			r.Route("/workspaces", func(r chi.Router) {
-				r.Get("/", ListWorkspaces(db))
-				r.Post("/", CreateWorkspace(db, fs))
-				r.Get("/last", GetLastWorkspace(db))
-				r.Put("/last", UpdateLastWorkspace(db))
+	handler := &handlers.Handler{
+		DB: db,
+		FS: fs,
+	}
 
-				r.Route("/{workspaceId}", func(r chi.Router) {
-					r.Get("/", GetWorkspace(db))
-					r.Put("/", UpdateWorkspace(db, fs))
-					r.Delete("/", DeleteWorkspace(db))
+	// Public routes (no authentication required)
+	r.Group(func(r chi.Router) {
+		r.Post("/auth/login", handler.Login(sessionService))
+		r.Post("/auth/refresh", handler.RefreshToken(sessionService))
+	})
 
-					// File routes
-					r.Route("/files", func(r chi.Router) {
-						r.Get("/", ListFiles(fs))
-						r.Get("/last", GetLastOpenedFile(db))
-						r.Put("/last", UpdateLastOpenedFile(db, fs))
-						r.Get("/lookup", LookupFileByName(fs)) // Moved here
+	// Protected routes (authentication required)
+	r.Group(func(r chi.Router) {
+		// Apply authentication middleware to all routes in this group
+		r.Use(authMiddleware.Authenticate)
+		r.Use(middleware.WithUserContext)
 
-						r.Post("/*", SaveFile(fs))
-						r.Get("/*", GetFileContent(fs))
-						r.Delete("/*", DeleteFile(fs))
+		// Auth routes
+		r.Post("/auth/logout", handler.Logout(sessionService))
+		r.Get("/auth/me", handler.GetCurrentUser())
 
-					})
+		// User profile routes
+		r.Put("/profile", handler.UpdateProfile())
+		r.Delete("/profile", handler.DeleteAccount())
 
-					// Git routes
-					r.Route("/git", func(r chi.Router) {
-						r.Post("/commit", StageCommitAndPush(fs))
-						r.Post("/pull", PullChanges(fs))
-					})
+		// Admin-only routes
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.RequireRole("admin"))
+			// r.Get("/admin/users", ListUsers(db))
+			// r.Post("/admin/users", CreateUser(db))
+			// r.Delete("/admin/users/{userId}", DeleteUser(db))
+		})
+
+		// Workspace routes
+		r.Route("/workspaces", func(r chi.Router) {
+			r.Get("/", handler.ListWorkspaces())
+			r.Post("/", handler.CreateWorkspace())
+			r.Get("/last", handler.GetLastWorkspaceName())
+			r.Put("/last", handler.UpdateLastWorkspaceName())
+
+			// Single workspace routes
+			r.Route("/{workspaceName}", func(r chi.Router) {
+				r.Use(middleware.WithWorkspaceContext(db))
+				r.Use(authMiddleware.RequireWorkspaceAccess)
+
+				r.Get("/", handler.GetWorkspace())
+				r.Put("/", handler.UpdateWorkspace())
+				r.Delete("/", handler.DeleteWorkspace())
+
+				// File routes
+				r.Route("/files", func(r chi.Router) {
+					r.Get("/", handler.ListFiles())
+					r.Get("/last", handler.GetLastOpenedFile())
+					r.Put("/last", handler.UpdateLastOpenedFile())
+					r.Get("/lookup", handler.LookupFileByName())
+
+					r.Post("/*", handler.SaveFile())
+					r.Get("/*", handler.GetFileContent())
+					r.Delete("/*", handler.DeleteFile())
+				})
+
+				// Git routes
+				r.Route("/git", func(r chi.Router) {
+					r.Post("/commit", handler.StageCommitAndPush())
+					r.Post("/pull", handler.PullChanges())
 				})
 			})
 		})
