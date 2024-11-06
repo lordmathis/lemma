@@ -7,16 +7,15 @@ import {
   Title,
   Stack,
   Accordion,
-  TextInput,
-  Box,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useProfileSettings } from '../../../hooks/useProfileSettings';
 import EmailPasswordModal from '../../modals/account/EmailPasswordModal';
-import DeleteAccountModal from '../../modals/account/DeleteAccountModal';
 import SecuritySettings from './SecuritySettings';
 import ProfileSettings from './ProfileSettings';
+import DangerZoneSettings from './DangerZoneSettings';
+import AccordionControl from '../AccordionControl';
 
 // Reducer for managing settings state
 const initialState = {
@@ -55,26 +54,11 @@ function settingsReducer(state, action) {
   }
 }
 
-const AccordionControl = ({ children }) => (
-  <Accordion.Control>
-    <Title order={4}>{children}</Title>
-  </Accordion.Control>
-);
-
-const DangerZone = ({ onDeleteClick }) => (
-  <Box>
-    <Button color="red" variant="light" onClick={onDeleteClick} fullWidth>
-      Delete Account
-    </Button>
-  </Box>
-);
-
 const AccountSettings = ({ opened, onClose }) => {
-  const { user, logout, refreshUser } = useAuth();
-  const { loading, updateProfile, deleteAccount } = useProfileSettings();
+  const { user, refreshUser } = useAuth();
+  const { loading, updateProfile } = useProfileSettings();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
   const isInitialMount = useRef(true);
-  const [deleteModalOpened, setDeleteModalOpened] = useState(false);
   const [emailModalOpened, setEmailModalOpened] = useState(false);
 
   // Initialize settings on mount
@@ -169,15 +153,6 @@ const AccountSettings = ({ opened, onClose }) => {
     }
   };
 
-  const handleDelete = async (password) => {
-    const result = await deleteAccount(password);
-    if (result.success) {
-      setDeleteModalOpened(false);
-      onClose();
-      logout();
-    }
-  };
-
   return (
     <>
       <Modal
@@ -240,7 +215,7 @@ const AccountSettings = ({ opened, onClose }) => {
             <Accordion.Item value="danger">
               <AccordionControl>Danger Zone</AccordionControl>
               <Accordion.Panel>
-                <DangerZone onDeleteClick={() => setDeleteModalOpened(true)} />
+                <DangerZoneSettings />
               </Accordion.Panel>
             </Accordion.Item>
           </Accordion>
@@ -265,12 +240,6 @@ const AccountSettings = ({ opened, onClose }) => {
         onClose={() => setEmailModalOpened(false)}
         onConfirm={handleEmailConfirm}
         email={state.localSettings.email}
-      />
-
-      <DeleteAccountModal
-        opened={deleteModalOpened}
-        onClose={() => setDeleteModalOpened(false)}
-        onConfirm={handleDelete}
       />
     </>
   );

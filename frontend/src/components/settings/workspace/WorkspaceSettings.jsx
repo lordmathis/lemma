@@ -16,6 +16,7 @@ import GitSettings from './GitSettings';
 import GeneralSettings from './GeneralSettings';
 import { useModalContext } from '../../../contexts/ModalContext';
 import DangerZoneSettings from './DangerZoneSettings';
+import AccordionControl from '../AccordionControl';
 
 const initialState = {
   localSettings: {},
@@ -52,12 +53,6 @@ function settingsReducer(state, action) {
       return state;
   }
 }
-
-const AccordionControl = ({ children }) => (
-  <Accordion.Control>
-    <Title order={4}>{children}</Title>
-  </Accordion.Control>
-);
 
 const WorkspaceSettings = () => {
   const { currentWorkspace, updateSettings } = useWorkspace();
