@@ -6,14 +6,16 @@ import (
 
 	"novamd/internal/crypto"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
+// DB represents the database connection
 type DB struct {
 	*sql.DB
 	crypto *crypto.Crypto
 }
 
+// Init initializes the database connection
 func Init(dbPath string, encryptionKey string) (*DB, error) {
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -42,6 +44,7 @@ func Init(dbPath string, encryptionKey string) (*DB, error) {
 	return database, nil
 }
 
+// Close closes the database connection
 func (db *DB) Close() error {
 	return db.DB.Close()
 }

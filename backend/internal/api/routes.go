@@ -1,3 +1,4 @@
+// Package api contains the API routes for the application. It sets up the routes for the public and protected endpoints, as well as the admin-only routes.
 package api
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// SetupRoutes configures the API routes
 func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddleware *auth.Middleware, sessionService *auth.SessionService) {
 
 	handler := &handlers.Handler{
@@ -38,11 +40,18 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddlew
 		r.Delete("/profile", handler.DeleteAccount())
 
 		// Admin-only routes
-		r.Group(func(r chi.Router) {
+		r.Route("/admin", func(r chi.Router) {
 			r.Use(authMiddleware.RequireRole("admin"))
-			// r.Get("/admin/users", ListUsers(db))
-			// r.Post("/admin/users", CreateUser(db))
-			// r.Delete("/admin/users/{userId}", DeleteUser(db))
+			// User management
+			r.Route("/users", func(r chi.Router) {
+				r.Get("/", handler.AdminListUsers())
+				r.Post("/", handler.AdminCreateUser())
+				r.Get("/{userId}", handler.AdminGetUser())
+				r.Put("/{userId}", handler.AdminUpdateUser())
+				r.Delete("/{userId}", handler.AdminDeleteUser())
+			})
+			// System stats
+			r.Get("/stats", handler.AdminGetSystemStats())
 		})
 
 		// Workspace routes
