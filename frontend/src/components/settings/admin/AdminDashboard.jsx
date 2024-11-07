@@ -11,47 +11,33 @@ import {
   Text,
   ActionIcon,
   Box,
+  LoadingOverlay,
+  Alert,
 } from '@mantine/core';
-import { IconTrash, IconEdit, IconPlus } from '@tabler/icons-react';
+import {
+  IconTrash,
+  IconEdit,
+  IconPlus,
+  IconAlertCircle,
+} from '@tabler/icons-react';
+import { useAdmin } from '../../../hooks/useAdmin';
+import { useAuth } from '../../../contexts/AuthContext';
 
-// Dummy data - replace with actual API calls in production
-const DUMMY_USERS = [
-  {
-    id: 1,
-    email: 'admin@example.com',
-    displayName: 'Admin User',
-    role: 'admin',
-    createdAt: '2024-01-01',
-  },
-  {
-    id: 2,
-    email: 'editor@example.com',
-    displayName: 'Editor User',
-    role: 'editor',
-    createdAt: '2024-01-02',
-  },
-  {
-    id: 3,
-    email: 'viewer@example.com',
-    displayName: 'Viewer User',
-    role: 'viewer',
-    createdAt: '2024-01-03',
-  },
-];
-
-const CreateUserModal = ({ opened, onClose, onCreateUser }) => {
+const CreateUserModal = ({ opened, onClose, onCreateUser, loading }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [role, setRole] = useState('viewer');
 
-  const handleSubmit = () => {
-    onCreateUser({ email, password, displayName, role });
-    setEmail('');
-    setPassword('');
-    setDisplayName('');
-    setRole('viewer');
-    onClose();
+  const handleSubmit = async () => {
+    const result = await onCreateUser({ email, password, displayName, role });
+    if (result.success) {
+      setEmail('');
+      setPassword('');
+      setDisplayName('');
+      setRole('viewer');
+      onClose();
+    }
   };
 
   return (
@@ -92,7 +78,9 @@ const CreateUserModal = ({ opened, onClose, onCreateUser }) => {
           <Button variant="default" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Create User</Button>
+          <Button onClick={handleSubmit} loading={loading}>
+            Create User
+          </Button>
         </Group>
       </Stack>
     </Modal>
@@ -100,20 +88,31 @@ const CreateUserModal = ({ opened, onClose, onCreateUser }) => {
 };
 
 const AdminDashboard = ({ opened, onClose }) => {
-  const [users, setUsers] = useState(DUMMY_USERS);
+  const {
+    data: users,
+    loading,
+    error,
+    create,
+    delete: deleteUser,
+  } = useAdmin('users');
   const [createModalOpened, setCreateModalOpened] = useState(false);
+  const { user: currentUser } = useAuth();
 
-  const handleCreateUser = (newUser) => {
-    // In production, make an API call here
-    setUsers([
-      ...users,
-      { ...newUser, id: users.length + 1, createdAt: new Date().toISOString() },
-    ]);
+  const handleCreateUser = async (userData) => {
+    return await create(userData);
   };
 
-  const handleDeleteUser = (userId) => {
-    // In production, make an API call here
-    setUsers(users.filter((user) => user.id !== userId));
+  const handleDeleteUser = async (userId) => {
+    if (userId === currentUser.id) {
+      notifications.show({
+        title: 'Error',
+        message: 'You cannot delete your own account',
+        color: 'red',
+      });
+      return;
+    }
+
+    return await deleteUser(userId);
   };
 
   const rows = users.map((user) => (
@@ -133,6 +132,7 @@ const AdminDashboard = ({ opened, onClose }) => {
             variant="subtle"
             color="red"
             onClick={() => handleDeleteUser(user.id)}
+            disabled={user.id === currentUser.id}
           >
             <IconTrash size={16} />
           </ActionIcon>
@@ -143,7 +143,20 @@ const AdminDashboard = ({ opened, onClose }) => {
 
   return (
     <Modal opened={opened} onClose={onClose} size="xl" title="Admin Dashboard">
-      <Box>
+      <Box pos="relative">
+        <LoadingOverlay visible={loading} />
+
+        {error && (
+          <Alert
+            icon={<IconAlertCircle size={16} />}
+            title="Error"
+            color="red"
+            mb="md"
+          >
+            {error}
+          </Alert>
+        )}
+
         <Group justify="space-between" mb="md">
           <Text size="xl" fw={700}>
             User Management
@@ -173,6 +186,7 @@ const AdminDashboard = ({ opened, onClose }) => {
           opened={createModalOpened}
           onClose={() => setCreateModalOpened(false)}
           onCreateUser={handleCreateUser}
+          loading={loading}
         />
       </Box>
     </Modal>
