@@ -6,10 +6,10 @@ import (
 )
 
 // CreateUser inserts a new user record into the database
-func (db *DB) CreateUser(user *models.User) error {
+func (db *DB) CreateUser(user *models.User) (*models.User, error) {
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback()
 
@@ -18,14 +18,20 @@ func (db *DB) CreateUser(user *models.User) error {
 		VALUES (?, ?, ?, ?)`,
 		user.Email, user.DisplayName, user.PasswordHash, user.Role)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	userID, err := result.LastInsertId()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	user.ID = int(userID)
+
+	// Retrieve the created_at timestamp
+	err = tx.QueryRow("SELECT created_at FROM users WHERE id = ?", user.ID).Scan(&user.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create default workspace with default settings
 	defaultWorkspace := &models.Workspace{
@@ -37,22 +43,22 @@ func (db *DB) CreateUser(user *models.User) error {
 	// Create workspace with settings
 	err = db.createWorkspaceTx(tx, defaultWorkspace)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Update user's last workspace ID
 	_, err = tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", defaultWorkspace.ID, user.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	user.LastWorkspaceID = defaultWorkspace.ID
-	return nil
+	return user, nil
 }
 
 // Helper function to create a workspace in a transaction

@@ -75,18 +75,19 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 			Role:         req.Role,
 		}
 
-		if err := h.DB.CreateUser(user); err != nil {
+		insertedUser, err := h.DB.CreateUser(user)
+		if err != nil {
 			http.Error(w, "Failed to create user", http.StatusInternalServerError)
 			return
 		}
 
 		// Initialize user workspace
-		if err := h.FS.InitializeUserWorkspace(user.ID, user.LastWorkspaceID); err != nil {
+		if err := h.FS.InitializeUserWorkspace(insertedUser.ID, insertedUser.LastWorkspaceID); err != nil {
 			http.Error(w, "Failed to initialize user workspace", http.StatusInternalServerError)
 			return
 		}
 
-		respondJSON(w, user)
+		respondJSON(w, insertedUser)
 	}
 }
 
@@ -197,7 +198,7 @@ func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 

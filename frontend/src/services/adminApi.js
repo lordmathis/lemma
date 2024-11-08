@@ -21,7 +21,11 @@ export const deleteUser = async (userId) => {
   const response = await apiCall(`${ADMIN_BASE_URL}/users/${userId}`, {
     method: 'DELETE',
   });
-  return response.json();
+  if (response.status === 204) {
+    return;
+  } else {
+    throw new Error('Failed to delete user with status: ', response.status);
+  }
 };
 
 export const updateUser = async (userId, userData) => {
