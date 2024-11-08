@@ -8,8 +8,6 @@ type SystemStats struct {
 	TotalUsers      int `json:"totalUsers"`
 	TotalWorkspaces int `json:"totalWorkspaces"`
 	ActiveUsers     int `json:"activeUsers"` // Users with activity in last 30 days
-	StorageUsed     int `json:"storageUsed"` // Total storage used in bytes
-	TotalFiles      int `json:"totalFiles"`  // Total number of files across all workspaces
 }
 
 // GetAllUsers returns a list of all users in the system
@@ -62,16 +60,6 @@ func (db *DB) GetSystemStats() (*SystemStats, error) {
 		FROM sessions 
 		WHERE created_at > datetime('now', '-30 days')`).
 		Scan(&stats.ActiveUsers)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get total files and storage used
-	// Note: This assumes you're tracking file sizes in your filesystem
-	err = db.QueryRow(`
-		SELECT COUNT(*), COALESCE(SUM(size), 0) 
-		FROM files`).
-		Scan(&stats.TotalFiles, &stats.StorageUsed)
 	if err != nil {
 		return nil, err
 	}
