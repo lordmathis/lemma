@@ -3,6 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"novamd/internal/db"
+	"novamd/internal/filesystem"
 	"novamd/internal/httpcontext"
 	"novamd/internal/models"
 	"strconv"
@@ -27,7 +29,7 @@ type UpdateUserRequest struct {
 
 // AdminListUsers returns a list of all users
 func (h *Handler) AdminListUsers() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		users, err := h.DB.GetAllUsers()
 		if err != nil {
 			http.Error(w, "Failed to list users", http.StatusInternalServerError)
@@ -202,13 +204,30 @@ func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 	}
 }
 
+// SystemStats holds system-wide statistics
+type SystemStats struct {
+	*db.UserStats
+	*filesystem.FileCountStats
+}
+
 // AdminGetSystemStats returns system-wide statistics for admins
 func (h *Handler) AdminGetSystemStats() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		stats, err := h.DB.GetSystemStats()
+	return func(w http.ResponseWriter, _ *http.Request) {
+		userStats, err := h.DB.GetSystemStats()
 		if err != nil {
-			http.Error(w, "Failed to get system stats", http.StatusInternalServerError)
+			http.Error(w, "Failed to get user stats", http.StatusInternalServerError)
 			return
+		}
+
+		fileStats, err := h.FS.GetTotalFileStats()
+		if err != nil {
+			http.Error(w, "Failed to get file stats", http.StatusInternalServerError)
+			return
+		}
+
+		stats := &SystemStats{
+			UserStats:      userStats,
+			FileCountStats: fileStats,
 		}
 
 		respondJSON(w, stats)

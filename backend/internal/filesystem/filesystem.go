@@ -33,3 +33,8 @@ func (fs *FileSystem) ValidatePath(userID, workspaceID int, path string) (string
 
 	return cleanPath, nil
 }
+
+// GetTotalFileStats returns the total file statistics for the file system.
+func (fs *FileSystem) GetTotalFileStats() (*FileCountStats, error) {
+	return fs.countFilesInPath(fs.RootDir)
+}

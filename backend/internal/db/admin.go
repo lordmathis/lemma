@@ -3,8 +3,8 @@ package db
 
 import "novamd/internal/models"
 
-// SystemStats represents system-wide statistics
-type SystemStats struct {
+// UserStats represents system-wide statistics
+type UserStats struct {
 	TotalUsers      int `json:"totalUsers"`
 	TotalWorkspaces int `json:"totalWorkspaces"`
 	ActiveUsers     int `json:"activeUsers"` // Users with activity in last 30 days
@@ -39,8 +39,8 @@ func (db *DB) GetAllUsers() ([]*models.User, error) {
 }
 
 // GetSystemStats returns system-wide statistics
-func (db *DB) GetSystemStats() (*SystemStats, error) {
-	stats := &SystemStats{}
+func (db *DB) GetSystemStats() (*UserStats, error) {
+	stats := &UserStats{}
 
 	// Get total users
 	err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&stats.TotalUsers)

@@ -4,6 +4,7 @@ package filesystem
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -150,4 +151,69 @@ func (fs *FileSystem) DeleteFile(userID, workspaceID int, filePath string) error
 		return err
 	}
 	return os.Remove(fullPath)
+}
+
+// FileCountStats holds statistics about files in a workspace
+type FileCountStats struct {
+	TotalFiles int   `json:"totalFiles"`
+	TotalSize  int64 `json:"totalSize"`
+}
+
+// GetFileStats returns the total number of files and related statistics in a workspace
+// Parameters:
+// - userID: the ID of the user who owns the workspace
+// - workspaceID: the ID of the workspace to count files in
+// Returns:
+// - result: statistics about the files in the workspace
+// - error: any error that occurred during counting
+func (fs *FileSystem) GetFileStats(userID, workspaceID int) (*FileCountStats, error) {
+	workspacePath := fs.GetWorkspacePath(userID, workspaceID)
+
+	// Check if workspace exists
+	if _, err := os.Stat(workspacePath); os.IsNotExist(err) {
+		return nil, errors.New("workspace directory does not exist")
+	}
+
+	return fs.countFilesInPath(workspacePath)
+
+}
+
+func (fs *FileSystem) countFilesInPath(directoryPath string) (*FileCountStats, error) {
+	result := &FileCountStats{}
+
+	err := filepath.WalkDir(directoryPath, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip the .git directory
+		if d.IsDir() && d.Name() == ".git" {
+			return filepath.SkipDir
+		}
+
+		// Only count regular files
+		if !d.IsDir() {
+			// Get relative path from workspace root
+			relPath, err := filepath.Rel(directoryPath, path)
+			if err != nil {
+				return fmt.Errorf("failed to get relative path: %w", err)
+			}
+
+			// Get file info for size
+			info, err := d.Info()
+			if err != nil {
+				return fmt.Errorf("failed to get file info for %s: %w", relPath, err)
+			}
+
+			result.TotalFiles++
+			result.TotalSize += info.Size()
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("error counting files: %w", err)
+	}
+
+	return result, nil
 }
