@@ -1,17 +1,18 @@
 import React from 'react';
-import {
-  Grid,
-  Card,
-  Stack,
-  Text,
-  Title,
-  LoadingOverlay,
-  Alert,
-  RingProgress,
-} from '@mantine/core';
-import { IconUsers, IconFolders, IconAlertCircle } from '@tabler/icons-react';
+import { Table, Text, Box, LoadingOverlay, Alert } from '@mantine/core';
+import { IconAlertCircle } from '@tabler/icons-react';
 import { useAdmin } from '../../../hooks/useAdmin';
-import StatCard from './StatCard';
+
+const formatBytes = (bytes) => {
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = bytes;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+  return `${size.toFixed(1)} ${units[unitIndex]}`;
+};
 
 const AdminStatsTab = () => {
   const { data: stats, loading, error } = useAdmin('stats');
@@ -28,61 +29,37 @@ const AdminStatsTab = () => {
     );
   }
 
+  const statsRows = [
+    { label: 'Total Users', value: stats.totalUsers },
+    { label: 'Active Users', value: stats.activeUsers },
+    { label: 'Total Workspaces', value: stats.totalWorkspaces },
+    { label: 'Total Files', value: stats.totalFiles },
+    { label: 'Total Storage Size', value: formatBytes(stats.totalSize) },
+  ];
+
   return (
-    <Stack>
-      <Text size="xl" fw={700}>
+    <Box pos="relative">
+      <Text size="xl" fw={700} mb="md">
         System Statistics
       </Text>
 
-      <Grid>
-        <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
-          <StatCard
-            title="Total Users"
-            value={stats.totalUsers}
-            icon={IconUsers}
-            color="blue"
-          />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
-          <StatCard
-            title="Total Workspaces"
-            value={stats.totalWorkspaces}
-            icon={IconFolders}
-            color="grape"
-          />
-        </Grid.Col>
-      </Grid>
-
-      <Grid mt="md">
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Card withBorder>
-            <Stack align="center">
-              <Title order={3}>Active Users</Title>
-              <RingProgress
-                size={200}
-                thickness={16}
-                roundCaps
-                sections={[
-                  {
-                    value: (stats.activeUsers / stats.totalUsers) * 100,
-                    color: 'blue',
-                  },
-                ]}
-                label={
-                  <Text ta="center" fw={700} size="xl">
-                    {((stats.activeUsers / stats.totalUsers) * 100).toFixed(1)}%
-                  </Text>
-                }
-              />
-              <Text c="dimmed" size="sm">
-                {stats.activeUsers} out of {stats.totalUsers} users active in
-                last 30 days
-              </Text>
-            </Stack>
-          </Card>
-        </Grid.Col>
-      </Grid>
-    </Stack>
+      <Table striped highlightOnHover withBorder>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>Metric</Table.Th>
+            <Table.Th>Value</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          {statsRows.map((row) => (
+            <Table.Tr key={row.label}>
+              <Table.Td>{row.label}</Table.Td>
+              <Table.Td>{row.value}</Table.Td>
+            </Table.Tr>
+          ))}
+        </Table.Tbody>
+      </Table>
+    </Box>
   );
 };
 
