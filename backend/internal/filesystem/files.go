@@ -3,7 +3,6 @@
 package filesystem
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -114,7 +113,7 @@ func (fs *FileSystem) FindFileByName(userID, workspaceID int, filename string) (
 	}
 
 	if len(foundPaths) == 0 {
-		return nil, errors.New("file not found")
+		return nil, fmt.Errorf("file not found")
 	}
 
 	return foundPaths, nil
@@ -171,7 +170,7 @@ func (fs *FileSystem) GetFileStats(userID, workspaceID int) (*FileCountStats, er
 
 	// Check if workspace exists
 	if _, err := os.Stat(workspacePath); os.IsNotExist(err) {
-		return nil, errors.New("workspace directory does not exist")
+		return nil, fmt.Errorf("workspace directory does not exist")
 	}
 
 	return fs.countFilesInPath(workspacePath)

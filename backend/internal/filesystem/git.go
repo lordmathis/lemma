@@ -1,7 +1,7 @@
 package filesystem
 
 import (
-	"errors"
+	"fmt"
 	"novamd/internal/gitutils"
 )
 
@@ -29,7 +29,7 @@ func (fs *FileSystem) DisableGitRepo(userID, workspaceID int) {
 func (fs *FileSystem) StageCommitAndPush(userID, workspaceID int, message string) error {
 	repo, ok := fs.getGitRepo(userID, workspaceID)
 	if !ok {
-		return errors.New("git settings not configured for this workspace")
+		return fmt.Errorf("git settings not configured for this workspace")
 	}
 
 	if err := repo.Commit(message); err != nil {
@@ -43,7 +43,7 @@ func (fs *FileSystem) StageCommitAndPush(userID, workspaceID int, message string
 func (fs *FileSystem) Pull(userID, workspaceID int) error {
 	repo, ok := fs.getGitRepo(userID, workspaceID)
 	if !ok {
-		return errors.New("git settings not configured for this workspace")
+		return fmt.Errorf("git settings not configured for this workspace")
 	}
 
 	return repo.Pull()
