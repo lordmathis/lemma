@@ -18,6 +18,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import { useAdmin } from '../../../hooks/useAdmin';
 import CreateUserModal from '../../modals/user/CreateUserModal';
+import EditUserModal from '../../modals/user/EditUserModal';
 import DeleteUserModal from '../../modals/user/DeleteUserModal';
 
 const AdminUsersTab = ({ currentUser }) => {
@@ -26,13 +27,20 @@ const AdminUsersTab = ({ currentUser }) => {
     loading,
     error,
     create,
+    update,
     delete: deleteUser,
   } = useAdmin('users');
+
   const [createModalOpened, setCreateModalOpened] = useState(false);
+  const [editModalData, setEditModalData] = useState(null);
   const [deleteModalData, setDeleteModalData] = useState(null);
 
   const handleCreateUser = async (userData) => {
     return await create(userData);
+  };
+
+  const handleEditUser = async (id, userData) => {
+    return await update(id, userData);
   };
 
   const handleDeleteClick = (user) => {
@@ -65,7 +73,11 @@ const AdminUsersTab = ({ currentUser }) => {
       <Table.Td>{new Date(user.createdAt).toLocaleDateString()}</Table.Td>
       <Table.Td>
         <Group gap="xs" justify="flex-end">
-          <ActionIcon variant="subtle" color="blue">
+          <ActionIcon
+            variant="subtle"
+            color="blue"
+            onClick={() => setEditModalData(user)}
+          >
             <IconEdit size={16} />
           </ActionIcon>
           <ActionIcon
@@ -125,6 +137,14 @@ const AdminUsersTab = ({ currentUser }) => {
         opened={createModalOpened}
         onClose={() => setCreateModalOpened(false)}
         onCreateUser={handleCreateUser}
+        loading={loading}
+      />
+
+      <EditUserModal
+        opened={!!editModalData}
+        onClose={() => setEditModalData(null)}
+        onEditUser={handleEditUser}
+        user={editModalData}
         loading={loading}
       />
 
