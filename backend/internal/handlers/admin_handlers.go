@@ -14,14 +14,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type CreateUserRequest struct {
+type createUserRequest struct {
 	Email       string          `json:"email"`
 	DisplayName string          `json:"displayName"`
 	Password    string          `json:"password"`
 	Role        models.UserRole `json:"role"`
 }
 
-type UpdateUserRequest struct {
+type updateUserRequest struct {
 	Email       string          `json:"email,omitempty"`
 	DisplayName string          `json:"displayName,omitempty"`
 	Password    string          `json:"password,omitempty"`
@@ -44,7 +44,7 @@ func (h *Handler) AdminListUsers() http.HandlerFunc {
 // AdminCreateUser creates a new user
 func (h *Handler) AdminCreateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req CreateUserRequest
+		var req createUserRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
@@ -60,6 +60,12 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 		existingUser, err := h.DB.GetUserByEmail(req.Email)
 		if err == nil && existingUser != nil {
 			http.Error(w, "Email already exists", http.StatusConflict)
+			return
+		}
+
+		// Check if password is long enough
+		if len(req.Password) < 8 {
+			http.Error(w, "Password must be at least 8 characters", http.StatusBadRequest)
 			return
 		}
 
@@ -129,7 +135,7 @@ func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 			return
 		}
 
-		var req UpdateUserRequest
+		var req updateUserRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
