@@ -16,20 +16,20 @@ import {
   IconAlertCircle,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { useAdmin } from '../../../hooks/useAdmin';
+import { useUserAdmin } from '../../../hooks/useUserAdmin';
 import CreateUserModal from '../../modals/user/CreateUserModal';
 import EditUserModal from '../../modals/user/EditUserModal';
 import DeleteUserModal from '../../modals/user/DeleteUserModal';
 
 const AdminUsersTab = ({ currentUser }) => {
   const {
-    data: users,
+    users,
     loading,
     error,
     create,
     update,
     delete: deleteUser,
-  } = useAdmin('users');
+  } = useUserAdmin();
 
   const [createModalOpened, setCreateModalOpened] = useState(false);
   const [editModalData, setEditModalData] = useState(null);

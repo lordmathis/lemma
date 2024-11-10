@@ -8,6 +8,7 @@ import (
 	"novamd/internal/httpcontext"
 	"novamd/internal/models"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -201,6 +202,58 @@ func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// WorkspaceStats holds workspace statistics
+type WorkspaceStats struct {
+	UserID             int       `json:"userID"`
+	UserEmail          string    `json:"userEmail"`
+	WorkspaceID        int       `json:"workspaceID"`
+	WorkspaceName      string    `json:"workspaceName"`
+	WorkspaceCreatedAt time.Time `json:"workspaceCreatedAt"`
+	*filesystem.FileCountStats
+}
+
+// AdminListWorkspaces returns a list of all workspaces and their stats
+func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		workspaces, err := h.DB.GetAllWorkspaces()
+		if err != nil {
+			http.Error(w, "Failed to list workspaces", http.StatusInternalServerError)
+			return
+		}
+
+		workspacesStats := make([]*WorkspaceStats, 0, len(workspaces))
+
+		for _, ws := range workspaces {
+
+			workspaceData := &WorkspaceStats{}
+
+			user, err := h.DB.GetUserByID(ws.UserID)
+			if err != nil {
+				http.Error(w, "Failed to get user", http.StatusInternalServerError)
+				return
+			}
+
+			workspaceData.UserID = ws.UserID
+			workspaceData.UserEmail = user.Email
+			workspaceData.WorkspaceID = ws.ID
+			workspaceData.WorkspaceName = ws.Name
+			workspaceData.WorkspaceCreatedAt = ws.CreatedAt
+
+			fileStats, err := h.FS.GetFileStats(ws.UserID, ws.ID)
+			if err != nil {
+				http.Error(w, "Failed to get file stats", http.StatusInternalServerError)
+				return
+			}
+
+			workspaceData.FileCountStats = fileStats
+
+			workspacesStats = append(workspacesStats, workspaceData)
+		}
+
+		respondJSON(w, workspacesStats)
 	}
 }
 

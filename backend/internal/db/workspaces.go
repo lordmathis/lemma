@@ -249,3 +249,43 @@ func (db *DB) GetLastOpenedFile(workspaceID int) (string, error) {
 	}
 	return filePath.String, nil
 }
+
+// GetAllWorkspaces retrieves all workspaces in the database
+func (db *DB) GetAllWorkspaces() ([]*models.Workspace, error) {
+	rows, err := db.Query(`
+		SELECT 
+			id, user_id, name, created_at,
+			theme, auto_save, 
+			git_enabled, git_url, git_user, git_token, 
+			git_auto_commit, git_commit_msg_template
+		FROM workspaces`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var workspaces []*models.Workspace
+	for rows.Next() {
+		workspace := &models.Workspace{}
+		var encryptedToken string
+		err := rows.Scan(
+			&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
+			&workspace.Theme, &workspace.AutoSave,
+			&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
+			&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Decrypt token
+		workspace.GitToken, err = db.decryptToken(encryptedToken)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt token: %w", err)
+		}
+
+		workspaces = append(workspaces, workspace)
+	}
+	return workspaces, nil
+}

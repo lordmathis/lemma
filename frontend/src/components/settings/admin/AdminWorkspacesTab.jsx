@@ -9,27 +9,21 @@ import {
   Alert,
 } from '@mantine/core';
 import { IconTrash, IconEdit, IconAlertCircle } from '@tabler/icons-react';
-import { useAdmin } from '../../../hooks/useAdmin';
+import { useAdminData } from '../../../hooks/useAdminData';
+import { formatBytes } from '../../../utils/formatBytes';
 
 const AdminWorkspacesTab = () => {
-  const { data: workspaces, loading, error } = useAdmin('workspaces');
+  const { data: workspaces, loading, error } = useAdminData('workspaces');
 
   const rows = workspaces.map((workspace) => (
     <Table.Tr key={workspace.id}>
-      <Table.Td>{workspace.name}</Table.Td>
-      <Table.Td>{workspace.owner?.email}</Table.Td>
-      <Table.Td>{new Date(workspace.createdAt).toLocaleDateString()}</Table.Td>
-      <Table.Td>{workspace.gitEnabled ? 'Yes' : 'No'}</Table.Td>
+      <Table.Td>{workspace.userEmail}</Table.Td>
+      <Table.Td>{workspace.workspaceName}</Table.Td>
       <Table.Td>
-        <Group gap="xs" justify="flex-end">
-          <ActionIcon variant="subtle" color="blue">
-            <IconEdit size={16} />
-          </ActionIcon>
-          <ActionIcon variant="subtle" color="red">
-            <IconTrash size={16} />
-          </ActionIcon>
-        </Group>
+        {new Date(workspace.workspaceCreatedAt).toLocaleDateString()}
       </Table.Td>
+      <Table.Td>{workspace.totalFiles}</Table.Td>
+      <Table.Td>{formatBytes(workspace.totalSize)}</Table.Td>
     </Table.Tr>
   ));
 
@@ -57,11 +51,11 @@ const AdminWorkspacesTab = () => {
       <Table striped highlightOnHover withTableBorder>
         <Table.Thead>
           <Table.Tr>
-            <Table.Th>Name</Table.Th>
             <Table.Th>Owner</Table.Th>
+            <Table.Th>Name</Table.Th>
             <Table.Th>Created At</Table.Th>
-            <Table.Th>Git Enabled</Table.Th>
-            <Table.Th style={{ width: 100 }}>Actions</Table.Th>
+            <Table.Th>Total Files</Table.Th>
+            <Table.Th>Total Size</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>{rows}</Table.Tbody>

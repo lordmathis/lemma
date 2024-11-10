@@ -4,7 +4,7 @@ import { API_BASE_URL } from '../utils/constants';
 const ADMIN_BASE_URL = `${API_BASE_URL}/admin`;
 
 // User Management
-export const listUsers = async () => {
+export const getUsers = async () => {
   const response = await apiCall(`${ADMIN_BASE_URL}/users`);
   return response.json();
 };
@@ -33,6 +33,12 @@ export const updateUser = async (userId, userData) => {
     method: 'PUT',
     body: JSON.stringify(userData),
   });
+  return response.json();
+};
+
+// Workspace Management
+export const getWorkspaces = async () => {
+  const response = await apiCall(`${ADMIN_BASE_URL}/workspaces`);
   return response.json();
 };
 

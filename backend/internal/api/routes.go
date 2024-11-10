@@ -50,6 +50,10 @@ func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddlew
 				r.Put("/{userId}", handler.AdminUpdateUser())
 				r.Delete("/{userId}", handler.AdminDeleteUser())
 			})
+			// Workspace management
+			r.Route("/workspaces", func(r chi.Router) {
+				r.Get("/", handler.AdminListWorkspaces())
+			})
 			// System stats
 			r.Get("/stats", handler.AdminGetSystemStats())
 		})

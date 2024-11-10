@@ -1,21 +1,11 @@
 import React from 'react';
 import { Table, Text, Box, LoadingOverlay, Alert } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
-import { useAdmin } from '../../../hooks/useAdmin';
-
-const formatBytes = (bytes) => {
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let size = bytes;
-  let unitIndex = 0;
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-  return `${size.toFixed(1)} ${units[unitIndex]}`;
-};
+import { useAdminData } from '../../../hooks/useAdminData';
+import { formatBytes } from '../../../utils/formatBytes';
 
 const AdminStatsTab = () => {
-  const { data: stats, loading, error } = useAdmin('stats');
+  const { data: stats, loading, error } = useAdminData('stats');
 
   if (loading) {
     return <LoadingOverlay visible={true} />;
