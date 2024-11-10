@@ -33,8 +33,8 @@ func DefaultConfig() *Config {
 		WorkDir:           "./data",
 		StaticPath:        "../frontend/dist",
 		Port:              "8080",
-		RateLimitRequests: int(10),
-		RateLimitWindow:   time.Minute,
+		RateLimitRequests: 100,
+		RateLimitWindow:   time.Minute * 15,
 		IsDevelopment:     false,
 	}
 }
