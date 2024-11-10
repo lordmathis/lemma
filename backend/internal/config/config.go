@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"novamd/internal/crypto"
@@ -15,12 +16,15 @@ type Config struct {
 	WorkDir           string
 	StaticPath        string
 	Port              string
+	AppURL            string
+	CORSOrigins       []string
 	AdminEmail        string
 	AdminPassword     string
 	EncryptionKey     string
 	JWTSigningKey     string
 	RateLimitRequests int
 	RateLimitWindow   time.Duration
+	IsDevelopment     bool
 }
 
 func DefaultConfig() *Config {
@@ -31,6 +35,7 @@ func DefaultConfig() *Config {
 		Port:              "8080",
 		RateLimitRequests: int(10),
 		RateLimitWindow:   time.Minute,
+		IsDevelopment:     false,
 	}
 }
 
@@ -50,6 +55,10 @@ func (c *Config) Validate() error {
 // Load creates a new Config instance with values from environment variables
 func Load() (*Config, error) {
 	config := DefaultConfig()
+
+	if env := os.Getenv("NOVAMD_ENV"); env != "" {
+		config.IsDevelopment = env == "development"
+	}
 
 	if dbPath := os.Getenv("NOVAMD_DB_PATH"); dbPath != "" {
 		config.DBPath = dbPath
@@ -71,6 +80,14 @@ func Load() (*Config, error) {
 
 	if port := os.Getenv("NOVAMD_PORT"); port != "" {
 		config.Port = port
+	}
+
+	if appURL := os.Getenv("NOVAMD_APP_URL"); appURL != "" {
+		config.AppURL = appURL
+	}
+
+	if corsOrigins := os.Getenv("NOVAMD_CORS_ORIGINS"); corsOrigins != "" {
+		config.CORSOrigins = strings.Split(corsOrigins, ",")
 	}
 
 	config.AdminEmail = os.Getenv("NOVAMD_ADMIN_EMAIL")
