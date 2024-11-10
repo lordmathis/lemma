@@ -5,10 +5,11 @@ import (
 	"novamd/internal/models"
 )
 
-func (db *DB) CreateUser(user *models.User) error {
+// CreateUser inserts a new user record into the database
+func (db *DB) CreateUser(user *models.User) (*models.User, error) {
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback()
 
@@ -17,14 +18,20 @@ func (db *DB) CreateUser(user *models.User) error {
 		VALUES (?, ?, ?, ?)`,
 		user.Email, user.DisplayName, user.PasswordHash, user.Role)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	userID, err := result.LastInsertId()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	user.ID = int(userID)
+
+	// Retrieve the created_at timestamp
+	err = tx.QueryRow("SELECT created_at FROM users WHERE id = ?", user.ID).Scan(&user.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create default workspace with default settings
 	defaultWorkspace := &models.Workspace{
@@ -36,24 +43,25 @@ func (db *DB) CreateUser(user *models.User) error {
 	// Create workspace with settings
 	err = db.createWorkspaceTx(tx, defaultWorkspace)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Update user's last workspace ID
 	_, err = tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", defaultWorkspace.ID, user.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	user.LastWorkspaceID = defaultWorkspace.ID
-	return nil
+	return user, nil
 }
 
+// Helper function to create a workspace in a transaction
 func (db *DB) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
 	result, err := tx.Exec(`
 		INSERT INTO workspaces (
@@ -78,6 +86,7 @@ func (db *DB) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
 	return nil
 }
 
+// GetUserByID retrieves a user by ID
 func (db *DB) GetUserByID(id int) (*models.User, error) {
 	user := &models.User{}
 	err := db.QueryRow(`
@@ -94,6 +103,7 @@ func (db *DB) GetUserByID(id int) (*models.User, error) {
 	return user, nil
 }
 
+// GetUserByEmail retrieves a user by email
 func (db *DB) GetUserByEmail(email string) (*models.User, error) {
 	user := &models.User{}
 	err := db.QueryRow(`
@@ -111,6 +121,7 @@ func (db *DB) GetUserByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
+// UpdateUser updates a user's information
 func (db *DB) UpdateUser(user *models.User) error {
 	_, err := db.Exec(`
 		UPDATE users
@@ -120,6 +131,7 @@ func (db *DB) UpdateUser(user *models.User) error {
 	return err
 }
 
+// UpdateLastWorkspace updates the last workspace the user accessed
 func (db *DB) UpdateLastWorkspace(userID int, workspaceName string) error {
 	tx, err := db.Begin()
 	if err != nil {
@@ -142,6 +154,7 @@ func (db *DB) UpdateLastWorkspace(userID int, workspaceName string) error {
 	return tx.Commit()
 }
 
+// DeleteUser deletes a user and all their workspaces
 func (db *DB) DeleteUser(id int) error {
 	tx, err := db.Begin()
 	if err != nil {
@@ -164,6 +177,7 @@ func (db *DB) DeleteUser(id int) error {
 	return tx.Commit()
 }
 
+// GetLastWorkspaceName returns the name of the last workspace the user accessed
 func (db *DB) GetLastWorkspaceName(userID int) (string, error) {
 	var workspaceName string
 	err := db.QueryRow(`

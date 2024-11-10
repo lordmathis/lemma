@@ -8,12 +8,19 @@ import {
   Text,
   Divider,
 } from '@mantine/core';
-import { IconUser, IconLogout, IconSettings } from '@tabler/icons-react';
+import {
+  IconUser,
+  IconUsers,
+  IconLogout,
+  IconSettings,
+} from '@tabler/icons-react';
 import { useAuth } from '../../contexts/AuthContext';
 import AccountSettings from '../settings/account/AccountSettings';
+import AdminDashboard from '../settings/admin/AdminDashboard';
 
 const UserMenu = () => {
   const [accountSettingsOpened, setAccountSettingsOpened] = useState(false);
+  const [adminDashboardOpened, setAdminDashboardOpened] = useState(false);
   const [opened, setOpened] = useState(false);
   const { user, logout } = useAuth();
 
@@ -81,6 +88,31 @@ const UserMenu = () => {
               </Group>
             </UnstyledButton>
 
+            {user.role === 'admin' && (
+              <UnstyledButton
+                onClick={() => {
+                  setAdminDashboardOpened(true);
+                  setOpened(false);
+                }}
+                px="sm"
+                py="xs"
+                style={(theme) => ({
+                  borderRadius: theme.radius.sm,
+                  '&:hover': {
+                    backgroundColor:
+                      theme.colorScheme === 'dark'
+                        ? theme.colors.dark[5]
+                        : theme.colors.gray[0],
+                  },
+                })}
+              >
+                <Group>
+                  <IconUsers size={16} />
+                  <Text size="sm">Admin Dashboard</Text>
+                </Group>
+              </UnstyledButton>
+            )}
+
             <UnstyledButton
               onClick={handleLogout}
               px="sm"
@@ -110,6 +142,11 @@ const UserMenu = () => {
       <AccountSettings
         opened={accountSettingsOpened}
         onClose={() => setAccountSettingsOpened(false)}
+      />
+
+      <AdminDashboard
+        opened={adminDashboardOpened}
+        onClose={() => setAdminDashboardOpened(false)}
       />
     </>
   );

@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	// JWTSecretKey is the key for the JWT secret in the system settings
 	JWTSecretKey = "jwt_secret"
 )
 

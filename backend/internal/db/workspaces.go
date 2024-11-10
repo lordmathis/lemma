@@ -6,6 +6,7 @@ import (
 	"novamd/internal/models"
 )
 
+// CreateWorkspace inserts a new workspace record into the database
 func (db *DB) CreateWorkspace(workspace *models.Workspace) error {
 	// Set default settings if not provided
 	if workspace.Theme == "" {
@@ -40,6 +41,7 @@ func (db *DB) CreateWorkspace(workspace *models.Workspace) error {
 	return nil
 }
 
+// GetWorkspaceByID retrieves a workspace by its ID
 func (db *DB) GetWorkspaceByID(id int) (*models.Workspace, error) {
 	workspace := &models.Workspace{}
 	var encryptedToken string
@@ -72,6 +74,7 @@ func (db *DB) GetWorkspaceByID(id int) (*models.Workspace, error) {
 	return workspace, nil
 }
 
+// GetWorkspaceByName retrieves a workspace by its name and user ID
 func (db *DB) GetWorkspaceByName(userID int, workspaceName string) (*models.Workspace, error) {
 	workspace := &models.Workspace{}
 	var encryptedToken string
@@ -104,6 +107,7 @@ func (db *DB) GetWorkspaceByName(userID int, workspaceName string) (*models.Work
 	return workspace, nil
 }
 
+// UpdateWorkspace updates a workspace record in the database
 func (db *DB) UpdateWorkspace(workspace *models.Workspace) error {
 	// Encrypt token before storing
 	encryptedToken, err := db.encryptToken(workspace.GitToken)
@@ -139,6 +143,7 @@ func (db *DB) UpdateWorkspace(workspace *models.Workspace) error {
 	return err
 }
 
+// GetWorkspacesByUserID retrieves all workspaces for a user
 func (db *DB) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
 	rows, err := db.Query(`
 		SELECT 
@@ -208,26 +213,31 @@ func (db *DB) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 	return err
 }
 
+// DeleteWorkspace removes a workspace record from the database
 func (db *DB) DeleteWorkspace(id int) error {
 	_, err := db.Exec("DELETE FROM workspaces WHERE id = ?", id)
 	return err
 }
 
+// DeleteWorkspaceTx removes a workspace record from the database within a transaction
 func (db *DB) DeleteWorkspaceTx(tx *sql.Tx, id int) error {
 	_, err := tx.Exec("DELETE FROM workspaces WHERE id = ?", id)
 	return err
 }
 
+// UpdateLastWorkspaceTx sets the last workspace for a user in with a transaction
 func (db *DB) UpdateLastWorkspaceTx(tx *sql.Tx, userID, workspaceID int) error {
 	_, err := tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", workspaceID, userID)
 	return err
 }
 
+// UpdateLastOpenedFile updates the last opened file path for a workspace
 func (db *DB) UpdateLastOpenedFile(workspaceID int, filePath string) error {
 	_, err := db.Exec("UPDATE workspaces SET last_opened_file_path = ? WHERE id = ?", filePath, workspaceID)
 	return err
 }
 
+// GetLastOpenedFile retrieves the last opened file path for a workspace
 func (db *DB) GetLastOpenedFile(workspaceID int) (string, error) {
 	var filePath sql.NullString
 	err := db.QueryRow("SELECT last_opened_file_path FROM workspaces WHERE id = ?", workspaceID).Scan(&filePath)
@@ -238,4 +248,44 @@ func (db *DB) GetLastOpenedFile(workspaceID int) (string, error) {
 		return "", nil
 	}
 	return filePath.String, nil
+}
+
+// GetAllWorkspaces retrieves all workspaces in the database
+func (db *DB) GetAllWorkspaces() ([]*models.Workspace, error) {
+	rows, err := db.Query(`
+		SELECT 
+			id, user_id, name, created_at,
+			theme, auto_save, 
+			git_enabled, git_url, git_user, git_token, 
+			git_auto_commit, git_commit_msg_template
+		FROM workspaces`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var workspaces []*models.Workspace
+	for rows.Next() {
+		workspace := &models.Workspace{}
+		var encryptedToken string
+		err := rows.Scan(
+			&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
+			&workspace.Theme, &workspace.AutoSave,
+			&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
+			&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Decrypt token
+		workspace.GitToken, err = db.decryptToken(encryptedToken)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt token: %w", err)
+		}
+
+		workspaces = append(workspaces, workspace)
+	}
+	return workspaces, nil
 }

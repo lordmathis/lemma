@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+// Migration represents a database migration
 type Migration struct {
 	Version int
 	SQL     string
@@ -78,6 +79,7 @@ var migrations = []Migration{
 	},
 }
 
+// Migrate applies all database migrations
 func (db *DB) Migrate() error {
 	// Create migrations table if it doesn't exist
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS migrations (

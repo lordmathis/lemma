@@ -5,14 +5,13 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io"
 )
 
 var (
-	ErrKeyRequired    = errors.New("encryption key is required")
-	ErrInvalidKeySize = errors.New("encryption key must be 32 bytes (256 bits) when decoded")
+	ErrKeyRequired    = fmt.Errorf("encryption key is required")
+	ErrInvalidKeySize = fmt.Errorf("encryption key must be 32 bytes (256 bits) when decoded")
 )
 
 type Crypto struct {
@@ -102,7 +101,7 @@ func (c *Crypto) Decrypt(ciphertext string) (string, error) {
 
 	nonceSize := gcm.NonceSize()
 	if len(data) < nonceSize {
-		return "", errors.New("ciphertext too short")
+		return "", fmt.Errorf("ciphertext too short")
 	}
 
 	nonce, ciphertextBytes := data[:nonceSize], data[nonceSize:]
