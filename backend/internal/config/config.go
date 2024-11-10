@@ -4,27 +4,38 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 
 	"novamd/internal/crypto"
 )
 
 type Config struct {
-	DBPath        string
-	WorkDir       string
-	StaticPath    string
-	Port          string
-	AdminEmail    string
-	AdminPassword string
-	EncryptionKey string
-	JWTSigningKey string
+	DBPath            string
+	WorkDir           string
+	StaticPath        string
+	Port              string
+	AppURL            string
+	CORSOrigins       []string
+	AdminEmail        string
+	AdminPassword     string
+	EncryptionKey     string
+	JWTSigningKey     string
+	RateLimitRequests int
+	RateLimitWindow   time.Duration
+	IsDevelopment     bool
 }
 
 func DefaultConfig() *Config {
 	return &Config{
-		DBPath:     "./novamd.db",
-		WorkDir:    "./data",
-		StaticPath: "../frontend/dist",
-		Port:       "8080",
+		DBPath:            "./novamd.db",
+		WorkDir:           "./data",
+		StaticPath:        "../frontend/dist",
+		Port:              "8080",
+		RateLimitRequests: 100,
+		RateLimitWindow:   time.Minute * 15,
+		IsDevelopment:     false,
 	}
 }
 
@@ -44,6 +55,10 @@ func (c *Config) Validate() error {
 // Load creates a new Config instance with values from environment variables
 func Load() (*Config, error) {
 	config := DefaultConfig()
+
+	if env := os.Getenv("NOVAMD_ENV"); env != "" {
+		config.IsDevelopment = env == "development"
+	}
 
 	if dbPath := os.Getenv("NOVAMD_DB_PATH"); dbPath != "" {
 		config.DBPath = dbPath
@@ -67,10 +82,31 @@ func Load() (*Config, error) {
 		config.Port = port
 	}
 
+	if appURL := os.Getenv("NOVAMD_APP_URL"); appURL != "" {
+		config.AppURL = appURL
+	}
+
+	if corsOrigins := os.Getenv("NOVAMD_CORS_ORIGINS"); corsOrigins != "" {
+		config.CORSOrigins = strings.Split(corsOrigins, ",")
+	}
+
 	config.AdminEmail = os.Getenv("NOVAMD_ADMIN_EMAIL")
 	config.AdminPassword = os.Getenv("NOVAMD_ADMIN_PASSWORD")
 	config.EncryptionKey = os.Getenv("NOVAMD_ENCRYPTION_KEY")
 	config.JWTSigningKey = os.Getenv("NOVAMD_JWT_SIGNING_KEY")
+
+	// Configure rate limiting
+	if reqStr := os.Getenv("NOVAMD_RATE_LIMIT_REQUESTS"); reqStr != "" {
+		if parsed, err := strconv.Atoi(reqStr); err == nil {
+			config.RateLimitRequests = parsed
+		}
+	}
+
+	if windowStr := os.Getenv("NOVAMD_RATE_LIMIT_WINDOW"); windowStr != "" {
+		if parsed, err := time.ParseDuration(windowStr); err == nil {
+			config.RateLimitWindow = parsed
+		}
+	}
 
 	// Validate all settings
 	if err := config.Validate(); err != nil {

@@ -8,6 +8,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
+
+	"github.com/unrolled/secure"
 
 	"novamd/internal/api"
 	"novamd/internal/auth"
@@ -67,10 +71,30 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
+
+	// Security headers
+	r.Use(secure.New(secure.Options{
+		SSLRedirect:     false, // Let proxy handle HTTPS
+		SSLProxyHeaders: map[string]string{"X-Forwarded-Proto": "https"},
+		IsDevelopment:   cfg.IsDevelopment,
+	}).Handler)
+
+	// CORS if origins are configured
+	if len(cfg.CORSOrigins) > 0 {
+		r.Use(cors.Handler(cors.Options{
+			AllowedOrigins:   cfg.CORSOrigins,
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Requested-With"},
+			AllowCredentials: true,
+			MaxAge:           300, // Maximum value not ignored by any major browser
+		}))
+	}
+
 	r.Use(middleware.Timeout(30 * time.Second))
 
 	// Set up routes
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Use(httprate.LimitByIP(cfg.RateLimitRequests, cfg.RateLimitWindow))
 		api.SetupRoutes(r, database, fs, authMiddleware, sessionService)
 	})
 
