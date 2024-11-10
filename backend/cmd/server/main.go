@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httprate"
 
 	"novamd/internal/api"
 	"novamd/internal/auth"
@@ -71,6 +72,7 @@ func main() {
 
 	// Set up routes
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Use(httprate.LimitByIP(cfg.RateLimitRequests, cfg.RateLimitWindow))
 		api.SetupRoutes(r, database, fs, authMiddleware, sessionService)
 	})
 
