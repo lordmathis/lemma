@@ -14,6 +14,7 @@ type Workspace struct {
 	// Integrated settings
 	Theme                string `json:"theme" validate:"oneof=light dark"`
 	AutoSave             bool   `json:"autoSave"`
+	ShowHiddenFiles      bool   `json:"showHiddenFiles"`
 	GitEnabled           bool   `json:"gitEnabled"`
 	GitURL               string `json:"gitUrl" validate:"required_if=GitEnabled true"`
 	GitUser              string `json:"gitUser" validate:"required_if=GitEnabled true"`
@@ -29,6 +30,7 @@ func (w *Workspace) Validate() error {
 func (w *Workspace) GetDefaultSettings() {
 	w.Theme = "light"
 	w.AutoSave = false
+	w.ShowHiddenFiles = false
 	w.GitEnabled = false
 	w.GitURL = ""
 	w.GitUser = ""
