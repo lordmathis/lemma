@@ -28,7 +28,7 @@ const Sidebar = ({ selectedFile, handleFileSelect, files, loadFileList }) => {
       <FileTree
         files={files}
         handleFileSelect={handleFileSelect}
-        selectedFile={selectedFile}
+        showHiddenFiles={settings.showHiddenFiles}
       />
     </Box>
   );

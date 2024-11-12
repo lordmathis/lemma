@@ -65,9 +65,16 @@ const Node = ({ node, style, dragHandle }) => {
   );
 };
 
-const FileTree = ({ files, handleFileSelect }) => {
+const FileTree = ({ files, handleFileSelect, showHiddenFiles }) => {
   const target = useRef(null);
   const size = useSize(target);
+
+  files = files.filter((file) => {
+    if (file.name.startsWith('.') && !showHiddenFiles) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div
