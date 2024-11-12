@@ -1,18 +1,18 @@
 # Stage 1: Build the frontend
 FROM node:20 AS frontend-builder
 WORKDIR /app
-COPY frontend/package*.json ./
+COPY app/package*.json ./
 RUN npm ci
-COPY frontend .
+COPY app .
 RUN npm run build
 
 # Stage 2: Build the backend
 FROM golang:1.23 AS backend-builder
 WORKDIR /app
 RUN apt-get update && apt-get install -y gcc musl-dev
-COPY backend/go.mod backend/go.sum ./
+COPY server/go.mod server/go.sum ./
 RUN go mod download
-COPY backend .
+COPY server .
 RUN CGO_ENABLED=1 GOOS=linux go build -o novamd ./cmd/server
 
 # Stage 3: Final stage

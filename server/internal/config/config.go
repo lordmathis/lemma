@@ -31,7 +31,7 @@ func DefaultConfig() *Config {
 	return &Config{
 		DBPath:            "./novamd.db",
 		WorkDir:           "./data",
-		StaticPath:        "../frontend/dist",
+		StaticPath:        "../app/dist",
 		Port:              "8080",
 		RateLimitRequests: 100,
 		RateLimitWindow:   time.Minute * 15,
