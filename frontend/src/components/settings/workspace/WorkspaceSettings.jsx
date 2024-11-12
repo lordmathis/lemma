@@ -67,6 +67,7 @@ const WorkspaceSettings = () => {
         name: currentWorkspace.name,
         theme: currentWorkspace.theme,
         autoSave: currentWorkspace.autoSave,
+        showHiddenFiles: currentWorkspace.showHiddenFiles,
         gitEnabled: currentWorkspace.gitEnabled,
         gitUrl: currentWorkspace.gitUrl,
         gitUser: currentWorkspace.gitUser,
@@ -184,6 +185,10 @@ const WorkspaceSettings = () => {
                 autoSave={state.localSettings.autoSave}
                 onAutoSaveChange={(value) =>
                   handleInputChange('autoSave', value)
+                }
+                showHiddenFiles={state.localSettings.showHiddenFiles}
+                onShowHiddenFilesChange={(value) =>
+                  handleInputChange('showHiddenFiles', value)
                 }
               />
             </Accordion.Panel>
