@@ -25,7 +25,7 @@ Set the following environment variables:
 - `CGO_ENABLED=1`: This is necessary for the go-sqlite3 package
 - `NOVAMD_DB_PATH`: Path to the SQLite database file (default: "./sqlite.db")
 - `NOVAMD_WORKDIR`: Directory for storing Markdown files (default: "./data")
-- `NOVAMD_STATIC_PATH`: Path to the frontend build files (default: "../frontend/dist")
+- `NOVAMD_STATIC_PATH`: Path to the frontend build files (default: "../app/dist")
 - `NOVAMD_PORT`: Port to run the server on (default: "8080")
 - `NOVAMD_ADMIN_EMAIL`: Admin user email
 - `NOVAMD_ADMIN_PASSWORD`: Admin user password
@@ -39,7 +39,7 @@ openssl rand -base64 32
 
 ## Running the Backend
 
-1. Navigate to the `backend` directory
+1. Navigate to the `server` directory
 2. Ensure all environment variables are set
 3. Run the server:
    ```
@@ -48,7 +48,7 @@ openssl rand -base64 32
 
 ## Running the Frontend
 
-1. Navigate to the `frontend` directory
+1. Navigate to the `app` directory
 2. Install dependencies:
    ```
    npm install
@@ -61,14 +61,14 @@ openssl rand -base64 32
 
 ## Building for Production
 
-1. Build the frontend:
+1. Build the frontend app:
    ```
-   cd frontend
+   cd app
    npm run build
    ```
 2. Build the backend:
    ```
-   cd backend
+   cd server
    go build -o novamd ./cmd/server
    ```
 3. Set the `NOVAMD_STATIC_PATH` environment variable to point to the frontend build directory
