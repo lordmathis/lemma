@@ -150,7 +150,7 @@ func (db *DB) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
 	rows, err := db.Query(`
 		SELECT 
 			id, user_id, name, created_at,
-			theme, auto_save, 
+			theme, auto_save, show_hidden_files,
 			git_enabled, git_url, git_user, git_token, 
 			git_auto_commit, git_commit_msg_template
 		FROM workspaces 
