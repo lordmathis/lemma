@@ -21,11 +21,11 @@ func (db *DB) CreateWorkspace(workspace *models.Workspace) error {
 
 	result, err := db.Exec(`
 		INSERT INTO workspaces (
-			user_id, name, theme, auto_save, 
+			user_id, name, theme, auto_save, show_hidden_files,
 			git_enabled, git_url, git_user, git_token, 
 			git_auto_commit, git_commit_msg_template
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		workspace.UserID, workspace.Name, workspace.Theme, workspace.AutoSave,
+		workspace.UserID, workspace.Name, workspace.Theme, workspace.AutoSave, workspace.ShowHiddenFiles,
 		workspace.GitEnabled, workspace.GitURL, workspace.GitUser, encryptedToken,
 		workspace.GitAutoCommit, workspace.GitCommitMsgTemplate,
 	)
@@ -49,7 +49,7 @@ func (db *DB) GetWorkspaceByID(id int) (*models.Workspace, error) {
 	err := db.QueryRow(`
 		SELECT 
 			id, user_id, name, created_at, 
-			theme, auto_save, 
+			theme, auto_save, show_hidden_files,
 			git_enabled, git_url, git_user, git_token, 
 			git_auto_commit, git_commit_msg_template
 		FROM workspaces 
@@ -57,7 +57,7 @@ func (db *DB) GetWorkspaceByID(id int) (*models.Workspace, error) {
 		id,
 	).Scan(
 		&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
-		&workspace.Theme, &workspace.AutoSave,
+		&workspace.Theme, &workspace.AutoSave, &workspace.ShowHiddenFiles,
 		&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
 		&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
 	)
@@ -82,7 +82,7 @@ func (db *DB) GetWorkspaceByName(userID int, workspaceName string) (*models.Work
 	err := db.QueryRow(`
 		SELECT 
 			id, user_id, name, created_at, 
-			theme, auto_save, 
+			theme, auto_save, show_hidden_files,
 			git_enabled, git_url, git_user, git_token, 
 			git_auto_commit, git_commit_msg_template
 		FROM workspaces 
@@ -90,7 +90,7 @@ func (db *DB) GetWorkspaceByName(userID int, workspaceName string) (*models.Work
 		userID, workspaceName,
 	).Scan(
 		&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
-		&workspace.Theme, &workspace.AutoSave,
+		&workspace.Theme, &workspace.AutoSave, &workspace.ShowHiddenFiles,
 		&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
 		&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
 	)
@@ -121,6 +121,7 @@ func (db *DB) UpdateWorkspace(workspace *models.Workspace) error {
 			name = ?,
 			theme = ?,
 			auto_save = ?,
+			show_hidden_files = ?,
 			git_enabled = ?,
 			git_url = ?,
 			git_user = ?,
@@ -131,6 +132,7 @@ func (db *DB) UpdateWorkspace(workspace *models.Workspace) error {
 		workspace.Name,
 		workspace.Theme,
 		workspace.AutoSave,
+		workspace.ShowHiddenFiles,
 		workspace.GitEnabled,
 		workspace.GitURL,
 		workspace.GitUser,
@@ -148,7 +150,7 @@ func (db *DB) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
 	rows, err := db.Query(`
 		SELECT 
 			id, user_id, name, created_at,
-			theme, auto_save, 
+			theme, auto_save, show_hidden_files,
 			git_enabled, git_url, git_user, git_token, 
 			git_auto_commit, git_commit_msg_template
 		FROM workspaces 
@@ -166,7 +168,7 @@ func (db *DB) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
 		var encryptedToken string
 		err := rows.Scan(
 			&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
-			&workspace.Theme, &workspace.AutoSave,
+			&workspace.Theme, &workspace.AutoSave, &workspace.ShowHiddenFiles,
 			&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
 			&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
 		)
@@ -193,6 +195,7 @@ func (db *DB) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 		SET 
 			theme = ?,
 			auto_save = ?,
+			show_hidden_files = ?,
 			git_enabled = ?,
 			git_url = ?,
 			git_user = ?,
@@ -202,6 +205,7 @@ func (db *DB) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 		WHERE id = ?`,
 		workspace.Theme,
 		workspace.AutoSave,
+		workspace.ShowHiddenFiles,
 		workspace.GitEnabled,
 		workspace.GitURL,
 		workspace.GitUser,
@@ -255,7 +259,7 @@ func (db *DB) GetAllWorkspaces() ([]*models.Workspace, error) {
 	rows, err := db.Query(`
 		SELECT 
 			id, user_id, name, created_at,
-			theme, auto_save, 
+			theme, auto_save, show_hidden_files,
 			git_enabled, git_url, git_user, git_token, 
 			git_auto_commit, git_commit_msg_template
 		FROM workspaces`,
@@ -271,7 +275,7 @@ func (db *DB) GetAllWorkspaces() ([]*models.Workspace, error) {
 		var encryptedToken string
 		err := rows.Scan(
 			&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
-			&workspace.Theme, &workspace.AutoSave,
+			&workspace.Theme, &workspace.AutoSave, &workspace.ShowHiddenFiles,
 			&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
 			&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
 		)

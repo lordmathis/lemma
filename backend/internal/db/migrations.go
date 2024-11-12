@@ -59,6 +59,9 @@ var migrations = []Migration{
 			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 		);
 
+		-- Add show_hidden_files field to workspaces
+		ALTER TABLE workspaces ADD COLUMN show_hidden_files BOOLEAN NOT NULL DEFAULT 0;
+
 		-- Add indexes for performance
 		CREATE INDEX idx_sessions_user_id ON sessions(user_id);
 		CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
