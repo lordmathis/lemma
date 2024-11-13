@@ -14,10 +14,10 @@ import (
 
 type UserService struct {
 	DB *db.DB
-	FS *filesystem.FileSystem
+	FS *filesystem.Storage
 }
 
-func NewUserService(database *db.DB, fs *filesystem.FileSystem) *UserService {
+func NewUserService(database *db.DB, fs *filesystem.Storage) *UserService {
 	return &UserService{
 		DB: database,
 		FS: fs,

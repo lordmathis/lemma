@@ -10,11 +10,11 @@ import (
 // Handler provides common functionality for all handlers
 type Handler struct {
 	DB *db.DB
-	FS *filesystem.FileSystem
+	FS *filesystem.Storage
 }
 
 // NewHandler creates a new handler with the given dependencies
-func NewHandler(db *db.DB, fs *filesystem.FileSystem) *Handler {
+func NewHandler(db *db.DB, fs *filesystem.Storage) *Handler {
 	return &Handler{
 		DB: db,
 		FS: fs,

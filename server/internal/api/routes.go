@@ -12,7 +12,7 @@ import (
 )
 
 // SetupRoutes configures the API routes
-func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.FileSystem, authMiddleware *auth.Middleware, sessionService *auth.SessionService) {
+func SetupRoutes(r chi.Router, db *db.DB, fs *filesystem.Storage, authMiddleware *auth.Middleware, sessionService *auth.SessionService) {
 
 	handler := &handlers.Handler{
 		DB: db,
