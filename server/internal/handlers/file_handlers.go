@@ -17,7 +17,7 @@ func (h *Handler) ListFiles() http.HandlerFunc {
 			return
 		}
 
-		files, err := h.FS.ListFilesRecursively(ctx.UserID, ctx.Workspace.ID)
+		files, err := h.S.ListFilesRecursively(ctx.UserID, ctx.Workspace.ID)
 		if err != nil {
 			http.Error(w, "Failed to list files", http.StatusInternalServerError)
 			return
@@ -40,7 +40,7 @@ func (h *Handler) LookupFileByName() http.HandlerFunc {
 			return
 		}
 
-		filePaths, err := h.FS.FindFileByName(ctx.UserID, ctx.Workspace.ID, filename)
+		filePaths, err := h.S.FindFileByName(ctx.UserID, ctx.Workspace.ID, filename)
 		if err != nil {
 			http.Error(w, "File not found", http.StatusNotFound)
 			return
@@ -58,7 +58,7 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 		}
 
 		filePath := chi.URLParam(r, "*")
-		content, err := h.FS.GetFileContent(ctx.UserID, ctx.Workspace.ID, filePath)
+		content, err := h.S.GetFileContent(ctx.UserID, ctx.Workspace.ID, filePath)
 		if err != nil {
 			http.Error(w, "Failed to read file", http.StatusNotFound)
 			return
@@ -83,7 +83,7 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 			return
 		}
 
-		err = h.FS.SaveFile(ctx.UserID, ctx.Workspace.ID, filePath, content)
+		err = h.S.SaveFile(ctx.UserID, ctx.Workspace.ID, filePath, content)
 		if err != nil {
 			http.Error(w, "Failed to save file", http.StatusInternalServerError)
 			return
@@ -101,7 +101,7 @@ func (h *Handler) DeleteFile() http.HandlerFunc {
 		}
 
 		filePath := chi.URLParam(r, "*")
-		err := h.FS.DeleteFile(ctx.UserID, ctx.Workspace.ID, filePath)
+		err := h.S.DeleteFile(ctx.UserID, ctx.Workspace.ID, filePath)
 		if err != nil {
 			http.Error(w, "Failed to delete file", http.StatusInternalServerError)
 			return
@@ -125,7 +125,7 @@ func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 			return
 		}
 
-		if _, err := h.FS.ValidatePath(ctx.UserID, ctx.Workspace.ID, filePath); err != nil {
+		if _, err := h.S.ValidatePath(ctx.UserID, ctx.Workspace.ID, filePath); err != nil {
 			http.Error(w, "Invalid file path", http.StatusBadRequest)
 			return
 		}
@@ -152,7 +152,7 @@ func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 
 		// Validate the file path exists in the workspace
 		if requestBody.FilePath != "" {
-			if _, err := h.FS.ValidatePath(ctx.UserID, ctx.Workspace.ID, requestBody.FilePath); err != nil {
+			if _, err := h.S.ValidatePath(ctx.UserID, ctx.Workspace.ID, requestBody.FilePath); err != nil {
 				http.Error(w, "Invalid file path", http.StatusBadRequest)
 				return
 			}

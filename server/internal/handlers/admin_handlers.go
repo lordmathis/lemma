@@ -91,7 +91,7 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 		}
 
 		// Initialize user workspace
-		if err := h.FS.InitializeUserWorkspace(insertedUser.ID, insertedUser.LastWorkspaceID); err != nil {
+		if err := h.S.InitializeUserWorkspace(insertedUser.ID, insertedUser.LastWorkspaceID); err != nil {
 			http.Error(w, "Failed to initialize user workspace", http.StatusInternalServerError)
 			return
 		}
@@ -248,7 +248,7 @@ func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 			workspaceData.WorkspaceName = ws.Name
 			workspaceData.WorkspaceCreatedAt = ws.CreatedAt
 
-			fileStats, err := h.FS.GetFileStats(ws.UserID, ws.ID)
+			fileStats, err := h.S.GetFileStats(ws.UserID, ws.ID)
 			if err != nil {
 				http.Error(w, "Failed to get file stats", http.StatusInternalServerError)
 				return
@@ -278,7 +278,7 @@ func (h *Handler) AdminGetSystemStats() http.HandlerFunc {
 			return
 		}
 
-		fileStats, err := h.FS.GetTotalFileStats()
+		fileStats, err := h.S.GetTotalFileStats()
 		if err != nil {
 			http.Error(w, "Failed to get file stats", http.StatusInternalServerError)
 			return

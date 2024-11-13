@@ -200,7 +200,7 @@ func (h *Handler) DeleteAccount() http.HandlerFunc {
 
 		// Delete workspace directories
 		for _, workspace := range workspaces {
-			if err := h.FS.DeleteUserWorkspace(ctx.UserID, workspace.ID); err != nil {
+			if err := h.S.DeleteUserWorkspace(ctx.UserID, workspace.ID); err != nil {
 				http.Error(w, "Failed to delete workspace files", http.StatusInternalServerError)
 				return
 			}
