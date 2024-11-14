@@ -6,19 +6,19 @@ import (
 	"testing/fstest"
 )
 
-// mapFS adapts testing.MapFS to implement our fileSystem interface
-type mapFS struct {
+// MapFS adapts testing.MapFS to implement our fileSystem interface
+type MapFS struct {
 	fstest.MapFS
 }
 
-func NewMapFS() *mapFS {
-	return &mapFS{
+func NewMapFS() *MapFS {
+	return &MapFS{
 		MapFS: make(fstest.MapFS),
 	}
 }
 
 // Only implement the methods that MapFS doesn't already provide
-func (m *mapFS) WriteFile(path string, data []byte, perm fs.FileMode) error {
+func (m *MapFS) WriteFile(path string, data []byte, perm fs.FileMode) error {
 	m.MapFS[path] = &fstest.MapFile{
 		Data: data,
 		Mode: perm,
@@ -26,21 +26,21 @@ func (m *mapFS) WriteFile(path string, data []byte, perm fs.FileMode) error {
 	return nil
 }
 
-func (m *mapFS) Remove(path string) error {
+func (m *MapFS) Remove(path string) error {
 	delete(m.MapFS, path)
 	return nil
 }
 
-func (m *mapFS) MkdirAll(_ string, _ fs.FileMode) error {
+func (m *MapFS) MkdirAll(_ string, _ fs.FileMode) error {
 	// For MapFS, we don't actually need to create directories
 	return nil
 }
 
-func (m *mapFS) RemoveAll(path string) error {
+func (m *MapFS) RemoveAll(path string) error {
 	delete(m.MapFS, path)
 	return nil
 }
 
-func (m *mapFS) IsNotExist(err error) bool {
+func (m *MapFS) IsNotExist(err error) bool {
 	return os.IsNotExist(err)
 }
