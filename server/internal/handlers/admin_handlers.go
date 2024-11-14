@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"novamd/internal/db"
-	"novamd/internal/filesystem"
 	"novamd/internal/httpcontext"
 	"novamd/internal/models"
+	"novamd/internal/storage"
 	"strconv"
 	"time"
 
@@ -91,7 +91,7 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 		}
 
 		// Initialize user workspace
-		if err := h.S.InitializeUserWorkspace(insertedUser.ID, insertedUser.LastWorkspaceID); err != nil {
+		if err := h.Storage.InitializeUserWorkspace(insertedUser.ID, insertedUser.LastWorkspaceID); err != nil {
 			http.Error(w, "Failed to initialize user workspace", http.StatusInternalServerError)
 			return
 		}
@@ -218,7 +218,7 @@ type WorkspaceStats struct {
 	WorkspaceID        int       `json:"workspaceID"`
 	WorkspaceName      string    `json:"workspaceName"`
 	WorkspaceCreatedAt time.Time `json:"workspaceCreatedAt"`
-	*filesystem.FileCountStats
+	*storage.FileCountStats
 }
 
 // AdminListWorkspaces returns a list of all workspaces and their stats
@@ -248,7 +248,7 @@ func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 			workspaceData.WorkspaceName = ws.Name
 			workspaceData.WorkspaceCreatedAt = ws.CreatedAt
 
-			fileStats, err := h.S.GetFileStats(ws.UserID, ws.ID)
+			fileStats, err := h.Storage.GetFileStats(ws.UserID, ws.ID)
 			if err != nil {
 				http.Error(w, "Failed to get file stats", http.StatusInternalServerError)
 				return
@@ -266,7 +266,7 @@ func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 // SystemStats holds system-wide statistics
 type SystemStats struct {
 	*db.UserStats
-	*filesystem.FileCountStats
+	*storage.FileCountStats
 }
 
 // AdminGetSystemStats returns system-wide statistics for admins
@@ -278,7 +278,7 @@ func (h *Handler) AdminGetSystemStats() http.HandlerFunc {
 			return
 		}
 
-		fileStats, err := h.S.GetTotalFileStats()
+		fileStats, err := h.Storage.GetTotalFileStats()
 		if err != nil {
 			http.Error(w, "Failed to get file stats", http.StatusInternalServerError)
 			return

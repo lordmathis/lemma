@@ -1,6 +1,6 @@
-// Package filesystem provides functionalities to interact with the file system,
+// Package storage provides functionalities to interact with the file system,
 // including listing files, finding files by name, getting file content, saving files, and deleting files.
-package filesystem
+package storage
 
 import (
 	"fmt"
@@ -10,12 +10,23 @@ import (
 	"strings"
 )
 
-// StorageNode represents a file or directory in the storage.
-type StorageNode struct {
-	ID       string        `json:"id"`
-	Name     string        `json:"name"`
-	Path     string        `json:"path"`
-	Children []StorageNode `json:"children,omitempty"`
+// FileManager provides functionalities to interact with files in the storage.
+type FileManager interface {
+	ListFilesRecursively(userID, workspaceID int) ([]FileNode, error)
+	FindFileByName(userID, workspaceID int, filename string) ([]string, error)
+	GetFileContent(userID, workspaceID int, filePath string) ([]byte, error)
+	SaveFile(userID, workspaceID int, filePath string, content []byte) error
+	DeleteFile(userID, workspaceID int, filePath string) error
+	GetFileStats(userID, workspaceID int) (*FileCountStats, error)
+	GetTotalFileStats() (*FileCountStats, error)
+}
+
+// FileNode represents a file or directory in the storage.
+type FileNode struct {
+	ID       string     `json:"id"`
+	Name     string     `json:"name"`
+	Path     string     `json:"path"`
+	Children []FileNode `json:"children,omitempty"`
 }
 
 // ListFilesRecursively returns a list of all files in the workspace directory and its subdirectories.
@@ -25,13 +36,13 @@ type StorageNode struct {
 // Returns:
 // - nodes: a list of files and directories in the workspace
 // - error: any error that occurred during listing
-func (s *Storage) ListFilesRecursively(userID, workspaceID int) ([]StorageNode, error) {
+func (s *Service) ListFilesRecursively(userID, workspaceID int) ([]FileNode, error) {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 	return s.walkDirectory(workspacePath, "")
 }
 
 // walkDirectory recursively walks the directory and returns a list of files and directories.
-func (s *Storage) walkDirectory(dir, prefix string) ([]StorageNode, error) {
+func (s *Service) walkDirectory(dir, prefix string) ([]FileNode, error) {
 	entries, err := s.fs.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -56,7 +67,7 @@ func (s *Storage) walkDirectory(dir, prefix string) ([]StorageNode, error) {
 	})
 
 	// Create combined slice with directories first, then files
-	nodes := make([]StorageNode, 0, len(entries))
+	nodes := make([]FileNode, 0, len(entries))
 
 	// Add directories first
 	for _, entry := range dirs {
@@ -69,7 +80,7 @@ func (s *Storage) walkDirectory(dir, prefix string) ([]StorageNode, error) {
 			return nil, err
 		}
 
-		node := StorageNode{
+		node := FileNode{
 			ID:       path,
 			Name:     name,
 			Path:     path,
@@ -83,7 +94,7 @@ func (s *Storage) walkDirectory(dir, prefix string) ([]StorageNode, error) {
 		name := entry.Name()
 		path := filepath.Join(prefix, name)
 
-		node := StorageNode{
+		node := FileNode{
 			ID:   path,
 			Name: name,
 			Path: path,
@@ -102,7 +113,7 @@ func (s *Storage) walkDirectory(dir, prefix string) ([]StorageNode, error) {
 // Returns:
 // - foundPaths: a list of file paths that match the filename
 // - error: any error that occurred during the search
-func (s *Storage) FindFileByName(userID, workspaceID int, filename string) ([]string, error) {
+func (s *Service) FindFileByName(userID, workspaceID int, filename string) ([]string, error) {
 	var foundPaths []string
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 
@@ -141,7 +152,7 @@ func (s *Storage) FindFileByName(userID, workspaceID int, filename string) ([]st
 // Returns:
 // - content: the content of the file
 // - error: any error that occurred during reading
-func (s *Storage) GetFileContent(userID, workspaceID int, filePath string) ([]byte, error) {
+func (s *Service) GetFileContent(userID, workspaceID int, filePath string) ([]byte, error) {
 	fullPath, err := s.ValidatePath(userID, workspaceID, filePath)
 	if err != nil {
 		return nil, err
@@ -157,7 +168,7 @@ func (s *Storage) GetFileContent(userID, workspaceID int, filePath string) ([]by
 // - content: the content to write to the file
 // Returns:
 // - error: any error that occurred during saving
-func (s *Storage) SaveFile(userID, workspaceID int, filePath string, content []byte) error {
+func (s *Service) SaveFile(userID, workspaceID int, filePath string, content []byte) error {
 	fullPath, err := s.ValidatePath(userID, workspaceID, filePath)
 	if err != nil {
 		return err
@@ -178,7 +189,7 @@ func (s *Storage) SaveFile(userID, workspaceID int, filePath string, content []b
 // - filePath: the path of the file to delete
 // Returns:
 // - error: any error that occurred during deletion
-func (s *Storage) DeleteFile(userID, workspaceID int, filePath string) error {
+func (s *Service) DeleteFile(userID, workspaceID int, filePath string) error {
 	fullPath, err := s.ValidatePath(userID, workspaceID, filePath)
 	if err != nil {
 		return err
@@ -199,7 +210,7 @@ type FileCountStats struct {
 // Returns:
 // - result: statistics about the files in the workspace
 // - error: any error that occurred during counting
-func (s *Storage) GetFileStats(userID, workspaceID int) (*FileCountStats, error) {
+func (s *Service) GetFileStats(userID, workspaceID int) (*FileCountStats, error) {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 
 	// Check if workspace exists
@@ -214,12 +225,12 @@ func (s *Storage) GetFileStats(userID, workspaceID int) (*FileCountStats, error)
 // GetTotalFileStats returns the total file statistics for the storage.
 // Returns:
 // - result: statistics about the files in the storage
-func (s *Storage) GetTotalFileStats() (*FileCountStats, error) {
+func (s *Service) GetTotalFileStats() (*FileCountStats, error) {
 	return s.countFilesInPath(s.RootDir)
 }
 
 // countFilesInPath counts the total number of files and the total size of files in the given directory.
-func (s *Storage) countFilesInPath(directoryPath string) (*FileCountStats, error) {
+func (s *Service) countFilesInPath(directoryPath string) (*FileCountStats, error) {
 	result := &FileCountStats{}
 
 	err := filepath.WalkDir(directoryPath, func(path string, d os.DirEntry, err error) error {

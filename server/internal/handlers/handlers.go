@@ -4,20 +4,20 @@ import (
 	"encoding/json"
 	"net/http"
 	"novamd/internal/db"
-	"novamd/internal/filesystem"
+	"novamd/internal/storage"
 )
 
 // Handler provides common functionality for all handlers
 type Handler struct {
-	DB *db.DB
-	S  *filesystem.Storage
+	DB      *db.DB
+	Storage storage.Manager
 }
 
 // NewHandler creates a new handler with the given dependencies
-func NewHandler(db *db.DB, fs *filesystem.Storage) *Handler {
+func NewHandler(db *db.DB, s storage.Manager) *Handler {
 	return &Handler{
-		DB: db,
-		S:  fs,
+		DB:      db,
+		Storage: s,
 	}
 }
 

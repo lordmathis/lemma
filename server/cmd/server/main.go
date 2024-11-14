@@ -17,8 +17,8 @@ import (
 	"novamd/internal/auth"
 	"novamd/internal/config"
 	"novamd/internal/db"
-	"novamd/internal/filesystem"
 	"novamd/internal/handlers"
+	"novamd/internal/storage"
 )
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 	}
 
 	// Initialize filesystem
-	fs := filesystem.New(cfg.WorkDir)
+	s := storage.NewService(cfg.WorkDir)
 
 	// Initialize JWT service
 	jwtService, err := auth.NewJWTService(auth.JWTConfig{
@@ -95,7 +95,7 @@ func main() {
 	// Set up routes
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(httprate.LimitByIP(cfg.RateLimitRequests, cfg.RateLimitWindow))
-		api.SetupRoutes(r, database, fs, authMiddleware, sessionService)
+		api.SetupRoutes(r, database, s, authMiddleware, sessionService)
 	})
 
 	// Handle all other routes with static file server

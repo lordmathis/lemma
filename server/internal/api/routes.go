@@ -4,19 +4,19 @@ package api
 import (
 	"novamd/internal/auth"
 	"novamd/internal/db"
-	"novamd/internal/filesystem"
 	"novamd/internal/handlers"
 	"novamd/internal/middleware"
+	"novamd/internal/storage"
 
 	"github.com/go-chi/chi/v5"
 )
 
 // SetupRoutes configures the API routes
-func SetupRoutes(r chi.Router, db *db.DB, s *filesystem.Storage, authMiddleware *auth.Middleware, sessionService *auth.SessionService) {
+func SetupRoutes(r chi.Router, db *db.DB, s storage.Manager, authMiddleware *auth.Middleware, sessionService *auth.SessionService) {
 
 	handler := &handlers.Handler{
-		DB: db,
-		S:  s,
+		DB:      db,
+		Storage: s,
 	}
 
 	// Public routes (no authentication required)

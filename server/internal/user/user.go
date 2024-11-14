@@ -8,19 +8,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"novamd/internal/db"
-	"novamd/internal/filesystem"
 	"novamd/internal/models"
+	"novamd/internal/storage"
 )
 
 type UserService struct {
-	DB *db.DB
-	FS *filesystem.Storage
+	DB      *db.DB
+	Storage storage.Manager
 }
 
-func NewUserService(database *db.DB, fs *filesystem.Storage) *UserService {
+func NewUserService(database *db.DB, s storage.Manager) *UserService {
 	return &UserService{
-		DB: database,
-		FS: fs,
+		DB:      database,
+		Storage: s,
 	}
 }
 
@@ -53,7 +53,7 @@ func (s *UserService) SetupAdminUser(adminEmail, adminPassword string) (*models.
 	}
 
 	// Initialize workspace directory
-	err = s.FS.InitializeUserWorkspace(createdUser.ID, createdUser.LastWorkspaceID)
+	err = s.Storage.InitializeUserWorkspace(createdUser.ID, createdUser.LastWorkspaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize admin workspace: %w", err)
 	}

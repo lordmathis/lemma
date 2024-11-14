@@ -28,7 +28,7 @@ func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 			return
 		}
 
-		err := h.S.StageCommitAndPush(ctx.UserID, ctx.Workspace.ID, requestBody.Message)
+		err := h.Storage.StageCommitAndPush(ctx.UserID, ctx.Workspace.ID, requestBody.Message)
 		if err != nil {
 			http.Error(w, "Failed to stage, commit, and push changes: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -45,7 +45,7 @@ func (h *Handler) PullChanges() http.HandlerFunc {
 			return
 		}
 
-		err := h.S.Pull(ctx.UserID, ctx.Workspace.ID)
+		err := h.Storage.Pull(ctx.UserID, ctx.Workspace.ID)
 		if err != nil {
 			http.Error(w, "Failed to pull changes: "+err.Error(), http.StatusInternalServerError)
 			return

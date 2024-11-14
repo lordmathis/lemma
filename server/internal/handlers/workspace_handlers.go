@@ -45,7 +45,7 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 			return
 		}
 
-		if err := h.S.InitializeUserWorkspace(workspace.UserID, workspace.ID); err != nil {
+		if err := h.Storage.InitializeUserWorkspace(workspace.UserID, workspace.ID); err != nil {
 			http.Error(w, "Failed to initialize workspace directory", http.StatusInternalServerError)
 			return
 		}
@@ -107,7 +107,7 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 		// Handle Git repository setup/teardown if Git settings changed
 		if gitSettingsChanged(&workspace, ctx.Workspace) {
 			if workspace.GitEnabled {
-				if err := h.S.SetupGitRepo(
+				if err := h.Storage.SetupGitRepo(
 					ctx.UserID,
 					ctx.Workspace.ID,
 					workspace.GitURL,
@@ -119,7 +119,7 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 				}
 
 			} else {
-				h.S.DisableGitRepo(ctx.UserID, ctx.Workspace.ID)
+				h.Storage.DisableGitRepo(ctx.UserID, ctx.Workspace.ID)
 			}
 		}
 
