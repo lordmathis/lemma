@@ -2,7 +2,7 @@ package storage
 
 import (
 	"fmt"
-	"novamd/internal/gitutils"
+	"novamd/internal/git"
 )
 
 // RepositoryManager defines the interface for managing Git repositories.
@@ -25,9 +25,9 @@ type RepositoryManager interface {
 func (s *Service) SetupGitRepo(userID, workspaceID int, gitURL, gitUser, gitToken string) error {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 	if _, ok := s.GitRepos[userID]; !ok {
-		s.GitRepos[userID] = make(map[int]*gitutils.GitRepo)
+		s.GitRepos[userID] = make(map[int]git.Client)
 	}
-	s.GitRepos[userID][workspaceID] = gitutils.New(gitURL, gitUser, gitToken, workspacePath)
+	s.GitRepos[userID][workspaceID] = git.New(gitURL, gitUser, gitToken, workspacePath)
 	return s.GitRepos[userID][workspaceID].EnsureRepo()
 }
 
@@ -80,7 +80,7 @@ func (s *Service) Pull(userID, workspaceID int) error {
 }
 
 // getGitRepo returns the Git repository for the given user and workspace IDs.
-func (s *Service) getGitRepo(userID, workspaceID int) (*gitutils.GitRepo, bool) {
+func (s *Service) getGitRepo(userID, workspaceID int) (git.Client, bool) {
 	userRepos, ok := s.GitRepos[userID]
 	if !ok {
 		return nil, false

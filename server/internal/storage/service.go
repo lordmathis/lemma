@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"novamd/internal/gitutils"
+	"novamd/internal/git"
 )
 
 // Manager interface combines all storage interfaces.
@@ -15,7 +15,7 @@ type Manager interface {
 type Service struct {
 	fs       fileSystem
 	RootDir  string
-	GitRepos map[int]map[int]*gitutils.GitRepo // map[userID]map[workspaceID]*gitutils.GitRepo
+	GitRepos map[int]map[int]git.Client // map[userID]map[workspaceID]*git.Client
 }
 
 // NewService creates a new Storage instance.
@@ -37,6 +37,6 @@ func NewServiceWithFS(rootDir string, fs fileSystem) *Service {
 	return &Service{
 		fs:       fs,
 		RootDir:  rootDir,
-		GitRepos: make(map[int]map[int]*gitutils.GitRepo),
+		GitRepos: make(map[int]map[int]git.Client),
 	}
 }
