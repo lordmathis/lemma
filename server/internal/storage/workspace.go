@@ -24,9 +24,17 @@ type WorkspaceManager interface {
 // - error: any error that occurred during validation
 func (s *Service) ValidatePath(userID, workspaceID int, path string) (string, error) {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
+
+	// First check if the path is absolute
+	if filepath.IsAbs(path) {
+		return "", fmt.Errorf("invalid path: absolute paths not allowed")
+	}
+
+	// Join and clean the path
 	fullPath := filepath.Join(workspacePath, path)
 	cleanPath := filepath.Clean(fullPath)
 
+	// Verify the path is still within the workspace
 	if !strings.HasPrefix(cleanPath, workspacePath) {
 		return "", fmt.Errorf("invalid path: outside of workspace")
 	}
