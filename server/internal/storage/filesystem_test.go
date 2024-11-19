@@ -1,46 +1,125 @@
 package storage_test
 
 import (
+	"errors"
 	"io/fs"
-	"os"
-	"testing/fstest"
+	"path/filepath"
+	"time"
 )
 
-// MapFS adapts testing.MapFS to implement our fileSystem interface
-type MapFS struct {
-	fstest.MapFS
+type mockDirEntry struct {
+	name  string
+	isDir bool
 }
 
-func NewMapFS() *MapFS {
-	return &MapFS{
-		MapFS: make(fstest.MapFS),
+func (m *mockDirEntry) Name() string               { return m.name }
+func (m *mockDirEntry) IsDir() bool                { return m.isDir }
+func (m *mockDirEntry) Type() fs.FileMode          { return fs.ModeDir }
+func (m *mockDirEntry) Info() (fs.FileInfo, error) { return nil, nil }
+
+func NewMockDirEntry(name string, isDir bool) fs.DirEntry {
+	return &mockDirEntry{name: name, isDir: isDir}
+}
+
+// Extend mockFS to support directory operations
+type MockDirInfo struct {
+	name    string
+	size    int64
+	mode    fs.FileMode
+	modTime time.Time
+	isDir   bool
+}
+
+func (m MockDirInfo) Name() string       { return m.name }
+func (m MockDirInfo) Size() int64        { return m.size }
+func (m MockDirInfo) Mode() fs.FileMode  { return m.mode }
+func (m MockDirInfo) ModTime() time.Time { return m.modTime }
+func (m MockDirInfo) IsDir() bool        { return m.isDir }
+func (m MockDirInfo) Sys() interface{}   { return nil }
+
+type mockFS struct {
+	// Record operations for verification
+	ReadCalls   map[string]int
+	WriteCalls  map[string][]byte
+	RemoveCalls []string
+	MkdirCalls  []string
+
+	// Configure test behavior
+	ReadFileReturns map[string]struct {
+		data []byte
+		err  error
+	}
+	ReadDirReturns map[string]struct {
+		entries []fs.DirEntry
+		err     error
+	}
+	WriteFileError error
+	RemoveError    error
+	MkdirError     error
+	StatError      error
+}
+
+func NewMockFS() *mockFS {
+	return &mockFS{
+		ReadCalls:   make(map[string]int),
+		WriteCalls:  make(map[string][]byte),
+		RemoveCalls: make([]string, 0),
+		MkdirCalls:  make([]string, 0),
+		ReadFileReturns: make(map[string]struct {
+			data []byte
+			err  error
+		}),
 	}
 }
 
-// Only implement the methods that MapFS doesn't already provide
-func (m *MapFS) WriteFile(path string, data []byte, perm fs.FileMode) error {
-	m.MapFS[path] = &fstest.MapFile{
-		Data: data,
-		Mode: perm,
+func (m *mockFS) ReadFile(path string) ([]byte, error) {
+	m.ReadCalls[path]++
+	if ret, ok := m.ReadFileReturns[path]; ok {
+		return ret.data, ret.err
 	}
-	return nil
+	return nil, errors.New("file not found")
 }
 
-func (m *MapFS) Remove(path string) error {
-	delete(m.MapFS, path)
-	return nil
+func (m *mockFS) WriteFile(path string, data []byte, _ fs.FileMode) error {
+	m.WriteCalls[path] = data
+	return m.WriteFileError
 }
 
-func (m *MapFS) MkdirAll(_ string, _ fs.FileMode) error {
-	// For MapFS, we don't actually need to create directories
-	return nil
+func (m *mockFS) Remove(path string) error {
+	m.RemoveCalls = append(m.RemoveCalls, path)
+	return m.RemoveError
 }
 
-func (m *MapFS) RemoveAll(path string) error {
-	delete(m.MapFS, path)
-	return nil
+func (m *mockFS) MkdirAll(path string, _ fs.FileMode) error {
+	m.MkdirCalls = append(m.MkdirCalls, path)
+	return m.MkdirError
 }
 
-func (m *MapFS) IsNotExist(err error) bool {
-	return os.IsNotExist(err)
+func (m *mockFS) Stat(path string) (fs.FileInfo, error) {
+	if m.StatError != nil {
+		return nil, m.StatError
+	}
+	return MockDirInfo{
+		name:    filepath.Base(path),
+		size:    1024,
+		mode:    0644,
+		modTime: time.Now(),
+		isDir:   false,
+	}, nil
+}
+
+func (m *mockFS) ReadDir(path string) ([]fs.DirEntry, error) {
+	if ret, ok := m.ReadDirReturns[path]; ok {
+		return ret.entries, ret.err
+	}
+	return nil, fs.ErrNotExist
+}
+
+func (m *mockFS) RemoveAll(path string) error {
+	m.RemoveCalls = append(m.RemoveCalls, path)
+	return m.RemoveError
+}
+
+func (m *mockFS) IsNotExist(err error) bool {
+	return err == fs.ErrNotExist
 }
