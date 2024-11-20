@@ -27,7 +27,7 @@ func (s *Service) SetupGitRepo(userID, workspaceID int, gitURL, gitUser, gitToke
 	if _, ok := s.GitRepos[userID]; !ok {
 		s.GitRepos[userID] = make(map[int]git.Client)
 	}
-	s.GitRepos[userID][workspaceID] = git.New(gitURL, gitUser, gitToken, workspacePath)
+	s.GitRepos[userID][workspaceID] = s.newGitClient(gitURL, gitUser, gitToken, workspacePath)
 	return s.GitRepos[userID][workspaceID].EnsureRepo()
 }
 

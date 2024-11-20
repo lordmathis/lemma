@@ -13,9 +13,16 @@ type Manager interface {
 
 // Service represents the file system structure.
 type Service struct {
-	fs       fileSystem
-	RootDir  string
-	GitRepos map[int]map[int]git.Client // map[userID]map[workspaceID]*git.Client
+	fs           fileSystem
+	newGitClient func(url, user, token, path string) git.Client
+	RootDir      string
+	GitRepos     map[int]map[int]git.Client // map[userID]map[workspaceID]*git.Client
+}
+
+// Options represents the options for the storage service.
+type Options struct {
+	Fs           fileSystem
+	NewGitClient func(url, user, token, path string) git.Client
 }
 
 // NewService creates a new Storage instance.
@@ -24,19 +31,23 @@ type Service struct {
 // Returns:
 // - result: the new Storage instance
 func NewService(rootDir string) *Service {
-	return NewServiceWithFS(rootDir, &osFS{})
+	return NewServiceWithOptions(rootDir, Options{
+		Fs:           &osFS{},
+		NewGitClient: git.New,
+	})
 }
 
-// NewServiceWithFS creates a new Storage instance with the given filesystem.
+// NewServiceWithOptions creates a new Storage instance with the given options.
 // Parameters:
 // - rootDir: the root directory for the storage
-// - fs: the filesystem implementation to use
+// - opts: the options for the storage service
 // Returns:
 // - result: the new Storage instance
-func NewServiceWithFS(rootDir string, fs fileSystem) *Service {
+func NewServiceWithOptions(rootDir string, opts Options) *Service {
 	return &Service{
-		fs:       fs,
-		RootDir:  rootDir,
-		GitRepos: make(map[int]map[int]git.Client),
+		fs:           opts.Fs,
+		newGitClient: opts.NewGitClient,
+		RootDir:      rootDir,
+		GitRepos:     make(map[int]map[int]git.Client),
 	}
 }

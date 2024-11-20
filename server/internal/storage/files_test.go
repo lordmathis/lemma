@@ -92,7 +92,10 @@ func TestFileNode(t *testing.T) {
 
 func TestListFilesRecursively(t *testing.T) {
 	mockFS := NewMockFS()
-	s := storage.NewServiceWithFS("test-root", mockFS)
+	s := storage.NewServiceWithOptions("test-root", storage.Options{
+		Fs:           mockFS,
+		NewGitClient: nil,
+	})
 
 	t.Run("empty directory", func(t *testing.T) {
 		mockFS.ReadDirReturns = map[string]struct {
@@ -183,7 +186,10 @@ func TestListFilesRecursively(t *testing.T) {
 
 func TestGetFileContent(t *testing.T) {
 	mockFS := NewMockFS()
-	s := storage.NewServiceWithFS("test-root", mockFS)
+	s := storage.NewServiceWithOptions("test-root", storage.Options{
+		Fs:           mockFS,
+		NewGitClient: nil,
+	})
 
 	testCases := []struct {
 		name        string
@@ -257,7 +263,10 @@ func TestGetFileContent(t *testing.T) {
 
 func TestSaveFile(t *testing.T) {
 	mockFS := NewMockFS()
-	s := storage.NewServiceWithFS("test-root", mockFS)
+	s := storage.NewServiceWithOptions("test-root", storage.Options{
+		Fs:           mockFS,
+		NewGitClient: nil,
+	})
 
 	testCases := []struct {
 		name        string
@@ -327,7 +336,10 @@ func TestSaveFile(t *testing.T) {
 
 func TestDeleteFile(t *testing.T) {
 	mockFS := NewMockFS()
-	s := storage.NewServiceWithFS("test-root", mockFS)
+	s := storage.NewServiceWithOptions("test-root", storage.Options{
+		Fs:           mockFS,
+		NewGitClient: nil,
+	})
 
 	testCases := []struct {
 		name        string

@@ -11,7 +11,10 @@ import (
 
 func TestValidatePath(t *testing.T) {
 	mockFS := NewMockFS()
-	s := storage.NewServiceWithFS("test-root", mockFS)
+	s := storage.NewServiceWithOptions("test-root", storage.Options{
+		Fs:           mockFS,
+		NewGitClient: nil,
+	})
 
 	testCases := []struct {
 		name        string
@@ -94,7 +97,10 @@ func TestValidatePath(t *testing.T) {
 
 func TestGetWorkspacePath(t *testing.T) {
 	mockFS := NewMockFS()
-	s := storage.NewServiceWithFS("test-root", mockFS)
+	s := storage.NewServiceWithOptions("test-root", storage.Options{
+		Fs:           mockFS,
+		NewGitClient: nil,
+	})
 
 	testCases := []struct {
 		name        string
@@ -134,7 +140,10 @@ func TestGetWorkspacePath(t *testing.T) {
 
 func TestInitializeUserWorkspace(t *testing.T) {
 	mockFS := NewMockFS()
-	s := storage.NewServiceWithFS("test-root", mockFS)
+	s := storage.NewServiceWithOptions("test-root", storage.Options{
+		Fs:           mockFS,
+		NewGitClient: nil,
+	})
 
 	testCases := []struct {
 		name        string
@@ -199,7 +208,10 @@ func TestInitializeUserWorkspace(t *testing.T) {
 
 func TestDeleteUserWorkspace(t *testing.T) {
 	mockFS := NewMockFS()
-	s := storage.NewServiceWithFS("test-root", mockFS)
+	s := storage.NewServiceWithOptions("test-root", storage.Options{
+		Fs:           mockFS,
+		NewGitClient: nil,
+	})
 
 	testCases := []struct {
 		name        string
