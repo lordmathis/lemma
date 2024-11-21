@@ -19,18 +19,18 @@ type Session struct {
 
 // SessionService manages user sessions in the database
 type SessionService struct {
-	db         *sql.DB     // Database connection
-	jwtService *JWTService // JWT service for token operations
+	db         *sql.DB    // Database connection
+	jwtManager JWTManager // JWT Manager for token operations
 }
 
 // NewSessionService creates a new session service
 // Parameters:
 // - db: database connection
-// - jwtService: JWT service for token operations
-func NewSessionService(db *sql.DB, jwtService *JWTService) *SessionService {
+// - jwtManager: JWT service for token operations
+func NewSessionService(db *sql.DB, jwtManager JWTManager) *SessionService {
 	return &SessionService{
 		db:         db,
-		jwtService: jwtService,
+		jwtManager: jwtManager,
 	}
 }
 
@@ -44,18 +44,18 @@ func NewSessionService(db *sql.DB, jwtService *JWTService) *SessionService {
 // - error: any error that occurred
 func (s *SessionService) CreateSession(userID int, role string) (*Session, string, error) {
 	// Generate both access and refresh tokens
-	accessToken, err := s.jwtService.GenerateAccessToken(userID, role)
+	accessToken, err := s.jwtManager.GenerateAccessToken(userID, role)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to generate access token: %w", err)
 	}
 
-	refreshToken, err := s.jwtService.GenerateRefreshToken(userID, role)
+	refreshToken, err := s.jwtManager.GenerateRefreshToken(userID, role)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
 	// Validate the refresh token to get its expiry time
-	claims, err := s.jwtService.ValidateToken(refreshToken)
+	claims, err := s.jwtManager.ValidateToken(refreshToken)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to validate refresh token: %w", err)
 	}
@@ -90,7 +90,7 @@ func (s *SessionService) CreateSession(userID int, role string) (*Session, strin
 // - error: any error that occurred
 func (s *SessionService) RefreshSession(refreshToken string) (string, error) {
 	// Validate the refresh token
-	claims, err := s.jwtService.ValidateToken(refreshToken)
+	claims, err := s.jwtManager.ValidateToken(refreshToken)
 	if err != nil {
 		return "", fmt.Errorf("invalid refresh token: %w", err)
 	}
@@ -112,7 +112,7 @@ func (s *SessionService) RefreshSession(refreshToken string) (string, error) {
 	}
 
 	// Generate a new access token
-	return s.jwtService.GenerateAccessToken(claims.UserID, claims.Role)
+	return s.jwtManager.GenerateAccessToken(claims.UserID, claims.Role)
 }
 
 // InvalidateSession removes a session from the database

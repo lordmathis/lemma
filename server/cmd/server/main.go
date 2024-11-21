@@ -48,7 +48,7 @@ func main() {
 	s := storage.NewService(cfg.WorkDir)
 
 	// Initialize JWT service
-	jwtService, err := auth.NewJWTService(auth.JWTConfig{
+	jwtManager, err := auth.NewJWTService(auth.JWTConfig{
 		SigningKey:         signingKey,
 		AccessTokenExpiry:  15 * time.Minute,
 		RefreshTokenExpiry: 7 * 24 * time.Hour,
@@ -58,10 +58,10 @@ func main() {
 	}
 
 	// Initialize auth middleware
-	authMiddleware := auth.NewMiddleware(jwtService)
+	authMiddleware := auth.NewMiddleware(jwtManager)
 
 	// Initialize session service
-	sessionService := auth.NewSessionService(database.DB, jwtService)
+	sessionService := auth.NewSessionService(database.DB, jwtManager)
 
 	// Set up router
 	r := chi.NewRouter()
