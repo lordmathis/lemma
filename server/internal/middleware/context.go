@@ -29,7 +29,7 @@ func WithUserContext(next http.Handler) http.Handler {
 }
 
 // Workspace context
-func WithWorkspaceContext(db *db.DB) func(http.Handler) http.Handler {
+func WithWorkspaceContext(db db.Database) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx, ok := httpcontext.GetRequestContext(w, r)

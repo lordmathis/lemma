@@ -13,11 +13,11 @@ import (
 )
 
 type UserService struct {
-	DB      *db.DB
+	DB      db.Database
 	Storage storage.Manager
 }
 
-func NewUserService(database *db.DB, s storage.Manager) *UserService {
+func NewUserService(database db.Database, s storage.Manager) *UserService {
 	return &UserService{
 		DB:      database,
 		Storage: s,

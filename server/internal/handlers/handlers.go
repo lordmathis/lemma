@@ -9,12 +9,12 @@ import (
 
 // Handler provides common functionality for all handlers
 type Handler struct {
-	DB      *db.DB
+	DB      db.Database
 	Storage storage.Manager
 }
 
 // NewHandler creates a new handler with the given dependencies
-func NewHandler(db *db.DB, s storage.Manager) *Handler {
+func NewHandler(db db.Database, s storage.Manager) *Handler {
 	return &Handler{
 		DB:      db,
 		Storage: s,

@@ -16,10 +16,10 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	AccessToken  string        `json:"accessToken"`
-	RefreshToken string        `json:"refreshToken"`
-	User         *models.User  `json:"user"`
-	Session      *auth.Session `json:"session"`
+	AccessToken  string          `json:"accessToken"`
+	RefreshToken string          `json:"refreshToken"`
+	User         *models.User    `json:"user"`
+	Session      *models.Session `json:"session"`
 }
 
 type RefreshRequest struct {

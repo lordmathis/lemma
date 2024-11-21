@@ -171,8 +171,7 @@ func (h *Handler) DeleteAccount() http.HandlerFunc {
 		// Prevent admin from deleting their own account if they're the last admin
 		if user.Role == "admin" {
 			// Count number of admin users
-			adminCount := 0
-			err := h.DB.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'admin'").Scan(&adminCount)
+			adminCount, err := h.DB.CountAdminUsers()
 			if err != nil {
 				http.Error(w, "Failed to verify admin status", http.StatusInternalServerError)
 				return

@@ -7,7 +7,7 @@ import (
 )
 
 // CreateWorkspace inserts a new workspace record into the database
-func (db *DB) CreateWorkspace(workspace *models.Workspace) error {
+func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 	// Set default settings if not provided
 	if workspace.Theme == "" {
 		workspace.GetDefaultSettings()
@@ -42,7 +42,7 @@ func (db *DB) CreateWorkspace(workspace *models.Workspace) error {
 }
 
 // GetWorkspaceByID retrieves a workspace by its ID
-func (db *DB) GetWorkspaceByID(id int) (*models.Workspace, error) {
+func (db *database) GetWorkspaceByID(id int) (*models.Workspace, error) {
 	workspace := &models.Workspace{}
 	var encryptedToken string
 
@@ -75,7 +75,7 @@ func (db *DB) GetWorkspaceByID(id int) (*models.Workspace, error) {
 }
 
 // GetWorkspaceByName retrieves a workspace by its name and user ID
-func (db *DB) GetWorkspaceByName(userID int, workspaceName string) (*models.Workspace, error) {
+func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*models.Workspace, error) {
 	workspace := &models.Workspace{}
 	var encryptedToken string
 
@@ -108,7 +108,7 @@ func (db *DB) GetWorkspaceByName(userID int, workspaceName string) (*models.Work
 }
 
 // UpdateWorkspace updates a workspace record in the database
-func (db *DB) UpdateWorkspace(workspace *models.Workspace) error {
+func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
 	// Encrypt token before storing
 	encryptedToken, err := db.encryptToken(workspace.GitToken)
 	if err != nil {
@@ -146,7 +146,7 @@ func (db *DB) UpdateWorkspace(workspace *models.Workspace) error {
 }
 
 // GetWorkspacesByUserID retrieves all workspaces for a user
-func (db *DB) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
+func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
 	rows, err := db.Query(`
 		SELECT 
 			id, user_id, name, created_at,
@@ -189,7 +189,7 @@ func (db *DB) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
 
 // UpdateWorkspaceSettings updates only the settings portion of a workspace
 // This is useful when you don't want to modify the name or other core workspace properties
-func (db *DB) UpdateWorkspaceSettings(workspace *models.Workspace) error {
+func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 	_, err := db.Exec(`
 		UPDATE workspaces 
 		SET 
@@ -218,31 +218,31 @@ func (db *DB) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 }
 
 // DeleteWorkspace removes a workspace record from the database
-func (db *DB) DeleteWorkspace(id int) error {
+func (db *database) DeleteWorkspace(id int) error {
 	_, err := db.Exec("DELETE FROM workspaces WHERE id = ?", id)
 	return err
 }
 
 // DeleteWorkspaceTx removes a workspace record from the database within a transaction
-func (db *DB) DeleteWorkspaceTx(tx *sql.Tx, id int) error {
+func (db *database) DeleteWorkspaceTx(tx *sql.Tx, id int) error {
 	_, err := tx.Exec("DELETE FROM workspaces WHERE id = ?", id)
 	return err
 }
 
 // UpdateLastWorkspaceTx sets the last workspace for a user in with a transaction
-func (db *DB) UpdateLastWorkspaceTx(tx *sql.Tx, userID, workspaceID int) error {
+func (db *database) UpdateLastWorkspaceTx(tx *sql.Tx, userID, workspaceID int) error {
 	_, err := tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", workspaceID, userID)
 	return err
 }
 
 // UpdateLastOpenedFile updates the last opened file path for a workspace
-func (db *DB) UpdateLastOpenedFile(workspaceID int, filePath string) error {
+func (db *database) UpdateLastOpenedFile(workspaceID int, filePath string) error {
 	_, err := db.Exec("UPDATE workspaces SET last_opened_file_path = ? WHERE id = ?", filePath, workspaceID)
 	return err
 }
 
 // GetLastOpenedFile retrieves the last opened file path for a workspace
-func (db *DB) GetLastOpenedFile(workspaceID int) (string, error) {
+func (db *database) GetLastOpenedFile(workspaceID int) (string, error) {
 	var filePath sql.NullString
 	err := db.QueryRow("SELECT last_opened_file_path FROM workspaces WHERE id = ?", workspaceID).Scan(&filePath)
 	if err != nil {
@@ -255,7 +255,7 @@ func (db *DB) GetLastOpenedFile(workspaceID int) (string, error) {
 }
 
 // GetAllWorkspaces retrieves all workspaces in the database
-func (db *DB) GetAllWorkspaces() ([]*models.Workspace, error) {
+func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
 	rows, err := db.Query(`
 		SELECT 
 			id, user_id, name, created_at,

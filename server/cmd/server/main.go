@@ -1,3 +1,4 @@
+// Package main contains the main entry point for the application. It sets up the server, database, and other services, and starts the server.
 package main
 
 import (
@@ -61,7 +62,7 @@ func main() {
 	authMiddleware := auth.NewMiddleware(jwtManager)
 
 	// Initialize session service
-	sessionService := auth.NewSessionService(database.DB, jwtManager)
+	sessionService := auth.NewSessionService(database, jwtManager)
 
 	// Set up router
 	r := chi.NewRouter()
