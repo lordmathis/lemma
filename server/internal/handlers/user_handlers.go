@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"novamd/internal/httpcontext"
+	"novamd/internal/context"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -22,7 +22,7 @@ type DeleteAccountRequest struct {
 
 func (h *Handler) GetUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -40,7 +40,7 @@ func (h *Handler) GetUser() http.HandlerFunc {
 // UpdateProfile updates the current user's profile
 func (h *Handler) UpdateProfile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -144,7 +144,7 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 // DeleteAccount handles user account deletion
 func (h *Handler) DeleteAccount() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}

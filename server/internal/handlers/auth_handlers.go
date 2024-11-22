@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"novamd/internal/auth"
-	"novamd/internal/httpcontext"
+	"novamd/internal/context"
 	"novamd/internal/models"
 
 	"golang.org/x/crypto/bcrypt"
@@ -129,7 +129,7 @@ func (h *Handler) RefreshToken(authService *auth.SessionService) http.HandlerFun
 // GetCurrentUser returns the currently authenticated user
 func (h *Handler) GetCurrentUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}

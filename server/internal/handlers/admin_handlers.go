@@ -3,8 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"novamd/internal/context"
 	"novamd/internal/db"
-	"novamd/internal/httpcontext"
 	"novamd/internal/models"
 	"novamd/internal/storage"
 	"strconv"
@@ -172,7 +172,7 @@ func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 // AdminDeleteUser deletes a specific user
 func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}

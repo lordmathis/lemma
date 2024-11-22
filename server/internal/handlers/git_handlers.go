@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"novamd/internal/httpcontext"
+	"novamd/internal/context"
 )
 
 func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -40,7 +40,7 @@ func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 
 func (h *Handler) PullChanges() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}

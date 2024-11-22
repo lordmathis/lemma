@@ -5,14 +5,14 @@ import (
 	"io"
 	"net/http"
 
-	"novamd/internal/httpcontext"
+	"novamd/internal/context"
 
 	"github.com/go-chi/chi/v5"
 )
 
 func (h *Handler) ListFiles() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -29,7 +29,7 @@ func (h *Handler) ListFiles() http.HandlerFunc {
 
 func (h *Handler) LookupFileByName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -52,7 +52,7 @@ func (h *Handler) LookupFileByName() http.HandlerFunc {
 
 func (h *Handler) GetFileContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -71,7 +71,7 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 
 func (h *Handler) SaveFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -95,7 +95,7 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 
 func (h *Handler) DeleteFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -114,7 +114,7 @@ func (h *Handler) DeleteFile() http.HandlerFunc {
 
 func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -136,7 +136,7 @@ func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 
 func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}

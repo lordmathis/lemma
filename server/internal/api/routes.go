@@ -3,9 +3,9 @@ package api
 
 import (
 	"novamd/internal/auth"
+	"novamd/internal/context"
 	"novamd/internal/db"
 	"novamd/internal/handlers"
-	"novamd/internal/middleware"
 	"novamd/internal/storage"
 
 	"github.com/go-chi/chi/v5"
@@ -29,7 +29,7 @@ func SetupRoutes(r chi.Router, db db.Database, s storage.Manager, authMiddleware
 	r.Group(func(r chi.Router) {
 		// Apply authentication middleware to all routes in this group
 		r.Use(authMiddleware.Authenticate)
-		r.Use(middleware.WithUserContext)
+		r.Use(context.WithUserContextMiddleware)
 
 		// Auth routes
 		r.Post("/auth/logout", handler.Logout(sessionService))
@@ -67,7 +67,7 @@ func SetupRoutes(r chi.Router, db db.Database, s storage.Manager, authMiddleware
 
 			// Single workspace routes
 			r.Route("/{workspaceName}", func(r chi.Router) {
-				r.Use(middleware.WithWorkspaceContext(db))
+				r.Use(context.WithWorkspaceContextMiddleware(db))
 				r.Use(authMiddleware.RequireWorkspaceAccess)
 
 				r.Get("/", handler.GetWorkspace())

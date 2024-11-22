@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"novamd/internal/httpcontext"
+	"novamd/internal/context"
 	"novamd/internal/models"
 )
 
 func (h *Handler) ListWorkspaces() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -28,7 +28,7 @@ func (h *Handler) ListWorkspaces() http.HandlerFunc {
 
 func (h *Handler) CreateWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -56,7 +56,7 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 
 func (h *Handler) GetWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -83,7 +83,7 @@ func gitSettingsChanged(new, old *models.Workspace) bool {
 
 func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -134,7 +134,7 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 
 func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -197,7 +197,7 @@ func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 
 func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -214,7 +214,7 @@ func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 
 func (h *Handler) UpdateLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
