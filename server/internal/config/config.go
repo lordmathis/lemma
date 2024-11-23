@@ -3,12 +3,11 @@ package config
 
 import (
 	"fmt"
+	"novamd/internal/secrets"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"novamd/internal/crypto"
 )
 
 // Config holds the configuration for the application
@@ -48,7 +47,7 @@ func (c *Config) Validate() error {
 	}
 
 	// Validate encryption key
-	if err := crypto.ValidateKey(c.EncryptionKey); err != nil {
+	if err := secrets.ValidateKey(c.EncryptionKey); err != nil {
 		return fmt.Errorf("invalid NOVAMD_ENCRYPTION_KEY: %w", err)
 	}
 

@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"novamd/internal/crypto"
 	"novamd/internal/models"
+	"novamd/internal/secrets"
 
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
@@ -70,7 +70,7 @@ type Database interface {
 // database represents the database connection
 type database struct {
 	*sql.DB
-	crypto *crypto.Crypto
+	secretsService secrets.Encryptor
 }
 
 // Init initializes the database connection
@@ -85,14 +85,14 @@ func Init(dbPath string, encryptionKey string) (Database, error) {
 	}
 
 	// Initialize crypto service
-	cryptoService, err := crypto.New(encryptionKey)
+	secretsService, err := secrets.New(encryptionKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize encryption: %w", err)
 	}
 
 	database := &database{
-		DB:     db,
-		crypto: cryptoService,
+		DB:             db,
+		secretsService: secretsService,
 	}
 
 	if err := database.Migrate(); err != nil {
@@ -112,12 +112,12 @@ func (db *database) encryptToken(token string) (string, error) {
 	if token == "" {
 		return "", nil
 	}
-	return db.crypto.Encrypt(token)
+	return db.secretsService.Encrypt(token)
 }
 
 func (db *database) decryptToken(token string) (string, error) {
 	if token == "" {
 		return "", nil
 	}
-	return db.crypto.Decrypt(token)
+	return db.secretsService.Decrypt(token)
 }
