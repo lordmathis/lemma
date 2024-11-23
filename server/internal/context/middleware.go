@@ -28,7 +28,7 @@ func WithUserContextMiddleware(next http.Handler) http.Handler {
 }
 
 // WithWorkspaceContextMiddleware adds workspace information to the request context
-func WithWorkspaceContextMiddleware(db db.Database) func(http.Handler) http.Handler {
+func WithWorkspaceContextMiddleware(db db.WorkspaceReader) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx, ok := GetRequestContext(w, r)

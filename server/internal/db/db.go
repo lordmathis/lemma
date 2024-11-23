@@ -24,12 +24,17 @@ type UserStore interface {
 	CountAdminUsers() (int, error)
 }
 
-// WorkspaceStore defines the methods for interacting with workspace data in the database
-type WorkspaceStore interface {
-	CreateWorkspace(workspace *models.Workspace) error
+// WorkspaceReader defines the methods for reading workspace data from the database
+type WorkspaceReader interface {
 	GetWorkspaceByID(workspaceID int) (*models.Workspace, error)
 	GetWorkspaceByName(userID int, workspaceName string) (*models.Workspace, error)
 	GetWorkspacesByUserID(userID int) ([]*models.Workspace, error)
+	GetAllWorkspaces() ([]*models.Workspace, error)
+}
+
+// WorkspaceWriter defines the methods for writing workspace data to the database
+type WorkspaceWriter interface {
+	CreateWorkspace(workspace *models.Workspace) error
 	UpdateWorkspace(workspace *models.Workspace) error
 	DeleteWorkspace(workspaceID int) error
 	UpdateWorkspaceSettings(workspace *models.Workspace) error
@@ -37,7 +42,12 @@ type WorkspaceStore interface {
 	UpdateLastWorkspaceTx(tx *sql.Tx, userID, workspaceID int) error
 	UpdateLastOpenedFile(workspaceID int, filePath string) error
 	GetLastOpenedFile(workspaceID int) (string, error)
-	GetAllWorkspaces() ([]*models.Workspace, error)
+}
+
+// WorkspaceStore defines the methods for interacting with workspace data in the database
+type WorkspaceStore interface {
+	WorkspaceReader
+	WorkspaceWriter
 }
 
 // SessionStore defines the methods for interacting with jwt sessions in the database
@@ -66,6 +76,21 @@ type Database interface {
 	Close() error
 	Migrate() error
 }
+
+var (
+	// Main Database interface
+	_ Database = (*database)(nil)
+
+	// Component interfaces
+	_ UserStore      = (*database)(nil)
+	_ WorkspaceStore = (*database)(nil)
+	_ SessionStore   = (*database)(nil)
+	_ SystemStore    = (*database)(nil)
+
+	// Sub-interfaces
+	_ WorkspaceReader = (*database)(nil)
+	_ WorkspaceWriter = (*database)(nil)
+)
 
 // database represents the database connection
 type database struct {
