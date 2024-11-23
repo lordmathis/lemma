@@ -10,8 +10,8 @@ import (
 	"io"
 )
 
-// Encryptor is an interface for encrypting and decrypting strings
-type Encryptor interface {
+// Service is an interface for encrypting and decrypting strings
+type Service interface {
 	Encrypt(plaintext string) (string, error)
 	Decrypt(ciphertext string) (string, error)
 }
@@ -51,8 +51,8 @@ func decodeAndValidateKey(key string) ([]byte, error) {
 	return keyBytes, nil
 }
 
-// New creates a new Crypto instance with the provided base64-encoded key
-func New(key string) (Encryptor, error) {
+// NewService creates a new Encryptor instance with the provided base64-encoded key
+func NewService(key string) (Service, error) {
 	keyBytes, err := decodeAndValidateKey(key)
 	if err != nil {
 		return nil, err

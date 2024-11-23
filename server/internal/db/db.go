@@ -3,7 +3,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 
 	"novamd/internal/models"
 	"novamd/internal/secrets"
@@ -95,11 +94,11 @@ var (
 // database represents the database connection
 type database struct {
 	*sql.DB
-	secretsService secrets.Encryptor
+	secretsService secrets.Service
 }
 
 // Init initializes the database connection
-func Init(dbPath string, encryptionKey string) (Database, error) {
+func Init(dbPath string, secretsService secrets.Service) (Database, error) {
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, err
@@ -109,19 +108,9 @@ func Init(dbPath string, encryptionKey string) (Database, error) {
 		return nil, err
 	}
 
-	// Initialize crypto service
-	secretsService, err := secrets.New(encryptionKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize encryption: %w", err)
-	}
-
 	database := &database{
 		DB:             db,
 		secretsService: secretsService,
-	}
-
-	if err := database.Migrate(); err != nil {
-		return nil, err
 	}
 
 	return database, nil

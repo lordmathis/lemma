@@ -96,7 +96,7 @@ func TestNew(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			e, err := secrets.New(tc.key)
+			e, err := secrets.NewService(tc.key)
 
 			if tc.wantErr {
 				if err == nil {
@@ -122,7 +122,7 @@ func TestNew(t *testing.T) {
 func TestEncryptDecrypt(t *testing.T) {
 	// Generate a valid key for testing
 	key := base64.StdEncoding.EncodeToString(make([]byte, 32))
-	e, err := secrets.New(key)
+	e, err := secrets.NewService(key)
 	if err != nil {
 		t.Fatalf("failed to create Encryptor instance: %v", err)
 	}
@@ -194,7 +194,7 @@ func TestEncryptDecrypt(t *testing.T) {
 
 func TestDecryptInvalidCiphertext(t *testing.T) {
 	key := base64.StdEncoding.EncodeToString(make([]byte, 32))
-	e, err := secrets.New(key)
+	e, err := secrets.NewService(key)
 	if err != nil {
 		t.Fatalf("failed to create Encryptor instance: %v", err)
 	}

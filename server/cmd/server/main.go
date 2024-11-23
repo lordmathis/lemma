@@ -19,6 +19,7 @@ import (
 	"novamd/internal/config"
 	"novamd/internal/db"
 	"novamd/internal/handlers"
+	"novamd/internal/secrets"
 	"novamd/internal/storage"
 )
 
@@ -29,12 +30,26 @@ func main() {
 		log.Fatal("Failed to load configuration:", err)
 	}
 
+	// Initialize secrets service
+	secretsService, err := secrets.NewService(cfg.EncryptionKey)
+	if err != nil {
+		log.Fatal("Failed to initialize secrets service:", err)
+	}
+
 	// Initialize database
-	database, err := db.Init(cfg.DBPath, cfg.EncryptionKey)
+	database, err := db.Init(cfg.DBPath, secretsService)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer database.Close()
+	err = database.Migrate()
+	if err != nil {
+		log.Fatal("Failed to apply database migrations:", err)
+	}
+	defer func() {
+		if err := database.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
 
 	// Get or generate JWT signing key
 	signingKey := cfg.JWTSigningKey
