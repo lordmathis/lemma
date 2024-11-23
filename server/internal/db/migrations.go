@@ -49,6 +49,9 @@ var migrations = []Migration{
 	{
 		Version: 2,
 		SQL: `
+		-- Enable foreign key constraints
+		PRAGMA foreign_keys = ON;
+
 		-- Create sessions table for authentication
 		CREATE TABLE IF NOT EXISTS sessions (
 			id TEXT PRIMARY KEY,
