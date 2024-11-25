@@ -69,7 +69,7 @@ func (db *database) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) e
 			theme, auto_save, show_hidden_files,
 			git_enabled, git_url, git_user, git_token,
 			git_auto_commit, git_commit_msg_template
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		workspace.UserID, workspace.Name,
 		workspace.Theme, workspace.AutoSave, workspace.ShowHiddenFiles,
 		workspace.GitEnabled, workspace.GitURL, workspace.GitUser, workspace.GitToken,

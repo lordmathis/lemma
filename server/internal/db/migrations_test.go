@@ -8,11 +8,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type mockSecrets struct{}
-
-func (m *mockSecrets) Encrypt(s string) (string, error) { return s, nil }
-func (m *mockSecrets) Decrypt(s string) (string, error) { return s, nil }
-
 func TestMigrate(t *testing.T) {
 	database, err := db.NewTestDB(":memory:", &mockSecrets{})
 	if err != nil {

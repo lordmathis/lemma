@@ -108,6 +108,11 @@ func Init(dbPath string, secretsService secrets.Service) (Database, error) {
 		return nil, err
 	}
 
+	// Enable foreign keys for this connection
+	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
+		return nil, err
+	}
+
 	database := &database{
 		DB:             db,
 		secretsService: secretsService,
