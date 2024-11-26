@@ -1,3 +1,4 @@
+// Package handlers contains the request handlers for the api routes.
 package handlers
 
 import (

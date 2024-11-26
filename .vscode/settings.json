@@ -14,7 +14,7 @@
   "go.lintTool": "golangci-lint",
   "go.lintOnSave": "package",
   "go.formatTool": "goimports",
-  "go.testFlags": ["-tags=test"],
+  "go.testFlags": ["-tags=test,integration"],
   "[go]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
@@ -25,6 +25,6 @@
   "gopls": {
     "usePlaceholders": true,
     "staticcheck": true,
-    "buildFlags": ["-tags", "test"]
+    "buildFlags": ["-tags", "test,integration"]
   }
 }

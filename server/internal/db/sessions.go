@@ -25,9 +25,9 @@ func (db *database) CreateSession(session *models.Session) error {
 func (db *database) GetSessionByRefreshToken(refreshToken string) (*models.Session, error) {
 	session := &models.Session{}
 	err := db.QueryRow(`
-		SELECT id, user_id, refresh_token, expires_at, created_at
-		FROM sessions
-		WHERE refresh_token = ? AND expires_at > ?`,
+        SELECT id, user_id, refresh_token, expires_at, created_at
+        FROM sessions
+        WHERE refresh_token = ? AND expires_at > ?`,
 		refreshToken, time.Now(),
 	).Scan(&session.ID, &session.UserID, &session.RefreshToken, &session.ExpiresAt, &session.CreatedAt)
 

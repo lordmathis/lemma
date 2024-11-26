@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// UpdateProfileRequest represents a user profile update request
 type UpdateProfileRequest struct {
 	DisplayName     string `json:"displayName"`
 	Email           string `json:"email"`
@@ -16,10 +18,12 @@ type UpdateProfileRequest struct {
 	NewPassword     string `json:"newPassword"`
 }
 
+// DeleteAccountRequest represents a user account deletion request
 type DeleteAccountRequest struct {
 	Password string `json:"password"`
 }
 
+// GetUser returns the current user's profile
 func (h *Handler) GetUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -64,7 +68,11 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 			http.Error(w, "Failed to start transaction", http.StatusInternalServerError)
 			return
 		}
-		defer tx.Rollback()
+		defer func() {
+			if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+				http.Error(w, "Failed to rollback transaction", http.StatusInternalServerError)
+			}
+		}()
 
 		// Handle password update if requested
 		if req.NewPassword != "" {
@@ -188,7 +196,11 @@ func (h *Handler) DeleteAccount() http.HandlerFunc {
 			http.Error(w, "Failed to start transaction", http.StatusInternalServerError)
 			return
 		}
-		defer tx.Rollback()
+		defer func() {
+			if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+				http.Error(w, "Failed to rollback transaction", http.StatusInternalServerError)
+			}
+		}()
 
 		// Get user's workspaces for cleanup
 		workspaces, err := h.DB.GetWorkspacesByUserID(ctx.UserID)

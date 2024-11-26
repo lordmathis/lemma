@@ -12,12 +12,14 @@ type StaticHandler struct {
 	staticPath string
 }
 
+// NewStaticHandler creates a new StaticHandler with the given static path
 func NewStaticHandler(staticPath string) *StaticHandler {
 	return &StaticHandler{
 		staticPath: staticPath,
 	}
 }
 
+// ServeHTTP serves the static files
 func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Get the requested path
 	requestedPath := r.URL.Path

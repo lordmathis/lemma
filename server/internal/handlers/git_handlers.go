@@ -7,6 +7,7 @@ import (
 	"novamd/internal/context"
 )
 
+// StageCommitAndPush stages, commits, and pushes changes to the remote repository
 func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -38,6 +39,7 @@ func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 	}
 }
 
+// PullChanges pulls changes from the remote repository
 func (h *Handler) PullChanges() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)

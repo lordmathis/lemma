@@ -10,11 +10,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// LoginRequest represents a user login request
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// LoginResponse represents a user login response
 type LoginResponse struct {
 	AccessToken  string          `json:"accessToken"`
 	RefreshToken string          `json:"refreshToken"`
@@ -22,10 +24,12 @@ type LoginResponse struct {
 	Session      *models.Session `json:"session"`
 }
 
+// RefreshRequest represents a refresh token request
 type RefreshRequest struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
+// RefreshResponse represents a refresh token response
 type RefreshResponse struct {
 	AccessToken string `json:"accessToken"`
 }

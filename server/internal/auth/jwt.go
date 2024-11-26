@@ -2,6 +2,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -87,11 +89,19 @@ func (s *jwtService) GenerateRefreshToken(userID int, role string) (string, erro
 // Returns the signed token string or an error
 func (s *jwtService) generateToken(userID int, role string, tokenType TokenType, expiry time.Duration) (string, error) {
 	now := time.Now()
+
+	// Add a random nonce to ensure uniqueness
+	nonce := make([]byte, 8)
+	if _, err := rand.Read(nonce); err != nil {
+		return "", fmt.Errorf("failed to generate nonce: %w", err)
+	}
+
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
+			ID:        hex.EncodeToString(nonce),
 		},
 		UserID: userID,
 		Role:   role,

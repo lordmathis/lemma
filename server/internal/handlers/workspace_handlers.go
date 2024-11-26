@@ -1,14 +1,15 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"novamd/internal/context"
 	"novamd/internal/models"
 )
 
+// ListWorkspaces returns a list of all workspaces for the current user
 func (h *Handler) ListWorkspaces() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -26,6 +27,7 @@ func (h *Handler) ListWorkspaces() http.HandlerFunc {
 	}
 }
 
+// CreateWorkspace creates a new workspace
 func (h *Handler) CreateWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -54,6 +56,7 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 	}
 }
 
+// GetWorkspace returns the current workspace
 func (h *Handler) GetWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -81,6 +84,7 @@ func gitSettingsChanged(new, old *models.Workspace) bool {
 	return false
 }
 
+// UpdateWorkspace updates the current workspace
 func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -132,6 +136,7 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 	}
 }
 
+// DeleteWorkspace deletes the current workspace
 func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -168,7 +173,11 @@ func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 			http.Error(w, "Failed to start transaction", http.StatusInternalServerError)
 			return
 		}
-		defer tx.Rollback()
+		defer func() {
+			if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+				http.Error(w, "Failed to rollback transaction", http.StatusInternalServerError)
+			}
+		}()
 
 		// Update last workspace ID first
 		err = h.DB.UpdateLastWorkspaceTx(tx, ctx.UserID, nextWorkspaceID)
@@ -195,6 +204,7 @@ func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 	}
 }
 
+// GetLastWorkspaceName returns the name of the last opened workspace
 func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -212,6 +222,7 @@ func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 	}
 }
 
+// UpdateLastWorkspaceName updates the name of the last opened workspace
 func (h *Handler) UpdateLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -224,13 +235,11 @@ func (h *Handler) UpdateLastWorkspaceName() http.HandlerFunc {
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-			fmt.Println(err)
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		if err := h.DB.UpdateLastWorkspace(ctx.UserID, requestBody.WorkspaceName); err != nil {
-			fmt.Println(err)
 			http.Error(w, "Failed to update last workspace", http.StatusInternalServerError)
 			return
 		}

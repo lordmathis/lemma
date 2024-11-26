@@ -76,8 +76,8 @@ func (s *SessionService) CreateSession(userID int, role string) (*models.Session
 // - string: a new access token
 // - error: any error that occurred
 func (s *SessionService) RefreshSession(refreshToken string) (string, error) {
-	// Get session from database
-	_, err := s.db.GetSessionByRefreshToken(refreshToken)
+	// Get session from database first
+	session, err := s.db.GetSessionByRefreshToken(refreshToken)
 	if err != nil {
 		return "", fmt.Errorf("invalid session: %w", err)
 	}
@@ -86,6 +86,11 @@ func (s *SessionService) RefreshSession(refreshToken string) (string, error) {
 	claims, err := s.jwtManager.ValidateToken(refreshToken)
 	if err != nil {
 		return "", fmt.Errorf("invalid refresh token: %w", err)
+	}
+
+	// Double check that the claims match the session
+	if claims.UserID != session.UserID {
+		return "", fmt.Errorf("token does not match session")
 	}
 
 	// Generate a new access token
