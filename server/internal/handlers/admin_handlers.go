@@ -15,14 +15,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type createUserRequest struct {
+// CreateUserRequest holds the request fields for creating a new user
+type CreateUserRequest struct {
 	Email       string          `json:"email"`
 	DisplayName string          `json:"displayName"`
 	Password    string          `json:"password"`
 	Role        models.UserRole `json:"role"`
 }
 
-type updateUserRequest struct {
+// UpdateUserRequest holds the request fields for updating a user
+type UpdateUserRequest struct {
 	Email       string          `json:"email,omitempty"`
 	DisplayName string          `json:"displayName,omitempty"`
 	Password    string          `json:"password,omitempty"`
@@ -45,7 +47,7 @@ func (h *Handler) AdminListUsers() http.HandlerFunc {
 // AdminCreateUser creates a new user
 func (h *Handler) AdminCreateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req createUserRequest
+		var req CreateUserRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
@@ -136,7 +138,7 @@ func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 			return
 		}
 
-		var req updateUserRequest
+		var req UpdateUserRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
