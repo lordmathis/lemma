@@ -95,7 +95,7 @@ func TestAuthenticateMiddleware(t *testing.T) {
 
 			// Create test handler
 			nextCalled := false
-			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				nextCalled = true
 				w.WriteHeader(http.StatusOK)
 			})

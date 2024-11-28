@@ -165,7 +165,9 @@ func TestRefreshSession(t *testing.T) {
 					ExpiresAt:    time.Now().Add(24 * time.Hour),
 					CreatedAt:    time.Now(),
 				}
-				mockDB.CreateSession(session)
+				if err := mockDB.CreateSession(session); err != nil {
+					t.Fatalf("failed to create session: %v", err)
+				}
 				return token
 			},
 			wantErr: false,
@@ -181,7 +183,9 @@ func TestRefreshSession(t *testing.T) {
 					ExpiresAt:    time.Now().Add(-1 * time.Hour), // Expired
 					CreatedAt:    time.Now().Add(-2 * time.Hour),
 				}
-				mockDB.CreateSession(session)
+				if err := mockDB.CreateSession(session); err != nil {
+					t.Fatalf("failed to create session: %v", err)
+				}
 				return token
 			},
 			wantErr:       true,
@@ -255,7 +259,9 @@ func TestInvalidateSession(t *testing.T) {
 					ExpiresAt:    time.Now().Add(24 * time.Hour),
 					CreatedAt:    time.Now(),
 				}
-				mockDB.CreateSession(session)
+				if err := mockDB.CreateSession(session); err != nil {
+					t.Fatalf("failed to create session: %v", err)
+				}
 				return session.ID
 			},
 			wantErr: false,
