@@ -48,7 +48,7 @@ func TestValidatePath(t *testing.T) {
 			path:        "../../../etc/passwd",
 			want:        "",
 			wantErr:     true,
-			errContains: "outside of workspace",
+			errContains: "path traversal attempt",
 		},
 		{
 			name:        "absolute path attempt",

@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 
 	"novamd/internal/context"
+	"novamd/internal/storage"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -63,7 +65,18 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 		filePath := chi.URLParam(r, "*")
 		content, err := h.Storage.GetFileContent(ctx.UserID, ctx.Workspace.ID, filePath)
 		if err != nil {
-			http.Error(w, "Failed to read file", http.StatusNotFound)
+
+			if storage.IsPathValidationError(err) {
+				http.Error(w, "Invalid file path", http.StatusBadRequest)
+				return
+			}
+
+			if os.IsNotExist(err) {
+				http.Error(w, "Failed to read file", http.StatusNotFound)
+				return
+			}
+
+			http.Error(w, "Failed to read file", http.StatusInternalServerError)
 			return
 		}
 
@@ -93,6 +106,11 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 
 		err = h.Storage.SaveFile(ctx.UserID, ctx.Workspace.ID, filePath, content)
 		if err != nil {
+			if storage.IsPathValidationError(err) {
+				http.Error(w, "Invalid file path", http.StatusBadRequest)
+				return
+			}
+
 			http.Error(w, "Failed to save file", http.StatusInternalServerError)
 			return
 		}
@@ -112,6 +130,16 @@ func (h *Handler) DeleteFile() http.HandlerFunc {
 		filePath := chi.URLParam(r, "*")
 		err := h.Storage.DeleteFile(ctx.UserID, ctx.Workspace.ID, filePath)
 		if err != nil {
+			if storage.IsPathValidationError(err) {
+				http.Error(w, "Invalid file path", http.StatusBadRequest)
+				return
+			}
+
+			if os.IsNotExist(err) {
+				http.Error(w, "File not found", http.StatusNotFound)
+				return
+			}
+
 			http.Error(w, "Failed to delete file", http.StatusInternalServerError)
 			return
 		}
@@ -165,10 +193,21 @@ func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 			return
 		}
 
-		// Validate the file path exists in the workspace
+		// Validate the file path in the workspace
 		if requestBody.FilePath != "" {
-			if _, err := h.Storage.ValidatePath(ctx.UserID, ctx.Workspace.ID, requestBody.FilePath); err != nil {
-				http.Error(w, "Invalid file path", http.StatusBadRequest)
+			_, err := h.Storage.GetFileContent(ctx.UserID, ctx.Workspace.ID, requestBody.FilePath)
+			if err != nil {
+				if storage.IsPathValidationError(err) {
+					http.Error(w, "Invalid file path", http.StatusBadRequest)
+					return
+				}
+
+				if os.IsNotExist(err) {
+					http.Error(w, "File not found", http.StatusNotFound)
+					return
+				}
+
+				http.Error(w, "Failed to update file", http.StatusInternalServerError)
 				return
 			}
 		}

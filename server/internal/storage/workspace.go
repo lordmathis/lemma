@@ -27,7 +27,7 @@ func (s *Service) ValidatePath(userID, workspaceID int, path string) (string, er
 
 	// First check if the path is absolute
 	if filepath.IsAbs(path) {
-		return "", fmt.Errorf("invalid path: absolute paths not allowed")
+		return "", &PathValidationError{Path: path, Message: "absolute paths not allowed"}
 	}
 
 	// Join and clean the path
@@ -36,7 +36,7 @@ func (s *Service) ValidatePath(userID, workspaceID int, path string) (string, er
 
 	// Verify the path is still within the workspace
 	if !strings.HasPrefix(cleanPath, workspacePath) {
-		return "", fmt.Errorf("invalid path: outside of workspace")
+		return "", &PathValidationError{Path: path, Message: "path traversal attempt"}
 	}
 
 	return cleanPath, nil
