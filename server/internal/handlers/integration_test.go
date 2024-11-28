@@ -5,6 +5,7 @@ package handlers_test
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http/httptest"
 	"os"
 	"testing"
@@ -184,6 +185,26 @@ func (h *testHarness) makeRequest(t *testing.T, method, path string, body interf
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	req.Header.Set("Content-Type", "application/json")
+
+	// Add any additional headers
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	rr := httptest.NewRecorder()
+	h.Router.ServeHTTP(rr, req)
+
+	return rr
+}
+
+// makeRequestRaw is a helper function to make HTTP requests with raw body content
+func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.Reader, token string, headers map[string]string) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := httptest.NewRequest(method, path, body)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	// Add any additional headers
 	for k, v := range headers {
