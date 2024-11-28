@@ -77,7 +77,7 @@ func TestWorkspaceOperations(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				if tc.workspace.Theme == "" {
-					tc.workspace.GetDefaultSettings()
+					tc.workspace.SetDefaultSettings()
 				}
 
 				err := database.CreateWorkspace(tc.workspace)
@@ -117,7 +117,7 @@ func TestWorkspaceOperations(t *testing.T) {
 			UserID: user.ID,
 			Name:   "Get By ID Workspace",
 		}
-		workspace.GetDefaultSettings()
+		workspace.SetDefaultSettings()
 		if err := database.CreateWorkspace(workspace); err != nil {
 			t.Fatalf("failed to create test workspace: %v", err)
 		}
@@ -167,7 +167,7 @@ func TestWorkspaceOperations(t *testing.T) {
 			UserID: user.ID,
 			Name:   "Get By Name Workspace",
 		}
-		workspace.GetDefaultSettings()
+		workspace.SetDefaultSettings()
 		if err := database.CreateWorkspace(workspace); err != nil {
 			t.Fatalf("failed to create test workspace: %v", err)
 		}
@@ -229,7 +229,7 @@ func TestWorkspaceOperations(t *testing.T) {
 			UserID: user.ID,
 			Name:   "Update Workspace",
 		}
-		workspace.GetDefaultSettings()
+		workspace.SetDefaultSettings()
 		if err := database.CreateWorkspace(workspace); err != nil {
 			t.Fatalf("failed to create test workspace: %v", err)
 		}
@@ -272,7 +272,7 @@ func TestWorkspaceOperations(t *testing.T) {
 		}
 
 		for _, w := range testWorkspaces {
-			w.GetDefaultSettings()
+			w.SetDefaultSettings()
 			if err := database.CreateWorkspace(w); err != nil {
 				t.Fatalf("failed to create test workspace: %v", err)
 			}
@@ -314,7 +314,7 @@ func TestWorkspaceOperations(t *testing.T) {
 			UserID: user.ID,
 			Name:   "Last File Workspace",
 		}
-		workspace.GetDefaultSettings()
+		workspace.SetDefaultSettings()
 		if err := database.CreateWorkspace(workspace); err != nil {
 			t.Fatalf("failed to create test workspace: %v", err)
 		}
@@ -369,7 +369,7 @@ func TestWorkspaceOperations(t *testing.T) {
 			UserID: user.ID,
 			Name:   "Delete Workspace",
 		}
-		workspace.GetDefaultSettings()
+		workspace.SetDefaultSettings()
 		if err := database.CreateWorkspace(workspace); err != nil {
 			t.Fatalf("failed to create test workspace: %v", err)
 		}

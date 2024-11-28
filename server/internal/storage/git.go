@@ -13,15 +13,8 @@ type RepositoryManager interface {
 	Pull(userID, workspaceID int) error
 }
 
-// SetupGitRepo sets up a Git repository for the given user and workspace IDs.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to set up the Git repository for
-// - gitURL: the URL of the Git repository
-// - gitUser: the username for the Git repository
-// - gitToken: the access token for the Git repository
-// Returns:
-// - error: any error that occurred during setup
+// SetupGitRepo sets up a Git repository for the given userID and workspaceID.
+// The repository is cloned from the given gitURL using the given gitUser and gitToken.
 func (s *Service) SetupGitRepo(userID, workspaceID int, gitURL, gitUser, gitToken string) error {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 	if _, ok := s.GitRepos[userID]; !ok {
@@ -31,10 +24,7 @@ func (s *Service) SetupGitRepo(userID, workspaceID int, gitURL, gitUser, gitToke
 	return s.GitRepos[userID][workspaceID].EnsureRepo()
 }
 
-// DisableGitRepo disables the Git repository for the given user and workspace IDs.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to disable the Git repository for
+// DisableGitRepo disables the Git repository for the given userID and workspaceID.
 func (s *Service) DisableGitRepo(userID, workspaceID int) {
 	if userRepos, ok := s.GitRepos[userID]; ok {
 		delete(userRepos, workspaceID)
@@ -44,13 +34,8 @@ func (s *Service) DisableGitRepo(userID, workspaceID int) {
 	}
 }
 
-// StageCommitAndPush stages, commits, and pushes the changes to the Git repository.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to commit and push
-// - message: the commit message
-// Returns:
-// - error: any error that occurred during the operation
+// StageCommitAndPush stages, commit with the message, and pushes the changes to the Git repository.
+// The git repository belongs to the given userID and is associated with the given workspaceID.
 func (s *Service) StageCommitAndPush(userID, workspaceID int, message string) error {
 	repo, ok := s.getGitRepo(userID, workspaceID)
 	if !ok {
@@ -65,11 +50,7 @@ func (s *Service) StageCommitAndPush(userID, workspaceID int, message string) er
 }
 
 // Pull pulls the changes from the remote Git repository.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to pull changes for
-// Returns:
-// - error: any error that occurred during the operation
+// The git repository belongs to the given userID and is associated with the given workspaceID.
 func (s *Service) Pull(userID, workspaceID int) error {
 	repo, ok := s.getGitRepo(userID, workspaceID)
 	if !ok {

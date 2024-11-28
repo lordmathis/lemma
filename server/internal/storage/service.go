@@ -25,11 +25,7 @@ type Options struct {
 	NewGitClient func(url, user, token, path string) git.Client
 }
 
-// NewService creates a new Storage instance.
-// Parameters:
-// - rootDir: the root directory for the storage
-// Returns:
-// - result: the new Storage instance
+// NewService creates a new Storage instance with the default options and the given rootDir root directory.
 func NewService(rootDir string) *Service {
 	return NewServiceWithOptions(rootDir, Options{
 		Fs:           &osFS{},
@@ -37,16 +33,11 @@ func NewService(rootDir string) *Service {
 	})
 }
 
-// NewServiceWithOptions creates a new Storage instance with the given options.
-// Parameters:
-// - rootDir: the root directory for the storage
-// - opts: the options for the storage service
-// Returns:
-// - result: the new Storage instance
-func NewServiceWithOptions(rootDir string, opts Options) *Service {
+// NewServiceWithOptions creates a new Storage instance with the given options and the given rootDir root directory.
+func NewServiceWithOptions(rootDir string, options Options) *Service {
 	return &Service{
-		fs:           opts.Fs,
-		newGitClient: opts.NewGitClient,
+		fs:           options.Fs,
+		newGitClient: options.NewGitClient,
 		RootDir:      rootDir,
 		GitRepos:     make(map[int]map[int]git.Client),
 	}

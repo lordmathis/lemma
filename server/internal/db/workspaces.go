@@ -10,7 +10,7 @@ import (
 func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 	// Set default settings if not provided
 	if workspace.Theme == "" {
-		workspace.GetDefaultSettings()
+		workspace.SetDefaultSettings()
 	}
 
 	// Encrypt token if present

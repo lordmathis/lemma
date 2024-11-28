@@ -33,14 +33,7 @@ type client struct {
 	repo *git.Repository
 }
 
-// New creates a new Client instance
-// Parameters:
-// - url: the URL of the Git repository
-// - username: the username for the Git repository
-// - token: the access token for the Git repository
-// - workDir: the local directory to clone the repository to
-// Returns:
-// - Client: the Git client
+// New creates a new git Client instance
 func New(url, username, token, workDir string) Client {
 	return &client{
 		Config: Config{
@@ -53,8 +46,6 @@ func New(url, username, token, workDir string) Client {
 }
 
 // Clone clones the Git repository to the local directory
-// Returns:
-// - error: any error that occurred during cloning
 func (c *client) Clone() error {
 	auth := &http.BasicAuth{
 		Username: c.Username,
@@ -76,8 +67,6 @@ func (c *client) Clone() error {
 }
 
 // Pull pulls the latest changes from the remote repository
-// Returns:
-// - error: any error that occurred during pulling
 func (c *client) Pull() error {
 	if c.repo == nil {
 		return fmt.Errorf("repository not initialized")
@@ -105,11 +94,7 @@ func (c *client) Pull() error {
 	return nil
 }
 
-// Commit commits the changes in the repository
-// Parameters:
-// - message: the commit message
-// Returns:
-// - error: any error that occurred during committing
+// Commit commits the changes in the repository with the given message
 func (c *client) Commit(message string) error {
 	if c.repo == nil {
 		return fmt.Errorf("repository not initialized")
@@ -134,8 +119,6 @@ func (c *client) Commit(message string) error {
 }
 
 // Push pushes the changes to the remote repository
-// Returns:
-// - error: any error that occurred during pushing
 func (c *client) Push() error {
 	if c.repo == nil {
 		return fmt.Errorf("repository not initialized")
@@ -158,9 +141,7 @@ func (c *client) Push() error {
 	return nil
 }
 
-// EnsureRepo ensures the local repository is up-to-date
-// Returns:
-// - error: any error that occurred during the operation
+// EnsureRepo ensures the local repository is cloned and up-to-date
 func (c *client) EnsureRepo() error {
 	if _, err := os.Stat(filepath.Join(c.WorkDir, ".git")); os.IsNotExist(err) {
 		return c.Clone()

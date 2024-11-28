@@ -30,12 +30,7 @@ type FileNode struct {
 }
 
 // ListFilesRecursively returns a list of all files in the workspace directory and its subdirectories.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to list files in
-// Returns:
-// - nodes: a list of files and directories in the workspace
-// - error: any error that occurred during listing
+// Workspace is identified by the given userID and workspaceID.
 func (s *Service) ListFilesRecursively(userID, workspaceID int) ([]FileNode, error) {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 	return s.walkDirectory(workspacePath, "")
@@ -106,13 +101,8 @@ func (s *Service) walkDirectory(dir, prefix string) ([]FileNode, error) {
 }
 
 // FindFileByName returns a list of file paths that match the given filename.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to search for the file
-// - filename: the name of the file to search for
-// Returns:
-// - foundPaths: a list of file paths that match the filename
-// - error: any error that occurred during the search
+// Files are searched recursively in the workspace directory and its subdirectories.
+// Workspace is identified by the given userID and workspaceID.
 func (s *Service) FindFileByName(userID, workspaceID int, filename string) ([]string, error) {
 	var foundPaths []string
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
@@ -144,14 +134,8 @@ func (s *Service) FindFileByName(userID, workspaceID int, filename string) ([]st
 	return foundPaths, nil
 }
 
-// GetFileContent returns the content of the file at the given path.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to get the file from
-// - filePath: the path of the file to get
-// Returns:
-// - content: the content of the file
-// - error: any error that occurred during reading
+// GetFileContent returns the content of the file at the given filePath.
+// Path must be a relative path within the workspace directory given by userID and workspaceID.
 func (s *Service) GetFileContent(userID, workspaceID int, filePath string) ([]byte, error) {
 	fullPath, err := s.ValidatePath(userID, workspaceID, filePath)
 	if err != nil {
@@ -160,14 +144,8 @@ func (s *Service) GetFileContent(userID, workspaceID int, filePath string) ([]by
 	return s.fs.ReadFile(fullPath)
 }
 
-// SaveFile writes the content to the file at the given path.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to save the file to
-// - filePath: the path of the file to save
-// - content: the content to write to the file
-// Returns:
-// - error: any error that occurred during saving
+// SaveFile writes the content to the file at the given filePath.
+// Path must be a relative path within the workspace directory given by userID and workspaceID.
 func (s *Service) SaveFile(userID, workspaceID int, filePath string, content []byte) error {
 	fullPath, err := s.ValidatePath(userID, workspaceID, filePath)
 	if err != nil {
@@ -182,13 +160,8 @@ func (s *Service) SaveFile(userID, workspaceID int, filePath string, content []b
 	return s.fs.WriteFile(fullPath, content, 0644)
 }
 
-// DeleteFile deletes the file at the given path.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to delete the file from
-// - filePath: the path of the file to delete
-// Returns:
-// - error: any error that occurred during deletion
+// DeleteFile deletes the file at the given filePath.
+// Path must be a relative path within the workspace directory given by userID and workspaceID.
 func (s *Service) DeleteFile(userID, workspaceID int, filePath string) error {
 	fullPath, err := s.ValidatePath(userID, workspaceID, filePath)
 	if err != nil {
@@ -204,12 +177,7 @@ type FileCountStats struct {
 }
 
 // GetFileStats returns the total number of files and related statistics in a workspace
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to count files in
-// Returns:
-// - result: statistics about the files in the workspace
-// - error: any error that occurred during counting
+// Workspace is identified by the given userID and workspaceID
 func (s *Service) GetFileStats(userID, workspaceID int) (*FileCountStats, error) {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 
@@ -223,8 +191,6 @@ func (s *Service) GetFileStats(userID, workspaceID int) (*FileCountStats, error)
 }
 
 // GetTotalFileStats returns the total file statistics for the storage.
-// Returns:
-// - result: statistics about the files in the storage
 func (s *Service) GetTotalFileStats() (*FileCountStats, error) {
 	return s.countFilesInPath(s.RootDir)
 }

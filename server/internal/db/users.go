@@ -38,7 +38,7 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 		UserID: user.ID,
 		Name:   "Main",
 	}
-	defaultWorkspace.GetDefaultSettings() // Initialize default settings
+	defaultWorkspace.SetDefaultSettings() // Initialize default settings
 
 	// Create workspace with settings
 	err = db.createWorkspaceTx(tx, defaultWorkspace)

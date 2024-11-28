@@ -14,14 +14,8 @@ type WorkspaceManager interface {
 	DeleteUserWorkspace(userID, workspaceID int) error
 }
 
-// ValidatePath validates the given path and returns the cleaned path if it is valid.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to validate the path for
-// - path: the path to validate
-// Returns:
-// - result: the cleaned path if it is valid
-// - error: any error that occurred during validation
+// ValidatePath validates the if the given path is valid within the workspace directory.
+// Workspace directory is defined as the directory for the given userID and workspaceID.
 func (s *Service) ValidatePath(userID, workspaceID int, path string) (string, error) {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 
@@ -42,22 +36,12 @@ func (s *Service) ValidatePath(userID, workspaceID int, path string) (string, er
 	return cleanPath, nil
 }
 
-// GetWorkspacePath returns the path to the workspace directory for the given user and workspace IDs.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace
-// Returns:
-// - result: the path to the workspace directory
+// GetWorkspacePath returns the path to the workspace directory for the given userID and workspaceID.
 func (s *Service) GetWorkspacePath(userID, workspaceID int) string {
 	return filepath.Join(s.RootDir, fmt.Sprintf("%d", userID), fmt.Sprintf("%d", workspaceID))
 }
 
-// InitializeUserWorkspace creates the workspace directory for the given user and workspace IDs.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to initialize
-// Returns:
-// - error: any error that occurred during the operation
+// InitializeUserWorkspace creates the workspace directory for the given userID and workspaceID.
 func (s *Service) InitializeUserWorkspace(userID, workspaceID int) error {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 	err := s.fs.MkdirAll(workspacePath, 0755)
@@ -68,12 +52,7 @@ func (s *Service) InitializeUserWorkspace(userID, workspaceID int) error {
 	return nil
 }
 
-// DeleteUserWorkspace deletes the workspace directory for the given user and workspace IDs.
-// Parameters:
-// - userID: the ID of the user who owns the workspace
-// - workspaceID: the ID of the workspace to delete
-// Returns:
-// - error: any error that occurred during the operation
+// DeleteUserWorkspace deletes the workspace directory for the given userID and workspaceID.
 func (s *Service) DeleteUserWorkspace(userID, workspaceID int) error {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 	err := s.fs.RemoveAll(workspacePath)

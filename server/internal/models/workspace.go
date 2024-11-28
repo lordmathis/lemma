@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Workspace represents a user's workspace in the system
 type Workspace struct {
 	ID                 int       `json:"id" validate:"required,min=1"`
 	UserID             int       `json:"userId" validate:"required,min=1"`
@@ -23,11 +24,13 @@ type Workspace struct {
 	GitCommitMsgTemplate string `json:"gitCommitMsgTemplate"`
 }
 
+// Validate validates the workspace struct
 func (w *Workspace) Validate() error {
 	return validate.Struct(w)
 }
 
-func (w *Workspace) GetDefaultSettings() {
+// SetDefaultSettings sets the default settings for the workspace
+func (w *Workspace) SetDefaultSettings() {
 	w.Theme = "light"
 	w.AutoSave = false
 	w.ShowHiddenFiles = false

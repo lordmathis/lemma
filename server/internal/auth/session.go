@@ -15,10 +15,7 @@ type SessionService struct {
 	jwtManager JWTManager      // JWT Manager for token operations
 }
 
-// NewSessionService creates a new session service
-// Parameters:
-// - db: database connection
-// - jwtManager: JWT service for token operations
+// NewSessionService creates a new session service with the given database and JWT manager
 func NewSessionService(db db.SessionStore, jwtManager JWTManager) *SessionService {
 	return &SessionService{
 		db:         db,
@@ -26,14 +23,7 @@ func NewSessionService(db db.SessionStore, jwtManager JWTManager) *SessionServic
 	}
 }
 
-// CreateSession creates a new user session
-// Parameters:
-// - userID: the ID of the user
-// - role: the role of the user
-// Returns:
-// - session: the created session
-// - accessToken: a new access token
-// - error: any error that occurred
+// CreateSession creates a new user session for a user with the given userID and role
 func (s *SessionService) CreateSession(userID int, role string) (*models.Session, string, error) {
 	// Generate both access and refresh tokens
 	accessToken, err := s.jwtManager.GenerateAccessToken(userID, role)
@@ -69,12 +59,7 @@ func (s *SessionService) CreateSession(userID int, role string) (*models.Session
 	return session, accessToken, nil
 }
 
-// RefreshSession creates a new access token using a refresh token
-// Parameters:
-// - refreshToken: the refresh token to use
-// Returns:
-// - string: a new access token
-// - error: any error that occurred
+// RefreshSession creates a new access token using a refreshToken
 func (s *SessionService) RefreshSession(refreshToken string) (string, error) {
 	// Get session from database first
 	session, err := s.db.GetSessionByRefreshToken(refreshToken)
@@ -97,18 +82,12 @@ func (s *SessionService) RefreshSession(refreshToken string) (string, error) {
 	return s.jwtManager.GenerateAccessToken(claims.UserID, claims.Role)
 }
 
-// InvalidateSession removes a session from the database
-// Parameters:
-// - sessionID: the ID of the session to invalidate
-// Returns:
-// - error: any error that occurred
+// InvalidateSession removes a session with the given sessionID from the database
 func (s *SessionService) InvalidateSession(sessionID string) error {
 	return s.db.DeleteSession(sessionID)
 }
 
 // CleanExpiredSessions removes all expired sessions from the database
-// Returns:
-// - error: any error that occurred
 func (s *SessionService) CleanExpiredSessions() error {
 	return s.db.CleanExpiredSessions()
 }

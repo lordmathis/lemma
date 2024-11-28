@@ -13,10 +13,6 @@ type Middleware struct {
 }
 
 // NewMiddleware creates a new authentication middleware
-// Parameters:
-// - jwtManager: the JWT manager to use for token operations
-// Returns:
-// - *Middleware: the new middleware instance
 func NewMiddleware(jwtManager JWTManager) *Middleware {
 	return &Middleware{
 		jwtManager: jwtManager,
@@ -24,10 +20,6 @@ func NewMiddleware(jwtManager JWTManager) *Middleware {
 }
 
 // Authenticate middleware validates JWT tokens and sets user information in context
-// Parameters:
-// - next: the next handler to call
-// Returns:
-// - http.Handler: the handler function
 func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Extract token from Authorization header
@@ -69,10 +61,6 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 }
 
 // RequireRole returns a middleware that ensures the user has the required role
-// Parameters:
-// - role: the required role
-// Returns:
-// - func(http.Handler) http.Handler: the middleware function
 func (m *Middleware) RequireRole(role string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -92,10 +80,6 @@ func (m *Middleware) RequireRole(role string) func(http.Handler) http.Handler {
 }
 
 // RequireWorkspaceAccess returns a middleware that ensures the user has access to the workspace
-// Parameters:
-// - next: the next handler to call
-// Returns:
-// - http.Handler: the handler function
 func (m *Middleware) RequireWorkspaceAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)

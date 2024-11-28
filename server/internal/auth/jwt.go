@@ -62,31 +62,17 @@ func NewJWTService(config JWTConfig) (JWTManager, error) {
 	return &jwtService{config: config}, nil
 }
 
-// GenerateAccessToken creates a new access token for a user
-// Parameters:
-// - userID: the ID of the user
-// - role: the role of the user
-// Returns the signed token string or an error
+// GenerateAccessToken creates a new access token for a user with the given userID and role
 func (s *jwtService) GenerateAccessToken(userID int, role string) (string, error) {
 	return s.generateToken(userID, role, AccessToken, s.config.AccessTokenExpiry)
 }
 
-// GenerateRefreshToken creates a new refresh token for a user
-// Parameters:
-// - userID: the ID of the user
-// - role: the role of the user
-// Returns the signed token string or an error
+// GenerateRefreshToken creates a new refresh token for a user with the given userID and role
 func (s *jwtService) GenerateRefreshToken(userID int, role string) (string, error) {
 	return s.generateToken(userID, role, RefreshToken, s.config.RefreshTokenExpiry)
 }
 
 // generateToken is an internal helper function that creates a new JWT token
-// Parameters:
-// - userID: the ID of the user
-// - role: the role of the user
-// - tokenType: the type of token (access or refresh)
-// - expiry: how long the token should be valid
-// Returns the signed token string or an error
 func (s *jwtService) generateToken(userID int, role string, tokenType TokenType, expiry time.Duration) (string, error) {
 	now := time.Now()
 
@@ -113,9 +99,6 @@ func (s *jwtService) generateToken(userID int, role string, tokenType TokenType,
 }
 
 // ValidateToken validates and parses a JWT token
-// Parameters:
-// - tokenString: the token to validate
-// Returns the token claims if valid, or an error if invalid
 func (s *jwtService) ValidateToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		// Validate the signing method
@@ -136,10 +119,7 @@ func (s *jwtService) ValidateToken(tokenString string) (*Claims, error) {
 	return nil, fmt.Errorf("invalid token claims")
 }
 
-// RefreshAccessToken creates a new access token using a refresh token
-// Parameters:
-// - refreshToken: the refresh token to use
-// Returns a new access token if the refresh token is valid, or an error
+// RefreshAccessToken creates a new access token using a refreshToken
 func (s *jwtService) RefreshAccessToken(refreshToken string) (string, error) {
 	claims, err := s.ValidateToken(refreshToken)
 	if err != nil {
