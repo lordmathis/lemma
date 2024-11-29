@@ -23,24 +23,6 @@ type DeleteAccountRequest struct {
 	Password string `json:"password"`
 }
 
-// GetUser returns the current user's profile
-func (h *Handler) GetUser() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := context.GetRequestContext(w, r)
-		if !ok {
-			return
-		}
-
-		user, err := h.DB.GetUserByID(ctx.UserID)
-		if err != nil {
-			http.Error(w, "Failed to get user", http.StatusInternalServerError)
-			return
-		}
-
-		respondJSON(w, user)
-	}
-}
-
 // UpdateProfile updates the current user's profile
 func (h *Handler) UpdateProfile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -61,18 +43,6 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 			http.Error(w, "User not found", http.StatusNotFound)
 			return
 		}
-
-		// Start transaction for atomic updates
-		tx, err := h.DB.Begin()
-		if err != nil {
-			http.Error(w, "Failed to start transaction", http.StatusInternalServerError)
-			return
-		}
-		defer func() {
-			if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
-				http.Error(w, "Failed to rollback transaction", http.StatusInternalServerError)
-			}
-		}()
 
 		// Handle password update if requested
 		if req.NewPassword != "" {
@@ -136,11 +106,6 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 		// Update user in database
 		if err := h.DB.UpdateUser(user); err != nil {
 			http.Error(w, "Failed to update profile", http.StatusInternalServerError)
-			return
-		}
-
-		if err := tx.Commit(); err != nil {
-			http.Error(w, "Failed to commit changes", http.StatusInternalServerError)
 			return
 		}
 
