@@ -18,6 +18,9 @@ func TestUserHandlers_Integration(t *testing.T) {
 	h := setupTestHarness(t)
 	defer h.teardown(t)
 
+	currentEmail := h.RegularUser.Email
+	currentPassword := "user123"
+
 	t.Run("get current user", func(t *testing.T) {
 		t.Run("successful get", func(t *testing.T) {
 			rr := h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularToken, nil)
@@ -58,7 +61,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 		t.Run("update email", func(t *testing.T) {
 			updateReq := handlers.UpdateProfileRequest{
 				Email:           "newemail@test.com",
-				CurrentPassword: "user123", // Regular user's password from test harness
+				CurrentPassword: currentPassword,
 			}
 
 			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularToken, nil)
@@ -68,6 +71,8 @@ func TestUserHandlers_Integration(t *testing.T) {
 			err := json.NewDecoder(rr.Body).Decode(&user)
 			require.NoError(t, err)
 			assert.Equal(t, updateReq.Email, user.Email)
+
+			currentEmail = updateReq.Email
 		})
 
 		t.Run("update email without password", func(t *testing.T) {
@@ -91,7 +96,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 
 		t.Run("update password", func(t *testing.T) {
 			updateReq := handlers.UpdateProfileRequest{
-				CurrentPassword: "user123",
+				CurrentPassword: currentPassword,
 				NewPassword:     "newpassword123",
 			}
 
@@ -100,12 +105,14 @@ func TestUserHandlers_Integration(t *testing.T) {
 
 			// Verify can login with new password
 			loginReq := handlers.LoginRequest{
-				Email:    h.RegularUser.Email,
+				Email:    currentEmail,
 				Password: "newpassword123",
 			}
 
 			rr = h.makeRequest(t, http.MethodPost, "/api/v1/auth/login", loginReq, "", nil)
 			assert.Equal(t, http.StatusOK, rr.Code)
+
+			currentPassword = updateReq.NewPassword
 		})
 
 		t.Run("update password without current password", func(t *testing.T) {
@@ -129,7 +136,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 
 		t.Run("update with short password", func(t *testing.T) {
 			updateReq := handlers.UpdateProfileRequest{
-				CurrentPassword: "user123",
+				CurrentPassword: currentPassword,
 				NewPassword:     "short",
 			}
 
@@ -140,7 +147,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 		t.Run("duplicate email", func(t *testing.T) {
 			updateReq := handlers.UpdateProfileRequest{
 				Email:           h.AdminUser.Email,
-				CurrentPassword: "user123",
+				CurrentPassword: currentPassword,
 			}
 
 			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularToken, nil)
