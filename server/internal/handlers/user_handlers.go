@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 
@@ -155,18 +154,6 @@ func (h *Handler) DeleteAccount() http.HandlerFunc {
 			}
 		}
 
-		// Start transaction for consistent deletion
-		tx, err := h.DB.Begin()
-		if err != nil {
-			http.Error(w, "Failed to start transaction", http.StatusInternalServerError)
-			return
-		}
-		defer func() {
-			if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
-				http.Error(w, "Failed to rollback transaction", http.StatusInternalServerError)
-			}
-		}()
-
 		// Get user's workspaces for cleanup
 		workspaces, err := h.DB.GetWorkspacesByUserID(ctx.UserID)
 		if err != nil {
@@ -185,11 +172,6 @@ func (h *Handler) DeleteAccount() http.HandlerFunc {
 		// Delete user from database (this will cascade delete workspaces and sessions)
 		if err := h.DB.DeleteUser(ctx.UserID); err != nil {
 			http.Error(w, "Failed to delete account", http.StatusInternalServerError)
-			return
-		}
-
-		if err := tx.Commit(); err != nil {
-			http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
 			return
 		}
 
