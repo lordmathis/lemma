@@ -52,6 +52,19 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 			return
 		}
 
+		if workspace.GitEnabled {
+			if err := h.Storage.SetupGitRepo(
+				ctx.UserID,
+				workspace.ID,
+				workspace.GitURL,
+				workspace.GitUser,
+				workspace.GitToken,
+			); err != nil {
+				http.Error(w, "Failed to setup git repo: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
 		respondJSON(w, workspace)
 	}
 }

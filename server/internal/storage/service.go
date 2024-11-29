@@ -35,6 +35,14 @@ func NewService(rootDir string) *Service {
 
 // NewServiceWithOptions creates a new Storage instance with the given options and the given rootDir root directory.
 func NewServiceWithOptions(rootDir string, options Options) *Service {
+	if options.Fs == nil {
+		options.Fs = &osFS{}
+	}
+
+	if options.NewGitClient == nil {
+		options.NewGitClient = git.New
+	}
+
 	return &Service{
 		fs:           options.Fs,
 		newGitClient: options.NewGitClient,

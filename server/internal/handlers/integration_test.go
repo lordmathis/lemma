@@ -17,6 +17,7 @@ import (
 	"novamd/internal/api"
 	"novamd/internal/auth"
 	"novamd/internal/db"
+	"novamd/internal/git"
 	"novamd/internal/handlers"
 	"novamd/internal/models"
 	"novamd/internal/secrets"
@@ -36,6 +37,7 @@ type testHarness struct {
 	RegularUser   *models.User
 	RegularToken  string
 	TempDirectory string
+	MockGit       *MockGitClient
 }
 
 // setupTestHarness creates a new test environment
@@ -63,8 +65,16 @@ func setupTestHarness(t *testing.T) *testHarness {
 		t.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	// Initialize storage
-	storageSvc := storage.NewService(tempDir)
+	// Create mock git client
+	mockGit := NewMockGitClient(false)
+
+	// Create storage with mock git client
+	storageOpts := storage.Options{
+		NewGitClient: func(url, user, token, path string) git.Client {
+			return mockGit
+		},
+	}
+	storageSvc := storage.NewServiceWithOptions(tempDir, storageOpts)
 
 	// Initialize JWT service
 	jwtSvc, err := auth.NewJWTService(auth.JWTConfig{
@@ -100,6 +110,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 		JWTManager:    jwtSvc,
 		SessionSvc:    sessionSvc,
 		TempDirectory: tempDir,
+		MockGit:       mockGit,
 	}
 
 	// Create test users

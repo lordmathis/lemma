@@ -31,13 +31,18 @@ func (w *Workspace) Validate() error {
 
 // SetDefaultSettings sets the default settings for the workspace
 func (w *Workspace) SetDefaultSettings() {
-	w.Theme = "light"
-	w.AutoSave = false
-	w.ShowHiddenFiles = false
-	w.GitEnabled = false
-	w.GitURL = ""
-	w.GitUser = ""
-	w.GitToken = ""
-	w.GitAutoCommit = false
-	w.GitCommitMsgTemplate = "${action} ${filename}"
+
+	if w.Theme == "" {
+		w.Theme = "light"
+	}
+
+	w.AutoSave = w.AutoSave || false
+	w.ShowHiddenFiles = w.ShowHiddenFiles || false
+	w.GitEnabled = w.GitEnabled || false
+
+	w.GitAutoCommit = w.GitEnabled && (w.GitAutoCommit || false)
+
+	if w.GitCommitMsgTemplate == "" {
+		w.GitCommitMsgTemplate = "${action} ${filename}"
+	}
 }
