@@ -27,13 +27,8 @@ jobs:
           go-version: "1.23"
           cache: true
 
-      #   - name: Install dependencies
-      #     run: |
-      #       sudo apt-get update
-      #       sudo apt-get install -y gcc
-
       - name: Run Tests
-        run: go test ./... -v
+        run: go test -tags=test,integration ./... -v
 
       - name: Run Tests with Race Detector
-        run: go test -race ./... -v
+        run: go test -tags=test,integration -race ./... -v
