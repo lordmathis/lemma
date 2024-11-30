@@ -16,13 +16,15 @@ const GitSettings = ({
   gitToken,
   gitAutoCommit,
   gitCommitMsgTemplate,
+  gitCommitName,
+  gitCommitEmail,
   onInputChange,
 }) => {
   return (
     <Stack spacing="md">
       <Grid gutter="md" align="center">
         <Grid.Col span={6}>
-          <Text size="sm">Enable Git</Text>
+          <Text size="sm">Enable Git Repository</Text>
         </Grid.Col>
         <Grid.Col span={6}>
           <Group justify="flex-end">
@@ -41,6 +43,7 @@ const GitSettings = ({
         <Grid.Col span={6}>
           <TextInput
             value={gitUrl}
+            description="The URL of your Git repository"
             onChange={(event) =>
               onInputChange('gitUrl', event.currentTarget.value)
             }
@@ -50,11 +53,12 @@ const GitSettings = ({
         </Grid.Col>
 
         <Grid.Col span={6}>
-          <Text size="sm">Git Username</Text>
+          <Text size="sm">Username</Text>
         </Grid.Col>
         <Grid.Col span={6}>
           <TextInput
             value={gitUser}
+            description="The username used to authenticate with the repository"
             onChange={(event) =>
               onInputChange('gitUser', event.currentTarget.value)
             }
@@ -64,11 +68,12 @@ const GitSettings = ({
         </Grid.Col>
 
         <Grid.Col span={6}>
-          <Text size="sm">Git Token</Text>
+          <Text size="sm">Access Token</Text>
         </Grid.Col>
         <Grid.Col span={6}>
           <PasswordInput
             value={gitToken}
+            description="Personal access token with repository read/write permissions"
             onChange={(event) =>
               onInputChange('gitToken', event.currentTarget.value)
             }
@@ -78,7 +83,7 @@ const GitSettings = ({
         </Grid.Col>
 
         <Grid.Col span={6}>
-          <Text size="sm">Auto Commit</Text>
+          <Text size="sm">Commit on Save</Text>
         </Grid.Col>
         <Grid.Col span={6}>
           <Group justify="flex-end">
@@ -98,11 +103,42 @@ const GitSettings = ({
         <Grid.Col span={6}>
           <TextInput
             value={gitCommitMsgTemplate}
+            description="Template for automated commit messages. Use ${filename} and ${action} as a placeholder."
             onChange={(event) =>
               onInputChange('gitCommitMsgTemplate', event.currentTarget.value)
             }
             disabled={!gitEnabled}
             placeholder="Enter commit message template"
+          />
+        </Grid.Col>
+
+        <Grid.Col span={6}>
+          <Text size="sm">Commit Author</Text>
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <TextInput
+            value={gitCommitName}
+            description="Name to appear in commit history. Leave empty to use Git username."
+            onChange={(event) =>
+              onInputChange('gitCommitName', event.currentTarget.value)
+            }
+            disabled={!gitEnabled}
+            placeholder="Enter commit author name."
+          />
+        </Grid.Col>
+
+        <Grid.Col span={6}>
+          <Text size="sm">Commit Author Email</Text>
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <TextInput
+            value={gitCommitEmail}
+            description="Email address to associate with your commits"
+            onChange={(event) =>
+              onInputChange('gitCommitEmail', event.currentTarget.value)
+            }
+            disabled={!gitEnabled}
+            placeholder="Enter commit author email."
           />
         </Grid.Col>
       </Grid>
