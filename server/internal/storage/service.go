@@ -14,7 +14,7 @@ type Manager interface {
 // Service represents the file system structure.
 type Service struct {
 	fs           fileSystem
-	newGitClient func(url, user, token, path string) git.Client
+	newGitClient func(url, user, token, path, commitName, commitEmail string) git.Client
 	RootDir      string
 	GitRepos     map[int]map[int]git.Client // map[userID]map[workspaceID]*git.Client
 }
@@ -22,7 +22,7 @@ type Service struct {
 // Options represents the options for the storage service.
 type Options struct {
 	Fs           fileSystem
-	NewGitClient func(url, user, token, path string) git.Client
+	NewGitClient func(url, user, token, path, commitName, commitEmail string) git.Client
 }
 
 // NewService creates a new Storage instance with the default options and the given rootDir root directory.

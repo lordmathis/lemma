@@ -7,7 +7,7 @@ import (
 
 // RepositoryManager defines the interface for managing Git repositories.
 type RepositoryManager interface {
-	SetupGitRepo(userID, workspaceID int, gitURL, gitUser, gitToken string) error
+	SetupGitRepo(userID, workspaceID int, gitURL, gitUser, gitToken, commitName, commitEmail string) error
 	DisableGitRepo(userID, workspaceID int)
 	StageCommitAndPush(userID, workspaceID int, message string) error
 	Pull(userID, workspaceID int) error
@@ -15,12 +15,12 @@ type RepositoryManager interface {
 
 // SetupGitRepo sets up a Git repository for the given userID and workspaceID.
 // The repository is cloned from the given gitURL using the given gitUser and gitToken.
-func (s *Service) SetupGitRepo(userID, workspaceID int, gitURL, gitUser, gitToken string) error {
+func (s *Service) SetupGitRepo(userID, workspaceID int, gitURL, gitUser, gitToken, commitName, commitEmail string) error {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 	if _, ok := s.GitRepos[userID]; !ok {
 		s.GitRepos[userID] = make(map[int]git.Client)
 	}
-	s.GitRepos[userID][workspaceID] = s.newGitClient(gitURL, gitUser, gitToken, workspacePath)
+	s.GitRepos[userID][workspaceID] = s.newGitClient(gitURL, gitUser, gitToken, workspacePath, commitName, commitEmail)
 	return s.GitRepos[userID][workspaceID].EnsureRepo()
 }
 
