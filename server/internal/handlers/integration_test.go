@@ -70,7 +70,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 
 	// Create storage with mock git client
 	storageOpts := storage.Options{
-		NewGitClient: func(url, user, token, path string) git.Client {
+		NewGitClient: func(url, user, token, path, commitName, commitEmail string) git.Client {
 			return mockGit
 		},
 	}

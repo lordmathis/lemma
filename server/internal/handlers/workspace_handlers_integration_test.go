@@ -54,12 +54,14 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 
 		t.Run("create with git settings", func(t *testing.T) {
 			workspace := &models.Workspace{
-				Name:          "Git Workspace",
-				GitEnabled:    true,
-				GitURL:        "https://github.com/test/repo.git",
-				GitUser:       "testuser",
-				GitToken:      "testtoken",
-				GitAutoCommit: true,
+				Name:           "Git Workspace",
+				GitEnabled:     true,
+				GitURL:         "https://github.com/test/repo.git",
+				GitUser:        "testuser",
+				GitToken:       "testtoken",
+				GitAutoCommit:  true,
+				GitCommitName:  "Test User",
+				GitCommitEmail: "test@example.com",
 			}
 
 			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularToken, nil)
@@ -73,6 +75,8 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 			assert.Equal(t, workspace.GitUser, created.GitUser)
 			assert.Equal(t, workspace.GitToken, created.GitToken)
 			assert.Equal(t, workspace.GitAutoCommit, created.GitAutoCommit)
+			assert.Equal(t, workspace.GitCommitName, created.GitCommitName)
+			assert.Equal(t, workspace.GitCommitEmail, created.GitCommitEmail)
 		})
 
 		t.Run("invalid workspace", func(t *testing.T) {
@@ -161,13 +165,15 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 
 		t.Run("enable git", func(t *testing.T) {
 			update := &models.Workspace{
-				Name:          workspace.Name,
-				Theme:         "dark",
-				GitEnabled:    true,
-				GitURL:        "https://github.com/test/repo.git",
-				GitUser:       "testuser",
-				GitToken:      "testtoken",
-				GitAutoCommit: true,
+				Name:           workspace.Name,
+				Theme:          "dark",
+				GitEnabled:     true,
+				GitURL:         "https://github.com/test/repo.git",
+				GitUser:        "testuser",
+				GitToken:       "testtoken",
+				GitAutoCommit:  true,
+				GitCommitName:  "Test User",
+				GitCommitEmail: "test@example.com",
 			}
 
 			rr := h.makeRequest(t, http.MethodPut, baseURL, update, h.RegularToken, nil)
@@ -180,6 +186,8 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 			assert.Equal(t, update.GitURL, updated.GitURL)
 			assert.Equal(t, update.GitUser, updated.GitUser)
 			assert.Equal(t, update.GitToken, updated.GitToken)
+			assert.Equal(t, update.GitAutoCommit, updated.GitAutoCommit)
+			assert.Equal(t, update.GitCommitName, updated.GitCommitName)
 
 			// Mock should have been called to setup git
 			assert.True(t, h.MockGit.IsInitialized())

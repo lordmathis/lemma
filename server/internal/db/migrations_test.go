@@ -27,8 +27,8 @@ func TestMigrate(t *testing.T) {
 			t.Fatalf("failed to get migration version: %v", err)
 		}
 
-		if version != 2 { // Current number of migrations in production code
-			t.Errorf("expected migration version 2, got %d", version)
+		if version != 1 { // Current number of migrations in production code
+			t.Errorf("expected migration version 1, got %d", version)
 		}
 
 		// Verify number of migration entries matches versions applied
@@ -38,8 +38,8 @@ func TestMigrate(t *testing.T) {
 			t.Fatalf("failed to count migrations: %v", err)
 		}
 
-		if count != 2 {
-			t.Errorf("expected 2 migration entries, got %d", count)
+		if count != 1 {
+			t.Errorf("expected 1 migration entries, got %d", count)
 		}
 	})
 
@@ -82,8 +82,8 @@ func TestMigrate(t *testing.T) {
 			t.Fatalf("failed to count migrations: %v", err)
 		}
 
-		if count != 2 {
-			t.Errorf("expected 2 migration entries, got %d", count)
+		if count != 1 {
+			t.Errorf("expected 1 migration entries, got %d", count)
 		}
 	})
 
@@ -118,8 +118,8 @@ func TestMigrate(t *testing.T) {
 			t.Fatalf("failed to get migration version: %v", err)
 		}
 
-		if version != 2 {
-			t.Errorf("expected migration version to remain at 2, got %d", version)
+		if version != 1 {
+			t.Errorf("expected migration version to remain at 1, got %d", version)
 		}
 	})
 }

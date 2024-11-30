@@ -23,7 +23,7 @@ type Workspace struct {
 	GitAutoCommit        bool   `json:"gitAutoCommit"`
 	GitCommitMsgTemplate string `json:"gitCommitMsgTemplate"`
 	GitCommitName        string `json:"gitCommitName"`
-	GitCommitEmail       string `json:"gitCommitEmail" validate:"required_if=GitEnabled true,email"`
+	GitCommitEmail       string `json:"gitCommitEmail" validate:"omitempty,required_if=GitEnabled true,email"`
 }
 
 // Validate validates the workspace struct

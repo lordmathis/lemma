@@ -68,12 +68,14 @@ func (db *database) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) e
 			user_id, name,
 			theme, auto_save, show_hidden_files,
 			git_enabled, git_url, git_user, git_token,
-			git_auto_commit, git_commit_msg_template
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			git_auto_commit, git_commit_msg_template,
+			git_commit_name, git_commit_email
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		workspace.UserID, workspace.Name,
 		workspace.Theme, workspace.AutoSave, workspace.ShowHiddenFiles,
 		workspace.GitEnabled, workspace.GitURL, workspace.GitUser, workspace.GitToken,
 		workspace.GitAutoCommit, workspace.GitCommitMsgTemplate,
+		workspace.GitCommitName, workspace.GitCommitEmail,
 	)
 	if err != nil {
 		return err

@@ -23,7 +23,8 @@ func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 		INSERT INTO workspaces (
 			user_id, name, theme, auto_save, show_hidden_files,
 			git_enabled, git_url, git_user, git_token, 
-			git_auto_commit, git_commit_msg_template, git_commit_name, git_commit_email
+			git_auto_commit, git_commit_msg_template,
+			git_commit_name, git_commit_email
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		workspace.UserID, workspace.Name, workspace.Theme, workspace.AutoSave, workspace.ShowHiddenFiles,
 		workspace.GitEnabled, workspace.GitURL, workspace.GitUser, encryptedToken,
@@ -51,7 +52,8 @@ func (db *database) GetWorkspaceByID(id int) (*models.Workspace, error) {
 			id, user_id, name, created_at, 
 			theme, auto_save, show_hidden_files,
 			git_enabled, git_url, git_user, git_token, 
-			git_auto_commit, git_commit_msg_template, git_commit_name, git_commit_email
+			git_auto_commit, git_commit_msg_template,
+			git_commit_name, git_commit_email
 		FROM workspaces 
 		WHERE id = ?`,
 		id,
@@ -93,7 +95,8 @@ func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*model
 		&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
 		&workspace.Theme, &workspace.AutoSave, &workspace.ShowHiddenFiles,
 		&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
-		&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate, &workspace.GitCommitName, &workspace.GitCommitEmail,
+		&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
+		&workspace.GitCommitName, &workspace.GitCommitEmail,
 	)
 	if err != nil {
 		return nil, err
