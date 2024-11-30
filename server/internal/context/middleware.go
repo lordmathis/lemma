@@ -1,38 +1,37 @@
-package middleware
+package context
 
 import (
 	"net/http"
-	"novamd/internal/auth"
 	"novamd/internal/db"
-	"novamd/internal/httpcontext"
 
 	"github.com/go-chi/chi/v5"
 )
 
-// User ID and User Role context
-func WithUserContext(next http.Handler) http.Handler {
+// WithUserContextMiddleware extracts user information from JWT claims
+// and adds it to the request context
+func WithUserContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims, err := auth.GetUserFromContext(r.Context())
+		claims, err := GetUserFromContext(r.Context())
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		hctx := &httpcontext.HandlerContext{
+		hctx := &HandlerContext{
 			UserID:   claims.UserID,
 			UserRole: claims.Role,
 		}
 
-		r = httpcontext.WithHandlerContext(r, hctx)
+		r = WithHandlerContext(r, hctx)
 		next.ServeHTTP(w, r)
 	})
 }
 
-// Workspace context
-func WithWorkspaceContext(db *db.DB) func(http.Handler) http.Handler {
+// WithWorkspaceContextMiddleware adds workspace information to the request context
+func WithWorkspaceContextMiddleware(db db.WorkspaceReader) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx, ok := httpcontext.GetRequestContext(w, r)
+			ctx, ok := GetRequestContext(w, r)
 			if !ok {
 				return
 			}
@@ -46,7 +45,7 @@ func WithWorkspaceContext(db *db.DB) func(http.Handler) http.Handler {
 
 			// Update existing context with workspace
 			ctx.Workspace = workspace
-			r = httpcontext.WithHandlerContext(r, ctx)
+			r = WithHandlerContext(r, ctx)
 			next.ServeHTTP(w, r)
 		})
 	}

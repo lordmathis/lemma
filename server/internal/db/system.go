@@ -11,9 +11,16 @@ const (
 	JWTSecretKey = "jwt_secret"
 )
 
+// UserStats represents system-wide statistics
+type UserStats struct {
+	TotalUsers      int `json:"totalUsers"`
+	TotalWorkspaces int `json:"totalWorkspaces"`
+	ActiveUsers     int `json:"activeUsers"` // Users with activity in last 30 days
+}
+
 // EnsureJWTSecret makes sure a JWT signing secret exists in the database
 // If no secret exists, it generates and stores a new one
-func (db *DB) EnsureJWTSecret() (string, error) {
+func (db *database) EnsureJWTSecret() (string, error) {
 	// First, try to get existing secret
 	secret, err := db.GetSystemSetting(JWTSecretKey)
 	if err == nil {
@@ -36,7 +43,7 @@ func (db *DB) EnsureJWTSecret() (string, error) {
 }
 
 // GetSystemSetting retrieves a system setting by key
-func (db *DB) GetSystemSetting(key string) (string, error) {
+func (db *database) GetSystemSetting(key string) (string, error) {
 	var value string
 	err := db.QueryRow("SELECT value FROM system_settings WHERE key = ?", key).Scan(&value)
 	if err != nil {
@@ -46,7 +53,7 @@ func (db *DB) GetSystemSetting(key string) (string, error) {
 }
 
 // SetSystemSetting stores or updates a system setting
-func (db *DB) SetSystemSetting(key, value string) error {
+func (db *database) SetSystemSetting(key, value string) error {
 	_, err := db.Exec(`
 		INSERT INTO system_settings (key, value)
 		VALUES (?, ?)
@@ -63,4 +70,33 @@ func generateRandomSecret(bytes int) (string, error) {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(b), nil
+}
+
+// GetSystemStats returns system-wide statistics
+func (db *database) GetSystemStats() (*UserStats, error) {
+	stats := &UserStats{}
+
+	// Get total users
+	err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&stats.TotalUsers)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get total workspaces
+	err = db.QueryRow("SELECT COUNT(*) FROM workspaces").Scan(&stats.TotalWorkspaces)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get active users (users with activity in last 30 days)
+	err = db.QueryRow(`
+		SELECT COUNT(DISTINCT user_id) 
+		FROM sessions 
+		WHERE created_at > datetime('now', '-30 days')`).
+		Scan(&stats.ActiveUsers)
+	if err != nil {
+		return nil, err
+	}
+
+	return stats, nil
 }

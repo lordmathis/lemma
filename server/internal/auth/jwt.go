@@ -1,6 +1,9 @@
+// Package auth provides JWT token generation and validation
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -30,14 +33,22 @@ type JWTConfig struct {
 	RefreshTokenExpiry time.Duration // How long refresh tokens are valid
 }
 
-// JWTService handles JWT token generation and validation
-type JWTService struct {
+// JWTManager defines the interface for managing JWT tokens
+type JWTManager interface {
+	GenerateAccessToken(userID int, role string) (string, error)
+	GenerateRefreshToken(userID int, role string) (string, error)
+	ValidateToken(tokenString string) (*Claims, error)
+	RefreshAccessToken(refreshToken string) (string, error)
+}
+
+// jwtService handles JWT token generation and validation
+type jwtService struct {
 	config JWTConfig
 }
 
 // NewJWTService creates a new JWT service with the provided configuration
 // Returns an error if the signing key is missing
-func NewJWTService(config JWTConfig) (*JWTService, error) {
+func NewJWTService(config JWTConfig) (JWTManager, error) {
 	if config.SigningKey == "" {
 		return nil, fmt.Errorf("signing key is required")
 	}
@@ -48,41 +59,35 @@ func NewJWTService(config JWTConfig) (*JWTService, error) {
 	if config.RefreshTokenExpiry == 0 {
 		config.RefreshTokenExpiry = 7 * 24 * time.Hour // Default to 7 days
 	}
-	return &JWTService{config: config}, nil
+	return &jwtService{config: config}, nil
 }
 
-// GenerateAccessToken creates a new access token for a user
-// Parameters:
-// - userID: the ID of the user
-// - role: the role of the user
-// Returns the signed token string or an error
-func (s *JWTService) GenerateAccessToken(userID int, role string) (string, error) {
+// GenerateAccessToken creates a new access token for a user with the given userID and role
+func (s *jwtService) GenerateAccessToken(userID int, role string) (string, error) {
 	return s.generateToken(userID, role, AccessToken, s.config.AccessTokenExpiry)
 }
 
-// GenerateRefreshToken creates a new refresh token for a user
-// Parameters:
-// - userID: the ID of the user
-// - role: the role of the user
-// Returns the signed token string or an error
-func (s *JWTService) GenerateRefreshToken(userID int, role string) (string, error) {
+// GenerateRefreshToken creates a new refresh token for a user with the given userID and role
+func (s *jwtService) GenerateRefreshToken(userID int, role string) (string, error) {
 	return s.generateToken(userID, role, RefreshToken, s.config.RefreshTokenExpiry)
 }
 
 // generateToken is an internal helper function that creates a new JWT token
-// Parameters:
-// - userID: the ID of the user
-// - role: the role of the user
-// - tokenType: the type of token (access or refresh)
-// - expiry: how long the token should be valid
-// Returns the signed token string or an error
-func (s *JWTService) generateToken(userID int, role string, tokenType TokenType, expiry time.Duration) (string, error) {
+func (s *jwtService) generateToken(userID int, role string, tokenType TokenType, expiry time.Duration) (string, error) {
 	now := time.Now()
+
+	// Add a random nonce to ensure uniqueness
+	nonce := make([]byte, 8)
+	if _, err := rand.Read(nonce); err != nil {
+		return "", fmt.Errorf("failed to generate nonce: %w", err)
+	}
+
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
+			ID:        hex.EncodeToString(nonce),
 		},
 		UserID: userID,
 		Role:   role,
@@ -94,10 +99,7 @@ func (s *JWTService) generateToken(userID int, role string, tokenType TokenType,
 }
 
 // ValidateToken validates and parses a JWT token
-// Parameters:
-// - tokenString: the token to validate
-// Returns the token claims if valid, or an error if invalid
-func (s *JWTService) ValidateToken(tokenString string) (*Claims, error) {
+func (s *jwtService) ValidateToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		// Validate the signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -117,11 +119,8 @@ func (s *JWTService) ValidateToken(tokenString string) (*Claims, error) {
 	return nil, fmt.Errorf("invalid token claims")
 }
 
-// RefreshAccessToken creates a new access token using a refresh token
-// Parameters:
-// - refreshToken: the refresh token to use
-// Returns a new access token if the refresh token is valid, or an error
-func (s *JWTService) RefreshAccessToken(refreshToken string) (string, error) {
+// RefreshAccessToken creates a new access token using a refreshToken
+func (s *jwtService) RefreshAccessToken(refreshToken string) (string, error) {
 	claims, err := s.ValidateToken(refreshToken)
 	if err != nil {
 		return "", fmt.Errorf("invalid refresh token: %w", err)

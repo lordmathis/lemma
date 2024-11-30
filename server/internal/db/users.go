@@ -6,7 +6,7 @@ import (
 )
 
 // CreateUser inserts a new user record into the database
-func (db *DB) CreateUser(user *models.User) (*models.User, error) {
+func (db *database) CreateUser(user *models.User) (*models.User, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func (db *DB) CreateUser(user *models.User) (*models.User, error) {
 		UserID: user.ID,
 		Name:   "Main",
 	}
-	defaultWorkspace.GetDefaultSettings() // Initialize default settings
+	defaultWorkspace.SetDefaultSettings() // Initialize default settings
 
 	// Create workspace with settings
 	err = db.createWorkspaceTx(tx, defaultWorkspace)
@@ -62,14 +62,14 @@ func (db *DB) CreateUser(user *models.User) (*models.User, error) {
 }
 
 // Helper function to create a workspace in a transaction
-func (db *DB) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
+func (db *database) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
 	result, err := tx.Exec(`
 		INSERT INTO workspaces (
 			user_id, name,
 			theme, auto_save, show_hidden_files,
 			git_enabled, git_url, git_user, git_token,
 			git_auto_commit, git_commit_msg_template
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		workspace.UserID, workspace.Name,
 		workspace.Theme, workspace.AutoSave, workspace.ShowHiddenFiles,
 		workspace.GitEnabled, workspace.GitURL, workspace.GitUser, workspace.GitToken,
@@ -87,7 +87,7 @@ func (db *DB) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
 }
 
 // GetUserByID retrieves a user by ID
-func (db *DB) GetUserByID(id int) (*models.User, error) {
+func (db *database) GetUserByID(id int) (*models.User, error) {
 	user := &models.User{}
 	err := db.QueryRow(`
         SELECT 
@@ -104,7 +104,7 @@ func (db *DB) GetUserByID(id int) (*models.User, error) {
 }
 
 // GetUserByEmail retrieves a user by email
-func (db *DB) GetUserByEmail(email string) (*models.User, error) {
+func (db *database) GetUserByEmail(email string) (*models.User, error) {
 	user := &models.User{}
 	err := db.QueryRow(`
         SELECT 
@@ -122,7 +122,7 @@ func (db *DB) GetUserByEmail(email string) (*models.User, error) {
 }
 
 // UpdateUser updates a user's information
-func (db *DB) UpdateUser(user *models.User) error {
+func (db *database) UpdateUser(user *models.User) error {
 	_, err := db.Exec(`
 		UPDATE users
 		SET email = ?, display_name = ?, password_hash = ?, role = ?, last_workspace_id = ?
@@ -131,8 +131,36 @@ func (db *DB) UpdateUser(user *models.User) error {
 	return err
 }
 
+// GetAllUsers returns a list of all users in the system
+func (db *database) GetAllUsers() ([]*models.User, error) {
+	rows, err := db.Query(`
+		SELECT 
+			id, email, display_name, role, created_at,
+			last_workspace_id
+		FROM users
+		ORDER BY id ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*models.User
+	for rows.Next() {
+		user := &models.User{}
+		err := rows.Scan(
+			&user.ID, &user.Email, &user.DisplayName, &user.Role,
+			&user.CreatedAt, &user.LastWorkspaceID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
 // UpdateLastWorkspace updates the last workspace the user accessed
-func (db *DB) UpdateLastWorkspace(userID int, workspaceName string) error {
+func (db *database) UpdateLastWorkspace(userID int, workspaceName string) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -155,7 +183,7 @@ func (db *DB) UpdateLastWorkspace(userID int, workspaceName string) error {
 }
 
 // DeleteUser deletes a user and all their workspaces
-func (db *DB) DeleteUser(id int) error {
+func (db *database) DeleteUser(id int) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -178,7 +206,7 @@ func (db *DB) DeleteUser(id int) error {
 }
 
 // GetLastWorkspaceName returns the name of the last workspace the user accessed
-func (db *DB) GetLastWorkspaceName(userID int) (string, error) {
+func (db *database) GetLastWorkspaceName(userID int) (string, error) {
 	var workspaceName string
 	err := db.QueryRow(`
         SELECT 
@@ -188,4 +216,11 @@ func (db *DB) GetLastWorkspaceName(userID int) (string, error) {
         WHERE u.id = ?`, userID).
 		Scan(&workspaceName)
 	return workspaceName, err
+}
+
+// CountAdminUsers returns the number of admin users in the system
+func (db *database) CountAdminUsers() (int, error) {
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'admin'").Scan(&count)
+	return count, err
 }

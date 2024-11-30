@@ -1,16 +1,16 @@
+// Package config provides the configuration for the application
 package config
 
 import (
 	"fmt"
+	"novamd/internal/secrets"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-
-	"novamd/internal/crypto"
 )
 
+// Config holds the configuration for the application
 type Config struct {
 	DBPath            string
 	WorkDir           string
@@ -27,6 +27,7 @@ type Config struct {
 	IsDevelopment     bool
 }
 
+// DefaultConfig returns a new Config instance with default values
 func DefaultConfig() *Config {
 	return &Config{
 		DBPath:            "./novamd.db",
@@ -39,13 +40,14 @@ func DefaultConfig() *Config {
 	}
 }
 
+// Validate checks if the configuration is valid
 func (c *Config) Validate() error {
 	if c.AdminEmail == "" || c.AdminPassword == "" {
 		return fmt.Errorf("NOVAMD_ADMIN_EMAIL and NOVAMD_ADMIN_PASSWORD must be set")
 	}
 
 	// Validate encryption key
-	if err := crypto.ValidateKey(c.EncryptionKey); err != nil {
+	if err := secrets.ValidateKey(c.EncryptionKey); err != nil {
 		return fmt.Errorf("invalid NOVAMD_ENCRYPTION_KEY: %w", err)
 	}
 
@@ -63,15 +65,9 @@ func Load() (*Config, error) {
 	if dbPath := os.Getenv("NOVAMD_DB_PATH"); dbPath != "" {
 		config.DBPath = dbPath
 	}
-	if err := ensureDir(filepath.Dir(config.DBPath)); err != nil {
-		return nil, fmt.Errorf("failed to create database directory: %w", err)
-	}
 
 	if workDir := os.Getenv("NOVAMD_WORKDIR"); workDir != "" {
 		config.WorkDir = workDir
-	}
-	if err := ensureDir(config.WorkDir); err != nil {
-		return nil, fmt.Errorf("failed to create work directory: %w", err)
 	}
 
 	if staticPath := os.Getenv("NOVAMD_STATIC_PATH"); staticPath != "" {
@@ -114,11 +110,4 @@ func Load() (*Config, error) {
 	}
 
 	return config, nil
-}
-
-func ensureDir(dir string) error {
-	if dir == "" {
-		return nil
-	}
-	return os.MkdirAll(dir, 0755)
 }

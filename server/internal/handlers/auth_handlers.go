@@ -4,28 +4,32 @@ import (
 	"encoding/json"
 	"net/http"
 	"novamd/internal/auth"
-	"novamd/internal/httpcontext"
+	"novamd/internal/context"
 	"novamd/internal/models"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
+// LoginRequest represents a user login request
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// LoginResponse represents a user login response
 type LoginResponse struct {
-	AccessToken  string        `json:"accessToken"`
-	RefreshToken string        `json:"refreshToken"`
-	User         *models.User  `json:"user"`
-	Session      *auth.Session `json:"session"`
+	AccessToken  string          `json:"accessToken"`
+	RefreshToken string          `json:"refreshToken"`
+	User         *models.User    `json:"user"`
+	Session      *models.Session `json:"session"`
 }
 
+// RefreshRequest represents a refresh token request
 type RefreshRequest struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
+// RefreshResponse represents a refresh token response
 type RefreshResponse struct {
 	AccessToken string `json:"accessToken"`
 }
@@ -129,7 +133,7 @@ func (h *Handler) RefreshToken(authService *auth.SessionService) http.HandlerFun
 // GetCurrentUser returns the currently authenticated user
 func (h *Handler) GetCurrentUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}

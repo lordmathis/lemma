@@ -83,7 +83,7 @@ var migrations = []Migration{
 }
 
 // Migrate applies all database migrations
-func (db *DB) Migrate() error {
+func (db *database) Migrate() error {
 	// Create migrations table if it doesn't exist
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS migrations (
 		version INTEGER PRIMARY KEY

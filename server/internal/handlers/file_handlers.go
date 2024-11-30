@@ -4,20 +4,23 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 
-	"novamd/internal/httpcontext"
+	"novamd/internal/context"
+	"novamd/internal/storage"
 
 	"github.com/go-chi/chi/v5"
 )
 
+// ListFiles returns a list of all files in the workspace
 func (h *Handler) ListFiles() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
 
-		files, err := h.FS.ListFilesRecursively(ctx.UserID, ctx.Workspace.ID)
+		files, err := h.Storage.ListFilesRecursively(ctx.UserID, ctx.Workspace.ID)
 		if err != nil {
 			http.Error(w, "Failed to list files", http.StatusInternalServerError)
 			return
@@ -27,9 +30,10 @@ func (h *Handler) ListFiles() http.HandlerFunc {
 	}
 }
 
+// LookupFileByName returns the paths of files with the given name
 func (h *Handler) LookupFileByName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -40,7 +44,7 @@ func (h *Handler) LookupFileByName() http.HandlerFunc {
 			return
 		}
 
-		filePaths, err := h.FS.FindFileByName(ctx.UserID, ctx.Workspace.ID, filename)
+		filePaths, err := h.Storage.FindFileByName(ctx.UserID, ctx.Workspace.ID, filename)
 		if err != nil {
 			http.Error(w, "File not found", http.StatusNotFound)
 			return
@@ -50,28 +54,45 @@ func (h *Handler) LookupFileByName() http.HandlerFunc {
 	}
 }
 
+// GetFileContent returns the content of a file
 func (h *Handler) GetFileContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
 
 		filePath := chi.URLParam(r, "*")
-		content, err := h.FS.GetFileContent(ctx.UserID, ctx.Workspace.ID, filePath)
+		content, err := h.Storage.GetFileContent(ctx.UserID, ctx.Workspace.ID, filePath)
 		if err != nil {
-			http.Error(w, "Failed to read file", http.StatusNotFound)
+
+			if storage.IsPathValidationError(err) {
+				http.Error(w, "Invalid file path", http.StatusBadRequest)
+				return
+			}
+
+			if os.IsNotExist(err) {
+				http.Error(w, "Failed to read file", http.StatusNotFound)
+				return
+			}
+
+			http.Error(w, "Failed to read file", http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write(content)
+		_, err = w.Write(content)
+		if err != nil {
+			http.Error(w, "Failed to write response", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
+// SaveFile saves the content of a file
 func (h *Handler) SaveFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -83,8 +104,13 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 			return
 		}
 
-		err = h.FS.SaveFile(ctx.UserID, ctx.Workspace.ID, filePath, content)
+		err = h.Storage.SaveFile(ctx.UserID, ctx.Workspace.ID, filePath, content)
 		if err != nil {
+			if storage.IsPathValidationError(err) {
+				http.Error(w, "Invalid file path", http.StatusBadRequest)
+				return
+			}
+
 			http.Error(w, "Failed to save file", http.StatusInternalServerError)
 			return
 		}
@@ -93,28 +119,44 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 	}
 }
 
+// DeleteFile deletes a file
 func (h *Handler) DeleteFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
 
 		filePath := chi.URLParam(r, "*")
-		err := h.FS.DeleteFile(ctx.UserID, ctx.Workspace.ID, filePath)
+		err := h.Storage.DeleteFile(ctx.UserID, ctx.Workspace.ID, filePath)
 		if err != nil {
+			if storage.IsPathValidationError(err) {
+				http.Error(w, "Invalid file path", http.StatusBadRequest)
+				return
+			}
+
+			if os.IsNotExist(err) {
+				http.Error(w, "File not found", http.StatusNotFound)
+				return
+			}
+
 			http.Error(w, "Failed to delete file", http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("File deleted successfully"))
+		_, err = w.Write([]byte("File deleted successfully"))
+		if err != nil {
+			http.Error(w, "Failed to write response", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
+// GetLastOpenedFile returns the last opened file in the workspace
 func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -125,7 +167,7 @@ func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 			return
 		}
 
-		if _, err := h.FS.ValidatePath(ctx.UserID, ctx.Workspace.ID, filePath); err != nil {
+		if _, err := h.Storage.ValidatePath(ctx.UserID, ctx.Workspace.ID, filePath); err != nil {
 			http.Error(w, "Invalid file path", http.StatusBadRequest)
 			return
 		}
@@ -134,9 +176,10 @@ func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 	}
 }
 
+// UpdateLastOpenedFile updates the last opened file in the workspace
 func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -150,10 +193,21 @@ func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 			return
 		}
 
-		// Validate the file path exists in the workspace
+		// Validate the file path in the workspace
 		if requestBody.FilePath != "" {
-			if _, err := h.FS.ValidatePath(ctx.UserID, ctx.Workspace.ID, requestBody.FilePath); err != nil {
-				http.Error(w, "Invalid file path", http.StatusBadRequest)
+			_, err := h.Storage.GetFileContent(ctx.UserID, ctx.Workspace.ID, requestBody.FilePath)
+			if err != nil {
+				if storage.IsPathValidationError(err) {
+					http.Error(w, "Invalid file path", http.StatusBadRequest)
+					return
+				}
+
+				if os.IsNotExist(err) {
+					http.Error(w, "File not found", http.StatusNotFound)
+					return
+				}
+
+				http.Error(w, "Failed to update file", http.StatusInternalServerError)
 				return
 			}
 		}

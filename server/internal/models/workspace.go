@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Workspace represents a user's workspace in the system
 type Workspace struct {
 	ID                 int       `json:"id" validate:"required,min=1"`
 	UserID             int       `json:"userId" validate:"required,min=1"`
@@ -23,18 +24,30 @@ type Workspace struct {
 	GitCommitMsgTemplate string `json:"gitCommitMsgTemplate"`
 }
 
+// Validate validates the workspace struct
 func (w *Workspace) Validate() error {
 	return validate.Struct(w)
 }
 
-func (w *Workspace) GetDefaultSettings() {
-	w.Theme = "light"
-	w.AutoSave = false
-	w.ShowHiddenFiles = false
-	w.GitEnabled = false
-	w.GitURL = ""
-	w.GitUser = ""
-	w.GitToken = ""
-	w.GitAutoCommit = false
-	w.GitCommitMsgTemplate = "${action} ${filename}"
+// ValidateGitSettings validates the git settings if git is enabled
+func (w *Workspace) ValidateGitSettings() error {
+	return validate.StructExcept(w, "ID", "UserID", "Theme")
+}
+
+// SetDefaultSettings sets the default settings for the workspace
+func (w *Workspace) SetDefaultSettings() {
+
+	if w.Theme == "" {
+		w.Theme = "light"
+	}
+
+	w.AutoSave = w.AutoSave || false
+	w.ShowHiddenFiles = w.ShowHiddenFiles || false
+	w.GitEnabled = w.GitEnabled || false
+
+	w.GitAutoCommit = w.GitEnabled && (w.GitAutoCommit || false)
+
+	if w.GitCommitMsgTemplate == "" {
+		w.GitCommitMsgTemplate = "${action} ${filename}"
+	}
 }

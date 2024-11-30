@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"novamd/internal/httpcontext"
+	"novamd/internal/context"
 )
 
+// StageCommitAndPush stages, commits, and pushes changes to the remote repository
 func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
@@ -28,7 +29,7 @@ func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 			return
 		}
 
-		err := h.FS.StageCommitAndPush(ctx.UserID, ctx.Workspace.ID, requestBody.Message)
+		err := h.Storage.StageCommitAndPush(ctx.UserID, ctx.Workspace.ID, requestBody.Message)
 		if err != nil {
 			http.Error(w, "Failed to stage, commit, and push changes: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -38,14 +39,15 @@ func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 	}
 }
 
+// PullChanges pulls changes from the remote repository
 func (h *Handler) PullChanges() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := httpcontext.GetRequestContext(w, r)
+		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
 
-		err := h.FS.Pull(ctx.UserID, ctx.Workspace.ID)
+		err := h.Storage.Pull(ctx.UserID, ctx.Workspace.ID)
 		if err != nil {
 			http.Error(w, "Failed to pull changes: "+err.Error(), http.StatusInternalServerError)
 			return

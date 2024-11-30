@@ -1,3 +1,4 @@
+// Package main contains the main entry point for the application. It sets up the server, database, and other services, and starts the server.
 package main
 
 import (
@@ -17,8 +18,9 @@ import (
 	"novamd/internal/auth"
 	"novamd/internal/config"
 	"novamd/internal/db"
-	"novamd/internal/filesystem"
 	"novamd/internal/handlers"
+	"novamd/internal/secrets"
+	"novamd/internal/storage"
 )
 
 func main() {
@@ -28,12 +30,26 @@ func main() {
 		log.Fatal("Failed to load configuration:", err)
 	}
 
+	// Initialize secrets service
+	secretsService, err := secrets.NewService(cfg.EncryptionKey)
+	if err != nil {
+		log.Fatal("Failed to initialize secrets service:", err)
+	}
+
 	// Initialize database
-	database, err := db.Init(cfg.DBPath, cfg.EncryptionKey)
+	database, err := db.Init(cfg.DBPath, secretsService)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer database.Close()
+	err = database.Migrate()
+	if err != nil {
+		log.Fatal("Failed to apply database migrations:", err)
+	}
+	defer func() {
+		if err := database.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
 
 	// Get or generate JWT signing key
 	signingKey := cfg.JWTSigningKey
@@ -45,10 +61,10 @@ func main() {
 	}
 
 	// Initialize filesystem
-	fs := filesystem.New(cfg.WorkDir)
+	s := storage.NewService(cfg.WorkDir)
 
 	// Initialize JWT service
-	jwtService, err := auth.NewJWTService(auth.JWTConfig{
+	jwtManager, err := auth.NewJWTService(auth.JWTConfig{
 		SigningKey:         signingKey,
 		AccessTokenExpiry:  15 * time.Minute,
 		RefreshTokenExpiry: 7 * 24 * time.Hour,
@@ -58,10 +74,10 @@ func main() {
 	}
 
 	// Initialize auth middleware
-	authMiddleware := auth.NewMiddleware(jwtService)
+	authMiddleware := auth.NewMiddleware(jwtManager)
 
 	// Initialize session service
-	sessionService := auth.NewSessionService(database.DB, jwtService)
+	sessionService := auth.NewSessionService(database, jwtManager)
 
 	// Set up router
 	r := chi.NewRouter()
@@ -95,7 +111,7 @@ func main() {
 	// Set up routes
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(httprate.LimitByIP(cfg.RateLimitRequests, cfg.RateLimitWindow))
-		api.SetupRoutes(r, database, fs, authMiddleware, sessionService)
+		api.SetupRoutes(r, database, s, authMiddleware, sessionService)
 	})
 
 	// Handle all other routes with static file server
