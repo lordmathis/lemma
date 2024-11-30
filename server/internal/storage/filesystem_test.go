@@ -59,6 +59,7 @@ type mockFS struct {
 	StatError      error
 }
 
+//revive:disable:unexported-return
 func NewMockFS() *mockFS {
 	return &mockFS{
 		ReadCalls:   make(map[string]int),

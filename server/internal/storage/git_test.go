@@ -55,6 +55,7 @@ func TestSetupGitRepo(t *testing.T) {
 		gitURL      string
 		gitUser     string
 		gitToken    string
+		commitEmail string
 		mockErr     error
 		wantErr     bool
 	}{
@@ -65,6 +66,7 @@ func TestSetupGitRepo(t *testing.T) {
 			gitURL:      "https://github.com/user/repo",
 			gitUser:     "user",
 			gitToken:    "token",
+			commitEmail: "test@example.com",
 			mockErr:     nil,
 			wantErr:     false,
 		},
@@ -75,6 +77,7 @@ func TestSetupGitRepo(t *testing.T) {
 			gitURL:      "https://github.com/user/repo",
 			gitUser:     "user",
 			gitToken:    "token",
+			commitEmail: "test@example.com",
 			mockErr:     errors.New("git initialization failed"),
 			wantErr:     true,
 		},
@@ -86,7 +89,7 @@ func TestSetupGitRepo(t *testing.T) {
 			mockClient := &MockGitClient{ReturnError: tc.mockErr}
 
 			// Create a client factory that returns our configured mock
-			mockClientFactory := func(_, _, _, _ string) git.Client {
+			mockClientFactory := func(_, _, _, _, _, _ string) git.Client {
 				return mockClient
 			}
 
@@ -96,7 +99,7 @@ func TestSetupGitRepo(t *testing.T) {
 			})
 
 			// Setup the git repo
-			err := s.SetupGitRepo(tc.userID, tc.workspaceID, tc.gitURL, tc.gitUser, tc.gitToken)
+			err := s.SetupGitRepo(tc.userID, tc.workspaceID, tc.gitURL, tc.gitUser, tc.gitToken, tc.gitUser, tc.commitEmail)
 
 			if tc.wantErr {
 				if err == nil {
@@ -131,7 +134,7 @@ func TestGitOperations(t *testing.T) {
 	mockFS := NewMockFS()
 	s := storage.NewServiceWithOptions("test-root", storage.Options{
 		Fs:           mockFS,
-		NewGitClient: func(_, _, _, _ string) git.Client { return &MockGitClient{} },
+		NewGitClient: func(_, _, _, _, _, _ string) git.Client { return &MockGitClient{} },
 	})
 
 	t.Run("operations on non-configured workspace", func(t *testing.T) {
@@ -203,7 +206,7 @@ func TestDisableGitRepo(t *testing.T) {
 	mockFS := NewMockFS()
 	s := storage.NewServiceWithOptions("test-root", storage.Options{
 		Fs:           mockFS,
-		NewGitClient: func(_, _, _, _ string) git.Client { return &MockGitClient{} },
+		NewGitClient: func(_, _, _, _, _, _ string) git.Client { return &MockGitClient{} },
 	})
 
 	testCases := []struct {

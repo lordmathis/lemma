@@ -69,6 +69,8 @@ func TestWorkspaceOperations(t *testing.T) {
 					GitToken:             "secret-token",
 					GitAutoCommit:        true,
 					GitCommitMsgTemplate: "${action} ${filename}",
+					GitCommitName:        "Test User",
+					GitCommitEmail:       "test@example.com",
 				},
 				wantErr: false,
 			},
@@ -244,6 +246,8 @@ func TestWorkspaceOperations(t *testing.T) {
 		workspace.GitToken = "new-token"
 		workspace.GitAutoCommit = true
 		workspace.GitCommitMsgTemplate = "custom ${filename}"
+		workspace.GitCommitName = "Test User"
+		workspace.GitCommitEmail = "test@example.com"
 
 		if err := database.UpdateWorkspace(workspace); err != nil {
 			t.Fatalf("failed to update workspace: %v", err)
@@ -423,6 +427,12 @@ func verifyWorkspace(t *testing.T, actual, expected *models.Workspace) {
 	}
 	if actual.GitCommitMsgTemplate != expected.GitCommitMsgTemplate {
 		t.Errorf("GitCommitMsgTemplate = %v, want %v", actual.GitCommitMsgTemplate, expected.GitCommitMsgTemplate)
+	}
+	if actual.GitCommitName != expected.GitCommitName {
+		t.Errorf("GitCommitName = %v, want %v", actual.GitCommitName, expected.GitCommitName)
+	}
+	if actual.GitCommitEmail != expected.GitCommitEmail {
+		t.Errorf("GitCommitEmail = %v, want %v", actual.GitCommitEmail, expected.GitCommitEmail)
 	}
 	if actual.CreatedAt.IsZero() {
 		t.Error("CreatedAt should not be zero")

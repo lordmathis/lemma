@@ -2,6 +2,7 @@
 package app
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,12 +13,14 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
 	"github.com/unrolled/secure"
+	"golang.org/x/crypto/bcrypt"
 
 	"novamd/internal/api"
 	"novamd/internal/auth"
 	"novamd/internal/config"
 	"novamd/internal/db"
 	"novamd/internal/handlers"
+	"novamd/internal/models"
 	"novamd/internal/secrets"
 	"novamd/internal/storage"
 )
@@ -46,6 +49,12 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	// Initialize filesystem
 	storageManager := storage.NewService(cfg.WorkDir)
+
+	// Setup admin user
+	err = setupAdminUser(database, storageManager, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup admin user: %w", err)
+	}
 
 	// Initialize router
 	router := initRouter(cfg)
@@ -167,4 +176,48 @@ func (s *Server) setupRoutes(jwtManager auth.JWTManager, sessionService *auth.Se
 
 	// Handle all other routes with static file server
 	s.router.Get("/*", handlers.NewStaticHandler(s.config.StaticPath).ServeHTTP)
+}
+
+func setupAdminUser(db db.Database, w storage.WorkspaceManager, cfg *config.Config) error {
+
+	adminEmail := cfg.AdminEmail
+	adminPassword := cfg.AdminPassword
+
+	// Check if admin user exists
+	adminUser, err := db.GetUserByEmail(adminEmail)
+	if adminUser != nil {
+		return nil // Admin user already exists
+	} else if err != sql.ErrNoRows {
+		return err
+	}
+
+	// Hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	// Create admin user
+	adminUser = &models.User{
+		Email:        adminEmail,
+		DisplayName:  "Admin",
+		PasswordHash: string(hashedPassword),
+		Role:         models.RoleAdmin,
+	}
+
+	createdUser, err := db.CreateUser(adminUser)
+	if err != nil {
+		return fmt.Errorf("failed to create admin user: %w", err)
+	}
+
+	// Initialize workspace directory
+	err = w.InitializeUserWorkspace(createdUser.ID, createdUser.LastWorkspaceID)
+	if err != nil {
+		return fmt.Errorf("failed to initialize admin workspace: %w", err)
+	}
+
+	log.Printf("Created admin user with ID: %d and default workspace with ID: %d", createdUser.ID, createdUser.LastWorkspaceID)
+
+	return nil
+
 }

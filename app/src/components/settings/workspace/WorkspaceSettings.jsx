@@ -74,6 +74,8 @@ const WorkspaceSettings = () => {
         gitToken: currentWorkspace.gitToken,
         gitAutoCommit: currentWorkspace.gitAutoCommit,
         gitCommitMsgTemplate: currentWorkspace.gitCommitMsgTemplate,
+        gitCommitName: currentWorkspace.gitCommitName,
+        gitCommitEmail: currentWorkspace.gitCommitEmail,
       };
       dispatch({ type: 'INIT_SETTINGS', payload: settings });
     }
@@ -204,6 +206,8 @@ const WorkspaceSettings = () => {
                 gitToken={state.localSettings.gitToken}
                 gitAutoCommit={state.localSettings.gitAutoCommit}
                 gitCommitMsgTemplate={state.localSettings.gitCommitMsgTemplate}
+                gitCommitName={state.localSettings.gitCommitName}
+                gitCommitEmail={state.localSettings.gitCommitEmail}
                 onInputChange={handleInputChange}
               />
             </Accordion.Panel>

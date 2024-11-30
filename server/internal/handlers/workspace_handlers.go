@@ -64,6 +64,8 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 				workspace.GitURL,
 				workspace.GitUser,
 				workspace.GitToken,
+				workspace.GitCommitName,
+				workspace.GitCommitEmail,
 			); err != nil {
 				http.Error(w, "Failed to setup git repo: "+err.Error(), http.StatusInternalServerError)
 				return
@@ -96,7 +98,9 @@ func gitSettingsChanged(new, old *models.Workspace) bool {
 	if new.GitEnabled {
 		return new.GitURL != old.GitURL ||
 			new.GitUser != old.GitUser ||
-			new.GitToken != old.GitToken
+			new.GitToken != old.GitToken ||
+			new.GitCommitName != old.GitCommitName ||
+			new.GitCommitEmail != old.GitCommitEmail
 	}
 
 	return false
@@ -135,6 +139,8 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 					workspace.GitURL,
 					workspace.GitUser,
 					workspace.GitToken,
+					workspace.GitCommitName,
+					workspace.GitCommitEmail,
 				); err != nil {
 					http.Error(w, "Failed to setup git repo: "+err.Error(), http.StatusInternalServerError)
 					return

@@ -5,17 +5,21 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 // Config holds the configuration for a Git client
 type Config struct {
-	URL      string
-	Username string
-	Token    string
-	WorkDir  string
+	URL         string
+	Username    string
+	Token       string
+	WorkDir     string
+	CommitName  string
+	CommitEmail string
 }
 
 // Client defines the interface for Git operations
@@ -34,13 +38,15 @@ type client struct {
 }
 
 // New creates a new git Client instance
-func New(url, username, token, workDir string) Client {
+func New(url, username, token, workDir, commitName, commitEmail string) Client {
 	return &client{
 		Config: Config{
-			URL:      url,
-			Username: username,
-			Token:    token,
-			WorkDir:  workDir,
+			URL:         url,
+			Username:    username,
+			Token:       token,
+			WorkDir:     workDir,
+			CommitName:  commitName,
+			CommitEmail: commitEmail,
 		},
 	}
 }
@@ -110,7 +116,13 @@ func (c *client) Commit(message string) error {
 		return fmt.Errorf("failed to add changes: %w", err)
 	}
 
-	_, err = w.Commit(message, &git.CommitOptions{})
+	_, err = w.Commit(message, &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  c.CommitName,
+			Email: c.CommitEmail,
+			When:  time.Now(),
+		},
+	})
 	if err != nil {
 		return fmt.Errorf("failed to commit changes: %w", err)
 	}
