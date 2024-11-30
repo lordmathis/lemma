@@ -103,3 +103,7 @@ A Dockerfile is provided for easy deployment. To build and run the Docker image:
    ```
    docker run -p 8080:8080 -v /path/to/data:/app/data novamd
    ```
+
+## Upgrading
+
+Before first stable release (1.0.0) there is not upgrade path. You have to delete the database file and start over.
