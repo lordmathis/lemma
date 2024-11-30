@@ -29,6 +29,11 @@ func (w *Workspace) Validate() error {
 	return validate.Struct(w)
 }
 
+// ValidateGitSettings validates the git settings if git is enabled
+func (w *Workspace) ValidateGitSettings() error {
+	return validate.StructExcept(w, "ID", "UserID", "Theme")
+}
+
 // SetDefaultSettings sets the default settings for the workspace
 func (w *Workspace) SetDefaultSettings() {
 

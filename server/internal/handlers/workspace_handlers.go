@@ -41,6 +41,11 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 			return
 		}
 
+		if err := workspace.ValidateGitSettings(); err != nil {
+			http.Error(w, "Invalid workspace", http.StatusBadRequest)
+			return
+		}
+
 		workspace.UserID = ctx.UserID
 		if err := h.DB.CreateWorkspace(&workspace); err != nil {
 			http.Error(w, "Failed to create workspace", http.StatusInternalServerError)
