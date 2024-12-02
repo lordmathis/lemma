@@ -5,21 +5,22 @@ import (
 	"log"
 
 	"novamd/internal/app"
-	"novamd/internal/config"
 )
 
 func main() {
 	// Load configuration
-	cfg, err := config.Load()
+	cfg, err := app.LoadConfig()
 	if err != nil {
 		log.Fatal("Failed to load configuration:", err)
 	}
 
 	// Initialize and start server
-	server, err := app.NewServer(cfg)
+	options, err := app.DefaultOptions(cfg)
 	if err != nil {
-		log.Fatal("Failed to initialize server:", err)
+		log.Fatal("Failed to initialize server options:", err)
 	}
+
+	server := app.NewServer(options)
 	defer func() {
 		if err := server.Close(); err != nil {
 			log.Println("Error closing server:", err)

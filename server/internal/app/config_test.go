@@ -1,15 +1,14 @@
-package config_test
+package app_test
 
 import (
+	"novamd/internal/app"
 	"os"
 	"testing"
 	"time"
-
-	"novamd/internal/config"
 )
 
 func TestDefaultConfig(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := app.DefaultConfig()
 
 	tests := []struct {
 		name     string
@@ -75,7 +74,7 @@ func TestLoad(t *testing.T) {
 		setEnv(t, "NOVAMD_ADMIN_PASSWORD", "password123")
 		setEnv(t, "NOVAMD_ENCRYPTION_KEY", "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=") // 32 bytes base64 encoded
 
-		cfg, err := config.Load()
+		cfg, err := app.LoadConfig()
 		if err != nil {
 			t.Fatalf("Load() error = %v", err)
 		}
@@ -110,7 +109,7 @@ func TestLoad(t *testing.T) {
 			setEnv(t, k, v)
 		}
 
-		cfg, err := config.Load()
+		cfg, err := app.LoadConfig()
 		if err != nil {
 			t.Fatalf("Load() error = %v", err)
 		}
@@ -201,7 +200,7 @@ func TestLoad(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				tc.setupEnv(t)
-				_, err := config.Load()
+				_, err := app.LoadConfig()
 				if err == nil {
 					t.Error("expected error, got nil")
 					return
