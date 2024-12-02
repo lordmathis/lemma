@@ -7,6 +7,12 @@ import (
 	"novamd/internal/app"
 )
 
+// @title NovaMD API
+// @version 1.0
+// @description This is the API for NovaMD markdown note taking app.
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @BasePath /api/v1
 func main() {
 	// Load configuration
 	cfg, err := app.LoadConfig()

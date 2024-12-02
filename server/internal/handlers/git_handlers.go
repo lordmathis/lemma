@@ -7,7 +7,20 @@ import (
 	"novamd/internal/context"
 )
 
-// StageCommitAndPush stages, commits, and pushes changes to the remote repository
+// StageCommitAndPush godoc
+// @Summary Stage, commit, and push changes
+// @Description Stages, commits, and pushes changes to the remote repository
+// @Tags git
+// @ID stageCommitAndPush
+// @Security BearerAuth
+// @Produce json
+// @Param workspace_name path string true "Workspace name"
+// @Param body body string true "Commit message"
+// @Success 200 {object} map[string]string
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 400 {string} string "Commit message is required"
+// @Failure 500 {string} string "Failed to stage, commit, and push changes"
+// @Router /workspaces/{workspace_name}/git/commit [post]
 func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -39,7 +52,17 @@ func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 	}
 }
 
-// PullChanges pulls changes from the remote repository
+// PullChanges godoc
+// @Summary Pull changes from remote
+// @Description Pulls changes from the remote repository
+// @Tags git
+// @ID pullChanges
+// @Security BearerAuth
+// @Produce json
+// @Param workspace_name path string true "Workspace name"
+// @Success 200 {object} map[string]string
+// @Failure 500 {string} string "Failed to pull changes"
+// @Router /workspaces/{workspace_name}/git/pull [post]
 func (h *Handler) PullChanges() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)

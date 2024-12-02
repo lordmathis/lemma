@@ -31,7 +31,32 @@ type UpdateUserRequest struct {
 	Role        models.UserRole `json:"role,omitempty"`
 }
 
-// AdminListUsers returns a list of all users
+// WorkspaceStats holds workspace statistics
+type WorkspaceStats struct {
+	UserID             int       `json:"userID"`
+	UserEmail          string    `json:"userEmail"`
+	WorkspaceID        int       `json:"workspaceID"`
+	WorkspaceName      string    `json:"workspaceName"`
+	WorkspaceCreatedAt time.Time `json:"workspaceCreatedAt"`
+	*storage.FileCountStats
+}
+
+// SystemStats holds system-wide statistics
+type SystemStats struct {
+	*db.UserStats
+	*storage.FileCountStats
+}
+
+// AdminListUsers godoc
+// @Summary List all users
+// @Description Returns the list of all users
+// @Tags Admin
+// @Security BearerAuth
+// @ID adminListUsers
+// @Produce json
+// @Success 200 {array} models.User
+// @Failure 500 {string} "Failed to list users"
+// @Router /admin/users [get]
 func (h *Handler) AdminListUsers() http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		users, err := h.DB.GetAllUsers()
@@ -44,7 +69,24 @@ func (h *Handler) AdminListUsers() http.HandlerFunc {
 	}
 }
 
-// AdminCreateUser creates a new user
+// AdminCreateUser godoc
+// @Summary Create a new user
+// @Description Create a new user as an admin
+// @Tags Admin
+// @Security BearerAuth
+// @ID adminCreateUser
+// @Accept json
+// @Produce json
+// @Param user body CreateUserRequest true "User details"
+// @Success 200 {object} models.User
+// @Failure 400 {string} "Invalid request body"
+// @Failure 400 {string} "Email, password, and role are required"
+// @Failure 400 {string} "Password must be at least 8 characters"
+// @Failure 409 {string} "Email already exists"
+// @Failure 500 {string} "Failed to hash password"
+// @Failure 500 {string} "Failed to create user"
+// @Failure 500 {string} "Failed to initialize user workspace"
+// @Router /admin/users [post]
 func (h *Handler) AdminCreateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req CreateUserRequest
@@ -103,7 +145,18 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 	}
 }
 
-// AdminGetUser gets a specific user by ID
+// AdminGetUser godoc
+// @Summary Get a specific user
+// @Description Get a specific user as an admin
+// @Tags Admin
+// @Security BearerAuth
+// @ID adminGetUser
+// @Produce json
+// @Param userId path int true "User ID"
+// @Success 200 {object} models.User
+// @Failure 400 {string} "Invalid user ID"
+// @Failure 404 {string} "User not found"
+// @Router /admin/users/{userId} [get]
 func (h *Handler) AdminGetUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := strconv.Atoi(chi.URLParam(r, "userId"))
@@ -122,7 +175,23 @@ func (h *Handler) AdminGetUser() http.HandlerFunc {
 	}
 }
 
-// AdminUpdateUser updates a specific user
+// AdminUpdateUser godoc
+// @Summary Update a specific user
+// @Description Update a specific user as an admin
+// @Tags Admin
+// @Security BearerAuth
+// @ID adminUpdateUser
+// @Accept json
+// @Produce json
+// @Param userId path int true "User ID"
+// @Param user body UpdateUserRequest true "User details"
+// @Success 200 {object} models.User
+// @Failure 400 {string} "Invalid user ID"
+// @Failure 400 {string} "Invalid request body"
+// @Failure 404 {string} "User not found"
+// @Failure 500 {string} "Failed to hash password"
+// @Failure 500 {string} "Failed to update user"
+// @Router /admin/users/{userId} [put]
 func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := strconv.Atoi(chi.URLParam(r, "userId"))
@@ -172,7 +241,20 @@ func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 	}
 }
 
-// AdminDeleteUser deletes a specific user
+// AdminDeleteUser godoc
+// @Summary Delete a specific user
+// @Description Delete a specific user as an admin
+// @Tags Admin
+// @Security BearerAuth
+// @ID adminDeleteUser
+// @Param userId path int true "User ID"
+// @Success 204 "No Content"
+// @Failure 400 {string} "Invalid user ID"
+// @Failure 400 {string} "Cannot delete your own account"
+// @Failure 403 {string} "Cannot delete other admin users"
+// @Failure 404 {string} "User not found"
+// @Failure 500 {string} "Failed to delete user"
+// @Router /admin/users/{userId} [delete]
 func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -214,17 +296,18 @@ func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 	}
 }
 
-// WorkspaceStats holds workspace statistics
-type WorkspaceStats struct {
-	UserID             int       `json:"userID"`
-	UserEmail          string    `json:"userEmail"`
-	WorkspaceID        int       `json:"workspaceID"`
-	WorkspaceName      string    `json:"workspaceName"`
-	WorkspaceCreatedAt time.Time `json:"workspaceCreatedAt"`
-	*storage.FileCountStats
-}
-
-// AdminListWorkspaces returns a list of all workspaces and their stats
+// AdminListWorkspaces godoc
+// @Summary List all workspaces
+// @Description List all workspaces and their stats as an admin
+// @Tags Admin
+// @Security BearerAuth
+// @ID adminListWorkspaces
+// @Produce json
+// @Success 200 {array} WorkspaceStats
+// @Failure 500 {string} "Failed to list workspaces"
+// @Failure 500 {string} "Failed to get user"
+// @Failure 500 {string} "Failed to get file stats"
+// @Router /admin/workspaces [get]
 func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		workspaces, err := h.DB.GetAllWorkspaces()
@@ -266,13 +349,17 @@ func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 	}
 }
 
-// SystemStats holds system-wide statistics
-type SystemStats struct {
-	*db.UserStats
-	*storage.FileCountStats
-}
-
-// AdminGetSystemStats returns system-wide statistics for admins
+// AdminGetSystemStats godoc
+// @Summary Get system statistics
+// @Description Get system-wide statistics as an admin
+// @Tags Admin
+// @Security BearerAuth
+// @ID adminGetSystemStats
+// @Produce json
+// @Success 200 {object} SystemStats
+// @Failure 500 {string} "Failed to get user stats"
+// @Failure 500 {string} "Failed to get file stats"
+// @Router /admin/stats [get]
 func (h *Handler) AdminGetSystemStats() http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		userStats, err := h.DB.GetSystemStats()

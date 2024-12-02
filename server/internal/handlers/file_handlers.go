@@ -12,7 +12,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// ListFiles returns a list of all files in the workspace
+// ListFiles godoc
+// @Summary List files
+// @Description Lists all files in the user's workspace
+// @Tags files
+// @ID listFiles
+// @Security BearerAuth
+// @Produce json
+// @Param workspace_name path string true "Workspace name"
+// @Success 200 {array} string
+// @Failure 500 {string} string "Failed to list files"
+// @Router /workspaces/{workspace_name}/files [get]
 func (h *Handler) ListFiles() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -30,7 +40,19 @@ func (h *Handler) ListFiles() http.HandlerFunc {
 	}
 }
 
-// LookupFileByName returns the paths of files with the given name
+// LookupFileByName godoc
+// @Summary Lookup file by name
+// @Description Returns the paths of files with the given name in the user's workspace
+// @Tags files
+// @ID lookupFileByName
+// @Security BearerAuth
+// @Produce json
+// @Param workspace_name path string true "Workspace name"
+// @Param filename query string true "File name"
+// @Success 200 {object} map[string][]string
+// @Failure 400 {string} string "Filename is required"
+// @Failure 404 {string} string "File not found"
+// @Router /workspaces/{workspace_name}/files/lookup [get]
 func (h *Handler) LookupFileByName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -54,7 +76,21 @@ func (h *Handler) LookupFileByName() http.HandlerFunc {
 	}
 }
 
-// GetFileContent returns the content of a file
+// GetFileContent godoc
+// @Summary Get file content
+// @Description Returns the content of a file in the user's workspace
+// @Tags files
+// @ID getFileContent
+// @Security BearerAuth
+// @Produce plain
+// @Param workspace_name path string true "Workspace name"
+// @Param file_path path string true "File path"
+// @Success 200 {string} "File content"
+// @Failure 400 {string} string "Invalid file path"
+// @Failure 404 {string} string "File not found"
+// @Failure 500 {string} string "Failed to read file"
+// @Failure 500 {string} string "Failed to write response"
+// @Router /workspaces/{workspace_name}/files/* [get]
 func (h *Handler) GetFileContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -72,7 +108,7 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 			}
 
 			if os.IsNotExist(err) {
-				http.Error(w, "Failed to read file", http.StatusNotFound)
+				http.Error(w, "File not found", http.StatusNotFound)
 				return
 			}
 
@@ -89,7 +125,21 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 	}
 }
 
-// SaveFile saves the content of a file
+// SaveFile godoc
+// @Summary Save file
+// @Description Saves the content of a file in the user's workspace
+// @Tags files
+// @ID saveFile
+// @Security BearerAuth
+// @Accept plain
+// @Produce json
+// @Param workspace_name path string true "Workspace name"
+// @Param file_path path string true "File path"
+// @Success 200 {string} "File saved successfully"
+// @Failure 400 {string} string "Failed to read request body"
+// @Failure 400 {string} string "Invalid file path"
+// @Failure 500 {string} string "Failed to save file"
+// @Router /workspaces/{workspace_name}/files/* [post]
 func (h *Handler) SaveFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -119,7 +169,21 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 	}
 }
 
-// DeleteFile deletes a file
+// DeleteFile godoc
+// @Summary Delete file
+// @Description Deletes a file in the user's workspace
+// @Tags files
+// @ID deleteFile
+// @Security BearerAuth
+// @Produce string
+// @Param workspace_name path string true "Workspace name"
+// @Param file_path path string true "File path"
+// @Success 200 {string} "File deleted successfully"
+// @Failure 400 {string} string "Invalid file path"
+// @Failure 404 {string} string "File not found"
+// @Failure 500 {string} string "Failed to delete file"
+// @Failure 500 {string} string "Failed to write response"
+// @Router /workspaces/{workspace_name}/files/* [delete]
 func (h *Handler) DeleteFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -153,7 +217,18 @@ func (h *Handler) DeleteFile() http.HandlerFunc {
 	}
 }
 
-// GetLastOpenedFile returns the last opened file in the workspace
+// GetLastOpenedFile godoc
+// @Summary Get last opened file
+// @Description Returns the path of the last opened file in the user's workspace
+// @Tags files
+// @ID getLastOpenedFile
+// @Security BearerAuth
+// @Produce json
+// @Param workspace_name path string true "Workspace name"
+// @Success 200 {object} map[string]string
+// @Failure 400 {string} string "Invalid file path"
+// @Failure 500 {string} string "Failed to get last opened file"
+// @Router /workspaces/{workspace_name}/files/last [get]
 func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -176,7 +251,21 @@ func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 	}
 }
 
-// UpdateLastOpenedFile updates the last opened file in the workspace
+// UpdateLastOpenedFile godoc
+// @Summary Update last opened file
+// @Description Updates the last opened file in the user's workspace
+// @Tags files
+// @ID updateLastOpenedFile
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param workspace_name path string true "Workspace name"
+// @Success 200 {object} map[string]string
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 400 {string} string "Invalid file path"
+// @Failure 404 {string} string "File not found"
+// @Failure 500 {string} string "Failed to update file"
+// @Router /workspaces/{workspace_name}/files/last [put]
 func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -207,7 +296,7 @@ func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 					return
 				}
 
-				http.Error(w, "Failed to update file", http.StatusInternalServerError)
+				http.Error(w, "Failed to update last opened file", http.StatusInternalServerError)
 				return
 			}
 		}

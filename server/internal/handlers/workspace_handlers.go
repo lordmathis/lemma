@@ -9,7 +9,16 @@ import (
 	"novamd/internal/models"
 )
 
-// ListWorkspaces returns a list of all workspaces for the current user
+// ListWorkspaces godoc
+// @Summary List workspaces
+// @Description Lists all workspaces for the current user
+// @Tags workspaces
+// @ID listWorkspaces
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {array} models.Workspace
+// @Failure 500 {string} string "Failed to list workspaces"
+// @Router /workspaces [get]
 func (h *Handler) ListWorkspaces() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -27,7 +36,22 @@ func (h *Handler) ListWorkspaces() http.HandlerFunc {
 	}
 }
 
-// CreateWorkspace creates a new workspace
+// CreateWorkspace godoc
+// @Summary Create workspace
+// @Description Creates a new workspace
+// @Tags workspaces
+// @ID createWorkspace
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param body body models.Workspace true "Workspace"
+// @Success 200 {object} models.Workspace
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 400 {string} string "Invalid workspace"
+// @Failure 500 {string} string "Failed to create workspace"
+// @Failure 500 {string} string "Failed to initialize workspace directory"
+// @Failure 500 {string} string "Failed to setup git repo"
+// @Router /workspaces [post]
 func (h *Handler) CreateWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -76,7 +100,17 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 	}
 }
 
-// GetWorkspace returns the current workspace
+// GetWorkspace godoc
+// @Summary Get workspace
+// @Description Returns the current workspace
+// @Tags workspaces
+// @ID getWorkspace
+// @Security BearerAuth
+// @Produce json
+// @Param workspace_name path string true "Workspace name"
+// @Success 200 {object} models.Workspace
+// @Failure 500 {string} string "Failed to get workspace"
+// @Router /workspaces/{workspace_name} [get]
 func (h *Handler) GetWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -106,7 +140,21 @@ func gitSettingsChanged(new, old *models.Workspace) bool {
 	return false
 }
 
-// UpdateWorkspace updates the current workspace
+// UpdateWorkspace godoc
+// @Summary Update workspace
+// @Description Updates the current workspace
+// @Tags workspaces
+// @ID updateWorkspace
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param workspace_name path string true "Workspace name"
+// @Param body body models.Workspace true "Workspace"
+// @Success 200 {object} models.Workspace
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 500 {string} string "Failed to update workspace"
+// @Failure 500 {string} string "Failed to setup git repo"
+// @Router /workspaces/{workspace_name} [put]
 func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -160,7 +208,23 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 	}
 }
 
-// DeleteWorkspace deletes the current workspace
+// DeleteWorkspace godoc
+// @Summary Delete workspace
+// @Description Deletes the current workspace
+// @Tags workspaces
+// @ID deleteWorkspace
+// @Security BearerAuth
+// @Produce json
+// @Param workspace_name path string true "Workspace name"
+// @Success 200 {object} map[string]string
+// @Failure 400 {string} string "Cannot delete the last workspace"
+// @Failure 500 {string} string "Failed to get workspaces"
+// @Failure 500 {string} string "Failed to start transaction"
+// @Failure 500 {string} string "Failed to update last workspace"
+// @Failure 500 {string} string "Failed to delete workspace"
+// @Failure 500 {string} string "Failed to rollback transaction"
+// @Failure 500 {string} string "Failed to commit transaction"
+// @Router /workspaces/{workspace_name} [delete]
 func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -228,7 +292,16 @@ func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 	}
 }
 
-// GetLastWorkspaceName returns the name of the last opened workspace
+// GetLastWorkspaceName godoc
+// @Summary Get last workspace name
+// @Description Returns the name of the last opened workspace
+// @Tags workspaces
+// @ID getLastWorkspaceName
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Failure 500 {string} string "Failed to get last workspace"
+// @Router /workspaces/last [get]
 func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -246,7 +319,18 @@ func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 	}
 }
 
-// UpdateLastWorkspaceName updates the name of the last opened workspace
+// UpdateLastWorkspaceName godoc
+// @Summary Update last workspace name
+// @Description Updates the name of the last opened workspace
+// @Tags workspaces
+// @ID updateLastWorkspaceName
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 500 {string} string "Failed to update last workspace"
+// @Router /workspaces/last [put]
 func (h *Handler) UpdateLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)

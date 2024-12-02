@@ -34,7 +34,20 @@ type RefreshResponse struct {
 	AccessToken string `json:"accessToken"`
 }
 
-// Login handles user authentication and returns JWT tokens
+// Login godoc
+// @Summary Login
+// @Description Logs in a user
+// @Tags auth
+// @ID login
+// @Accept json
+// @Produce json
+// @Param body body LoginRequest true "Login request"
+// @Success 200 {object} LoginResponse
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 400 {string} string "Email and password are required"
+// @Failure 401 {string} string "Invalid credentials"
+// @Failure 500 {string} string "Failed to create session"
+// @Router /auth/login [post]
 func (h *Handler) Login(authService *auth.SessionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req LoginRequest
@@ -82,7 +95,16 @@ func (h *Handler) Login(authService *auth.SessionService) http.HandlerFunc {
 	}
 }
 
-// Logout invalidates the user's session
+// Logout godoc
+// @Summary Logout
+// @Description Log out invalidates the user's session
+// @Tags auth
+// @ID logout
+// @Security BearerAuth
+// @Success 200 {string} string "OK"
+// @Failure 400 {string} string "Session ID required"
+// @Failure 500 {string} string "Failed to logout"
+// @Router /auth/logout [post]
 func (h *Handler) Logout(authService *auth.SessionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionID := r.Header.Get("X-Session-ID")
@@ -101,7 +123,19 @@ func (h *Handler) Logout(authService *auth.SessionService) http.HandlerFunc {
 	}
 }
 
-// RefreshToken generates a new access token using a refresh token
+// RefreshToken godoc
+// @Summary Refresh token
+// @Description Refreshes the access token using the refresh token
+// @Tags auth
+// @ID refreshToken
+// @Accept json
+// @Produce json
+// @Param body body RefreshRequest true "Refresh request"
+// @Success 200 {object} RefreshResponse
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 400 {string} string "Refresh token required"
+// @Failure 401 {string} string "Invalid refresh token"
+// @Router /auth/refresh [post]
 func (h *Handler) RefreshToken(authService *auth.SessionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RefreshRequest
@@ -130,7 +164,16 @@ func (h *Handler) RefreshToken(authService *auth.SessionService) http.HandlerFun
 	}
 }
 
-// GetCurrentUser returns the currently authenticated user
+// GetCurrentUser godoc
+// @Summary Get current user
+// @Description Returns the current authenticated user
+// @Tags auth
+// @ID getCurrentUser
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} models.User
+// @Failure 404 {string} string "User not found"
+// @Router /auth/me [get]
 func (h *Handler) GetCurrentUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)

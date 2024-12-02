@@ -22,7 +22,26 @@ type DeleteAccountRequest struct {
 	Password string `json:"password"`
 }
 
-// UpdateProfile updates the current user's profile
+// UpdateProfile godoc
+// @Summary Update profile
+// @Description Updates the user's profile
+// @Tags users
+// @ID updateProfile
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param body body UpdateProfileRequest true "Profile update request"
+// @Success 200 {object} models.User
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 400 {string} string "Current password is required to change password"
+// @Failure 400 {string} string "New password must be at least 8 characters long"
+// @Failure 400 {string} string "Current password is required to change email"
+// @Failure 401 {string} string "Current password is incorrect"
+// @Failure 404 {string} string "User not found"
+// @Failure 409 {string} string "Email already in use"
+// @Failure 500 {string} string "Failed to process new password"
+// @Failure 500 {string} string "Failed to update profile"
+// @Router /profile [put]
 func (h *Handler) UpdateProfile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -113,7 +132,23 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 	}
 }
 
-// DeleteAccount handles user account deletion
+// DeleteAccount godoc
+// @Summary Delete account
+// @Description Deletes the user's account and all associated data
+// @Tags users
+// @ID deleteAccount
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param body body DeleteAccountRequest true "Account deletion request"
+// @Success 200 {object} map[string]string
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 401 {string} string "Password is incorrect"
+// @Failure 403 {string} string "Cannot delete the last admin account"
+// @Failure 404 {string} string "User not found"
+// @Failure 500 {string} string "Failed to verify admin status"
+// @Failure 500 {string} string "Failed to delete account"
+// @Router /profile [delete]
 func (h *Handler) DeleteAccount() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
