@@ -11,6 +11,10 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
 	"github.com/unrolled/secure"
+
+	httpSwagger "github.com/swaggo/http-swagger"
+
+	_ "novamd/docs" // Swagger docs
 )
 
 // setupRouter creates and configures the chi router with middleware and routes
@@ -47,6 +51,12 @@ func setupRouter(o Options) *chi.Mux {
 	handler := &handlers.Handler{
 		DB:      o.Database,
 		Storage: o.Storage,
+	}
+
+	if o.Config.IsDevelopment {
+		r.Get("/swagger/*", httpSwagger.Handler(
+			httpSwagger.URL("/swagger/doc.json"), // The URL pointing to API definition
+		))
 	}
 
 	// API routes

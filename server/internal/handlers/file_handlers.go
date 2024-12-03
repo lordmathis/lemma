@@ -108,12 +108,12 @@ func (h *Handler) LookupFileByName() http.HandlerFunc {
 // @Produce plain
 // @Param workspace_name path string true "Workspace name"
 // @Param file_path path string true "File path"
-// @Success 200 {string} "File content"
+// @Success 200 {string} string "Raw file content"
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 404 {object} ErrorResponse "File not found"
 // @Failure 500 {object} ErrorResponse "Failed to read file"
 // @Failure 500 {object} ErrorResponse "Failed to write response"
-// @Router /workspaces/{workspace_name}/files/* [get]
+// @Router /workspaces/{workspace_name}/files/{file_path} [get]
 func (h *Handler) GetFileContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -162,7 +162,7 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 // @Failure 400 {object} ErrorResponse "Failed to read request body"
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 500 {object} ErrorResponse "Failed to save file"
-// @Router /workspaces/{workspace_name}/files/* [post]
+// @Router /workspaces/{workspace_name}/files/{file_path} [post]
 func (h *Handler) SaveFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -205,7 +205,6 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 // @Tags files
 // @ID deleteFile
 // @Security BearerAuth
-// @Produce string
 // @Param workspace_name path string true "Workspace name"
 // @Param file_path path string true "File path"
 // @Success 204 "No Content - File deleted successfully"
@@ -213,7 +212,7 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 // @Failure 404 {object} ErrorResponse "File not found"
 // @Failure 500 {object} ErrorResponse "Failed to delete file"
 // @Failure 500 {object} ErrorResponse "Failed to write response"
-// @Router /workspaces/{workspace_name}/files/* [delete]
+// @Router /workspaces/{workspace_name}/files/{file_path} [delete]
 func (h *Handler) DeleteFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)

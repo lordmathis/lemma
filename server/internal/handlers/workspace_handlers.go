@@ -14,8 +14,8 @@ type DeleteWorkspaceResponse struct {
 	NextWorkspaceName string `json:"nextWorkspaceName"`
 }
 
-// GetLastWorkspaceNameResponse contains the name of the last opened workspace
-type GetLastWorkspaceNameResponse struct {
+// LastWorkspaceNameResponse contains the name of the last opened workspace
+type LastWorkspaceNameResponse struct {
 	LastWorkspaceName string `json:"lastWorkspaceName"`
 }
 
@@ -325,7 +325,7 @@ func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, &GetLastWorkspaceNameResponse{LastWorkspaceName: workspaceName})
+		respondJSON(w, &LastWorkspaceNameResponse{LastWorkspaceName: workspaceName})
 	}
 }
 
