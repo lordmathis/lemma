@@ -191,7 +191,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 			}
 
 			rr := h.makeRequest(t, http.MethodDelete, "/api/v1/profile", deleteReq, userToken, nil)
-			require.Equal(t, http.StatusOK, rr.Code)
+			require.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Verify user is deleted
 			rr = h.makeRequest(t, http.MethodPost, "/api/v1/auth/login", loginReq, "", nil)

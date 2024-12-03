@@ -56,7 +56,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 				var response map[string]string
 				err := json.NewDecoder(rr.Body).Decode(&response)
 				require.NoError(t, err)
-				assert.Contains(t, response["message"], "successfully")
+				require.Contains(t, response, "commitHash")
 
 				// Verify mock was called correctly
 				assert.Equal(t, 1, h.MockGit.GetCommitCount(), "Commit should be called once")
@@ -100,7 +100,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 				var response map[string]string
 				err := json.NewDecoder(rr.Body).Decode(&response)
 				require.NoError(t, err)
-				assert.Contains(t, response["message"], "Pulled changes")
+				assert.Contains(t, response["message"], "Successfully pulled changes")
 
 				assert.Equal(t, 1, h.MockGit.GetPullCount(), "Pull should be called once")
 			})

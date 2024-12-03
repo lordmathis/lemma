@@ -43,43 +43,43 @@ type RefreshResponse struct {
 // @Produce json
 // @Param body body LoginRequest true "Login request"
 // @Success 200 {object} LoginResponse
-// @Failure 400 {string} string "Invalid request body"
-// @Failure 400 {string} string "Email and password are required"
-// @Failure 401 {string} string "Invalid credentials"
-// @Failure 500 {string} string "Failed to create session"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 400 {object} ErrorResponse "Email and password are required"
+// @Failure 401 {object} ErrorResponse "Invalid credentials"
+// @Failure 500 {object} ErrorResponse "Failed to create session"
 // @Router /auth/login [post]
 func (h *Handler) Login(authService *auth.SessionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		// Validate request
 		if req.Email == "" || req.Password == "" {
-			http.Error(w, "Email and password are required", http.StatusBadRequest)
+			respondError(w, "Email and password are required", http.StatusBadRequest)
 			return
 		}
 
 		// Get user from database
 		user, err := h.DB.GetUserByEmail(req.Email)
 		if err != nil {
-			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			respondError(w, "Invalid credentials", http.StatusUnauthorized)
 			return
 		}
 
 		// Verify password
 		err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
 		if err != nil {
-			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			respondError(w, "Invalid credentials", http.StatusUnauthorized)
 			return
 		}
 
 		// Create session and generate tokens
 		session, accessToken, err := authService.CreateSession(user.ID, string(user.Role))
 		if err != nil {
-			http.Error(w, "Failed to create session", http.StatusInternalServerError)
+			respondError(w, "Failed to create session", http.StatusInternalServerError)
 			return
 		}
 
@@ -101,25 +101,25 @@ func (h *Handler) Login(authService *auth.SessionService) http.HandlerFunc {
 // @Tags auth
 // @ID logout
 // @Security BearerAuth
-// @Success 200 {string} string "OK"
-// @Failure 400 {string} string "Session ID required"
-// @Failure 500 {string} string "Failed to logout"
+// @Success 204 "No Content"
+// @Failure 400 {object} ErrorResponse "Session ID required"
+// @Failure 500 {object} ErrorResponse "Failed to logout"
 // @Router /auth/logout [post]
 func (h *Handler) Logout(authService *auth.SessionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionID := r.Header.Get("X-Session-ID")
 		if sessionID == "" {
-			http.Error(w, "Session ID required", http.StatusBadRequest)
+			respondError(w, "Session ID required", http.StatusBadRequest)
 			return
 		}
 
 		err := authService.InvalidateSession(sessionID)
 		if err != nil {
-			http.Error(w, "Failed to logout", http.StatusInternalServerError)
+			respondError(w, "Failed to logout", http.StatusInternalServerError)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -132,27 +132,27 @@ func (h *Handler) Logout(authService *auth.SessionService) http.HandlerFunc {
 // @Produce json
 // @Param body body RefreshRequest true "Refresh request"
 // @Success 200 {object} RefreshResponse
-// @Failure 400 {string} string "Invalid request body"
-// @Failure 400 {string} string "Refresh token required"
-// @Failure 401 {string} string "Invalid refresh token"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 400 {object} ErrorResponse "Refresh token required"
+// @Failure 401 {object} ErrorResponse "Invalid refresh token"
 // @Router /auth/refresh [post]
 func (h *Handler) RefreshToken(authService *auth.SessionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RefreshRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		if req.RefreshToken == "" {
-			http.Error(w, "Refresh token required", http.StatusBadRequest)
+			respondError(w, "Refresh token required", http.StatusBadRequest)
 			return
 		}
 
 		// Generate new access token
 		accessToken, err := authService.RefreshSession(req.RefreshToken)
 		if err != nil {
-			http.Error(w, "Invalid refresh token", http.StatusUnauthorized)
+			respondError(w, "Invalid refresh token", http.StatusUnauthorized)
 			return
 		}
 
@@ -172,7 +172,7 @@ func (h *Handler) RefreshToken(authService *auth.SessionService) http.HandlerFun
 // @Security BearerAuth
 // @Produce json
 // @Success 200 {object} models.User
-// @Failure 404 {string} string "User not found"
+// @Failure 404 {object} ErrorResponse "User not found"
 // @Router /auth/me [get]
 func (h *Handler) GetCurrentUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +184,7 @@ func (h *Handler) GetCurrentUser() http.HandlerFunc {
 		// Get user from database
 		user, err := h.DB.GetUserByID(ctx.UserID)
 		if err != nil {
-			http.Error(w, "User not found", http.StatusNotFound)
+			respondError(w, "User not found", http.StatusNotFound)
 			return
 		}
 

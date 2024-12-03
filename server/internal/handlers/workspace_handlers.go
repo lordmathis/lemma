@@ -9,6 +9,16 @@ import (
 	"novamd/internal/models"
 )
 
+// DeleteWorkspaceResponse contains the name of the next workspace after deleting the current one
+type DeleteWorkspaceResponse struct {
+	NextWorkspaceName string `json:"nextWorkspaceName"`
+}
+
+// GetLastWorkspaceNameResponse contains the name of the last opened workspace
+type GetLastWorkspaceNameResponse struct {
+	LastWorkspaceName string `json:"lastWorkspaceName"`
+}
+
 // ListWorkspaces godoc
 // @Summary List workspaces
 // @Description Lists all workspaces for the current user
@@ -17,7 +27,7 @@ import (
 // @Security BearerAuth
 // @Produce json
 // @Success 200 {array} models.Workspace
-// @Failure 500 {string} string "Failed to list workspaces"
+// @Failure 500 {object} ErrorResponse "Failed to list workspaces"
 // @Router /workspaces [get]
 func (h *Handler) ListWorkspaces() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +38,7 @@ func (h *Handler) ListWorkspaces() http.HandlerFunc {
 
 		workspaces, err := h.DB.GetWorkspacesByUserID(ctx.UserID)
 		if err != nil {
-			http.Error(w, "Failed to list workspaces", http.StatusInternalServerError)
+			respondError(w, "Failed to list workspaces", http.StatusInternalServerError)
 			return
 		}
 
@@ -46,11 +56,11 @@ func (h *Handler) ListWorkspaces() http.HandlerFunc {
 // @Produce json
 // @Param body body models.Workspace true "Workspace"
 // @Success 200 {object} models.Workspace
-// @Failure 400 {string} string "Invalid request body"
-// @Failure 400 {string} string "Invalid workspace"
-// @Failure 500 {string} string "Failed to create workspace"
-// @Failure 500 {string} string "Failed to initialize workspace directory"
-// @Failure 500 {string} string "Failed to setup git repo"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 400 {object} ErrorResponse "Invalid workspace"
+// @Failure 500 {object} ErrorResponse "Failed to create workspace"
+// @Failure 500 {object} ErrorResponse "Failed to initialize workspace directory"
+// @Failure 500 {object} ErrorResponse "Failed to setup git repo"
 // @Router /workspaces [post]
 func (h *Handler) CreateWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -61,23 +71,23 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 
 		var workspace models.Workspace
 		if err := json.NewDecoder(r.Body).Decode(&workspace); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		if err := workspace.ValidateGitSettings(); err != nil {
-			http.Error(w, "Invalid workspace", http.StatusBadRequest)
+			respondError(w, "Invalid workspace", http.StatusBadRequest)
 			return
 		}
 
 		workspace.UserID = ctx.UserID
 		if err := h.DB.CreateWorkspace(&workspace); err != nil {
-			http.Error(w, "Failed to create workspace", http.StatusInternalServerError)
+			respondError(w, "Failed to create workspace", http.StatusInternalServerError)
 			return
 		}
 
 		if err := h.Storage.InitializeUserWorkspace(workspace.UserID, workspace.ID); err != nil {
-			http.Error(w, "Failed to initialize workspace directory", http.StatusInternalServerError)
+			respondError(w, "Failed to initialize workspace directory", http.StatusInternalServerError)
 			return
 		}
 
@@ -91,7 +101,7 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 				workspace.GitCommitName,
 				workspace.GitCommitEmail,
 			); err != nil {
-				http.Error(w, "Failed to setup git repo: "+err.Error(), http.StatusInternalServerError)
+				respondError(w, "Failed to setup git repo: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 		}
@@ -109,7 +119,7 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
 // @Success 200 {object} models.Workspace
-// @Failure 500 {string} string "Failed to get workspace"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /workspaces/{workspace_name} [get]
 func (h *Handler) GetWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -151,9 +161,9 @@ func gitSettingsChanged(new, old *models.Workspace) bool {
 // @Param workspace_name path string true "Workspace name"
 // @Param body body models.Workspace true "Workspace"
 // @Success 200 {object} models.Workspace
-// @Failure 400 {string} string "Invalid request body"
-// @Failure 500 {string} string "Failed to update workspace"
-// @Failure 500 {string} string "Failed to setup git repo"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 500 {object} ErrorResponse "Failed to update workspace"
+// @Failure 500 {object} ErrorResponse "Failed to setup git repo"
 // @Router /workspaces/{workspace_name} [put]
 func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -164,7 +174,7 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 
 		var workspace models.Workspace
 		if err := json.NewDecoder(r.Body).Decode(&workspace); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
@@ -174,7 +184,7 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 
 		// Validate the workspace
 		if err := workspace.Validate(); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			respondError(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -190,7 +200,7 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 					workspace.GitCommitName,
 					workspace.GitCommitEmail,
 				); err != nil {
-					http.Error(w, "Failed to setup git repo: "+err.Error(), http.StatusInternalServerError)
+					respondError(w, "Failed to setup git repo: "+err.Error(), http.StatusInternalServerError)
 					return
 				}
 
@@ -200,7 +210,7 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 		}
 
 		if err := h.DB.UpdateWorkspace(&workspace); err != nil {
-			http.Error(w, "Failed to update workspace", http.StatusInternalServerError)
+			respondError(w, "Failed to update workspace", http.StatusInternalServerError)
 			return
 		}
 
@@ -216,14 +226,14 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 // @Security BearerAuth
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
-// @Success 200 {object} map[string]string
-// @Failure 400 {string} string "Cannot delete the last workspace"
-// @Failure 500 {string} string "Failed to get workspaces"
-// @Failure 500 {string} string "Failed to start transaction"
-// @Failure 500 {string} string "Failed to update last workspace"
-// @Failure 500 {string} string "Failed to delete workspace"
-// @Failure 500 {string} string "Failed to rollback transaction"
-// @Failure 500 {string} string "Failed to commit transaction"
+// @Success 200 {object} DeleteWorkspaceResponse
+// @Failure 400 {object} ErrorResponse "Cannot delete the last workspace"
+// @Failure 500 {object} ErrorResponse "Failed to get workspaces"
+// @Failure 500 {object} ErrorResponse "Failed to start transaction"
+// @Failure 500 {object} ErrorResponse "Failed to update last workspace"
+// @Failure 500 {object} ErrorResponse "Failed to delete workspace"
+// @Failure 500 {object} ErrorResponse "Failed to rollback transaction"
+// @Failure 500 {object} ErrorResponse "Failed to commit transaction"
 // @Router /workspaces/{workspace_name} [delete]
 func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -235,12 +245,12 @@ func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 		// Check if this is the user's last workspace
 		workspaces, err := h.DB.GetWorkspacesByUserID(ctx.UserID)
 		if err != nil {
-			http.Error(w, "Failed to get workspaces", http.StatusInternalServerError)
+			respondError(w, "Failed to get workspaces", http.StatusInternalServerError)
 			return
 		}
 
 		if len(workspaces) <= 1 {
-			http.Error(w, "Cannot delete the last workspace", http.StatusBadRequest)
+			respondError(w, "Cannot delete the last workspace", http.StatusBadRequest)
 			return
 		}
 
@@ -258,37 +268,37 @@ func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 		// Start transaction
 		tx, err := h.DB.Begin()
 		if err != nil {
-			http.Error(w, "Failed to start transaction", http.StatusInternalServerError)
+			respondError(w, "Failed to start transaction", http.StatusInternalServerError)
 			return
 		}
 		defer func() {
 			if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
-				http.Error(w, "Failed to rollback transaction", http.StatusInternalServerError)
+				respondError(w, "Failed to rollback transaction", http.StatusInternalServerError)
 			}
 		}()
 
 		// Update last workspace ID first
 		err = h.DB.UpdateLastWorkspaceTx(tx, ctx.UserID, nextWorkspaceID)
 		if err != nil {
-			http.Error(w, "Failed to update last workspace", http.StatusInternalServerError)
+			respondError(w, "Failed to update last workspace", http.StatusInternalServerError)
 			return
 		}
 
 		// Delete the workspace
 		err = h.DB.DeleteWorkspaceTx(tx, ctx.Workspace.ID)
 		if err != nil {
-			http.Error(w, "Failed to delete workspace", http.StatusInternalServerError)
+			respondError(w, "Failed to delete workspace", http.StatusInternalServerError)
 			return
 		}
 
 		// Commit transaction
 		if err = tx.Commit(); err != nil {
-			http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
+			respondError(w, "Failed to commit transaction", http.StatusInternalServerError)
 			return
 		}
 
 		// Return the next workspace ID in the response so frontend knows where to redirect
-		respondJSON(w, map[string]string{"nextWorkspaceName": nextWorkspaceName})
+		respondJSON(w, &DeleteWorkspaceResponse{NextWorkspaceName: nextWorkspaceName})
 	}
 }
 
@@ -299,8 +309,8 @@ func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 // @ID getLastWorkspaceName
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {object} map[string]string
-// @Failure 500 {string} string "Failed to get last workspace"
+// @Success 200 {object} LastWorkspaceNameResponse
+// @Failure 500 {object} ErrorResponse "Failed to get last workspace"
 // @Router /workspaces/last [get]
 func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -311,11 +321,11 @@ func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 
 		workspaceName, err := h.DB.GetLastWorkspaceName(ctx.UserID)
 		if err != nil {
-			http.Error(w, "Failed to get last workspace", http.StatusInternalServerError)
+			respondError(w, "Failed to get last workspace", http.StatusInternalServerError)
 			return
 		}
 
-		respondJSON(w, map[string]string{"lastWorkspaceName": workspaceName})
+		respondJSON(w, &GetLastWorkspaceNameResponse{LastWorkspaceName: workspaceName})
 	}
 }
 
@@ -327,9 +337,9 @@ func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]string
-// @Failure 400 {string} string "Invalid request body"
-// @Failure 500 {string} string "Failed to update last workspace"
+// @Success 204 "No Content - Last workspace updated successfully"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 500 {object} ErrorResponse "Failed to update last workspace"
 // @Router /workspaces/last [put]
 func (h *Handler) UpdateLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -343,15 +353,15 @@ func (h *Handler) UpdateLastWorkspaceName() http.HandlerFunc {
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		if err := h.DB.UpdateLastWorkspace(ctx.UserID, requestBody.WorkspaceName); err != nil {
-			http.Error(w, "Failed to update last workspace", http.StatusInternalServerError)
+			respondError(w, "Failed to update last workspace", http.StatusInternalServerError)
 			return
 		}
 
-		respondJSON(w, map[string]string{"message": "Last workspace updated successfully"})
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

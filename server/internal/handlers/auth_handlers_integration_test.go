@@ -188,7 +188,7 @@ func TestAuthHandlers_Integration(t *testing.T) {
 				"X-Session-ID": loginResp.Session.ID,
 			}
 			rr = h.makeRequest(t, http.MethodPost, "/api/v1/auth/logout", nil, loginResp.AccessToken, headers)
-			require.Equal(t, http.StatusOK, rr.Code)
+			require.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Try to use the refresh token - should fail
 			refreshReq := handlers.RefreshRequest{

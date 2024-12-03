@@ -55,13 +55,13 @@ type SystemStats struct {
 // @ID adminListUsers
 // @Produce json
 // @Success 200 {array} models.User
-// @Failure 500 {string} "Failed to list users"
+// @Failure 500 {object} ErrorResponse "Failed to list users"
 // @Router /admin/users [get]
 func (h *Handler) AdminListUsers() http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		users, err := h.DB.GetAllUsers()
 		if err != nil {
-			http.Error(w, "Failed to list users", http.StatusInternalServerError)
+			respondError(w, "Failed to list users", http.StatusInternalServerError)
 			return
 		}
 
@@ -79,45 +79,45 @@ func (h *Handler) AdminListUsers() http.HandlerFunc {
 // @Produce json
 // @Param user body CreateUserRequest true "User details"
 // @Success 200 {object} models.User
-// @Failure 400 {string} "Invalid request body"
-// @Failure 400 {string} "Email, password, and role are required"
-// @Failure 400 {string} "Password must be at least 8 characters"
-// @Failure 409 {string} "Email already exists"
-// @Failure 500 {string} "Failed to hash password"
-// @Failure 500 {string} "Failed to create user"
-// @Failure 500 {string} "Failed to initialize user workspace"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 400 {object} ErrorResponse "Email, password, and role are required"
+// @Failure 400 {object} ErrorResponse "Password must be at least 8 characters"
+// @Failure 409 {object} ErrorResponse "Email already exists"
+// @Failure 500 {object} ErrorResponse "Failed to hash password"
+// @Failure 500 {object} ErrorResponse "Failed to create user"
+// @Failure 500 {object} ErrorResponse "Failed to initialize user workspace"
 // @Router /admin/users [post]
 func (h *Handler) AdminCreateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req CreateUserRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		// Validate request
 		if req.Email == "" || req.Password == "" || req.Role == "" {
-			http.Error(w, "Email, password, and role are required", http.StatusBadRequest)
+			respondError(w, "Email, password, and role are required", http.StatusBadRequest)
 			return
 		}
 
 		// Check if email already exists
 		existingUser, err := h.DB.GetUserByEmail(req.Email)
 		if err == nil && existingUser != nil {
-			http.Error(w, "Email already exists", http.StatusConflict)
+			respondError(w, "Email already exists", http.StatusConflict)
 			return
 		}
 
 		// Check if password is long enough
 		if len(req.Password) < 8 {
-			http.Error(w, "Password must be at least 8 characters", http.StatusBadRequest)
+			respondError(w, "Password must be at least 8 characters", http.StatusBadRequest)
 			return
 		}
 
 		// Hash password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
-			http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+			respondError(w, "Failed to hash password", http.StatusInternalServerError)
 			return
 		}
 
@@ -131,13 +131,13 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 
 		insertedUser, err := h.DB.CreateUser(user)
 		if err != nil {
-			http.Error(w, "Failed to create user", http.StatusInternalServerError)
+			respondError(w, "Failed to create user", http.StatusInternalServerError)
 			return
 		}
 
 		// Initialize user workspace
 		if err := h.Storage.InitializeUserWorkspace(insertedUser.ID, insertedUser.LastWorkspaceID); err != nil {
-			http.Error(w, "Failed to initialize user workspace", http.StatusInternalServerError)
+			respondError(w, "Failed to initialize user workspace", http.StatusInternalServerError)
 			return
 		}
 
@@ -154,20 +154,20 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 // @Produce json
 // @Param userId path int true "User ID"
 // @Success 200 {object} models.User
-// @Failure 400 {string} "Invalid user ID"
-// @Failure 404 {string} "User not found"
+// @Failure 400 {object} ErrorResponse "Invalid user ID"
+// @Failure 404 {object} ErrorResponse "User not found"
 // @Router /admin/users/{userId} [get]
 func (h *Handler) AdminGetUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := strconv.Atoi(chi.URLParam(r, "userId"))
 		if err != nil {
-			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			respondError(w, "Invalid user ID", http.StatusBadRequest)
 			return
 		}
 
 		user, err := h.DB.GetUserByID(userID)
 		if err != nil {
-			http.Error(w, "User not found", http.StatusNotFound)
+			respondError(w, "User not found", http.StatusNotFound)
 			return
 		}
 
@@ -186,30 +186,30 @@ func (h *Handler) AdminGetUser() http.HandlerFunc {
 // @Param userId path int true "User ID"
 // @Param user body UpdateUserRequest true "User details"
 // @Success 200 {object} models.User
-// @Failure 400 {string} "Invalid user ID"
-// @Failure 400 {string} "Invalid request body"
-// @Failure 404 {string} "User not found"
-// @Failure 500 {string} "Failed to hash password"
-// @Failure 500 {string} "Failed to update user"
+// @Failure 400 {object} ErrorResponse "Invalid user ID"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 404 {object} ErrorResponse "User not found"
+// @Failure 500 {object} ErrorResponse "Failed to hash password"
+// @Failure 500 {object} ErrorResponse "Failed to update user"
 // @Router /admin/users/{userId} [put]
 func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := strconv.Atoi(chi.URLParam(r, "userId"))
 		if err != nil {
-			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			respondError(w, "Invalid user ID", http.StatusBadRequest)
 			return
 		}
 
 		// Get existing user
 		user, err := h.DB.GetUserByID(userID)
 		if err != nil {
-			http.Error(w, "User not found", http.StatusNotFound)
+			respondError(w, "User not found", http.StatusNotFound)
 			return
 		}
 
 		var req UpdateUserRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
@@ -226,14 +226,14 @@ func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 		if req.Password != "" {
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 			if err != nil {
-				http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+				respondError(w, "Failed to hash password", http.StatusInternalServerError)
 				return
 			}
 			user.PasswordHash = string(hashedPassword)
 		}
 
 		if err := h.DB.UpdateUser(user); err != nil {
-			http.Error(w, "Failed to update user", http.StatusInternalServerError)
+			respondError(w, "Failed to update user", http.StatusInternalServerError)
 			return
 		}
 
@@ -249,11 +249,11 @@ func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 // @ID adminDeleteUser
 // @Param userId path int true "User ID"
 // @Success 204 "No Content"
-// @Failure 400 {string} "Invalid user ID"
-// @Failure 400 {string} "Cannot delete your own account"
-// @Failure 403 {string} "Cannot delete other admin users"
-// @Failure 404 {string} "User not found"
-// @Failure 500 {string} "Failed to delete user"
+// @Failure 400 {object} ErrorResponse "Invalid user ID"
+// @Failure 400 {object} ErrorResponse "Cannot delete your own account"
+// @Failure 403 {object} ErrorResponse "Cannot delete other admin users"
+// @Failure 404 {object} ErrorResponse "User not found"
+// @Failure 500 {object} ErrorResponse "Failed to delete user"
 // @Router /admin/users/{userId} [delete]
 func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -264,31 +264,31 @@ func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 
 		userID, err := strconv.Atoi(chi.URLParam(r, "userId"))
 		if err != nil {
-			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			respondError(w, "Invalid user ID", http.StatusBadRequest)
 			return
 		}
 
 		// Prevent admin from deleting themselves
 		if userID == ctx.UserID {
-			http.Error(w, "Cannot delete your own account", http.StatusBadRequest)
+			respondError(w, "Cannot delete your own account", http.StatusBadRequest)
 			return
 		}
 
 		// Get user before deletion to check role
 		user, err := h.DB.GetUserByID(userID)
 		if err != nil {
-			http.Error(w, "User not found", http.StatusNotFound)
+			respondError(w, "User not found", http.StatusNotFound)
 			return
 		}
 
 		// Prevent deletion of other admin users
 		if user.Role == models.RoleAdmin && ctx.UserID != userID {
-			http.Error(w, "Cannot delete other admin users", http.StatusForbidden)
+			respondError(w, "Cannot delete other admin users", http.StatusForbidden)
 			return
 		}
 
 		if err := h.DB.DeleteUser(userID); err != nil {
-			http.Error(w, "Failed to delete user", http.StatusInternalServerError)
+			respondError(w, "Failed to delete user", http.StatusInternalServerError)
 			return
 		}
 
@@ -304,15 +304,15 @@ func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 // @ID adminListWorkspaces
 // @Produce json
 // @Success 200 {array} WorkspaceStats
-// @Failure 500 {string} "Failed to list workspaces"
-// @Failure 500 {string} "Failed to get user"
-// @Failure 500 {string} "Failed to get file stats"
+// @Failure 500 {object} ErrorResponse "Failed to list workspaces"
+// @Failure 500 {object} ErrorResponse "Failed to get user"
+// @Failure 500 {object} ErrorResponse "Failed to get file stats"
 // @Router /admin/workspaces [get]
 func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		workspaces, err := h.DB.GetAllWorkspaces()
 		if err != nil {
-			http.Error(w, "Failed to list workspaces", http.StatusInternalServerError)
+			respondError(w, "Failed to list workspaces", http.StatusInternalServerError)
 			return
 		}
 
@@ -324,7 +324,7 @@ func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 
 			user, err := h.DB.GetUserByID(ws.UserID)
 			if err != nil {
-				http.Error(w, "Failed to get user", http.StatusInternalServerError)
+				respondError(w, "Failed to get user", http.StatusInternalServerError)
 				return
 			}
 
@@ -336,7 +336,7 @@ func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 
 			fileStats, err := h.Storage.GetFileStats(ws.UserID, ws.ID)
 			if err != nil {
-				http.Error(w, "Failed to get file stats", http.StatusInternalServerError)
+				respondError(w, "Failed to get file stats", http.StatusInternalServerError)
 				return
 			}
 
@@ -357,20 +357,20 @@ func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 // @ID adminGetSystemStats
 // @Produce json
 // @Success 200 {object} SystemStats
-// @Failure 500 {string} "Failed to get user stats"
-// @Failure 500 {string} "Failed to get file stats"
+// @Failure 500 {object} ErrorResponse "Failed to get user stats"
+// @Failure 500 {object} ErrorResponse "Failed to get file stats"
 // @Router /admin/stats [get]
 func (h *Handler) AdminGetSystemStats() http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		userStats, err := h.DB.GetSystemStats()
 		if err != nil {
-			http.Error(w, "Failed to get user stats", http.StatusInternalServerError)
+			respondError(w, "Failed to get user stats", http.StatusInternalServerError)
 			return
 		}
 
 		fileStats, err := h.Storage.GetTotalFileStats()
 		if err != nil {
-			http.Error(w, "Failed to get file stats", http.StatusInternalServerError)
+			respondError(w, "Failed to get file stats", http.StatusInternalServerError)
 			return
 		}
 

@@ -9,7 +9,7 @@ import (
 type RepositoryManager interface {
 	SetupGitRepo(userID, workspaceID int, gitURL, gitUser, gitToken, commitName, commitEmail string) error
 	DisableGitRepo(userID, workspaceID int)
-	StageCommitAndPush(userID, workspaceID int, message string) error
+	StageCommitAndPush(userID, workspaceID int, message string) (git.CommitHash, error)
 	Pull(userID, workspaceID int) error
 }
 
@@ -36,17 +36,19 @@ func (s *Service) DisableGitRepo(userID, workspaceID int) {
 
 // StageCommitAndPush stages, commit with the message, and pushes the changes to the Git repository.
 // The git repository belongs to the given userID and is associated with the given workspaceID.
-func (s *Service) StageCommitAndPush(userID, workspaceID int, message string) error {
+func (s *Service) StageCommitAndPush(userID, workspaceID int, message string) (git.CommitHash, error) {
 	repo, ok := s.getGitRepo(userID, workspaceID)
 	if !ok {
-		return fmt.Errorf("git settings not configured for this workspace")
+		return git.CommitHash{}, fmt.Errorf("git settings not configured for this workspace")
 	}
 
-	if err := repo.Commit(message); err != nil {
-		return err
+	hash, err := repo.Commit(message)
+	if err != nil {
+		return git.CommitHash{}, err
 	}
 
-	return repo.Push()
+	err = repo.Push()
+	return hash, err
 }
 
 // Pull pulls the changes from the remote Git repository.

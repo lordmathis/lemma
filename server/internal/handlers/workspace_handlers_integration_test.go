@@ -226,7 +226,7 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 			}
 
 			rr := h.makeRequest(t, http.MethodPut, "/api/v1/workspaces/last", req, h.RegularToken, nil)
-			require.Equal(t, http.StatusOK, rr.Code)
+			require.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Verify the update
 			rr = h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/last", nil, h.RegularToken, nil)
