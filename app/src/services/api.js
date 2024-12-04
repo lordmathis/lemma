@@ -47,17 +47,16 @@ export const saveFileContent = async (workspaceName, filePath, content) => {
       body: content,
     }
   );
-  return response.text();
+  return response.json();
 };
 
 export const deleteFile = async (workspaceName, filePath) => {
-  const response = await apiCall(
+  await apiCall(
     `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`,
     {
       method: 'DELETE',
     }
   );
-  return response.text();
 };
 
 export const getWorkspace = async (workspaceName) => {
@@ -119,17 +118,13 @@ export const lookupFileByName = async (workspaceName, filename) => {
 };
 
 export const updateLastOpenedFile = async (workspaceName, filePath) => {
-  const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceName}/files/last`,
-    {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ filePath }),
-    }
-  );
-  return response.json();
+  await apiCall(`${API_BASE_URL}/workspaces/${workspaceName}/files/last`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ filePath }),
+  });
 };
 
 export const getLastOpenedFile = async (workspaceName) => {
