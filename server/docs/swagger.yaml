@@ -1,0 +1,1168 @@
+basePath: /api/v1
+definitions:
+  handlers.CommitRequest:
+    properties:
+      message:
+        example: Initial commit
+        type: string
+    type: object
+  handlers.CommitResponse:
+    properties:
+      commitHash:
+        example: a1b2c3d4
+        type: string
+    type: object
+  handlers.CreateUserRequest:
+    properties:
+      displayName:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+      role:
+        $ref: '#/definitions/models.UserRole'
+    type: object
+  handlers.DeleteAccountRequest:
+    properties:
+      password:
+        type: string
+    type: object
+  handlers.DeleteWorkspaceResponse:
+    properties:
+      nextWorkspaceName:
+        type: string
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.LastOpenedFileResponse:
+    properties:
+      lastOpenedFilePath:
+        type: string
+    type: object
+  handlers.LastWorkspaceNameResponse:
+    properties:
+      lastWorkspaceName:
+        type: string
+    type: object
+  handlers.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.LoginResponse:
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+      session:
+        $ref: '#/definitions/models.Session'
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+  handlers.LookupResponse:
+    properties:
+      paths:
+        items:
+          type: string
+        type: array
+    type: object
+  handlers.PullResponse:
+    properties:
+      message:
+        example: Pulled changes from remote
+        type: string
+    type: object
+  handlers.RefreshRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
+  handlers.RefreshResponse:
+    properties:
+      accessToken:
+        type: string
+    type: object
+  handlers.SaveFileResponse:
+    properties:
+      filePath:
+        type: string
+      size:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  handlers.SystemStats:
+    properties:
+      activeUsers:
+        description: Users with activity in last 30 days
+        type: integer
+      totalFiles:
+        type: integer
+      totalSize:
+        type: integer
+      totalUsers:
+        type: integer
+      totalWorkspaces:
+        type: integer
+    type: object
+  handlers.UpdateLastOpenedFileRequest:
+    properties:
+      filePath:
+        type: string
+    type: object
+  handlers.UpdateProfileRequest:
+    properties:
+      currentPassword:
+        type: string
+      displayName:
+        type: string
+      email:
+        type: string
+      newPassword:
+        type: string
+    type: object
+  handlers.UpdateUserRequest:
+    properties:
+      displayName:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+      role:
+        $ref: '#/definitions/models.UserRole'
+    type: object
+  handlers.WorkspaceStats:
+    properties:
+      totalFiles:
+        type: integer
+      totalSize:
+        type: integer
+      userEmail:
+        type: string
+      userID:
+        type: integer
+      workspaceCreatedAt:
+        type: string
+      workspaceID:
+        type: integer
+      workspaceName:
+        type: string
+    type: object
+  models.Session:
+    properties:
+      createdAt:
+        description: When this session was created
+        type: string
+      expiresAt:
+        description: When this session expires
+        type: string
+      id:
+        description: Unique session identifier
+        type: string
+      refreshToken:
+        description: The refresh token associated with this session
+        type: string
+      userID:
+        description: ID of the user this session belongs to
+        type: integer
+    type: object
+  models.User:
+    properties:
+      createdAt:
+        type: string
+      displayName:
+        type: string
+      email:
+        type: string
+      id:
+        minimum: 1
+        type: integer
+      lastWorkspaceId:
+        type: integer
+      role:
+        allOf:
+        - $ref: '#/definitions/models.UserRole'
+        enum:
+        - admin
+        - editor
+        - viewer
+    required:
+    - email
+    - id
+    - role
+    type: object
+  models.UserRole:
+    enum:
+    - admin
+    - editor
+    - viewer
+    type: string
+    x-enum-varnames:
+    - RoleAdmin
+    - RoleEditor
+    - RoleViewer
+  models.Workspace:
+    properties:
+      autoSave:
+        type: boolean
+      createdAt:
+        type: string
+      gitAutoCommit:
+        type: boolean
+      gitCommitEmail:
+        type: string
+      gitCommitMsgTemplate:
+        type: string
+      gitCommitName:
+        type: string
+      gitEnabled:
+        type: boolean
+      gitToken:
+        type: string
+      gitUrl:
+        type: string
+      gitUser:
+        type: string
+      id:
+        minimum: 1
+        type: integer
+      lastOpenedFilePath:
+        type: string
+      name:
+        type: string
+      showHiddenFiles:
+        type: boolean
+      theme:
+        description: Integrated settings
+        enum:
+        - light
+        - dark
+        type: string
+      userId:
+        minimum: 1
+        type: integer
+    required:
+    - id
+    - name
+    - userId
+    type: object
+  storage.FileNode:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/storage.FileNode'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is the API for NovaMD markdown note taking app.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: NovaMD API
+  version: "1.0"
+paths:
+  /admin/stats:
+    get:
+      description: Get system-wide statistics as an admin
+      operationId: adminGetSystemStats
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SystemStats'
+        "500":
+          description: Failed to get file stats
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get system statistics
+      tags:
+      - Admin
+  /admin/users:
+    get:
+      description: Returns the list of all users
+      operationId: adminListUsers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+        "500":
+          description: Failed to list users
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all users
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Create a new user as an admin
+      operationId: adminCreateUser
+      parameters:
+      - description: User details
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Password must be at least 8 characters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Email already exists
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to initialize user workspace
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new user
+      tags:
+      - Admin
+  /admin/users/{userId}:
+    delete:
+      description: Delete a specific user as an admin
+      operationId: adminDeleteUser
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Cannot delete your own account
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Cannot delete other admin users
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to delete user
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a specific user
+      tags:
+      - Admin
+    get:
+      description: Get a specific user as an admin
+      operationId: adminGetUser
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a specific user
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Update a specific user as an admin
+      operationId: adminUpdateUser
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      - description: User details
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to update user
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a specific user
+      tags:
+      - Admin
+  /admin/workspaces:
+    get:
+      description: List all workspaces and their stats as an admin
+      operationId: adminListWorkspaces
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.WorkspaceStats'
+            type: array
+        "500":
+          description: Failed to get file stats
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all workspaces
+      tags:
+      - Admin
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in a user
+      operationId: login
+      parameters:
+      - description: Login request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.LoginResponse'
+        "400":
+          description: Email and password are required
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to create session
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Log out invalidates the user's session
+      operationId: logout
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Session ID required
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to logout
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - auth
+  /auth/me:
+    get:
+      description: Returns the current authenticated user
+      operationId: getCurrentUser
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refreshes the access token using the refresh token
+      operationId: refreshToken
+      parameters:
+      - description: Refresh request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.RefreshResponse'
+        "400":
+          description: Refresh token required
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Invalid refresh token
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Refresh token
+      tags:
+      - auth
+  /profile:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes the user's account and all associated data
+      operationId: deleteAccount
+      parameters:
+      - description: Account deletion request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.DeleteAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content - Account deleted successfully
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Password is incorrect
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Cannot delete the last admin account
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to delete account
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete account
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Updates the user's profile
+      operationId: updateProfile
+      parameters:
+      - description: Profile update request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Current password is required to change email
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Current password is incorrect
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Email already in use
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to update profile
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update profile
+      tags:
+      - users
+  /workspaces:
+    get:
+      description: Lists all workspaces for the current user
+      operationId: listWorkspaces
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Workspace'
+            type: array
+        "500":
+          description: Failed to list workspaces
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List workspaces
+      tags:
+      - workspaces
+    post:
+      consumes:
+      - application/json
+      description: Creates a new workspace
+      operationId: createWorkspace
+      parameters:
+      - description: Workspace
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Workspace'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Workspace'
+        "400":
+          description: Invalid workspace
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to setup git repo
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create workspace
+      tags:
+      - workspaces
+  /workspaces/{workspace_name}:
+    delete:
+      description: Deletes the current workspace
+      operationId: deleteWorkspace
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.DeleteWorkspaceResponse'
+        "400":
+          description: Cannot delete the last workspace
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to commit transaction
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete workspace
+      tags:
+      - workspaces
+    get:
+      description: Returns the current workspace
+      operationId: getWorkspace
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Workspace'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get workspace
+      tags:
+      - workspaces
+    put:
+      consumes:
+      - application/json
+      description: Updates the current workspace
+      operationId: updateWorkspace
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      - description: Workspace
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Workspace'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Workspace'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to setup git repo
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update workspace
+      tags:
+      - workspaces
+  /workspaces/{workspace_name}/files:
+    get:
+      description: Lists all files in the user's workspace
+      operationId: listFiles
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/storage.FileNode'
+            type: array
+        "500":
+          description: Failed to list files
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List files
+      tags:
+      - files
+  /workspaces/{workspace_name}/files/{file_path}:
+    delete:
+      description: Deletes a file in the user's workspace
+      operationId: deleteFile
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      - description: File path
+        in: path
+        name: file_path
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content - File deleted successfully
+        "400":
+          description: Invalid file path
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: File not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to write response
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete file
+      tags:
+      - files
+    get:
+      description: Returns the content of a file in the user's workspace
+      operationId: getFileContent
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      - description: File path
+        in: path
+        name: file_path
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Raw file content
+          schema:
+            type: string
+        "400":
+          description: Invalid file path
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: File not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to write response
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get file content
+      tags:
+      - files
+    post:
+      consumes:
+      - text/plain
+      description: Saves the content of a file in the user's workspace
+      operationId: saveFile
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      - description: File path
+        in: path
+        name: file_path
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SaveFileResponse'
+        "400":
+          description: Invalid file path
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to save file
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Save file
+      tags:
+      - files
+  /workspaces/{workspace_name}/files/last:
+    get:
+      description: Returns the path of the last opened file in the user's workspace
+      operationId: getLastOpenedFile
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.LastOpenedFileResponse'
+        "400":
+          description: Invalid file path
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to get last opened file
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get last opened file
+      tags:
+      - files
+    put:
+      consumes:
+      - application/json
+      description: Updates the last opened file in the user's workspace
+      operationId: updateLastOpenedFile
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      - description: Update last opened file request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateLastOpenedFileRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content - Last opened file updated successfully
+        "400":
+          description: Invalid file path
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: File not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to update file
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update last opened file
+      tags:
+      - files
+  /workspaces/{workspace_name}/files/lookup:
+    get:
+      description: Returns the paths of files with the given name in the user's workspace
+      operationId: lookupFileByName
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      - description: File name
+        in: query
+        name: filename
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.LookupResponse'
+        "400":
+          description: Filename is required
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: File not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Lookup file by name
+      tags:
+      - files
+  /workspaces/{workspace_name}/git/commit:
+    post:
+      description: Stages, commits, and pushes changes to the remote repository
+      operationId: stageCommitAndPush
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      - description: Commit request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CommitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.CommitResponse'
+        "400":
+          description: Commit message is required
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to stage, commit, and push changes
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Stage, commit, and push changes
+      tags:
+      - git
+  /workspaces/{workspace_name}/git/pull:
+    post:
+      description: Pulls changes from the remote repository
+      operationId: pullChanges
+      parameters:
+      - description: Workspace name
+        in: path
+        name: workspace_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PullResponse'
+        "500":
+          description: Failed to pull changes
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Pull changes from remote
+      tags:
+      - git
+  /workspaces/last:
+    get:
+      description: Returns the name of the last opened workspace
+      operationId: getLastWorkspaceName
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.LastWorkspaceNameResponse'
+        "500":
+          description: Failed to get last workspace
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get last workspace name
+      tags:
+      - workspaces
+    put:
+      consumes:
+      - application/json
+      description: Updates the name of the last opened workspace
+      operationId: updateLastWorkspaceName
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content - Last workspace updated successfully
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to update last workspace
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update last workspace name
+      tags:
+      - workspaces
+swagger: "2.0"

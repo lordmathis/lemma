@@ -28,7 +28,7 @@ func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Security check to prevent directory traversal
 	if !strings.HasPrefix(cleanPath, h.staticPath) {
-		http.Error(w, "Invalid path", http.StatusBadRequest)
+		respondError(w, "Invalid path", http.StatusBadRequest)
 		return
 	}
 

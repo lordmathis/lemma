@@ -145,7 +145,7 @@ func TestFileHandlers_Integration(t *testing.T) {
 
 			// Delete file
 			rr = h.makeRequest(t, http.MethodDelete, baseURL+"/"+filePath, nil, h.RegularToken, nil)
-			require.Equal(t, http.StatusOK, rr.Code)
+			require.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Verify file is gone
 			rr = h.makeRequest(t, http.MethodGet, baseURL+"/"+filePath, nil, h.RegularToken, nil)
@@ -171,7 +171,7 @@ func TestFileHandlers_Integration(t *testing.T) {
 				FilePath: "docs/readme.md",
 			}
 			rr = h.makeRequest(t, http.MethodPut, baseURL+"/last", updateReq, h.RegularToken, nil)
-			require.Equal(t, http.StatusOK, rr.Code)
+			require.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Verify update
 			rr = h.makeRequest(t, http.MethodGet, baseURL+"/last", nil, h.RegularToken, nil)

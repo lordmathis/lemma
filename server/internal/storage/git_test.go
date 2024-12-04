@@ -29,10 +29,10 @@ func (m *MockGitClient) Pull() error {
 	return m.ReturnError
 }
 
-func (m *MockGitClient) Commit(message string) error {
+func (m *MockGitClient) Commit(message string) (git.CommitHash, error) {
 	m.CommitCalled = true
 	m.CommitMessage = message
-	return m.ReturnError
+	return git.CommitHash{}, m.ReturnError
 }
 
 func (m *MockGitClient) Push() error {
@@ -138,7 +138,7 @@ func TestGitOperations(t *testing.T) {
 	})
 
 	t.Run("operations on non-configured workspace", func(t *testing.T) {
-		err := s.StageCommitAndPush(1, 1, "test commit")
+		_, err := s.StageCommitAndPush(1, 1, "test commit")
 		if err == nil {
 			t.Error("expected error for non-configured workspace, got nil")
 		}
@@ -157,7 +157,7 @@ func TestGitOperations(t *testing.T) {
 		s.GitRepos[1][1] = mockClient
 
 		// Test commit and push
-		err := s.StageCommitAndPush(1, 1, "test commit")
+		_, err := s.StageCommitAndPush(1, 1, "test commit")
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -189,7 +189,7 @@ func TestGitOperations(t *testing.T) {
 		s.GitRepos[1][1] = mockClient
 
 		// Test commit error
-		err := s.StageCommitAndPush(1, 1, "test commit")
+		_, err := s.StageCommitAndPush(1, 1, "test commit")
 		if err == nil {
 			t.Error("expected error for commit, got nil")
 		}

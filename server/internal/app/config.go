@@ -1,5 +1,4 @@
-// Package config provides the configuration for the application
-package config
+package app
 
 import (
 	"fmt"
@@ -40,8 +39,8 @@ func DefaultConfig() *Config {
 	}
 }
 
-// Validate checks if the configuration is valid
-func (c *Config) Validate() error {
+// validate checks if the configuration is valid
+func (c *Config) validate() error {
 	if c.AdminEmail == "" || c.AdminPassword == "" {
 		return fmt.Errorf("NOVAMD_ADMIN_EMAIL and NOVAMD_ADMIN_PASSWORD must be set")
 	}
@@ -54,8 +53,8 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// Load creates a new Config instance with values from environment variables
-func Load() (*Config, error) {
+// LoadConfig creates a new Config instance with values from environment variables
+func LoadConfig() (*Config, error) {
 	config := DefaultConfig()
 
 	if env := os.Getenv("NOVAMD_ENV"); env != "" {
@@ -105,7 +104,7 @@ func Load() (*Config, error) {
 	}
 
 	// Validate all settings
-	if err := config.Validate(); err != nil {
+	if err := config.validate(); err != nil {
 		return nil, err
 	}
 

@@ -5,21 +5,28 @@ import (
 	"log"
 
 	"novamd/internal/app"
-	"novamd/internal/config"
 )
 
+// @title NovaMD API
+// @version 1.0
+// @description This is the API for NovaMD markdown note taking app.
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @BasePath /api/v1
 func main() {
 	// Load configuration
-	cfg, err := config.Load()
+	cfg, err := app.LoadConfig()
 	if err != nil {
 		log.Fatal("Failed to load configuration:", err)
 	}
 
 	// Initialize and start server
-	server, err := app.NewServer(cfg)
+	options, err := app.DefaultOptions(cfg)
 	if err != nil {
-		log.Fatal("Failed to initialize server:", err)
+		log.Fatal("Failed to initialize server options:", err)
 	}
+
+	server := app.NewServer(options)
 	defer func() {
 		if err := server.Close(); err != nil {
 			log.Println("Error closing server:", err)

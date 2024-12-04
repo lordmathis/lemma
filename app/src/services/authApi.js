@@ -49,11 +49,15 @@ export const apiCall = async (url, options = {}) => {
       throw new Error('Authentication failed');
     }
 
-    if (!response.ok) {
+    if (!response.ok && response.status !== 204) {
       const errorData = await response.json().catch(() => null);
       throw new Error(
         errorData?.message || `HTTP error! status: ${response.status}`
       );
+    }
+
+    if (response.status === 204) {
+      return null;
     }
 
     return response;

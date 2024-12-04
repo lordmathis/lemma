@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
@@ -26,9 +27,17 @@ type Config struct {
 type Client interface {
 	Clone() error
 	Pull() error
-	Commit(message string) error
+	Commit(message string) (CommitHash, error)
 	Push() error
 	EnsureRepo() error
+}
+
+// CommitHash represents a Git commit hash
+type CommitHash plumbing.Hash
+
+// String returns the string representation of the CommitHash
+func (h CommitHash) String() string {
+	return plumbing.Hash(h).String()
 }
 
 // client implements the Client interface
@@ -101,22 +110,22 @@ func (c *client) Pull() error {
 }
 
 // Commit commits the changes in the repository with the given message
-func (c *client) Commit(message string) error {
+func (c *client) Commit(message string) (CommitHash, error) {
 	if c.repo == nil {
-		return fmt.Errorf("repository not initialized")
+		return CommitHash(plumbing.ZeroHash), fmt.Errorf("repository not initialized")
 	}
 
 	w, err := c.repo.Worktree()
 	if err != nil {
-		return fmt.Errorf("failed to get worktree: %w", err)
+		return CommitHash(plumbing.ZeroHash), fmt.Errorf("failed to get worktree: %w", err)
 	}
 
 	_, err = w.Add(".")
 	if err != nil {
-		return fmt.Errorf("failed to add changes: %w", err)
+		return CommitHash(plumbing.ZeroHash), fmt.Errorf("failed to add changes: %w", err)
 	}
 
-	_, err = w.Commit(message, &git.CommitOptions{
+	hash, err := w.Commit(message, &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  c.CommitName,
 			Email: c.CommitEmail,
@@ -124,10 +133,10 @@ func (c *client) Commit(message string) error {
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to commit changes: %w", err)
+		return CommitHash(plumbing.ZeroHash), fmt.Errorf("failed to commit changes: %w", err)
 	}
 
-	return nil
+	return CommitHash(hash), nil
 }
 
 // Push pushes the changes to the remote repository

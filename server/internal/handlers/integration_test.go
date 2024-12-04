@@ -11,14 +11,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"golang.org/x/crypto/bcrypt"
 
-	"novamd/internal/api"
+	"novamd/internal/app"
 	"novamd/internal/auth"
 	"novamd/internal/db"
 	"novamd/internal/git"
-	"novamd/internal/handlers"
 	"novamd/internal/models"
 	"novamd/internal/secrets"
 	"novamd/internal/storage"
@@ -26,10 +24,9 @@ import (
 
 // testHarness encapsulates all the dependencies needed for testing
 type testHarness struct {
+	Server        *app.Server
 	DB            db.TestDatabase
 	Storage       storage.Manager
-	Router        *chi.Mux
-	Handler       *handlers.Handler
 	JWTManager    auth.JWTManager
 	SessionSvc    *auth.SessionService
 	AdminUser     *models.User
@@ -89,24 +86,34 @@ func setupTestHarness(t *testing.T) *testHarness {
 	// Initialize session service
 	sessionSvc := auth.NewSessionService(database, jwtSvc)
 
-	// Create handler
-	handler := &handlers.Handler{
-		DB:      database,
-		Storage: storageSvc,
+	// Create test config
+	testConfig := &app.Config{
+		DBPath:        ":memory:",
+		WorkDir:       tempDir,
+		StaticPath:    "../testdata",
+		Port:          "8081",
+		AdminEmail:    "admin@test.com",
+		AdminPassword: "admin123",
+		EncryptionKey: "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=",
+		IsDevelopment: true,
 	}
 
-	// Set up router with middlewares
-	router := chi.NewRouter()
-	authMiddleware := auth.NewMiddleware(jwtSvc)
-	router.Route("/api/v1", func(r chi.Router) {
-		api.SetupRoutes(r, database, storageSvc, authMiddleware, sessionSvc)
-	})
+	// Create server options
+	serverOpts := &app.Options{
+		Config:         testConfig,
+		Database:       database,
+		Storage:        storageSvc,
+		JWTManager:     jwtSvc,
+		SessionService: sessionSvc,
+	}
+
+	// Create server
+	srv := app.NewServer(serverOpts)
 
 	h := &testHarness{
+		Server:        srv,
 		DB:            database,
 		Storage:       storageSvc,
-		Router:        router,
-		Handler:       handler,
 		JWTManager:    jwtSvc,
 		SessionSvc:    sessionSvc,
 		TempDirectory: tempDir,
@@ -114,8 +121,8 @@ func setupTestHarness(t *testing.T) *testHarness {
 	}
 
 	// Create test users
-	adminUser, adminToken := h.createTestUser(t, database, sessionSvc, "admin@test.com", "admin123", models.RoleAdmin)
-	regularUser, regularToken := h.createTestUser(t, database, sessionSvc, "user@test.com", "user123", models.RoleEditor)
+	adminUser, adminToken := h.createTestUser(t, "admin@test.com", "admin123", models.RoleAdmin)
+	regularUser, regularToken := h.createTestUser(t, "user@test.com", "user123", models.RoleEditor)
 
 	h.AdminUser = adminUser
 	h.AdminToken = adminToken
@@ -139,7 +146,7 @@ func (h *testHarness) teardown(t *testing.T) {
 }
 
 // createTestUser creates a test user and returns the user and access token
-func (h *testHarness) createTestUser(t *testing.T, db db.Database, sessionSvc *auth.SessionService, email, password string, role models.UserRole) (*models.User, string) {
+func (h *testHarness) createTestUser(t *testing.T, email, password string, role models.UserRole) (*models.User, string) {
 	t.Helper()
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -154,7 +161,7 @@ func (h *testHarness) createTestUser(t *testing.T, db db.Database, sessionSvc *a
 		Role:         role,
 	}
 
-	user, err = db.CreateUser(user)
+	user, err = h.DB.CreateUser(user)
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
@@ -165,7 +172,7 @@ func (h *testHarness) createTestUser(t *testing.T, db db.Database, sessionSvc *a
 		t.Fatalf("Failed to initialize user workspace: %v", err)
 	}
 
-	session, accessToken, err := sessionSvc.CreateSession(user.ID, string(user.Role))
+	session, accessToken, err := h.SessionSvc.CreateSession(user.ID, string(user.Role))
 	if err != nil {
 		t.Fatalf("Failed to create session: %v", err)
 	}
@@ -203,7 +210,7 @@ func (h *testHarness) makeRequest(t *testing.T, method, path string, body interf
 	}
 
 	rr := httptest.NewRecorder()
-	h.Router.ServeHTTP(rr, req)
+	h.Server.Router().ServeHTTP(rr, req)
 
 	return rr
 }
@@ -223,7 +230,7 @@ func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.
 	}
 
 	rr := httptest.NewRecorder()
-	h.Router.ServeHTTP(rr, req)
+	h.Server.Router().ServeHTTP(rr, req)
 
 	return rr
 }

@@ -4,6 +4,7 @@ package handlers_test
 
 import (
 	"fmt"
+	"novamd/internal/git"
 )
 
 // MockGitClient implements the git.Client interface for testing
@@ -51,13 +52,13 @@ func (m *MockGitClient) Pull() error {
 }
 
 // Commit implements git.Client
-func (m *MockGitClient) Commit(message string) error {
+func (m *MockGitClient) Commit(message string) (git.CommitHash, error) {
 	if m.error != nil {
-		return m.error
+		return git.CommitHash{}, m.error
 	}
 	m.commitCount++
 	m.lastCommitMsg = message
-	return nil
+	return git.CommitHash{}, nil
 }
 
 // Push implements git.Client
