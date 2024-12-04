@@ -1,5 +1,7 @@
 # NovaMD
 
+![Build](https://github.com/LordMathis/NovaMD/actions/workflows/build-and-release.yml/badge.svg) ![Go Tests](https://github.com/LordMathis/NovaMD/actions/workflows/go-test.yml/badge.svg)
+
 Yet another markdown editor. Work in progress
 
 ## Features
