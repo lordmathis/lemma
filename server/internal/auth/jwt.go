@@ -38,7 +38,6 @@ type JWTManager interface {
 	GenerateAccessToken(userID int, role string) (string, error)
 	GenerateRefreshToken(userID int, role string) (string, error)
 	ValidateToken(tokenString string) (*Claims, error)
-	RefreshAccessToken(refreshToken string) (string, error)
 }
 
 // jwtService handles JWT token generation and validation
@@ -117,18 +116,4 @@ func (s *jwtService) ValidateToken(tokenString string) (*Claims, error) {
 	}
 
 	return nil, fmt.Errorf("invalid token claims")
-}
-
-// RefreshAccessToken creates a new access token using a refreshToken
-func (s *jwtService) RefreshAccessToken(refreshToken string) (string, error) {
-	claims, err := s.ValidateToken(refreshToken)
-	if err != nil {
-		return "", fmt.Errorf("invalid refresh token: %w", err)
-	}
-
-	if claims.Type != RefreshToken {
-		return "", fmt.Errorf("invalid token type: expected refresh token")
-	}
-
-	return s.GenerateAccessToken(claims.UserID, claims.Role)
 }

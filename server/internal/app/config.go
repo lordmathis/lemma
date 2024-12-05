@@ -15,7 +15,8 @@ type Config struct {
 	WorkDir           string
 	StaticPath        string
 	Port              string
-	AppURL            string
+	RootURL           string
+	Domain            string
 	CORSOrigins       []string
 	AdminEmail        string
 	AdminPassword     string
@@ -77,8 +78,12 @@ func LoadConfig() (*Config, error) {
 		config.Port = port
 	}
 
-	if appURL := os.Getenv("NOVAMD_APP_URL"); appURL != "" {
-		config.AppURL = appURL
+	if rootURL := os.Getenv("NOVAMD_ROOT_URL"); rootURL != "" {
+		config.RootURL = rootURL
+	}
+
+	if domain := os.Getenv("NOVAMD_DOMAIN"); domain != "" {
+		config.Domain = domain
 	}
 
 	if corsOrigins := os.Getenv("NOVAMD_CORS_ORIGINS"); corsOrigins != "" {

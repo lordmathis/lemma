@@ -24,7 +24,7 @@ type LastWorkspaceNameResponse struct {
 // @Description Lists all workspaces for the current user
 // @Tags workspaces
 // @ID listWorkspaces
-// @Security BearerAuth
+// @Security CookieAuth
 // @Produce json
 // @Success 200 {array} models.Workspace
 // @Failure 500 {object} ErrorResponse "Failed to list workspaces"
@@ -51,7 +51,7 @@ func (h *Handler) ListWorkspaces() http.HandlerFunc {
 // @Description Creates a new workspace
 // @Tags workspaces
 // @ID createWorkspace
-// @Security BearerAuth
+// @Security CookieAuth
 // @Accept json
 // @Produce json
 // @Param body body models.Workspace true "Workspace"
@@ -115,7 +115,7 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 // @Description Returns the current workspace
 // @Tags workspaces
 // @ID getWorkspace
-// @Security BearerAuth
+// @Security CookieAuth
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
 // @Success 200 {object} models.Workspace
@@ -155,7 +155,7 @@ func gitSettingsChanged(new, old *models.Workspace) bool {
 // @Description Updates the current workspace
 // @Tags workspaces
 // @ID updateWorkspace
-// @Security BearerAuth
+// @Security CookieAuth
 // @Accept json
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
@@ -223,7 +223,7 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 // @Description Deletes the current workspace
 // @Tags workspaces
 // @ID deleteWorkspace
-// @Security BearerAuth
+// @Security CookieAuth
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
 // @Success 200 {object} DeleteWorkspaceResponse
@@ -307,7 +307,7 @@ func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 // @Description Returns the name of the last opened workspace
 // @Tags workspaces
 // @ID getLastWorkspaceName
-// @Security BearerAuth
+// @Security CookieAuth
 // @Produce json
 // @Success 200 {object} LastWorkspaceNameResponse
 // @Failure 500 {object} ErrorResponse "Failed to get last workspace"
@@ -334,7 +334,7 @@ func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 // @Description Updates the name of the last opened workspace
 // @Tags workspaces
 // @ID updateLastWorkspaceName
-// @Security BearerAuth
+// @Security CookieAuth
 // @Accept json
 // @Produce json
 // @Success 204 "No Content - Last workspace updated successfully"

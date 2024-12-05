@@ -27,7 +27,7 @@ type PullResponse struct {
 // @Description Stages, commits, and pushes changes to the remote repository
 // @Tags git
 // @ID stageCommitAndPush
-// @Security BearerAuth
+// @Security CookieAuth
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
 // @Param body body CommitRequest true "Commit request"
@@ -70,7 +70,7 @@ func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 // @Description Pulls changes from the remote repository
 // @Tags git
 // @ID pullChanges
-// @Security BearerAuth
+// @Security CookieAuth
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
 // @Success 200 {object} PullResponse

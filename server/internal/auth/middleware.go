@@ -1,8 +1,8 @@
 package auth
 
 import (
+	"crypto/subtle"
 	"net/http"
-	"strings"
 
 	"novamd/internal/context"
 )
@@ -23,21 +23,14 @@ func NewMiddleware(jwtManager JWTManager) *Middleware {
 func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Extract token from Authorization header
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Authorization header required", http.StatusUnauthorized)
-			return
-		}
-
-		// Check Bearer token format
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			http.Error(w, "Invalid authorization format", http.StatusUnauthorized)
+		cookie, err := r.Cookie("access_token")
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		// Validate token
-		claims, err := m.jwtManager.ValidateToken(parts[1])
+		claims, err := m.jwtManager.ValidateToken(cookie.Value)
 		if err != nil {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
@@ -47,6 +40,26 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 		if claims.Type != AccessToken {
 			http.Error(w, "Invalid token type", http.StatusUnauthorized)
 			return
+		}
+
+		// Add CSRF check for non-GET requests
+		if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Method != http.MethodOptions {
+			csrfCookie, err := r.Cookie("csrf_token")
+			if err != nil {
+				http.Error(w, "CSRF cookie not found", http.StatusForbidden)
+				return
+			}
+
+			csrfHeader := r.Header.Get("X-CSRF-Token")
+			if csrfHeader == "" {
+				http.Error(w, "CSRF token header not found", http.StatusForbidden)
+				return
+			}
+
+			if subtle.ConstantTimeCompare([]byte(csrfCookie.Value), []byte(csrfHeader)) != 1 {
+				http.Error(w, "CSRF token mismatch", http.StatusForbidden)
+				return
+			}
 		}
 
 		// Create handler context with user information

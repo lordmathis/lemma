@@ -83,8 +83,14 @@ func (s *SessionService) RefreshSession(refreshToken string) (string, error) {
 }
 
 // InvalidateSession removes a session with the given sessionID from the database
-func (s *SessionService) InvalidateSession(sessionID string) error {
-	return s.db.DeleteSession(sessionID)
+func (s *SessionService) InvalidateSession(token string) error {
+	// Parse the JWT to get the session info
+	claims, err := s.jwtManager.ValidateToken(token)
+	if err != nil {
+		return fmt.Errorf("invalid token: %w", err)
+	}
+
+	return s.db.DeleteSession(claims.ID)
 }
 
 // CleanExpiredSessions removes all expired sessions from the database

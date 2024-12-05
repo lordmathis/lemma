@@ -27,7 +27,7 @@ type DeleteAccountRequest struct {
 // @Description Updates the user's profile
 // @Tags users
 // @ID updateProfile
-// @Security BearerAuth
+// @Security CookieAuth
 // @Accept json
 // @Produce json
 // @Param body body UpdateProfileRequest true "Profile update request"
@@ -137,7 +137,7 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 // @Description Deletes the user's account and all associated data
 // @Tags users
 // @ID deleteAccount
-// @Security BearerAuth
+// @Security CookieAuth
 // @Accept json
 // @Produce json
 // @Param body body DeleteAccountRequest true "Account deletion request"

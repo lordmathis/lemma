@@ -51,7 +51,7 @@ type SystemStats struct {
 // @Summary List all users
 // @Description Returns the list of all users
 // @Tags Admin
-// @Security BearerAuth
+// @Security CookieAuth
 // @ID adminListUsers
 // @Produce json
 // @Success 200 {array} models.User
@@ -73,7 +73,7 @@ func (h *Handler) AdminListUsers() http.HandlerFunc {
 // @Summary Create a new user
 // @Description Create a new user as an admin
 // @Tags Admin
-// @Security BearerAuth
+// @Security CookieAuth
 // @ID adminCreateUser
 // @Accept json
 // @Produce json
@@ -149,7 +149,7 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 // @Summary Get a specific user
 // @Description Get a specific user as an admin
 // @Tags Admin
-// @Security BearerAuth
+// @Security CookieAuth
 // @ID adminGetUser
 // @Produce json
 // @Param userId path int true "User ID"
@@ -179,7 +179,7 @@ func (h *Handler) AdminGetUser() http.HandlerFunc {
 // @Summary Update a specific user
 // @Description Update a specific user as an admin
 // @Tags Admin
-// @Security BearerAuth
+// @Security CookieAuth
 // @ID adminUpdateUser
 // @Accept json
 // @Produce json
@@ -245,7 +245,7 @@ func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 // @Summary Delete a specific user
 // @Description Delete a specific user as an admin
 // @Tags Admin
-// @Security BearerAuth
+// @Security CookieAuth
 // @ID adminDeleteUser
 // @Param userId path int true "User ID"
 // @Success 204 "No Content"
@@ -300,7 +300,7 @@ func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 // @Summary List all workspaces
 // @Description List all workspaces and their stats as an admin
 // @Tags Admin
-// @Security BearerAuth
+// @Security CookieAuth
 // @ID adminListWorkspaces
 // @Produce json
 // @Success 200 {array} WorkspaceStats
@@ -353,7 +353,7 @@ func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 // @Summary Get system statistics
 // @Description Get system-wide statistics as an admin
 // @Tags Admin
-// @Security BearerAuth
+// @Security CookieAuth
 // @ID adminGetSystemStats
 // @Produce json
 // @Success 200 {object} SystemStats

@@ -40,7 +40,8 @@ func setupRouter(o Options) *chi.Mux {
 		r.Use(cors.Handler(cors.Options{
 			AllowedOrigins:   o.Config.CORSOrigins,
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Requested-With"},
+			AllowedHeaders:   []string{"Accept", "Content-Type", "X-CSRF-Token"},
+			ExposedHeaders:   []string{"X-CSRF-Token"},
 			AllowCredentials: true,
 			MaxAge:           300,
 		}))
@@ -71,8 +72,8 @@ func setupRouter(o Options) *chi.Mux {
 
 		// Public routes (no authentication required)
 		r.Group(func(r chi.Router) {
-			r.Post("/auth/login", handler.Login(o.SessionService))
-			r.Post("/auth/refresh", handler.RefreshToken(o.SessionService))
+			r.Post("/auth/login", handler.Login(o.SessionService, o.CookieService))
+			r.Post("/auth/refresh", handler.RefreshToken(o.SessionService, o.CookieService))
 		})
 
 		// Protected routes (authentication required)
@@ -81,7 +82,7 @@ func setupRouter(o Options) *chi.Mux {
 			r.Use(context.WithUserContextMiddleware)
 
 			// Auth routes
-			r.Post("/auth/logout", handler.Logout(o.SessionService))
+			r.Post("/auth/logout", handler.Logout(o.SessionService, o.CookieService))
 			r.Get("/auth/me", handler.GetCurrentUser())
 
 			// User profile routes
