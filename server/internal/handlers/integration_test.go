@@ -24,17 +24,17 @@ import (
 
 // testHarness encapsulates all the dependencies needed for testing
 type testHarness struct {
-	Server        *app.Server
-	DB            db.TestDatabase
-	Storage       storage.Manager
-	JWTManager    auth.JWTManager
-	SessionSvc    *auth.SessionService
-	AdminUser     *models.User
-	AdminToken    string
-	RegularUser   *models.User
-	RegularToken  string
-	TempDirectory string
-	MockGit       *MockGitClient
+	Server         *app.Server
+	DB             db.TestDatabase
+	Storage        storage.Manager
+	JWTManager     auth.JWTManager
+	SessionManager auth.SessionManager
+	AdminUser      *models.User
+	AdminToken     string
+	RegularUser    *models.User
+	RegularToken   string
+	TempDirectory  string
+	MockGit        *MockGitClient
 }
 
 // setupTestHarness creates a new test environment
@@ -104,20 +104,20 @@ func setupTestHarness(t *testing.T) *testHarness {
 		Database:       database,
 		Storage:        storageSvc,
 		JWTManager:     jwtSvc,
-		SessionService: sessionSvc,
+		SessionManager: sessionSvc,
 	}
 
 	// Create server
 	srv := app.NewServer(serverOpts)
 
 	h := &testHarness{
-		Server:        srv,
-		DB:            database,
-		Storage:       storageSvc,
-		JWTManager:    jwtSvc,
-		SessionSvc:    sessionSvc,
-		TempDirectory: tempDir,
-		MockGit:       mockGit,
+		Server:         srv,
+		DB:             database,
+		Storage:        storageSvc,
+		JWTManager:     jwtSvc,
+		SessionManager: sessionSvc,
+		TempDirectory:  tempDir,
+		MockGit:        mockGit,
 	}
 
 	// Create test users
@@ -172,7 +172,7 @@ func (h *testHarness) createTestUser(t *testing.T, email, password string, role 
 		t.Fatalf("Failed to initialize user workspace: %v", err)
 	}
 
-	session, accessToken, err := h.SessionSvc.CreateSession(user.ID, string(user.Role))
+	session, accessToken, err := h.SessionManager.CreateSession(user.ID, string(user.Role))
 	if err != nil {
 		t.Fatalf("Failed to create session: %v", err)
 	}

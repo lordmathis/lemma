@@ -53,6 +53,7 @@ type WorkspaceStore interface {
 type SessionStore interface {
 	CreateSession(session *models.Session) error
 	GetSessionByRefreshToken(refreshToken string) (*models.Session, error)
+	GetSessionByID(sessionID string) (*models.Session, error)
 	DeleteSession(sessionID string) error
 	CleanExpiredSessions() error
 }

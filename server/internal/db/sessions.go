@@ -41,6 +41,26 @@ func (db *database) GetSessionByRefreshToken(refreshToken string) (*models.Sessi
 	return session, nil
 }
 
+// GetSessionByID retrieves a session by its ID
+func (db *database) GetSessionByID(sessionID string) (*models.Session, error) {
+	session := &models.Session{}
+	err := db.QueryRow(`
+		SELECT id, user_id, refresh_token, expires_at, created_at
+		FROM sessions
+		WHERE id = ? AND expires_at > ?`,
+		sessionID, time.Now(),
+	).Scan(&session.ID, &session.UserID, &session.RefreshToken, &session.ExpiresAt, &session.CreatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("session not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch session: %w", err)
+	}
+
+	return session, nil
+}
+
 // DeleteSession removes a session from the database
 func (db *database) DeleteSession(sessionID string) error {
 	result, err := db.Exec("DELETE FROM sessions WHERE id = ?", sessionID)

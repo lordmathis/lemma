@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-// CookieService interface defines methods for generating cookies
-type CookieService interface {
+// CookieManager interface defines methods for generating cookies
+type CookieManager interface {
 	GenerateAccessTokenCookie(token string) *http.Cookie
 	GenerateRefreshTokenCookie(token string) *http.Cookie
 	GenerateCSRFCookie(token string) *http.Cookie
@@ -14,14 +14,14 @@ type CookieService interface {
 }
 
 // CookieService
-type cookieService struct {
+type cookieManager struct {
 	Domain   string
 	Secure   bool
 	SameSite http.SameSite
 }
 
 // NewCookieService creates a new cookie service
-func NewCookieService(isDevelopment bool, domain string) CookieService {
+func NewCookieService(isDevelopment bool, domain string) CookieManager {
 	secure := !isDevelopment
 	var sameSite http.SameSite
 
@@ -31,7 +31,7 @@ func NewCookieService(isDevelopment bool, domain string) CookieService {
 		sameSite = http.SameSiteStrictMode
 	}
 
-	return &cookieService{
+	return &cookieManager{
 		Domain:   domain,
 		Secure:   secure,
 		SameSite: sameSite,
@@ -39,7 +39,7 @@ func NewCookieService(isDevelopment bool, domain string) CookieService {
 }
 
 // GenerateAccessTokenCookie creates a new cookie for the access token
-func (c *cookieService) GenerateAccessTokenCookie(token string) *http.Cookie {
+func (c *cookieManager) GenerateAccessTokenCookie(token string) *http.Cookie {
 	return &http.Cookie{
 		Name:     "access_token",
 		Value:    token,
@@ -52,7 +52,7 @@ func (c *cookieService) GenerateAccessTokenCookie(token string) *http.Cookie {
 }
 
 // GenerateRefreshTokenCookie creates a new cookie for the refresh token
-func (c *cookieService) GenerateRefreshTokenCookie(token string) *http.Cookie {
+func (c *cookieManager) GenerateRefreshTokenCookie(token string) *http.Cookie {
 	return &http.Cookie{
 		Name:     "refresh_token",
 		Value:    token,
@@ -65,7 +65,7 @@ func (c *cookieService) GenerateRefreshTokenCookie(token string) *http.Cookie {
 }
 
 // GenerateCSRFCookie creates a new cookie for the CSRF token
-func (c *cookieService) GenerateCSRFCookie(token string) *http.Cookie {
+func (c *cookieManager) GenerateCSRFCookie(token string) *http.Cookie {
 	return &http.Cookie{
 		Name:     "csrf_token",
 		Value:    token,
@@ -78,7 +78,7 @@ func (c *cookieService) GenerateCSRFCookie(token string) *http.Cookie {
 }
 
 // InvalidateCookie creates a new cookie with a MaxAge of -1 to invalidate the cookie
-func (c *cookieService) InvalidateCookie(cookieType string) *http.Cookie {
+func (c *cookieManager) InvalidateCookie(cookieType string) *http.Cookie {
 	return &http.Cookie{
 		Name:     cookieType,
 		Value:    "",

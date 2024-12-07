@@ -9,13 +9,17 @@ import (
 
 // Middleware handles JWT authentication for protected routes
 type Middleware struct {
-	jwtManager JWTManager
+	jwtManager     JWTManager
+	sessionManager SessionManager
+	cookieManager  CookieManager
 }
 
 // NewMiddleware creates a new authentication middleware
-func NewMiddleware(jwtManager JWTManager) *Middleware {
+func NewMiddleware(jwtManager JWTManager, sessionManager SessionManager, cookieManager CookieManager) *Middleware {
 	return &Middleware{
-		jwtManager: jwtManager,
+		jwtManager:     jwtManager,
+		sessionManager: sessionManager,
+		cookieManager:  cookieManager,
 	}
 }
 
@@ -39,6 +43,16 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 		// Check token type
 		if claims.Type != AccessToken {
 			http.Error(w, "Invalid token type", http.StatusUnauthorized)
+			return
+		}
+
+		// Check if session is still valid in database
+		session, err := m.sessionManager.ValidateSession(claims.ID)
+		if err != nil || session == nil {
+			m.cookieManager.InvalidateCookie("access_token")
+			m.cookieManager.InvalidateCookie("refresh_token")
+			m.cookieManager.InvalidateCookie("csrf_token")
+			http.Error(w, "Session invalid or expired", http.StatusUnauthorized)
 			return
 		}
 

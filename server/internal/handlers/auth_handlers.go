@@ -39,7 +39,7 @@ type LoginResponse struct {
 // @Failure 401 {object} ErrorResponse "Invalid credentials"
 // @Failure 500 {object} ErrorResponse "Failed to create session"
 // @Router /auth/login [post]
-func (h *Handler) Login(authService *auth.SessionService, cookieService auth.CookieService) http.HandlerFunc {
+func (h *Handler) Login(authManager auth.SessionManager, cookieService auth.CookieManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -68,7 +68,7 @@ func (h *Handler) Login(authService *auth.SessionService, cookieService auth.Coo
 		}
 
 		// Create session and generate tokens
-		session, accessToken, err := authService.CreateSession(user.ID, string(user.Role))
+		session, accessToken, err := authManager.CreateSession(user.ID, string(user.Role))
 		if err != nil {
 			respondError(w, "Failed to create session", http.StatusInternalServerError)
 			return
@@ -110,7 +110,7 @@ func (h *Handler) Login(authService *auth.SessionService, cookieService auth.Coo
 // @Failure 400 {object} ErrorResponse "Session ID required"
 // @Failure 500 {object} ErrorResponse "Failed to logout"
 // @Router /auth/logout [post]
-func (h *Handler) Logout(authService *auth.SessionService, cookieService auth.CookieService) http.HandlerFunc {
+func (h *Handler) Logout(authManager auth.SessionManager, cookieService auth.CookieManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get session ID from cookie
 		sessionCookie, err := r.Cookie("access_token")
@@ -120,7 +120,7 @@ func (h *Handler) Logout(authService *auth.SessionService, cookieService auth.Co
 		}
 
 		// Invalidate the session in the database
-		if err := authService.InvalidateSession(sessionCookie.Value); err != nil {
+		if err := authManager.InvalidateSession(sessionCookie.Value); err != nil {
 			respondError(w, "Failed to invalidate session", http.StatusInternalServerError)
 			return
 		}
@@ -147,7 +147,7 @@ func (h *Handler) Logout(authService *auth.SessionService, cookieService auth.Co
 // @Failure 400 {object} ErrorResponse "Refresh token required"
 // @Failure 401 {object} ErrorResponse "Invalid refresh token"
 // @Router /auth/refresh [post]
-func (h *Handler) RefreshToken(authService *auth.SessionService, cookieService auth.CookieService) http.HandlerFunc {
+func (h *Handler) RefreshToken(authManager auth.SessionManager, cookieService auth.CookieManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		refreshCookie, err := r.Cookie("refresh_token")
 		if err != nil {
@@ -156,7 +156,7 @@ func (h *Handler) RefreshToken(authService *auth.SessionService, cookieService a
 		}
 
 		// Generate new access token
-		accessToken, err := authService.RefreshSession(refreshCookie.Value)
+		accessToken, err := authManager.RefreshSession(refreshCookie.Value)
 		if err != nil {
 			respondError(w, "Invalid refresh token", http.StatusUnauthorized)
 			return

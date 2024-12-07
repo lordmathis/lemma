@@ -12,8 +12,8 @@ type Options struct {
 	Database       db.Database
 	Storage        storage.Manager
 	JWTManager     auth.JWTManager
-	SessionService *auth.SessionService
-	CookieService  auth.CookieService
+	SessionManager auth.SessionManager
+	CookieService  auth.CookieManager
 }
 
 // DefaultOptions creates server options with default configuration
@@ -49,7 +49,7 @@ func DefaultOptions(cfg *Config) (*Options, error) {
 		Database:       database,
 		Storage:        storageManager,
 		JWTManager:     jwtManager,
-		SessionService: sessionService,
+		SessionManager: sessionService,
 		CookieService:  cookieService,
 	}, nil
 }

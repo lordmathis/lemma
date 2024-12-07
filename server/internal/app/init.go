@@ -40,7 +40,7 @@ func initDatabase(cfg *Config, secretsService secrets.Service) (db.Database, err
 }
 
 // initAuth initializes JWT and session services
-func initAuth(cfg *Config, database db.Database) (auth.JWTManager, *auth.SessionService, auth.CookieService, error) {
+func initAuth(cfg *Config, database db.Database) (auth.JWTManager, auth.SessionManager, auth.CookieManager, error) {
 	// Get or generate JWT signing key
 	signingKey := cfg.JWTSigningKey
 	if signingKey == "" {
@@ -62,12 +62,12 @@ func initAuth(cfg *Config, database db.Database) (auth.JWTManager, *auth.Session
 	}
 
 	// Initialize session service
-	sessionService := auth.NewSessionService(database, jwtManager)
+	sessionManager := auth.NewSessionService(database, jwtManager)
 
 	// Cookie service
 	cookieService := auth.NewCookieService(cfg.IsDevelopment, cfg.Domain)
 
-	return jwtManager, sessionService, cookieService, nil
+	return jwtManager, sessionManager, cookieService, nil
 }
 
 // setupAdminUser creates the admin user if it doesn't exist

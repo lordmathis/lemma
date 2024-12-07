@@ -9,22 +9,30 @@ import (
 	"github.com/google/uuid"
 )
 
-// SessionService manages user sessions in the database
-type SessionService struct {
+type SessionManager interface {
+	CreateSession(userID int, role string) (*models.Session, string, error)
+	RefreshSession(refreshToken string) (string, error)
+	ValidateSession(sessionID string) (*models.Session, error)
+	InvalidateSession(token string) error
+	CleanExpiredSessions() error
+}
+
+// sessionManager manages user sessions in the database
+type sessionManager struct {
 	db         db.SessionStore // Database store for sessions
 	jwtManager JWTManager      // JWT Manager for token operations
 }
 
 // NewSessionService creates a new session service with the given database and JWT manager
-func NewSessionService(db db.SessionStore, jwtManager JWTManager) *SessionService {
-	return &SessionService{
+func NewSessionService(db db.SessionStore, jwtManager JWTManager) *sessionManager {
+	return &sessionManager{
 		db:         db,
 		jwtManager: jwtManager,
 	}
 }
 
 // CreateSession creates a new user session for a user with the given userID and role
-func (s *SessionService) CreateSession(userID int, role string) (*models.Session, string, error) {
+func (s *sessionManager) CreateSession(userID int, role string) (*models.Session, string, error) {
 	// Generate both access and refresh tokens
 	accessToken, err := s.jwtManager.GenerateAccessToken(userID, role)
 	if err != nil {
@@ -60,7 +68,7 @@ func (s *SessionService) CreateSession(userID int, role string) (*models.Session
 }
 
 // RefreshSession creates a new access token using a refreshToken
-func (s *SessionService) RefreshSession(refreshToken string) (string, error) {
+func (s *sessionManager) RefreshSession(refreshToken string) (string, error) {
 	// Get session from database first
 	session, err := s.db.GetSessionByRefreshToken(refreshToken)
 	if err != nil {
@@ -82,8 +90,20 @@ func (s *SessionService) RefreshSession(refreshToken string) (string, error) {
 	return s.jwtManager.GenerateAccessToken(claims.UserID, claims.Role)
 }
 
+// ValidateSession checks if a session with the given sessionID is valid
+func (s *sessionManager) ValidateSession(sessionID string) (*models.Session, error) {
+
+	// Get the session from the database
+	session, err := s.db.GetSessionByID(sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session: %w", err)
+	}
+
+	return session, nil
+}
+
 // InvalidateSession removes a session with the given sessionID from the database
-func (s *SessionService) InvalidateSession(token string) error {
+func (s *sessionManager) InvalidateSession(token string) error {
 	// Parse the JWT to get the session info
 	claims, err := s.jwtManager.ValidateToken(token)
 	if err != nil {
@@ -94,6 +114,6 @@ func (s *SessionService) InvalidateSession(token string) error {
 }
 
 // CleanExpiredSessions removes all expired sessions from the database
-func (s *SessionService) CleanExpiredSessions() error {
+func (s *sessionManager) CleanExpiredSessions() error {
 	return s.db.CleanExpiredSessions()
 }
