@@ -27,7 +27,7 @@ func TestFileHandlers_Integration(t *testing.T) {
 			UserID: h.RegularUser.ID,
 			Name:   "File Test Workspace",
 		}
-		rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularSession, nil)
+		rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularSession)
 		require.Equal(t, http.StatusOK, rr.Code)
 
 		err := json.NewDecoder(rr.Body).Decode(workspace)
@@ -37,7 +37,7 @@ func TestFileHandlers_Integration(t *testing.T) {
 		baseURL := fmt.Sprintf("/api/v1/workspaces/%s/files", url.PathEscape(workspace.Name))
 
 		t.Run("list empty directory", func(t *testing.T) {
-			rr := h.makeRequest(t, http.MethodGet, baseURL, nil, h.RegularSession, nil)
+			rr := h.makeRequest(t, http.MethodGet, baseURL, nil, h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var files []storage.FileNode
@@ -51,16 +51,16 @@ func TestFileHandlers_Integration(t *testing.T) {
 			filePath := "test.md"
 
 			// Save file
-			rr := h.makeRequestRaw(t, http.MethodPost, baseURL+"/"+filePath, strings.NewReader(content), h.RegularSession, nil)
+			rr := h.makeRequestRaw(t, http.MethodPost, baseURL+"/"+filePath, strings.NewReader(content), h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			// Get file content
-			rr = h.makeRequest(t, http.MethodGet, baseURL+"/"+filePath, nil, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/"+filePath, nil, h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 			assert.Equal(t, content, rr.Body.String())
 
 			// List directory should now show the file
-			rr = h.makeRequest(t, http.MethodGet, baseURL, nil, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodGet, baseURL, nil, h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var files []storage.FileNode
@@ -80,12 +80,12 @@ func TestFileHandlers_Integration(t *testing.T) {
 
 			// Create all files
 			for path, content := range files {
-				rr := h.makeRequest(t, http.MethodPost, baseURL+"/"+path, content, h.RegularSession, nil)
+				rr := h.makeRequest(t, http.MethodPost, baseURL+"/"+path, content, h.RegularSession)
 				require.Equal(t, http.StatusOK, rr.Code)
 			}
 
 			// List all files
-			rr := h.makeRequest(t, http.MethodGet, baseURL, nil, h.RegularSession, nil)
+			rr := h.makeRequest(t, http.MethodGet, baseURL, nil, h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var fileNodes []storage.FileNode
@@ -116,11 +116,11 @@ func TestFileHandlers_Integration(t *testing.T) {
 			// Look up a file that exists in multiple locations
 			filename := "readme.md"
 			dupContent := "Another readme"
-			rr := h.makeRequest(t, http.MethodPost, baseURL+"/projects/"+filename, dupContent, h.RegularSession, nil)
+			rr := h.makeRequest(t, http.MethodPost, baseURL+"/projects/"+filename, dupContent, h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			// Search for the file
-			rr = h.makeRequest(t, http.MethodGet, baseURL+"/lookup?filename="+filename, nil, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/lookup?filename="+filename, nil, h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var response struct {
@@ -131,7 +131,7 @@ func TestFileHandlers_Integration(t *testing.T) {
 			assert.Len(t, response.Paths, 2)
 
 			// Search for non-existent file
-			rr = h.makeRequest(t, http.MethodGet, baseURL+"/lookup?filename=nonexistent.md", nil, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/lookup?filename=nonexistent.md", nil, h.RegularSession)
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 		})
 
@@ -140,21 +140,21 @@ func TestFileHandlers_Integration(t *testing.T) {
 			content := "This file will be deleted"
 
 			// Create file
-			rr := h.makeRequest(t, http.MethodPost, baseURL+"/"+filePath, content, h.RegularSession, nil)
+			rr := h.makeRequest(t, http.MethodPost, baseURL+"/"+filePath, content, h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			// Delete file
-			rr = h.makeRequest(t, http.MethodDelete, baseURL+"/"+filePath, nil, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodDelete, baseURL+"/"+filePath, nil, h.RegularSession)
 			require.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Verify file is gone
-			rr = h.makeRequest(t, http.MethodGet, baseURL+"/"+filePath, nil, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/"+filePath, nil, h.RegularSession)
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 		})
 
 		t.Run("last opened file", func(t *testing.T) {
 			// Initially should be empty
-			rr := h.makeRequest(t, http.MethodGet, baseURL+"/last", nil, h.RegularSession, nil)
+			rr := h.makeRequest(t, http.MethodGet, baseURL+"/last", nil, h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var response struct {
@@ -170,11 +170,11 @@ func TestFileHandlers_Integration(t *testing.T) {
 			}{
 				FilePath: "docs/readme.md",
 			}
-			rr = h.makeRequest(t, http.MethodPut, baseURL+"/last", updateReq, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodPut, baseURL+"/last", updateReq, h.RegularSession)
 			require.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Verify update
-			rr = h.makeRequest(t, http.MethodGet, baseURL+"/last", nil, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/last", nil, h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			err = json.NewDecoder(rr.Body).Decode(&response)
@@ -183,7 +183,7 @@ func TestFileHandlers_Integration(t *testing.T) {
 
 			// Test invalid file path
 			updateReq.FilePath = "nonexistent.md"
-			rr = h.makeRequest(t, http.MethodPut, baseURL+"/last", updateReq, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodPut, baseURL+"/last", updateReq, h.RegularSession)
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 		})
 
@@ -205,11 +205,11 @@ func TestFileHandlers_Integration(t *testing.T) {
 			for _, tc := range tests {
 				t.Run(tc.name, func(t *testing.T) {
 					// Test without session
-					rr := h.makeRequest(t, tc.method, tc.path, tc.body, nil, nil)
+					rr := h.makeRequest(t, tc.method, tc.path, tc.body, nil)
 					assert.Equal(t, http.StatusUnauthorized, rr.Code)
 
 					// Test with wrong user's session
-					rr = h.makeRequest(t, tc.method, tc.path, tc.body, h.AdminSession, nil)
+					rr = h.makeRequest(t, tc.method, tc.path, tc.body, h.AdminSession)
 					assert.Equal(t, http.StatusNotFound, rr.Code)
 				})
 			}
@@ -226,11 +226,11 @@ func TestFileHandlers_Integration(t *testing.T) {
 			for _, path := range maliciousPaths {
 				t.Run(path, func(t *testing.T) {
 					// Try to read
-					rr := h.makeRequest(t, http.MethodGet, baseURL+"/"+path, nil, h.RegularSession, nil)
+					rr := h.makeRequest(t, http.MethodGet, baseURL+"/"+path, nil, h.RegularSession)
 					assert.Equal(t, http.StatusBadRequest, rr.Code)
 
 					// Try to write
-					rr = h.makeRequest(t, http.MethodPost, baseURL+"/"+path, "malicious content", h.RegularSession, nil)
+					rr = h.makeRequest(t, http.MethodPost, baseURL+"/"+path, "malicious content", h.RegularSession)
 					assert.Equal(t, http.StatusBadRequest, rr.Code)
 				})
 			}

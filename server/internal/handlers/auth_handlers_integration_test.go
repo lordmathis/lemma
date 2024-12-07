@@ -29,7 +29,7 @@ func TestAuthHandlers_Integration(t *testing.T) {
 				Password: "admin123",
 			}
 
-			rr := h.makeRequest(t, http.MethodPost, "/api/v1/auth/login", loginReq, nil, nil)
+			rr := h.makeRequest(t, http.MethodPost, "/api/v1/auth/login", loginReq, nil)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			// Verify all required cookies are present with correct attributes
@@ -135,7 +135,7 @@ func TestAuthHandlers_Integration(t *testing.T) {
 						req.Body = io.NopCloser(strings.NewReader("{bad json"))
 						rr = h.executeRequest(req)
 					} else {
-						rr = h.makeRequest(t, http.MethodPost, "/api/v1/auth/login", tt.request, nil, nil)
+						rr = h.makeRequest(t, http.MethodPost, "/api/v1/auth/login", tt.request, nil)
 					}
 					assert.Equal(t, tt.wantCode, rr.Code)
 					assert.Empty(t, rr.Result().Cookies(), "failed login should not set cookies")
@@ -238,7 +238,7 @@ func TestAuthHandlers_Integration(t *testing.T) {
 			}
 
 			// Verify session is actually invalidated
-			rr = h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularSession)
 			assert.Equal(t, http.StatusUnauthorized, rr.Code)
 		})
 
@@ -286,7 +286,7 @@ func TestAuthHandlers_Integration(t *testing.T) {
 
 	t.Run("get current user", func(t *testing.T) {
 		t.Run("successful get current user", func(t *testing.T) {
-			rr := h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularSession, nil)
+			rr := h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var user models.User

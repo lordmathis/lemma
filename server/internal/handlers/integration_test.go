@@ -241,15 +241,10 @@ func (h *testHarness) addAuthCookies(t *testing.T, req *http.Request, session *m
 }
 
 // makeRequest is the main helper for making JSON requests
-func (h *testHarness) makeRequest(t *testing.T, method, path string, body interface{}, session *models.Session, headers map[string]string) *httptest.ResponseRecorder {
+func (h *testHarness) makeRequest(t *testing.T, method, path string, body interface{}, session *models.Session) *httptest.ResponseRecorder {
 	t.Helper()
 
 	req := h.newRequest(t, method, path, body)
-
-	// Add custom headers
-	for k, v := range headers {
-		req.Header.Set(k, v)
-	}
 
 	if session != nil {
 		needsCSRF := method != http.MethodGet && method != http.MethodHead && method != http.MethodOptions
@@ -263,15 +258,10 @@ func (h *testHarness) makeRequest(t *testing.T, method, path string, body interf
 }
 
 // makeRequestRawWithHeaders adds support for custom headers with raw body
-func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.Reader, session *models.Session, headers map[string]string) *httptest.ResponseRecorder {
+func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.Reader, session *models.Session) *httptest.ResponseRecorder {
 	t.Helper()
 
 	req := h.newRequestRaw(t, method, path, body)
-
-	// Add custom headers
-	for k, v := range headers {
-		req.Header.Set(k, v)
-	}
 
 	if session != nil {
 		needsCSRF := method != http.MethodGet && method != http.MethodHead && method != http.MethodOptions

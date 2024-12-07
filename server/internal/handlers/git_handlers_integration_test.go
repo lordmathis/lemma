@@ -32,7 +32,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 			GitCommitMsgTemplate: "Update: {{message}}",
 		}
 
-		rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularSession, nil)
+		rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularSession)
 		require.Equal(t, http.StatusOK, rr.Code)
 
 		err := json.NewDecoder(rr.Body).Decode(workspace)
@@ -50,7 +50,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 					"message": commitMsg,
 				}
 
-				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularSession, nil)
+				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularSession)
 				require.Equal(t, http.StatusOK, rr.Code)
 
 				var response map[string]string
@@ -70,7 +70,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 					"message": "",
 				}
 
-				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularSession, nil)
+				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularSession)
 				assert.Equal(t, http.StatusBadRequest, rr.Code)
 				assert.Equal(t, 0, h.MockGit.GetCommitCount(), "Commit should not be called")
 			})
@@ -83,7 +83,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 					"message": "Test message",
 				}
 
-				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularSession, nil)
+				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularSession)
 				assert.Equal(t, http.StatusInternalServerError, rr.Code)
 
 				h.MockGit.SetError(nil) // Reset error state
@@ -94,7 +94,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 			h.MockGit.Reset()
 
 			t.Run("successful pull", func(t *testing.T) {
-				rr := h.makeRequest(t, http.MethodPost, baseURL+"/pull", nil, h.RegularSession, nil)
+				rr := h.makeRequest(t, http.MethodPost, baseURL+"/pull", nil, h.RegularSession)
 				require.Equal(t, http.StatusOK, rr.Code)
 
 				var response map[string]string
@@ -109,7 +109,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 				h.MockGit.Reset()
 				h.MockGit.SetError(fmt.Errorf("mock git error"))
 
-				rr := h.makeRequest(t, http.MethodPost, baseURL+"/pull", nil, h.RegularSession, nil)
+				rr := h.makeRequest(t, http.MethodPost, baseURL+"/pull", nil, h.RegularSession)
 				assert.Equal(t, http.StatusInternalServerError, rr.Code)
 
 				h.MockGit.SetError(nil) // Reset error state
@@ -141,11 +141,11 @@ func TestGitHandlers_Integration(t *testing.T) {
 			for _, tc := range tests {
 				t.Run(tc.name, func(t *testing.T) {
 					// Test without session
-					rr := h.makeRequest(t, tc.method, tc.path, tc.body, nil, nil)
+					rr := h.makeRequest(t, tc.method, tc.path, tc.body, nil)
 					assert.Equal(t, http.StatusUnauthorized, rr.Code)
 
 					// Test with wrong user's session
-					rr = h.makeRequest(t, tc.method, tc.path, tc.body, h.AdminSession, nil)
+					rr = h.makeRequest(t, tc.method, tc.path, tc.body, h.AdminSession)
 					assert.Equal(t, http.StatusNotFound, rr.Code)
 				})
 			}
@@ -160,7 +160,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 				Name:   "Non-Git Workspace",
 			}
 
-			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", nonGitWorkspace, h.RegularSession, nil)
+			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", nonGitWorkspace, h.RegularSession)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			err := json.NewDecoder(rr.Body).Decode(nonGitWorkspace)
@@ -170,11 +170,11 @@ func TestGitHandlers_Integration(t *testing.T) {
 
 			// Try to commit
 			commitMsg := map[string]string{"message": "test"}
-			rr = h.makeRequest(t, http.MethodPost, nonGitBaseURL+"/commit", commitMsg, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodPost, nonGitBaseURL+"/commit", commitMsg, h.RegularSession)
 			assert.Equal(t, http.StatusInternalServerError, rr.Code)
 
 			// Try to pull
-			rr = h.makeRequest(t, http.MethodPost, nonGitBaseURL+"/pull", nil, h.RegularSession, nil)
+			rr = h.makeRequest(t, http.MethodPost, nonGitBaseURL+"/pull", nil, h.RegularSession)
 			assert.Equal(t, http.StatusInternalServerError, rr.Code)
 		})
 	})
