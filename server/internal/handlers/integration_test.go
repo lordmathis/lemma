@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
@@ -29,10 +30,11 @@ type testHarness struct {
 	Storage        storage.Manager
 	JWTManager     auth.JWTManager
 	SessionManager auth.SessionManager
+	CookieManager  auth.CookieManager
 	AdminUser      *models.User
-	AdminToken     string
+	AdminSession   *models.Session
 	RegularUser    *models.User
-	RegularToken   string
+	RegularSession *models.Session
 	TempDirectory  string
 	MockGit        *MockGitClient
 }
@@ -86,6 +88,9 @@ func setupTestHarness(t *testing.T) *testHarness {
 	// Initialize session service
 	sessionSvc := auth.NewSessionService(database, jwtSvc)
 
+	// Initialize cookie service
+	cookieSvc := auth.NewCookieService(true, "localhost")
+
 	// Create test config
 	testConfig := &app.Config{
 		DBPath:        ":memory:",
@@ -116,18 +121,19 @@ func setupTestHarness(t *testing.T) *testHarness {
 		Storage:        storageSvc,
 		JWTManager:     jwtSvc,
 		SessionManager: sessionSvc,
+		CookieManager:  cookieSvc,
 		TempDirectory:  tempDir,
 		MockGit:        mockGit,
 	}
 
 	// Create test users
-	adminUser, adminToken := h.createTestUser(t, "admin@test.com", "admin123", models.RoleAdmin)
-	regularUser, regularToken := h.createTestUser(t, "user@test.com", "user123", models.RoleEditor)
+	adminUser, adminSession := h.createTestUser(t, "admin@test.com", "admin123", models.RoleAdmin)
+	regularUser, regularSession := h.createTestUser(t, "user@test.com", "user123", models.RoleEditor)
 
 	h.AdminUser = adminUser
-	h.AdminToken = adminToken
+	h.AdminSession = adminSession
 	h.RegularUser = regularUser
-	h.RegularToken = regularToken
+	h.RegularSession = regularSession
 
 	return h
 }
@@ -146,7 +152,7 @@ func (h *testHarness) teardown(t *testing.T) {
 }
 
 // createTestUser creates a test user and returns the user and access token
-func (h *testHarness) createTestUser(t *testing.T, email, password string, role models.UserRole) (*models.User, string) {
+func (h *testHarness) createTestUser(t *testing.T, email, password string, role models.UserRole) (*models.User, *models.Session) {
 	t.Helper()
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -172,25 +178,19 @@ func (h *testHarness) createTestUser(t *testing.T, email, password string, role 
 		t.Fatalf("Failed to initialize user workspace: %v", err)
 	}
 
-	session, accessToken, err := h.SessionManager.CreateSession(user.ID, string(user.Role))
+	session, _, err := h.SessionManager.CreateSession(user.ID, string(user.Role))
 	if err != nil {
 		t.Fatalf("Failed to create session: %v", err)
 	}
 
-	if session == nil || accessToken == "" {
-		t.Fatal("Failed to get valid session or token")
-	}
-
-	return user, accessToken
+	return user, session
 }
 
-// makeRequest is a helper function to make HTTP requests in tests
-func (h *testHarness) makeRequest(t *testing.T, method, path string, body interface{}, token string, headers map[string]string) *httptest.ResponseRecorder {
+func (h *testHarness) newRequest(t *testing.T, method, path string, body interface{}) *http.Request {
 	t.Helper()
 
 	var reqBody []byte
 	var err error
-
 	if body != nil {
 		reqBody, err = json.Marshal(body)
 		if err != nil {
@@ -199,38 +199,87 @@ func (h *testHarness) makeRequest(t *testing.T, method, path string, body interf
 	}
 
 	req := httptest.NewRequest(method, path, bytes.NewBuffer(reqBody))
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
 	req.Header.Set("Content-Type", "application/json")
+	return req
+}
 
-	// Add any additional headers
-	for k, v := range headers {
-		req.Header.Set(k, v)
-	}
+// newRequestRaw creates a new request with raw body
+func (h *testHarness) newRequestRaw(t *testing.T, method, path string, body io.Reader) *http.Request {
+	t.Helper()
+	return httptest.NewRequest(method, path, body)
+}
 
+// executeRequest executes the request and returns response recorder
+func (h *testHarness) executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
 	h.Server.Router().ServeHTTP(rr, req)
-
 	return rr
 }
 
-// makeRequestRaw is a helper function to make HTTP requests with raw body content
-func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.Reader, token string, headers map[string]string) *httptest.ResponseRecorder {
+// addAuthCookies adds authentication cookies to request
+func (h *testHarness) addAuthCookies(t *testing.T, req *http.Request, session *models.Session, addCSRF bool) string {
 	t.Helper()
 
-	req := httptest.NewRequest(method, path, body)
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
+	if session == nil {
+		return ""
 	}
 
-	// Add any additional headers
+	accessToken, err := h.JWTManager.GenerateAccessToken(session.UserID, "admin")
+	if err != nil {
+		t.Fatalf("Failed to generate access token: %v", err)
+	}
+
+	req.AddCookie(h.CookieManager.GenerateAccessTokenCookie(accessToken))
+	req.AddCookie(h.CookieManager.GenerateRefreshTokenCookie(session.RefreshToken))
+
+	if addCSRF {
+		csrfToken := "test-csrf-token"
+		req.AddCookie(h.CookieManager.GenerateCSRFCookie(csrfToken))
+		return csrfToken
+	}
+	return ""
+}
+
+// makeRequest is the main helper for making JSON requests
+func (h *testHarness) makeRequest(t *testing.T, method, path string, body interface{}, session *models.Session, headers map[string]string) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := h.newRequest(t, method, path, body)
+
+	// Add custom headers
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
 
-	rr := httptest.NewRecorder()
-	h.Server.Router().ServeHTTP(rr, req)
+	if session != nil {
+		needsCSRF := method != http.MethodGet && method != http.MethodHead && method != http.MethodOptions
+		csrfToken := h.addAuthCookies(t, req, session, needsCSRF)
+		if needsCSRF {
+			req.Header.Set("X-CSRF-Token", csrfToken)
+		}
+	}
 
-	return rr
+	return h.executeRequest(req)
+}
+
+// makeRequestRawWithHeaders adds support for custom headers with raw body
+func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.Reader, session *models.Session, headers map[string]string) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := h.newRequestRaw(t, method, path, body)
+
+	// Add custom headers
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	if session != nil {
+		needsCSRF := method != http.MethodGet && method != http.MethodHead && method != http.MethodOptions
+		csrfToken := h.addAuthCookies(t, req, session, needsCSRF)
+		if needsCSRF {
+			req.Header.Set("X-CSRF-Token", csrfToken)
+		}
+	}
+
+	return h.executeRequest(req)
 }
