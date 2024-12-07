@@ -3,6 +3,7 @@ package auth_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,6 +11,42 @@ import (
 	"novamd/internal/context"
 	"novamd/internal/models"
 )
+
+// Mock SessionManager
+type mockSessionManager struct {
+	sessions map[string]*models.Session
+}
+
+func newMockSessionManager() *mockSessionManager {
+	return &mockSessionManager{
+		sessions: make(map[string]*models.Session),
+	}
+}
+
+func (m *mockSessionManager) CreateSession(userID int, role string) (*models.Session, string, error) {
+	return nil, "", nil // Not needed for these tests
+}
+
+func (m *mockSessionManager) RefreshSession(refreshToken string) (string, error) {
+	return "", nil // Not needed for these tests
+}
+
+func (m *mockSessionManager) ValidateSession(sessionID string) (*models.Session, error) {
+	session, exists := m.sessions[sessionID]
+	if !exists {
+		return nil, nil
+	}
+	return session, nil
+}
+
+func (m *mockSessionManager) InvalidateSession(token string) error {
+	delete(m.sessions, token)
+	return nil
+}
+
+func (m *mockSessionManager) CleanExpiredSessions() error {
+	return nil
+}
 
 // Complete mockResponseWriter implementation
 type mockResponseWriter struct {
@@ -44,61 +81,121 @@ func TestAuthenticateMiddleware(t *testing.T) {
 		RefreshTokenExpiry: 24 * time.Hour,
 	}
 	jwtService, _ := auth.NewJWTService(config)
-	middleware := auth.NewMiddleware(jwtService)
+	sessionManager := newMockSessionManager()
+	cookieManager := auth.NewCookieService(true, "localhost")
+	middleware := auth.NewMiddleware(jwtService, sessionManager, cookieManager)
 
 	testCases := []struct {
 		name           string
-		setupAuth      func() string
+		setupRequest   func() *http.Request
+		setupSession   func(sessionID string)
+		method         string
 		wantStatusCode int
 	}{
 		{
-			name: "valid token",
-			setupAuth: func() string {
+			name: "valid token with valid session",
+			setupRequest: func() *http.Request {
+				req := httptest.NewRequest("GET", "/test", nil)
 				token, _ := jwtService.GenerateAccessToken(1, "admin")
-				return token
+				cookie := cookieManager.GenerateAccessTokenCookie(token)
+				req.AddCookie(cookie)
+				return req
 			},
+			setupSession: func(sessionID string) {
+				sessionManager.sessions[sessionID] = &models.Session{
+					ID:        sessionID,
+					UserID:    1,
+					ExpiresAt: time.Now().Add(15 * time.Minute),
+				}
+			},
+			method:         "GET",
 			wantStatusCode: http.StatusOK,
 		},
 		{
-			name: "missing auth header",
-			setupAuth: func() string {
-				return ""
+			name: "valid token but invalid session",
+			setupRequest: func() *http.Request {
+				req := httptest.NewRequest("GET", "/test", nil)
+				token, _ := jwtService.GenerateAccessToken(1, "admin")
+				cookie := cookieManager.GenerateAccessTokenCookie(token)
+				req.AddCookie(cookie)
+				return req
 			},
+			setupSession:   func(sessionID string) {}, // No session setup
+			method:         "GET",
 			wantStatusCode: http.StatusUnauthorized,
 		},
 		{
-			name: "invalid auth format",
-			setupAuth: func() string {
-				return "InvalidFormat token"
+			name: "missing auth cookie",
+			setupRequest: func() *http.Request {
+				return httptest.NewRequest("GET", "/test", nil)
 			},
+			setupSession:   func(sessionID string) {},
+			method:         "GET",
 			wantStatusCode: http.StatusUnauthorized,
 		},
 		{
-			name: "invalid token",
-			setupAuth: func() string {
-				return "Bearer invalid.token.here"
+			name: "POST request without CSRF token",
+			setupRequest: func() *http.Request {
+				req := httptest.NewRequest("POST", "/test", nil)
+				token, _ := jwtService.GenerateAccessToken(1, "admin")
+				cookie := cookieManager.GenerateAccessTokenCookie(token)
+				req.AddCookie(cookie)
+				return req
 			},
-			wantStatusCode: http.StatusUnauthorized,
+			setupSession: func(sessionID string) {
+				sessionManager.sessions[sessionID] = &models.Session{
+					ID:        sessionID,
+					UserID:    1,
+					ExpiresAt: time.Now().Add(15 * time.Minute),
+				}
+			},
+			method:         "POST",
+			wantStatusCode: http.StatusForbidden,
+		},
+		{
+			name: "POST request with valid CSRF token",
+			setupRequest: func() *http.Request {
+				req := httptest.NewRequest("POST", "/test", nil)
+				token, _ := jwtService.GenerateAccessToken(1, "admin")
+				cookie := cookieManager.GenerateAccessTokenCookie(token)
+				req.AddCookie(cookie)
+
+				csrfToken := "test-csrf-token"
+				csrfCookie := cookieManager.GenerateCSRFCookie(csrfToken)
+				req.AddCookie(csrfCookie)
+				req.Header.Set("X-CSRF-Token", csrfToken)
+				return req
+			},
+			setupSession: func(sessionID string) {
+				sessionManager.sessions[sessionID] = &models.Session{
+					ID:        sessionID,
+					UserID:    1,
+					ExpiresAt: time.Now().Add(15 * time.Minute),
+				}
+			},
+			method:         "POST",
+			wantStatusCode: http.StatusOK,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Create test request
-			req := httptest.NewRequest("GET", "/test", nil)
-			if token := tc.setupAuth(); token != "" {
-				req.Header.Set("Authorization", "Bearer "+token)
-			}
-
-			// Create response recorder
+			req := tc.setupRequest()
 			w := newMockResponseWriter()
 
 			// Create test handler
 			nextCalled := false
-			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				nextCalled = true
 				w.WriteHeader(http.StatusOK)
 			})
+
+			// If we have a valid token, set up the session
+			if cookie, err := req.Cookie("access_token"); err == nil {
+				if claims, err := jwtService.ValidateToken(cookie.Value); err == nil {
+					tc.setupSession(claims.ID)
+				}
+			}
 
 			// Execute middleware
 			middleware.Authenticate(next).ServeHTTP(w, req)
@@ -115,6 +212,15 @@ func TestAuthenticateMiddleware(t *testing.T) {
 			if tc.wantStatusCode != http.StatusOK && nextCalled {
 				t.Error("next handler was called when it shouldn't have been")
 			}
+
+			// For unauthorized responses, check if cookies were invalidated
+			if w.statusCode == http.StatusUnauthorized {
+				for _, cookie := range w.Header()["Set-Cookie"] {
+					if strings.Contains(cookie, "Max-Age=0") {
+						t.Error("cookies were not properly invalidated")
+					}
+				}
+			}
 		})
 	}
 }
@@ -126,7 +232,7 @@ func TestRequireRole(t *testing.T) {
 		RefreshTokenExpiry: 24 * time.Hour,
 	}
 	jwtService, _ := auth.NewJWTService(config)
-	middleware := auth.NewMiddleware(jwtService)
+	middleware := auth.NewMiddleware(jwtService, &mockSessionManager{}, auth.NewCookieService(true, "localhost"))
 
 	testCases := []struct {
 		name           string
@@ -198,7 +304,7 @@ func TestRequireWorkspaceAccess(t *testing.T) {
 		SigningKey: "test-key",
 	}
 	jwtService, _ := auth.NewJWTService(config)
-	middleware := auth.NewMiddleware(jwtService)
+	middleware := auth.NewMiddleware(jwtService, &mockSessionManager{}, auth.NewCookieService(true, "localhost"))
 
 	testCases := []struct {
 		name           string

@@ -13,7 +13,7 @@ import (
 // Mock SessionStore
 type mockSessionStore struct {
 	sessions        map[string]*models.Session
-	sessionsByToken map[string]*models.Session // Added index by refresh token
+	sessionsByToken map[string]*models.Session
 }
 
 func newMockSessionStore() *mockSessionStore {
@@ -27,6 +27,17 @@ func (m *mockSessionStore) CreateSession(session *models.Session) error {
 	m.sessions[session.ID] = session
 	m.sessionsByToken[session.RefreshToken] = session
 	return nil
+}
+
+func (m *mockSessionStore) GetSessionByID(sessionID string) (*models.Session, error) {
+	session, exists := m.sessions[sessionID]
+	if !exists {
+		return nil, errors.New("session not found")
+	}
+	if session.ExpiresAt.Before(time.Now()) {
+		return nil, errors.New("session expired")
+	}
+	return session, nil
 }
 
 func (m *mockSessionStore) GetSessionByRefreshToken(refreshToken string) (*models.Session, error) {
@@ -111,9 +122,9 @@ func TestCreateSession(t *testing.T) {
 			}
 
 			// Verify the session was stored
-			storedSession, exists := mockDB.sessions[session.ID]
-			if !exists {
-				t.Error("session was not stored in database")
+			storedSession, err := mockDB.GetSessionByID(session.ID)
+			if err != nil {
+				t.Errorf("failed to get stored session: %v", err)
 			}
 			if storedSession.RefreshToken != session.RefreshToken {
 				t.Error("stored refresh token doesn't match")
@@ -133,6 +144,97 @@ func TestCreateSession(t *testing.T) {
 			}
 			if claims.Type != auth.AccessToken {
 				t.Errorf("token type = %v, want access token", claims.Type)
+			}
+		})
+	}
+}
+
+func TestValidateSession(t *testing.T) {
+	config := auth.JWTConfig{
+		SigningKey:         "test-key",
+		AccessTokenExpiry:  15 * time.Minute,
+		RefreshTokenExpiry: 24 * time.Hour,
+	}
+	jwtService, _ := auth.NewJWTService(config)
+	mockDB := newMockSessionStore()
+	sessionService := auth.NewSessionService(mockDB, jwtService)
+
+	testCases := []struct {
+		name          string
+		setupSession  func() string
+		wantErr       bool
+		errorContains string
+	}{
+		{
+			name: "valid session",
+			setupSession: func() string {
+				session := &models.Session{
+					ID:        "test-session-1",
+					UserID:    1,
+					ExpiresAt: time.Now().Add(24 * time.Hour),
+					CreatedAt: time.Now(),
+				}
+				if err := mockDB.CreateSession(session); err != nil {
+					t.Fatalf("failed to create session: %v", err)
+				}
+
+				return session.ID
+			},
+			wantErr: false,
+		},
+		{
+			name: "expired session",
+			setupSession: func() string {
+				session := &models.Session{
+					ID:        "test-session-2",
+					UserID:    1,
+					ExpiresAt: time.Now().Add(-1 * time.Hour),
+					CreatedAt: time.Now().Add(-2 * time.Hour),
+				}
+				if err := mockDB.CreateSession(session); err != nil {
+					t.Fatalf("failed to create session: %v", err)
+				}
+				return session.ID
+			},
+			wantErr:       true,
+			errorContains: "session expired",
+		},
+		{
+			name: "non-existent session",
+			setupSession: func() string {
+				return "non-existent-session-id"
+			},
+			wantErr:       true,
+			errorContains: "session not found",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sessionID := tc.setupSession()
+			session, err := sessionService.ValidateSession(sessionID)
+
+			if tc.wantErr {
+				if err == nil {
+					t.Error("expected error, got nil")
+				} else if tc.errorContains != "" && !strings.Contains(err.Error(), tc.errorContains) {
+					t.Errorf("error = %v, want error containing %v", err, tc.errorContains)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+
+			if session == nil {
+				t.Error("expected session, got nil")
+				return
+			}
+
+			if session.ID != sessionID {
+				t.Errorf("session ID = %v, want %v", session.ID, sessionID)
 			}
 		})
 	}
@@ -180,7 +282,7 @@ func TestRefreshSession(t *testing.T) {
 					ID:           "test-session-2",
 					UserID:       1,
 					RefreshToken: token,
-					ExpiresAt:    time.Now().Add(-1 * time.Hour), // Expired
+					ExpiresAt:    time.Now().Add(-1 * time.Hour),
 					CreatedAt:    time.Now().Add(-2 * time.Hour),
 				}
 				if err := mockDB.CreateSession(session); err != nil {
@@ -233,7 +335,7 @@ func TestRefreshSession(t *testing.T) {
 	}
 }
 
-func TestInvalidateSession(t *testing.T) {
+func TestCleanExpiredSessions(t *testing.T) {
 	config := auth.JWTConfig{
 		SigningKey:         "test-key",
 		AccessTokenExpiry:  15 * time.Minute,
@@ -243,62 +345,40 @@ func TestInvalidateSession(t *testing.T) {
 	mockDB := newMockSessionStore()
 	sessionService := auth.NewSessionService(mockDB, jwtService)
 
-	testCases := []struct {
-		name          string
-		setupSession  func() string
-		wantErr       bool
-		errorContains string
-	}{
-		{
-			name: "valid session invalidation",
-			setupSession: func() string {
-				session := &models.Session{
-					ID:           "test-session-1",
-					UserID:       1,
-					RefreshToken: "valid-token",
-					ExpiresAt:    time.Now().Add(24 * time.Hour),
-					CreatedAt:    time.Now(),
-				}
-				if err := mockDB.CreateSession(session); err != nil {
-					t.Fatalf("failed to create session: %v", err)
-				}
-				return session.ID
-			},
-			wantErr: false,
-		},
-		{
-			name: "non-existent session",
-			setupSession: func() string {
-				return "non-existent-session-id"
-			},
-			wantErr:       true,
-			errorContains: "session not found",
-		},
+	// Create test sessions
+	validSession := &models.Session{
+		ID:        "valid-session",
+		UserID:    1,
+		ExpiresAt: time.Now().Add(24 * time.Hour),
+		CreatedAt: time.Now(),
+	}
+	if err := mockDB.CreateSession(validSession); err != nil {
+		t.Fatalf("failed to create valid session: %v", err)
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			sessionID := tc.setupSession()
-			err := sessionService.InvalidateSession(sessionID)
+	expiredSession := &models.Session{
+		ID:        "expired-session",
+		UserID:    2,
+		ExpiresAt: time.Now().Add(-1 * time.Hour),
+		CreatedAt: time.Now().Add(-2 * time.Hour),
+	}
+	if err := mockDB.CreateSession(expiredSession); err != nil {
+		t.Fatalf("failed to create expired session: %v", err)
+	}
 
-			if tc.wantErr {
-				if err == nil {
-					t.Error("expected error, got nil")
-				} else if !strings.Contains(err.Error(), tc.errorContains) {
-					t.Errorf("error = %v, want error containing %v", err, tc.errorContains)
-				}
-				return
-			}
+	// Clean expired sessions
+	err := sessionService.CleanExpiredSessions()
+	if err != nil {
+		t.Errorf("unexpected error cleaning sessions: %v", err)
+	}
 
-			if err != nil {
-				t.Errorf("unexpected error: %v", err)
-				return
-			}
+	// Verify valid session still exists
+	if _, err := mockDB.GetSessionByID(validSession.ID); err != nil {
+		t.Error("valid session was incorrectly removed")
+	}
 
-			// Verify session was removed
-			if _, exists := mockDB.sessions[sessionID]; exists {
-				t.Error("session still exists after invalidation")
-			}
-		})
+	// Verify expired session was removed
+	if _, err := mockDB.GetSessionByID(expiredSession.ID); err == nil {
+		t.Error("expired session was not removed")
 	}
 }
