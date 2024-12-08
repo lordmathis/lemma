@@ -34,10 +34,12 @@ type LoginResponse struct {
 // @Produce json
 // @Param body body LoginRequest true "Login request"
 // @Success 200 {object} LoginResponse
+// @Header 200 {string} X-CSRF-Token "CSRF token for future requests"
 // @Failure 400 {object} ErrorResponse "Invalid request body"
 // @Failure 400 {object} ErrorResponse "Email and password are required"
 // @Failure 401 {object} ErrorResponse "Invalid credentials"
 // @Failure 500 {object} ErrorResponse "Failed to create session"
+// @Failure 500 {object} ErrorResponse "Failed to generate CSRF token"
 // @Router /auth/login [post]
 func (h *Handler) Login(authManager auth.SessionManager, cookieService auth.CookieManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -142,10 +144,11 @@ func (h *Handler) Logout(authManager auth.SessionManager, cookieService auth.Coo
 // @Accept json
 // @Produce json
 // @Param body body RefreshRequest true "Refresh request"
-// @Success 200 "Tokens refreshed successfully via cookies"
-// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Success 200
+// @Header 200 {string} X-CSRF-Token "New CSRF token"
 // @Failure 400 {object} ErrorResponse "Refresh token required"
 // @Failure 401 {object} ErrorResponse "Invalid refresh token"
+// @Failure 500 {object} ErrorResponse "Failed to generate CSRF token"
 // @Router /auth/refresh [post]
 func (h *Handler) RefreshToken(authManager auth.SessionManager, cookieService auth.CookieManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
