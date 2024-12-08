@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// SessionManager is an interface for managing user sessions
 type SessionManager interface {
 	CreateSession(userID int, role string) (*models.Session, string, error)
 	RefreshSession(refreshToken string) (string, error)
@@ -24,6 +25,7 @@ type sessionManager struct {
 }
 
 // NewSessionService creates a new session service with the given database and JWT manager
+// revive:disable:unexported-return
 func NewSessionService(db db.SessionStore, jwtManager JWTManager) *sessionManager {
 	return &sessionManager{
 		db:         db,
@@ -33,13 +35,17 @@ func NewSessionService(db db.SessionStore, jwtManager JWTManager) *sessionManage
 
 // CreateSession creates a new user session for a user with the given userID and role
 func (s *sessionManager) CreateSession(userID int, role string) (*models.Session, string, error) {
+
+	// Generate a new session ID
+	sessionID := uuid.New().String()
+
 	// Generate both access and refresh tokens
-	accessToken, err := s.jwtManager.GenerateAccessToken(userID, role)
+	accessToken, err := s.jwtManager.GenerateAccessToken(userID, role, sessionID)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to generate access token: %w", err)
 	}
 
-	refreshToken, err := s.jwtManager.GenerateRefreshToken(userID, role)
+	refreshToken, err := s.jwtManager.GenerateRefreshToken(userID, role, sessionID)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to generate refresh token: %w", err)
 	}
@@ -52,7 +58,7 @@ func (s *sessionManager) CreateSession(userID int, role string) (*models.Session
 
 	// Create a new session record
 	session := &models.Session{
-		ID:           uuid.New().String(),
+		ID:           sessionID,
 		UserID:       userID,
 		RefreshToken: refreshToken,
 		ExpiresAt:    claims.ExpiresAt.Time,
@@ -87,7 +93,7 @@ func (s *sessionManager) RefreshSession(refreshToken string) (string, error) {
 	}
 
 	// Generate a new access token
-	return s.jwtManager.GenerateAccessToken(claims.UserID, claims.Role)
+	return s.jwtManager.GenerateAccessToken(claims.UserID, claims.Role, session.ID)
 }
 
 // ValidateSession checks if a session with the given sessionID is valid

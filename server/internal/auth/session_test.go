@@ -259,7 +259,7 @@ func TestRefreshSession(t *testing.T) {
 		{
 			name: "valid refresh token",
 			setupSession: func() string {
-				token, _ := jwtService.GenerateRefreshToken(1, "admin")
+				token, _ := jwtService.GenerateRefreshToken(1, "admin", "test-session-1")
 				session := &models.Session{
 					ID:           "test-session-1",
 					UserID:       1,
@@ -277,7 +277,7 @@ func TestRefreshSession(t *testing.T) {
 		{
 			name: "expired refresh token",
 			setupSession: func() string {
-				token, _ := jwtService.GenerateRefreshToken(1, "admin")
+				token, _ := jwtService.GenerateRefreshToken(1, "admin", "test-session-2")
 				session := &models.Session{
 					ID:           "test-session-2",
 					UserID:       1,

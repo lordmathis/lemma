@@ -1,6 +1,7 @@
 package auth_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -23,18 +24,18 @@ func newMockSessionManager() *mockSessionManager {
 	}
 }
 
-func (m *mockSessionManager) CreateSession(userID int, role string) (*models.Session, string, error) {
+func (m *mockSessionManager) CreateSession(_ int, _ string) (*models.Session, string, error) {
 	return nil, "", nil // Not needed for these tests
 }
 
-func (m *mockSessionManager) RefreshSession(refreshToken string) (string, error) {
+func (m *mockSessionManager) RefreshSession(_ string) (string, error) {
 	return "", nil // Not needed for these tests
 }
 
 func (m *mockSessionManager) ValidateSession(sessionID string) (*models.Session, error) {
 	session, exists := m.sessions[sessionID]
 	if !exists {
-		return nil, nil
+		return nil, fmt.Errorf("session not found")
 	}
 	return session, nil
 }
@@ -87,16 +88,16 @@ func TestAuthenticateMiddleware(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		setupRequest   func() *http.Request
+		setupRequest   func(sessionID string) *http.Request
 		setupSession   func(sessionID string)
 		method         string
 		wantStatusCode int
 	}{
 		{
 			name: "valid token with valid session",
-			setupRequest: func() *http.Request {
+			setupRequest: func(sessionID string) *http.Request {
 				req := httptest.NewRequest("GET", "/test", nil)
-				token, _ := jwtService.GenerateAccessToken(1, "admin")
+				token, _ := jwtService.GenerateAccessToken(1, "admin", sessionID)
 				cookie := cookieManager.GenerateAccessTokenCookie(token)
 				req.AddCookie(cookie)
 				return req
@@ -113,31 +114,31 @@ func TestAuthenticateMiddleware(t *testing.T) {
 		},
 		{
 			name: "valid token but invalid session",
-			setupRequest: func() *http.Request {
+			setupRequest: func(sessionID string) *http.Request {
 				req := httptest.NewRequest("GET", "/test", nil)
-				token, _ := jwtService.GenerateAccessToken(1, "admin")
+				token, _ := jwtService.GenerateAccessToken(1, "admin", sessionID)
 				cookie := cookieManager.GenerateAccessTokenCookie(token)
 				req.AddCookie(cookie)
 				return req
 			},
-			setupSession:   func(sessionID string) {}, // No session setup
+			setupSession:   func(_ string) {}, // No session setup
 			method:         "GET",
 			wantStatusCode: http.StatusUnauthorized,
 		},
 		{
 			name: "missing auth cookie",
-			setupRequest: func() *http.Request {
+			setupRequest: func(_ string) *http.Request {
 				return httptest.NewRequest("GET", "/test", nil)
 			},
-			setupSession:   func(sessionID string) {},
+			setupSession:   func(_ string) {},
 			method:         "GET",
 			wantStatusCode: http.StatusUnauthorized,
 		},
 		{
 			name: "POST request without CSRF token",
-			setupRequest: func() *http.Request {
+			setupRequest: func(sessionID string) *http.Request {
 				req := httptest.NewRequest("POST", "/test", nil)
-				token, _ := jwtService.GenerateAccessToken(1, "admin")
+				token, _ := jwtService.GenerateAccessToken(1, "admin", sessionID)
 				cookie := cookieManager.GenerateAccessTokenCookie(token)
 				req.AddCookie(cookie)
 				return req
@@ -154,9 +155,9 @@ func TestAuthenticateMiddleware(t *testing.T) {
 		},
 		{
 			name: "POST request with valid CSRF token",
-			setupRequest: func() *http.Request {
+			setupRequest: func(sessionID string) *http.Request {
 				req := httptest.NewRequest("POST", "/test", nil)
-				token, _ := jwtService.GenerateAccessToken(1, "admin")
+				token, _ := jwtService.GenerateAccessToken(1, "admin", sessionID)
 				cookie := cookieManager.GenerateAccessTokenCookie(token)
 				req.AddCookie(cookie)
 
@@ -180,12 +181,14 @@ func TestAuthenticateMiddleware(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			req := tc.setupRequest()
+			sessionID := tc.name
+
+			req := tc.setupRequest(sessionID)
 			w := newMockResponseWriter()
 
 			// Create test handler
 			nextCalled := false
-			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				nextCalled = true
 				w.WriteHeader(http.StatusOK)
 			})

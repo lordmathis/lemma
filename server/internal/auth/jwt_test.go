@@ -1,3 +1,4 @@
+// Package auth_test provides tests for the auth package
 package auth_test
 
 import (
@@ -98,9 +99,9 @@ func TestGenerateAndValidateToken(t *testing.T) {
 
 			// Generate token based on type
 			if tc.tokenType == auth.AccessToken {
-				token, err = service.GenerateAccessToken(tc.userID, tc.role)
+				token, err = service.GenerateAccessToken(tc.userID, tc.role, "")
 			} else {
-				token, err = service.GenerateRefreshToken(tc.userID, tc.role)
+				token, err = service.GenerateRefreshToken(tc.userID, tc.role, "")
 			}
 
 			if err != nil {
