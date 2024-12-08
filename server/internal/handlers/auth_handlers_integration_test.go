@@ -251,13 +251,13 @@ func TestAuthHandlers_Integration(t *testing.T) {
 		t.Run("logout edge cases", func(t *testing.T) {
 			tests := []struct {
 				name     string
-				setup    func(*http.Request)
+				setup    func(*http.Request, *testUser)
 				wantCode int
 			}{
 				{
 					name: "missing CSRF token",
-					setup: func(req *http.Request) {
-						h.addAuthCookies(t, req, h.RegularTestUser)
+					setup: func(req *http.Request, tu *testUser) {
+						h.addAuthCookies(t, req, tu)
 						h.addCSRFCookie(t, req)
 						// Deliberately not setting X-CSRF-Token header
 					},
@@ -265,8 +265,8 @@ func TestAuthHandlers_Integration(t *testing.T) {
 				},
 				{
 					name: "mismatched CSRF token",
-					setup: func(req *http.Request) {
-						h.addAuthCookies(t, req, h.RegularTestUser)
+					setup: func(req *http.Request, tu *testUser) {
+						h.addAuthCookies(t, req, tu)
 						h.addCSRFCookie(t, req)
 						req.Header.Set("X-CSRF-Token", "wrong-token")
 					},
@@ -274,7 +274,7 @@ func TestAuthHandlers_Integration(t *testing.T) {
 				},
 				{
 					name: "missing auth cookies",
-					setup: func(req *http.Request) {
+					setup: func(req *http.Request, tu *testUser) {
 						// No setup - testing completely unauthenticated request
 					},
 					wantCode: http.StatusUnauthorized,
@@ -283,8 +283,12 @@ func TestAuthHandlers_Integration(t *testing.T) {
 
 			for _, tt := range tests {
 				t.Run(tt.name, func(t *testing.T) {
+					// Create a unique user for each test case
+					// Construct a unique email address from test name
+					uniqueUserEmail := strings.Replace(tt.name, " ", "", -1) + "@test.com"
+					logoutTestUser := h.createTestUser(t, uniqueUserEmail, "password123", models.RoleEditor)
 					req := h.newRequest(t, http.MethodPost, "/api/v1/auth/logout", nil)
-					tt.setup(req)
+					tt.setup(req, logoutTestUser)
 					rr := h.executeRequest(req)
 					assert.Equal(t, tt.wantCode, rr.Code)
 				})
@@ -293,14 +297,17 @@ func TestAuthHandlers_Integration(t *testing.T) {
 	})
 
 	t.Run("get current user", func(t *testing.T) {
+
+		getTestUser := h.createTestUser(t, "testgetuser@test.com", "password123", models.RoleEditor)
+
 		t.Run("successful get current user", func(t *testing.T) {
-			rr := h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularTestUser)
+			rr := h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, getTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var user models.User
 			err := json.NewDecoder(rr.Body).Decode(&user)
 			require.NoError(t, err)
-			assert.Equal(t, h.RegularTestUser.userModel.Email, user.Email)
+			assert.Equal(t, getTestUser.userModel.Email, user.Email)
 		})
 
 		t.Run("auth edge cases", func(t *testing.T) {
