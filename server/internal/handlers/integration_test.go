@@ -25,18 +25,22 @@ import (
 
 // testHarness encapsulates all the dependencies needed for testing
 type testHarness struct {
-	Server         *app.Server
-	DB             db.TestDatabase
-	Storage        storage.Manager
-	JWTManager     auth.JWTManager
-	SessionManager auth.SessionManager
-	CookieManager  auth.CookieManager
-	AdminUser      *models.User
-	AdminSession   *models.Session
-	RegularUser    *models.User
-	RegularSession *models.Session
-	TempDirectory  string
-	MockGit        *MockGitClient
+	Server          *app.Server
+	DB              db.TestDatabase
+	Storage         storage.Manager
+	JWTManager      auth.JWTManager
+	SessionManager  auth.SessionManager
+	CookieManager   auth.CookieManager
+	AdminTestUser   *testUser
+	RegularTestUser *testUser
+	TempDirectory   string
+	MockGit         *MockGitClient
+}
+
+type testUser struct {
+	userModel   *models.User
+	accessToken string
+	session     *models.Session
 }
 
 // setupTestHarness creates a new test environment
@@ -110,6 +114,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 		Storage:        storageSvc,
 		JWTManager:     jwtSvc,
 		SessionManager: sessionSvc,
+		CookieService:  cookieSvc,
 	}
 
 	// Create server
@@ -127,13 +132,11 @@ func setupTestHarness(t *testing.T) *testHarness {
 	}
 
 	// Create test users
-	adminUser, adminSession := h.createTestUser(t, "admin@test.com", "admin123", models.RoleAdmin)
-	regularUser, regularSession := h.createTestUser(t, "user@test.com", "user123", models.RoleEditor)
+	adminTestUser := h.createTestUser(t, "admin@test.com", "admin123", models.RoleAdmin)
+	regularTestUser := h.createTestUser(t, "user@test.com", "user123", models.RoleEditor)
 
-	h.AdminUser = adminUser
-	h.AdminSession = adminSession
-	h.RegularUser = regularUser
-	h.RegularSession = regularSession
+	h.AdminTestUser = adminTestUser
+	h.RegularTestUser = regularTestUser
 
 	return h
 }
@@ -152,7 +155,7 @@ func (h *testHarness) teardown(t *testing.T) {
 }
 
 // createTestUser creates a test user and returns the user and access token
-func (h *testHarness) createTestUser(t *testing.T, email, password string, role models.UserRole) (*models.User, *models.Session) {
+func (h *testHarness) createTestUser(t *testing.T, email, password string, role models.UserRole) *testUser {
 	t.Helper()
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -178,12 +181,16 @@ func (h *testHarness) createTestUser(t *testing.T, email, password string, role 
 		t.Fatalf("Failed to initialize user workspace: %v", err)
 	}
 
-	session, _, err := h.SessionManager.CreateSession(user.ID, string(user.Role))
+	session, accessToken, err := h.SessionManager.CreateSession(user.ID, string(user.Role))
 	if err != nil {
 		t.Fatalf("Failed to create session: %v", err)
 	}
 
-	return user, session
+	return &testUser{
+		userModel:   user,
+		accessToken: accessToken,
+		session:     session,
+	}
 }
 
 func (h *testHarness) newRequest(t *testing.T, method, path string, body interface{}) *http.Request {
@@ -217,58 +224,52 @@ func (h *testHarness) executeRequest(req *http.Request) *httptest.ResponseRecord
 }
 
 // addAuthCookies adds authentication cookies to request
-func (h *testHarness) addAuthCookies(t *testing.T, req *http.Request, session *models.Session, addCSRF bool) string {
+func (h *testHarness) addAuthCookies(t *testing.T, req *http.Request, testUser *testUser) {
 	t.Helper()
 
-	if session == nil {
-		return ""
+	if testUser == nil || testUser.session == nil {
+		return
 	}
 
-	accessToken, err := h.JWTManager.GenerateAccessToken(session.UserID, "admin")
-	if err != nil {
-		t.Fatalf("Failed to generate access token: %v", err)
-	}
+	req.AddCookie(h.CookieManager.GenerateAccessTokenCookie(testUser.accessToken))
+	req.AddCookie(h.CookieManager.GenerateRefreshTokenCookie(testUser.session.RefreshToken))
+}
 
-	req.AddCookie(h.CookieManager.GenerateAccessTokenCookie(accessToken))
-	req.AddCookie(h.CookieManager.GenerateRefreshTokenCookie(session.RefreshToken))
+func (h *testHarness) addCSRFCookie(t *testing.T, req *http.Request) string {
+	t.Helper()
 
-	if addCSRF {
-		csrfToken := "test-csrf-token"
-		req.AddCookie(h.CookieManager.GenerateCSRFCookie(csrfToken))
-		return csrfToken
-	}
-	return ""
+	csrfToken := "test-csrf-token"
+	req.AddCookie(h.CookieManager.GenerateCSRFCookie(csrfToken))
+	return csrfToken
 }
 
 // makeRequest is the main helper for making JSON requests
-func (h *testHarness) makeRequest(t *testing.T, method, path string, body interface{}, session *models.Session) *httptest.ResponseRecorder {
+func (h *testHarness) makeRequest(t *testing.T, method, path string, body interface{}, testUser *testUser) *httptest.ResponseRecorder {
 	t.Helper()
 
 	req := h.newRequest(t, method, path, body)
+	h.addAuthCookies(t, req, testUser)
 
-	if session != nil {
-		needsCSRF := method != http.MethodGet && method != http.MethodHead && method != http.MethodOptions
-		csrfToken := h.addAuthCookies(t, req, session, needsCSRF)
-		if needsCSRF {
-			req.Header.Set("X-CSRF-Token", csrfToken)
-		}
+	needsCSRF := method != http.MethodGet && method != http.MethodHead && method != http.MethodOptions
+	if needsCSRF {
+		csrfToken := h.addCSRFCookie(t, req)
+		req.Header.Set("X-CSRF-Token", csrfToken)
 	}
 
 	return h.executeRequest(req)
 }
 
 // makeRequestRawWithHeaders adds support for custom headers with raw body
-func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.Reader, session *models.Session) *httptest.ResponseRecorder {
+func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.Reader, testUser *testUser) *httptest.ResponseRecorder {
 	t.Helper()
 
 	req := h.newRequestRaw(t, method, path, body)
+	h.addAuthCookies(t, req, testUser)
 
-	if session != nil {
-		needsCSRF := method != http.MethodGet && method != http.MethodHead && method != http.MethodOptions
-		csrfToken := h.addAuthCookies(t, req, session, needsCSRF)
-		if needsCSRF {
-			req.Header.Set("X-CSRF-Token", csrfToken)
-		}
+	needsCSRF := method != http.MethodGet && method != http.MethodHead && method != http.MethodOptions
+	if needsCSRF {
+		csrfToken := h.addCSRFCookie(t, req)
+		req.Header.Set("X-CSRF-Token", csrfToken)
 	}
 
 	return h.executeRequest(req)

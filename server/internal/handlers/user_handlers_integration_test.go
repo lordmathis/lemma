@@ -18,22 +18,22 @@ func TestUserHandlers_Integration(t *testing.T) {
 	h := setupTestHarness(t)
 	defer h.teardown(t)
 
-	currentEmail := h.RegularUser.Email
+	currentEmail := h.RegularTestUser.userModel.Email
 	currentPassword := "user123"
 
 	t.Run("get current user", func(t *testing.T) {
 		t.Run("successful get", func(t *testing.T) {
-			rr := h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var user models.User
 			err := json.NewDecoder(rr.Body).Decode(&user)
 			require.NoError(t, err)
 
-			assert.Equal(t, h.RegularUser.ID, user.ID)
-			assert.Equal(t, h.RegularUser.Email, user.Email)
-			assert.Equal(t, h.RegularUser.DisplayName, user.DisplayName)
-			assert.Equal(t, h.RegularUser.Role, user.Role)
+			assert.Equal(t, h.RegularTestUser.userModel.ID, user.ID)
+			assert.Equal(t, h.RegularTestUser.userModel.Email, user.Email)
+			assert.Equal(t, h.RegularTestUser.userModel.DisplayName, user.DisplayName)
+			assert.Equal(t, h.RegularTestUser.userModel.Role, user.Role)
 			assert.Empty(t, user.PasswordHash, "Password hash should not be included in response")
 		})
 
@@ -49,7 +49,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 				DisplayName: "Updated Name",
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var user models.User
@@ -64,7 +64,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 				CurrentPassword: currentPassword,
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var user models.User
@@ -80,7 +80,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 				Email: "anotheremail@test.com",
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularTestUser)
 			assert.Equal(t, http.StatusBadRequest, rr.Code)
 		})
 
@@ -90,7 +90,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 				CurrentPassword: "wrongpassword",
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularTestUser)
 			assert.Equal(t, http.StatusUnauthorized, rr.Code)
 		})
 
@@ -100,7 +100,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 				NewPassword:     "newpassword123",
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			// Verify can login with new password
@@ -120,7 +120,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 				NewPassword: "newpass123",
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularTestUser)
 			assert.Equal(t, http.StatusBadRequest, rr.Code)
 		})
 
@@ -130,7 +130,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 				NewPassword:     "newpass123",
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularTestUser)
 			assert.Equal(t, http.StatusUnauthorized, rr.Code)
 		})
 
@@ -140,68 +140,40 @@ func TestUserHandlers_Integration(t *testing.T) {
 				NewPassword:     "short",
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularTestUser)
 			assert.Equal(t, http.StatusBadRequest, rr.Code)
 		})
 
 		t.Run("duplicate email", func(t *testing.T) {
 			updateReq := handlers.UpdateProfileRequest{
-				Email:           h.AdminUser.Email,
+				Email:           h.AdminTestUser.userModel.Email,
 				CurrentPassword: currentPassword,
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, "/api/v1/profile", updateReq, h.RegularTestUser)
 			assert.Equal(t, http.StatusConflict, rr.Code)
 		})
 	})
 
 	t.Run("delete account", func(t *testing.T) {
-		// Create a new user that we can delete
-		createReq := handlers.CreateUserRequest{
-			Email:       "todelete@test.com",
-			DisplayName: "To Delete",
-			Password:    "password123",
-			Role:        models.RoleEditor,
-		}
 
-		rr := h.makeRequest(t, http.MethodPost, "/api/v1/admin/users", createReq, h.AdminSession)
-		require.Equal(t, http.StatusOK, rr.Code)
-
-		var newUser models.User
-		err := json.NewDecoder(rr.Body).Decode(&newUser)
-		require.NoError(t, err)
-
-		// Get session for new user
-		loginReq := handlers.LoginRequest{
-			Email:    createReq.Email,
-			Password: createReq.Password,
-		}
-
-		rr = h.makeRequest(t, http.MethodPost, "/api/v1/auth/login", loginReq, nil)
-		require.Equal(t, http.StatusOK, rr.Code)
-
-		var loginResp handlers.LoginResponse
-		err = json.NewDecoder(rr.Body).Decode(&loginResp)
-		require.NoError(t, err)
-
-		// Create a session struct for the new user
-		userSession := &models.Session{
-			ID:           loginResp.SessionID,
-			UserID:       newUser.ID,
-			RefreshToken: "",
-			ExpiresAt:    loginResp.ExpiresAt,
-		}
+		deleteUserPassword := "password123"
+		testDeleteUser := h.createTestUser(t, "todelete@test.com", deleteUserPassword, models.RoleEditor)
 
 		t.Run("successful delete", func(t *testing.T) {
 			deleteReq := handlers.DeleteAccountRequest{
-				Password: createReq.Password,
+				Password: deleteUserPassword,
 			}
 
-			rr := h.makeRequest(t, http.MethodDelete, "/api/v1/profile", deleteReq, userSession)
+			rr := h.makeRequest(t, http.MethodDelete, "/api/v1/profile", deleteReq, testDeleteUser)
 			require.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Verify user is deleted
-			rr = h.makeRequest(t, http.MethodPost, "/api/v1/auth/login", loginReq, nil)
+			loginReq := handlers.LoginRequest{
+				Email:    testDeleteUser.userModel.Email,
+				Password: deleteUserPassword,
+			}
+			rr = h.makeRequest(t, http.MethodPost, "/api/v1/auth/login", loginReq, testDeleteUser)
 			assert.Equal(t, http.StatusUnauthorized, rr.Code)
 		})
 
@@ -210,7 +182,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 				Password: "wrongpassword",
 			}
 
-			rr := h.makeRequest(t, http.MethodDelete, "/api/v1/profile", deleteReq, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodDelete, "/api/v1/profile", deleteReq, h.RegularTestUser)
 			assert.Equal(t, http.StatusUnauthorized, rr.Code)
 		})
 
@@ -219,7 +191,7 @@ func TestUserHandlers_Integration(t *testing.T) {
 				Password: "admin123", // Admin password from test harness
 			}
 
-			rr := h.makeRequest(t, http.MethodDelete, "/api/v1/profile", deleteReq, h.AdminSession)
+			rr := h.makeRequest(t, http.MethodDelete, "/api/v1/profile", deleteReq, h.AdminTestUser)
 			assert.Equal(t, http.StatusForbidden, rr.Code)
 		})
 	})

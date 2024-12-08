@@ -20,7 +20,7 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 
 	t.Run("list workspaces", func(t *testing.T) {
 		t.Run("successful list", func(t *testing.T) {
-			rr := h.makeRequest(t, http.MethodGet, "/api/v1/workspaces", nil, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodGet, "/api/v1/workspaces", nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var workspaces []*models.Workspace
@@ -41,14 +41,14 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 				Name: "Test Workspace",
 			}
 
-			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var created models.Workspace
 			err := json.NewDecoder(rr.Body).Decode(&created)
 			require.NoError(t, err)
 			assert.Equal(t, workspace.Name, created.Name)
-			assert.Equal(t, h.RegularUser.ID, created.UserID)
+			assert.Equal(t, h.RegularTestUser.session.UserID, created.UserID)
 			assert.NotZero(t, created.ID)
 		})
 
@@ -64,7 +64,7 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 				GitCommitEmail: "test@example.com",
 			}
 
-			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var created models.Workspace
@@ -86,7 +86,7 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 				// Missing required Git settings
 			}
 
-			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularTestUser)
 			assert.Equal(t, http.StatusBadRequest, rr.Code)
 		})
 	})
@@ -95,7 +95,7 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 	workspace := &models.Workspace{
 		Name: "Test Workspace Operations",
 	}
-	rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularSession)
+	rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularTestUser)
 	require.Equal(t, http.StatusOK, rr.Code)
 	err := json.NewDecoder(rr.Body).Decode(workspace)
 	require.NoError(t, err)
@@ -105,7 +105,7 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 
 	t.Run("get workspace", func(t *testing.T) {
 		t.Run("successful get", func(t *testing.T) {
-			rr := h.makeRequest(t, http.MethodGet, baseURL, nil, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodGet, baseURL, nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var got models.Workspace
@@ -116,13 +116,13 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 		})
 
 		t.Run("nonexistent workspace", func(t *testing.T) {
-			rr := h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/nonexistent", nil, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/nonexistent", nil, h.RegularTestUser)
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 		})
 
 		t.Run("unauthorized access", func(t *testing.T) {
 			// Try accessing with another user's token
-			rr := h.makeRequest(t, http.MethodGet, baseURL, nil, h.AdminSession)
+			rr := h.makeRequest(t, http.MethodGet, baseURL, nil, h.AdminTestUser)
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 		})
 	})
@@ -131,7 +131,7 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 		t.Run("update name", func(t *testing.T) {
 			workspace.Name = "Updated Workspace"
 
-			rr := h.makeRequest(t, http.MethodPut, baseURL, workspace, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, baseURL, workspace, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var updated models.Workspace
@@ -152,7 +152,7 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 				ShowHiddenFiles: true,
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, baseURL, update, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, baseURL, update, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var updated models.Workspace
@@ -176,7 +176,7 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 				GitCommitEmail: "test@example.com",
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, baseURL, update, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, baseURL, update, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var updated models.Workspace
@@ -200,14 +200,14 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 				// Missing required Git settings
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, baseURL, update, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, baseURL, update, h.RegularTestUser)
 			assert.Equal(t, http.StatusBadRequest, rr.Code)
 		})
 	})
 
 	t.Run("last workspace", func(t *testing.T) {
 		t.Run("get last workspace", func(t *testing.T) {
-			rr := h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/last", nil, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/last", nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var response struct {
@@ -225,11 +225,11 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 				WorkspaceName: workspace.Name,
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, "/api/v1/workspaces/last", req, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPut, "/api/v1/workspaces/last", req, h.RegularTestUser)
 			require.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Verify the update
-			rr = h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/last", nil, h.RegularSession)
+			rr = h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/last", nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var response struct {
@@ -243,7 +243,7 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 
 	t.Run("delete workspace", func(t *testing.T) {
 		// Get current workspaces to know how many we have
-		rr := h.makeRequest(t, http.MethodGet, "/api/v1/workspaces", nil, h.RegularSession)
+		rr := h.makeRequest(t, http.MethodGet, "/api/v1/workspaces", nil, h.RegularTestUser)
 		require.Equal(t, http.StatusOK, rr.Code)
 
 		var existingWorkspaces []*models.Workspace
@@ -254,13 +254,13 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 		newWorkspace := &models.Workspace{
 			Name: "Workspace To Delete",
 		}
-		rr = h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", newWorkspace, h.RegularSession)
+		rr = h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", newWorkspace, h.RegularTestUser)
 		require.Equal(t, http.StatusOK, rr.Code)
 		err = json.NewDecoder(rr.Body).Decode(newWorkspace)
 		require.NoError(t, err)
 
 		t.Run("successful delete", func(t *testing.T) {
-			rr := h.makeRequest(t, http.MethodDelete, "/api/v1/workspaces/"+url.PathEscape(newWorkspace.Name), nil, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodDelete, "/api/v1/workspaces/"+url.PathEscape(newWorkspace.Name), nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var response struct {
@@ -271,7 +271,7 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 			assert.NotEmpty(t, response.NextWorkspaceName)
 
 			// Verify workspace is deleted
-			rr = h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/"+url.PathEscape(newWorkspace.Name), nil, h.RegularSession)
+			rr = h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/"+url.PathEscape(newWorkspace.Name), nil, h.RegularTestUser)
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 		})
 
@@ -279,13 +279,13 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 			// Delete all but one workspace
 			for i := 0; i < len(existingWorkspaces)-1; i++ {
 				ws := existingWorkspaces[i]
-				rr := h.makeRequest(t, http.MethodDelete, "/api/v1/workspaces/"+url.PathEscape(ws.Name), nil, h.RegularSession)
+				rr := h.makeRequest(t, http.MethodDelete, "/api/v1/workspaces/"+url.PathEscape(ws.Name), nil, h.RegularTestUser)
 				require.Equal(t, http.StatusOK, rr.Code)
 			}
 
 			// Try to delete the last remaining workspace
 			lastWs := existingWorkspaces[len(existingWorkspaces)-1]
-			rr := h.makeRequest(t, http.MethodDelete, "/api/v1/workspaces/"+url.PathEscape(lastWs.Name), nil, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodDelete, "/api/v1/workspaces/"+url.PathEscape(lastWs.Name), nil, h.RegularTestUser)
 			assert.Equal(t, http.StatusBadRequest, rr.Code)
 		})
 
@@ -294,11 +294,11 @@ func TestWorkspaceHandlers_Integration(t *testing.T) {
 			workspace := &models.Workspace{
 				Name: "Unauthorized Delete Test",
 			}
-			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			// Try to delete with wrong user's token
-			rr = h.makeRequest(t, http.MethodDelete, "/api/v1/workspaces/"+url.PathEscape(workspace.Name), nil, h.AdminSession)
+			rr = h.makeRequest(t, http.MethodDelete, "/api/v1/workspaces/"+url.PathEscape(workspace.Name), nil, h.AdminTestUser)
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 		})
 	})

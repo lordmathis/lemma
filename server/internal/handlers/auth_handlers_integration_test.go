@@ -40,17 +40,17 @@ func TestAuthHandlers_Integration(t *testing.T) {
 				case "access_token":
 					foundAccessToken = true
 					assert.True(t, cookie.HttpOnly, "access_token cookie must be HttpOnly")
-					assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
+					assert.Equal(t, http.SameSiteLaxMode, cookie.SameSite)
 					assert.Equal(t, 900, cookie.MaxAge) // 15 minutes
 				case "refresh_token":
 					foundRefreshToken = true
 					assert.True(t, cookie.HttpOnly, "refresh_token cookie must be HttpOnly")
-					assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
+					assert.Equal(t, http.SameSiteLaxMode, cookie.SameSite)
 					assert.Equal(t, 604800, cookie.MaxAge) // 7 days
 				case "csrf_token":
 					foundCSRF = true
 					assert.False(t, cookie.HttpOnly, "csrf_token cookie must not be HttpOnly")
-					assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
+					assert.Equal(t, http.SameSiteLaxMode, cookie.SameSite)
 					assert.Equal(t, 900, cookie.MaxAge) // 15 minutes
 				}
 			}
@@ -148,7 +148,8 @@ func TestAuthHandlers_Integration(t *testing.T) {
 		t.Run("successful token refresh", func(t *testing.T) {
 			// Need lower level helpers for precise cookie control
 			req := h.newRequest(t, http.MethodPost, "/api/v1/auth/refresh", nil)
-			h.addAuthCookies(t, req, h.RegularSession, true) // Adds both tokens
+			h.addAuthCookies(t, req, h.RegularTestUser) // Adds both tokens
+			h.addCSRFCookie(t, req)
 			rr := h.executeRequest(req)
 			require.Equal(t, http.StatusOK, rr.Code)
 
@@ -181,8 +182,7 @@ func TestAuthHandlers_Integration(t *testing.T) {
 					name: "missing refresh token cookie",
 					setup: func(req *http.Request) {
 						// Only add access token
-						token, _ := h.JWTManager.GenerateAccessToken(h.RegularSession.UserID, "admin")
-						req.AddCookie(h.CookieManager.GenerateAccessTokenCookie(token))
+						req.AddCookie(h.CookieManager.GenerateAccessTokenCookie(h.RegularTestUser.accessToken))
 					},
 					wantCode: http.StatusBadRequest,
 				},
@@ -191,11 +191,16 @@ func TestAuthHandlers_Integration(t *testing.T) {
 					setup: func(req *http.Request) {
 						expiredSession := &models.Session{
 							ID:           "expired",
-							UserID:       h.RegularUser.ID,
+							UserID:       h.RegularTestUser.session.UserID,
 							RefreshToken: "expired-token",
 							ExpiresAt:    time.Now().Add(-1 * time.Hour),
 						}
-						h.addAuthCookies(t, req, expiredSession, true)
+						expiredSessionUser := &testUser{
+							userModel:   h.RegularTestUser.userModel,
+							accessToken: h.RegularTestUser.accessToken,
+							session:     expiredSession,
+						}
+						h.addAuthCookies(t, req, expiredSessionUser)
 					},
 					wantCode: http.StatusUnauthorized,
 				},
@@ -226,7 +231,8 @@ func TestAuthHandlers_Integration(t *testing.T) {
 		t.Run("successful logout", func(t *testing.T) {
 			// Need CSRF token for POST request
 			req := h.newRequest(t, http.MethodPost, "/api/v1/auth/logout", nil)
-			csrfToken := h.addAuthCookies(t, req, h.RegularSession, true)
+			h.addAuthCookies(t, req, h.RegularTestUser)
+			csrfToken := h.addCSRFCookie(t, req)
 			req.Header.Set("X-CSRF-Token", csrfToken)
 			rr := h.executeRequest(req)
 			require.Equal(t, http.StatusNoContent, rr.Code)
@@ -238,7 +244,7 @@ func TestAuthHandlers_Integration(t *testing.T) {
 			}
 
 			// Verify session is actually invalidated
-			rr = h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularSession)
+			rr = h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularTestUser)
 			assert.Equal(t, http.StatusUnauthorized, rr.Code)
 		})
 
@@ -251,7 +257,8 @@ func TestAuthHandlers_Integration(t *testing.T) {
 				{
 					name: "missing CSRF token",
 					setup: func(req *http.Request) {
-						h.addAuthCookies(t, req, h.RegularSession, true)
+						h.addAuthCookies(t, req, h.RegularTestUser)
+						h.addCSRFCookie(t, req)
 						// Deliberately not setting X-CSRF-Token header
 					},
 					wantCode: http.StatusForbidden,
@@ -259,7 +266,8 @@ func TestAuthHandlers_Integration(t *testing.T) {
 				{
 					name: "mismatched CSRF token",
 					setup: func(req *http.Request) {
-						h.addAuthCookies(t, req, h.RegularSession, true)
+						h.addAuthCookies(t, req, h.RegularTestUser)
+						h.addCSRFCookie(t, req)
 						req.Header.Set("X-CSRF-Token", "wrong-token")
 					},
 					wantCode: http.StatusForbidden,
@@ -286,13 +294,13 @@ func TestAuthHandlers_Integration(t *testing.T) {
 
 	t.Run("get current user", func(t *testing.T) {
 		t.Run("successful get current user", func(t *testing.T) {
-			rr := h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodGet, "/api/v1/auth/me", nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var user models.User
 			err := json.NewDecoder(rr.Body).Decode(&user)
 			require.NoError(t, err)
-			assert.Equal(t, h.RegularUser.Email, user.Email)
+			assert.Equal(t, h.RegularTestUser.userModel.Email, user.Email)
 		})
 
 		t.Run("auth edge cases", func(t *testing.T) {
@@ -317,7 +325,12 @@ func TestAuthHandlers_Integration(t *testing.T) {
 							RefreshToken: "invalid",
 							ExpiresAt:    time.Now().Add(time.Hour),
 						}
-						h.addAuthCookies(t, req, invalidSession, false)
+						invalidSessionUser := &testUser{
+							userModel:   h.RegularTestUser.userModel,
+							accessToken: h.RegularTestUser.accessToken,
+							session:     invalidSession,
+						}
+						h.addAuthCookies(t, req, invalidSessionUser)
 					},
 					wantCode: http.StatusUnauthorized,
 				},
@@ -326,11 +339,16 @@ func TestAuthHandlers_Integration(t *testing.T) {
 					setup: func(req *http.Request) {
 						expiredSession := &models.Session{
 							ID:           "expired",
-							UserID:       h.RegularUser.ID,
+							UserID:       h.RegularTestUser.session.UserID,
 							RefreshToken: "expired-token",
 							ExpiresAt:    time.Now().Add(-1 * time.Hour),
 						}
-						h.addAuthCookies(t, req, expiredSession, false)
+						expiredSessionUser := &testUser{
+							userModel:   h.RegularTestUser.userModel,
+							accessToken: h.RegularTestUser.accessToken,
+							session:     expiredSession,
+						}
+						h.addAuthCookies(t, req, expiredSessionUser)
 					},
 					wantCode: http.StatusUnauthorized,
 				},

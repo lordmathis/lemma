@@ -22,7 +22,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 	t.Run("git operations", func(t *testing.T) {
 		// Setup: Create a workspace with Git enabled
 		workspace := &models.Workspace{
-			UserID:               h.RegularUser.ID,
+			UserID:               h.RegularTestUser.session.UserID,
 			Name:                 "Git Test Workspace",
 			GitEnabled:           true,
 			GitURL:               "https://github.com/test/repo.git",
@@ -32,7 +32,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 			GitCommitMsgTemplate: "Update: {{message}}",
 		}
 
-		rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularSession)
+		rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularTestUser)
 		require.Equal(t, http.StatusOK, rr.Code)
 
 		err := json.NewDecoder(rr.Body).Decode(workspace)
@@ -50,7 +50,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 					"message": commitMsg,
 				}
 
-				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularSession)
+				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularTestUser)
 				require.Equal(t, http.StatusOK, rr.Code)
 
 				var response map[string]string
@@ -70,7 +70,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 					"message": "",
 				}
 
-				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularSession)
+				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularTestUser)
 				assert.Equal(t, http.StatusBadRequest, rr.Code)
 				assert.Equal(t, 0, h.MockGit.GetCommitCount(), "Commit should not be called")
 			})
@@ -83,7 +83,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 					"message": "Test message",
 				}
 
-				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularSession)
+				rr := h.makeRequest(t, http.MethodPost, baseURL+"/commit", requestBody, h.RegularTestUser)
 				assert.Equal(t, http.StatusInternalServerError, rr.Code)
 
 				h.MockGit.SetError(nil) // Reset error state
@@ -94,7 +94,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 			h.MockGit.Reset()
 
 			t.Run("successful pull", func(t *testing.T) {
-				rr := h.makeRequest(t, http.MethodPost, baseURL+"/pull", nil, h.RegularSession)
+				rr := h.makeRequest(t, http.MethodPost, baseURL+"/pull", nil, h.RegularTestUser)
 				require.Equal(t, http.StatusOK, rr.Code)
 
 				var response map[string]string
@@ -109,7 +109,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 				h.MockGit.Reset()
 				h.MockGit.SetError(fmt.Errorf("mock git error"))
 
-				rr := h.makeRequest(t, http.MethodPost, baseURL+"/pull", nil, h.RegularSession)
+				rr := h.makeRequest(t, http.MethodPost, baseURL+"/pull", nil, h.RegularTestUser)
 				assert.Equal(t, http.StatusInternalServerError, rr.Code)
 
 				h.MockGit.SetError(nil) // Reset error state
@@ -145,7 +145,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 					assert.Equal(t, http.StatusUnauthorized, rr.Code)
 
 					// Test with wrong user's session
-					rr = h.makeRequest(t, tc.method, tc.path, tc.body, h.AdminSession)
+					rr = h.makeRequest(t, tc.method, tc.path, tc.body, h.AdminTestUser)
 					assert.Equal(t, http.StatusNotFound, rr.Code)
 				})
 			}
@@ -156,11 +156,11 @@ func TestGitHandlers_Integration(t *testing.T) {
 
 			// Create a workspace without Git enabled
 			nonGitWorkspace := &models.Workspace{
-				UserID: h.RegularUser.ID,
+				UserID: h.RegularTestUser.session.UserID,
 				Name:   "Non-Git Workspace",
 			}
 
-			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", nonGitWorkspace, h.RegularSession)
+			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", nonGitWorkspace, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			err := json.NewDecoder(rr.Body).Decode(nonGitWorkspace)
@@ -170,11 +170,11 @@ func TestGitHandlers_Integration(t *testing.T) {
 
 			// Try to commit
 			commitMsg := map[string]string{"message": "test"}
-			rr = h.makeRequest(t, http.MethodPost, nonGitBaseURL+"/commit", commitMsg, h.RegularSession)
+			rr = h.makeRequest(t, http.MethodPost, nonGitBaseURL+"/commit", commitMsg, h.RegularTestUser)
 			assert.Equal(t, http.StatusInternalServerError, rr.Code)
 
 			// Try to pull
-			rr = h.makeRequest(t, http.MethodPost, nonGitBaseURL+"/pull", nil, h.RegularSession)
+			rr = h.makeRequest(t, http.MethodPost, nonGitBaseURL+"/pull", nil, h.RegularTestUser)
 			assert.Equal(t, http.StatusInternalServerError, rr.Code)
 		})
 	})
