@@ -143,7 +143,6 @@ func (h *Handler) Logout(authManager auth.SessionManager, cookieService auth.Coo
 // @ID refreshToken
 // @Accept json
 // @Produce json
-// @Param body body RefreshRequest true "Refresh request"
 // @Success 200
 // @Header 200 {string} X-CSRF-Token "New CSRF token"
 // @Failure 400 {object} ErrorResponse "Refresh token required"

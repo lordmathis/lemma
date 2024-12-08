@@ -16,7 +16,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Get system-wide statistics as an admin",
@@ -48,7 +48,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the list of all users",
@@ -81,7 +81,7 @@
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Create a new user as an admin",
@@ -139,7 +139,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Get a specific user as an admin",
@@ -184,7 +184,7 @@
             "put": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Update a specific user as an admin",
@@ -247,7 +247,7 @@
             "delete": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Delete a specific user as an admin",
@@ -300,7 +300,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "List all workspaces and their stats as an admin",
@@ -333,7 +333,7 @@
         },
         "/auth/login": {
             "post": {
-                "description": "Logs in a user",
+                "description": "Logs in a user and returns a session with access and refresh tokens",
                 "consumes": [
                     "application/json"
                 ],
@@ -344,7 +344,6 @@
                     "auth"
                 ],
                 "summary": "Login",
-                "operationId": "login",
                 "parameters": [
                     {
                         "description": "Login request",
@@ -361,6 +360,12 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handlers.LoginResponse"
+                        },
+                        "headers": {
+                            "X-CSRF-Token": {
+                                "type": "string",
+                                "description": "CSRF token for future requests"
+                            }
                         }
                     },
                     "400": {
@@ -376,7 +381,7 @@
                         }
                     },
                     "500": {
-                        "description": "Failed to create session",
+                        "description": "Failed to generate CSRF token",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -386,11 +391,6 @@
         },
         "/auth/logout": {
             "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "description": "Log out invalidates the user's session",
                 "tags": [
                     "auth"
@@ -420,7 +420,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the current authenticated user",
@@ -462,22 +462,14 @@
                 ],
                 "summary": "Refresh token",
                 "operationId": "refreshToken",
-                "parameters": [
-                    {
-                        "description": "Refresh request",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.RefreshRequest"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.RefreshResponse"
+                        "headers": {
+                            "X-CSRF-Token": {
+                                "type": "string",
+                                "description": "New CSRF token"
+                            }
                         }
                     },
                     "400": {
@@ -491,6 +483,12 @@
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Failed to generate CSRF token",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
                     }
                 }
             }
@@ -499,7 +497,7 @@
             "put": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Updates the user's profile",
@@ -567,7 +565,7 @@
             "delete": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Deletes the user's account and all associated data",
@@ -634,7 +632,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Lists all workspaces for the current user",
@@ -667,7 +665,7 @@
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Creates a new workspace",
@@ -719,7 +717,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the name of the last opened workspace",
@@ -749,7 +747,7 @@
             "put": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Updates the name of the last opened workspace",
@@ -787,7 +785,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the current workspace",
@@ -826,7 +824,7 @@
             "put": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Updates the current workspace",
@@ -883,7 +881,7 @@
             "delete": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Deletes the current workspace",
@@ -930,7 +928,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Lists all files in the user's workspace",
@@ -974,7 +972,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the path of the last opened file in the user's workspace",
@@ -1019,7 +1017,7 @@
             "put": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Updates the last opened file in the user's workspace",
@@ -1081,7 +1079,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the paths of files with the given name in the user's workspace",
@@ -1135,7 +1133,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the content of a file in the user's workspace",
@@ -1193,7 +1191,7 @@
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Saves the content of a file in the user's workspace",
@@ -1248,7 +1246,7 @@
             "delete": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Deletes a file in the user's workspace",
@@ -1302,7 +1300,7 @@
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Stages, commits, and pushes changes to the remote repository",
@@ -1358,7 +1356,7 @@
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Pulls changes from the remote repository",
@@ -1486,14 +1484,11 @@
         "handlers.LoginResponse": {
             "type": "object",
             "properties": {
-                "accessToken": {
+                "expiresAt": {
                     "type": "string"
                 },
-                "refreshToken": {
+                "sessionId": {
                     "type": "string"
-                },
-                "session": {
-                    "$ref": "#/definitions/models.Session"
                 },
                 "user": {
                     "$ref": "#/definitions/models.User"
@@ -1517,22 +1512,6 @@
                 "message": {
                     "type": "string",
                     "example": "Pulled changes from remote"
-                }
-            }
-        },
-        "handlers.RefreshRequest": {
-            "type": "object",
-            "properties": {
-                "refreshToken": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.RefreshResponse": {
-            "type": "object",
-            "properties": {
-                "accessToken": {
-                    "type": "string"
                 }
             }
         },
@@ -1636,31 +1615,6 @@
                 },
                 "workspaceName": {
                     "type": "string"
-                }
-            }
-        },
-        "models.Session": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "description": "When this session was created",
-                    "type": "string"
-                },
-                "expiresAt": {
-                    "description": "When this session expires",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "Unique session identifier",
-                    "type": "string"
-                },
-                "refreshToken": {
-                    "description": "The refresh token associated with this session",
-                    "type": "string"
-                },
-                "userID": {
-                    "description": "ID of the user this session belongs to",
-                    "type": "integer"
                 }
             }
         },
@@ -1799,6 +1753,13 @@
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "CookieAuth": {
+            "type": "apiKey",
+            "name": "access_token",
+            "in": "cookie"
         }
     }
 }
