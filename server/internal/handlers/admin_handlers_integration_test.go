@@ -34,8 +34,8 @@ func TestAdminHandlers_Integration(t *testing.T) {
 
 	t.Run("user management", func(t *testing.T) {
 		t.Run("list users", func(t *testing.T) {
-			// Test with admin token
-			rr := h.makeRequest(t, http.MethodGet, "/api/v1/admin/users", nil, h.AdminToken, nil)
+			// Test with admin session
+			rr := h.makeRequest(t, http.MethodGet, "/api/v1/admin/users", nil, h.AdminTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var users []*models.User
@@ -44,15 +44,15 @@ func TestAdminHandlers_Integration(t *testing.T) {
 
 			// Should have at least our admin and regular test users
 			assert.GreaterOrEqual(t, len(users), 2)
-			assert.True(t, containsUser(users, h.AdminUser), "Admin user not found in users list")
-			assert.True(t, containsUser(users, h.RegularUser), "Regular user not found in users list")
+			assert.True(t, containsUser(users, h.AdminTestUser.userModel), "Admin user not found in users list")
+			assert.True(t, containsUser(users, h.RegularTestUser.userModel), "Regular user not found in users list")
 
-			// Test with non-admin token
-			rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/users", nil, h.RegularToken, nil)
+			// Test with non-admin session
+			rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/users", nil, h.RegularTestUser)
 			assert.Equal(t, http.StatusForbidden, rr.Code)
 
-			// Test without token
-			rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/users", nil, "", nil)
+			// Test without session
+			rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/users", nil, nil)
 			assert.Equal(t, http.StatusUnauthorized, rr.Code)
 		})
 
@@ -64,8 +64,8 @@ func TestAdminHandlers_Integration(t *testing.T) {
 				Role:        models.RoleEditor,
 			}
 
-			// Test with admin token
-			rr := h.makeRequest(t, http.MethodPost, "/api/v1/admin/users", createReq, h.AdminToken, nil)
+			// Test with admin session
+			rr := h.makeRequest(t, http.MethodPost, "/api/v1/admin/users", createReq, h.AdminTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var createdUser models.User
@@ -77,7 +77,7 @@ func TestAdminHandlers_Integration(t *testing.T) {
 			assert.NotZero(t, createdUser.LastWorkspaceID)
 
 			// Test duplicate email
-			rr = h.makeRequest(t, http.MethodPost, "/api/v1/admin/users", createReq, h.AdminToken, nil)
+			rr = h.makeRequest(t, http.MethodPost, "/api/v1/admin/users", createReq, h.AdminTestUser)
 			assert.Equal(t, http.StatusConflict, rr.Code)
 
 			// Test invalid request (missing required fields)
@@ -85,44 +85,44 @@ func TestAdminHandlers_Integration(t *testing.T) {
 				Email: "invalid@test.com",
 				// Missing password and role
 			}
-			rr = h.makeRequest(t, http.MethodPost, "/api/v1/admin/users", invalidReq, h.AdminToken, nil)
+			rr = h.makeRequest(t, http.MethodPost, "/api/v1/admin/users", invalidReq, h.AdminTestUser)
 			assert.Equal(t, http.StatusBadRequest, rr.Code)
 
-			// Test with non-admin token
-			rr = h.makeRequest(t, http.MethodPost, "/api/v1/admin/users", createReq, h.RegularToken, nil)
+			// Test with non-admin session
+			rr = h.makeRequest(t, http.MethodPost, "/api/v1/admin/users", createReq, h.RegularTestUser)
 			assert.Equal(t, http.StatusForbidden, rr.Code)
 		})
 
 		t.Run("get user", func(t *testing.T) {
-			path := fmt.Sprintf("/api/v1/admin/users/%d", h.RegularUser.ID)
+			path := fmt.Sprintf("/api/v1/admin/users/%d", h.RegularTestUser.session.UserID)
 
-			// Test with admin token
-			rr := h.makeRequest(t, http.MethodGet, path, nil, h.AdminToken, nil)
+			// Test with admin session
+			rr := h.makeRequest(t, http.MethodGet, path, nil, h.AdminTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var user models.User
 			err := json.NewDecoder(rr.Body).Decode(&user)
 			require.NoError(t, err)
-			assert.Equal(t, h.RegularUser.ID, user.ID)
+			assert.Equal(t, h.RegularTestUser.session.UserID, user.ID)
 
 			// Test non-existent user
-			rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/users/999999", nil, h.AdminToken, nil)
+			rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/users/999999", nil, h.AdminTestUser)
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 
-			// Test with non-admin token
-			rr = h.makeRequest(t, http.MethodGet, path, nil, h.RegularToken, nil)
+			// Test with non-admin session
+			rr = h.makeRequest(t, http.MethodGet, path, nil, h.RegularTestUser)
 			assert.Equal(t, http.StatusForbidden, rr.Code)
 		})
 
 		t.Run("update user", func(t *testing.T) {
-			path := fmt.Sprintf("/api/v1/admin/users/%d", h.RegularUser.ID)
+			path := fmt.Sprintf("/api/v1/admin/users/%d", h.RegularTestUser.session.UserID)
 			updateReq := handlers.UpdateUserRequest{
 				DisplayName: "Updated Name",
 				Role:        models.RoleViewer,
 			}
 
-			// Test with admin token
-			rr := h.makeRequest(t, http.MethodPut, path, updateReq, h.AdminToken, nil)
+			// Test with admin session
+			rr := h.makeRequest(t, http.MethodPut, path, updateReq, h.AdminTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var updatedUser models.User
@@ -131,8 +131,8 @@ func TestAdminHandlers_Integration(t *testing.T) {
 			assert.Equal(t, updateReq.DisplayName, updatedUser.DisplayName)
 			assert.Equal(t, updateReq.Role, updatedUser.Role)
 
-			// Test with non-admin token
-			rr = h.makeRequest(t, http.MethodPut, path, updateReq, h.RegularToken, nil)
+			// Test with non-admin session
+			rr = h.makeRequest(t, http.MethodPut, path, updateReq, h.RegularTestUser)
 			assert.Equal(t, http.StatusForbidden, rr.Code)
 		})
 
@@ -145,7 +145,7 @@ func TestAdminHandlers_Integration(t *testing.T) {
 				Role:        models.RoleEditor,
 			}
 
-			rr := h.makeRequest(t, http.MethodPost, "/api/v1/admin/users", createReq, h.AdminToken, nil)
+			rr := h.makeRequest(t, http.MethodPost, "/api/v1/admin/users", createReq, h.AdminTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var createdUser models.User
@@ -155,20 +155,20 @@ func TestAdminHandlers_Integration(t *testing.T) {
 			path := fmt.Sprintf("/api/v1/admin/users/%d", createdUser.ID)
 
 			// Test deleting own account (should fail)
-			adminPath := fmt.Sprintf("/api/v1/admin/users/%d", h.AdminUser.ID)
-			rr = h.makeRequest(t, http.MethodDelete, adminPath, nil, h.AdminToken, nil)
+			adminPath := fmt.Sprintf("/api/v1/admin/users/%d", h.AdminTestUser.session.UserID)
+			rr = h.makeRequest(t, http.MethodDelete, adminPath, nil, h.AdminTestUser)
 			assert.Equal(t, http.StatusBadRequest, rr.Code)
 
-			// Test with admin token
-			rr = h.makeRequest(t, http.MethodDelete, path, nil, h.AdminToken, nil)
+			// Test with admin session
+			rr = h.makeRequest(t, http.MethodDelete, path, nil, h.AdminTestUser)
 			assert.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Verify user is deleted
-			rr = h.makeRequest(t, http.MethodGet, path, nil, h.AdminToken, nil)
+			rr = h.makeRequest(t, http.MethodGet, path, nil, h.AdminTestUser)
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 
-			// Test with non-admin token
-			rr = h.makeRequest(t, http.MethodDelete, path, nil, h.RegularToken, nil)
+			// Test with non-admin session
+			rr = h.makeRequest(t, http.MethodDelete, path, nil, h.RegularTestUser)
 			assert.Equal(t, http.StatusForbidden, rr.Code)
 		})
 	})
@@ -177,15 +177,15 @@ func TestAdminHandlers_Integration(t *testing.T) {
 		t.Run("list workspaces", func(t *testing.T) {
 			// Create a test workspace first
 			workspace := &models.Workspace{
-				UserID: h.RegularUser.ID,
+				UserID: h.RegularTestUser.session.UserID,
 				Name:   "Test Workspace",
 			}
 
-			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularToken, nil)
+			rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
-			// Test with admin token
-			rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/workspaces", nil, h.AdminToken, nil)
+			// Test with admin session
+			rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/workspaces", nil, h.AdminTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var workspaces []*handlers.WorkspaceStats
@@ -206,8 +206,8 @@ func TestAdminHandlers_Integration(t *testing.T) {
 				assert.GreaterOrEqual(t, ws.TotalSize, int64(0))
 			}
 
-			// Test with non-admin token
-			rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/workspaces", nil, h.RegularToken, nil)
+			// Test with non-admin session
+			rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/workspaces", nil, h.RegularTestUser)
 			assert.Equal(t, http.StatusForbidden, rr.Code)
 		})
 	})
@@ -215,14 +215,14 @@ func TestAdminHandlers_Integration(t *testing.T) {
 	t.Run("system stats", func(t *testing.T) {
 		// Create some test data
 		workspace := &models.Workspace{
-			UserID: h.RegularUser.ID,
+			UserID: h.RegularTestUser.session.UserID,
 			Name:   "Stats Test Workspace",
 		}
-		rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularToken, nil)
+		rr := h.makeRequest(t, http.MethodPost, "/api/v1/workspaces", workspace, h.RegularTestUser)
 		require.Equal(t, http.StatusOK, rr.Code)
 
-		// Test with admin token
-		rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/stats", nil, h.AdminToken, nil)
+		// Test with admin session
+		rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/stats", nil, h.AdminTestUser)
 		require.Equal(t, http.StatusOK, rr.Code)
 
 		var stats handlers.SystemStats
@@ -236,8 +236,8 @@ func TestAdminHandlers_Integration(t *testing.T) {
 		assert.GreaterOrEqual(t, stats.TotalFiles, 0)
 		assert.GreaterOrEqual(t, stats.TotalSize, int64(0))
 
-		// Test with non-admin token
-		rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/stats", nil, h.RegularToken, nil)
+		// Test with non-admin session
+		rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/stats", nil, h.RegularTestUser)
 		assert.Equal(t, http.StatusForbidden, rr.Code)
 	})
 }

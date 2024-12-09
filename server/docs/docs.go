@@ -23,7 +23,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Get system-wide statistics as an admin",
@@ -55,7 +55,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the list of all users",
@@ -88,7 +88,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Create a new user as an admin",
@@ -146,7 +146,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Get a specific user as an admin",
@@ -191,7 +191,7 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Update a specific user as an admin",
@@ -254,7 +254,7 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Delete a specific user as an admin",
@@ -307,7 +307,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "List all workspaces and their stats as an admin",
@@ -340,7 +340,7 @@ const docTemplate = `{
         },
         "/auth/login": {
             "post": {
-                "description": "Logs in a user",
+                "description": "Logs in a user and returns a session with access and refresh tokens",
                 "consumes": [
                     "application/json"
                 ],
@@ -351,7 +351,6 @@ const docTemplate = `{
                     "auth"
                 ],
                 "summary": "Login",
-                "operationId": "login",
                 "parameters": [
                     {
                         "description": "Login request",
@@ -368,6 +367,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handlers.LoginResponse"
+                        },
+                        "headers": {
+                            "X-CSRF-Token": {
+                                "type": "string",
+                                "description": "CSRF token for future requests"
+                            }
                         }
                     },
                     "400": {
@@ -383,7 +388,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Failed to create session",
+                        "description": "Failed to generate CSRF token",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -393,11 +398,6 @@ const docTemplate = `{
         },
         "/auth/logout": {
             "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "description": "Log out invalidates the user's session",
                 "tags": [
                     "auth"
@@ -427,7 +427,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the current authenticated user",
@@ -469,22 +469,14 @@ const docTemplate = `{
                 ],
                 "summary": "Refresh token",
                 "operationId": "refreshToken",
-                "parameters": [
-                    {
-                        "description": "Refresh request",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.RefreshRequest"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.RefreshResponse"
+                        "headers": {
+                            "X-CSRF-Token": {
+                                "type": "string",
+                                "description": "New CSRF token"
+                            }
                         }
                     },
                     "400": {
@@ -498,6 +490,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Failed to generate CSRF token",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
                     }
                 }
             }
@@ -506,7 +504,7 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Updates the user's profile",
@@ -574,7 +572,7 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Deletes the user's account and all associated data",
@@ -641,7 +639,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Lists all workspaces for the current user",
@@ -674,7 +672,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Creates a new workspace",
@@ -726,7 +724,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the name of the last opened workspace",
@@ -756,7 +754,7 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Updates the name of the last opened workspace",
@@ -794,7 +792,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the current workspace",
@@ -833,7 +831,7 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Updates the current workspace",
@@ -890,7 +888,7 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Deletes the current workspace",
@@ -937,7 +935,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Lists all files in the user's workspace",
@@ -981,7 +979,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the path of the last opened file in the user's workspace",
@@ -1026,7 +1024,7 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Updates the last opened file in the user's workspace",
@@ -1088,7 +1086,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the paths of files with the given name in the user's workspace",
@@ -1142,7 +1140,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Returns the content of a file in the user's workspace",
@@ -1200,7 +1198,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Saves the content of a file in the user's workspace",
@@ -1255,7 +1253,7 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Deletes a file in the user's workspace",
@@ -1309,7 +1307,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Stages, commits, and pushes changes to the remote repository",
@@ -1365,7 +1363,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Pulls changes from the remote repository",
@@ -1493,14 +1491,11 @@ const docTemplate = `{
         "handlers.LoginResponse": {
             "type": "object",
             "properties": {
-                "accessToken": {
+                "expiresAt": {
                     "type": "string"
                 },
-                "refreshToken": {
+                "sessionId": {
                     "type": "string"
-                },
-                "session": {
-                    "$ref": "#/definitions/models.Session"
                 },
                 "user": {
                     "$ref": "#/definitions/models.User"
@@ -1524,22 +1519,6 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Pulled changes from remote"
-                }
-            }
-        },
-        "handlers.RefreshRequest": {
-            "type": "object",
-            "properties": {
-                "refreshToken": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.RefreshResponse": {
-            "type": "object",
-            "properties": {
-                "accessToken": {
-                    "type": "string"
                 }
             }
         },
@@ -1643,31 +1622,6 @@ const docTemplate = `{
                 },
                 "workspaceName": {
                     "type": "string"
-                }
-            }
-        },
-        "models.Session": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "description": "When this session was created",
-                    "type": "string"
-                },
-                "expiresAt": {
-                    "description": "When this session expires",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "Unique session identifier",
-                    "type": "string"
-                },
-                "refreshToken": {
-                    "description": "The refresh token associated with this session",
-                    "type": "string"
-                },
-                "userID": {
-                    "description": "ID of the user this session belongs to",
-                    "type": "integer"
                 }
             }
         },
@@ -1806,6 +1760,13 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "CookieAuth": {
+            "type": "apiKey",
+            "name": "access_token",
+            "in": "cookie"
         }
     }
 }`

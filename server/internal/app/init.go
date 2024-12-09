@@ -40,14 +40,14 @@ func initDatabase(cfg *Config, secretsService secrets.Service) (db.Database, err
 }
 
 // initAuth initializes JWT and session services
-func initAuth(cfg *Config, database db.Database) (auth.JWTManager, *auth.SessionService, error) {
+func initAuth(cfg *Config, database db.Database) (auth.JWTManager, auth.SessionManager, auth.CookieManager, error) {
 	// Get or generate JWT signing key
 	signingKey := cfg.JWTSigningKey
 	if signingKey == "" {
 		var err error
 		signingKey, err = database.EnsureJWTSecret()
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to ensure JWT secret: %w", err)
+			return nil, nil, nil, fmt.Errorf("failed to ensure JWT secret: %w", err)
 		}
 	}
 
@@ -58,13 +58,16 @@ func initAuth(cfg *Config, database db.Database) (auth.JWTManager, *auth.Session
 		RefreshTokenExpiry: 7 * 24 * time.Hour,
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to initialize JWT service: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to initialize JWT service: %w", err)
 	}
 
 	// Initialize session service
-	sessionService := auth.NewSessionService(database, jwtManager)
+	sessionManager := auth.NewSessionService(database, jwtManager)
 
-	return jwtManager, sessionService, nil
+	// Cookie service
+	cookieService := auth.NewCookieService(cfg.IsDevelopment, cfg.Domain)
+
+	return jwtManager, sessionManager, cookieService, nil
 }
 
 // setupAdminUser creates the admin user if it doesn't exist

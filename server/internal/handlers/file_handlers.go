@@ -40,7 +40,7 @@ type UpdateLastOpenedFileRequest struct {
 // @Description Lists all files in the user's workspace
 // @Tags files
 // @ID listFiles
-// @Security BearerAuth
+// @Security CookieAuth
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
 // @Success 200 {array} storage.FileNode
@@ -68,7 +68,7 @@ func (h *Handler) ListFiles() http.HandlerFunc {
 // @Description Returns the paths of files with the given name in the user's workspace
 // @Tags files
 // @ID lookupFileByName
-// @Security BearerAuth
+// @Security CookieAuth
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
 // @Param filename query string true "File name"
@@ -104,7 +104,7 @@ func (h *Handler) LookupFileByName() http.HandlerFunc {
 // @Description Returns the content of a file in the user's workspace
 // @Tags files
 // @ID getFileContent
-// @Security BearerAuth
+// @Security CookieAuth
 // @Produce plain
 // @Param workspace_name path string true "Workspace name"
 // @Param file_path path string true "File path"
@@ -153,7 +153,7 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 // @Description Saves the content of a file in the user's workspace
 // @Tags files
 // @ID saveFile
-// @Security BearerAuth
+// @Security CookieAuth
 // @Accept plain
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
@@ -204,7 +204,7 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 // @Description Deletes a file in the user's workspace
 // @Tags files
 // @ID deleteFile
-// @Security BearerAuth
+// @Security CookieAuth
 // @Param workspace_name path string true "Workspace name"
 // @Param file_path path string true "File path"
 // @Success 204 "No Content - File deleted successfully"
@@ -246,7 +246,7 @@ func (h *Handler) DeleteFile() http.HandlerFunc {
 // @Description Returns the path of the last opened file in the user's workspace
 // @Tags files
 // @ID getLastOpenedFile
-// @Security BearerAuth
+// @Security CookieAuth
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
 // @Success 200 {object} LastOpenedFileResponse
@@ -280,7 +280,7 @@ func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 // @Description Updates the last opened file in the user's workspace
 // @Tags files
 // @ID updateLastOpenedFile
-// @Security BearerAuth
+// @Security CookieAuth
 // @Accept json
 // @Produce json
 // @Param workspace_name path string true "Workspace name"

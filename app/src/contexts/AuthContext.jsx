@@ -19,16 +19,10 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const storedToken = localStorage.getItem('accessToken');
-        if (storedToken) {
-          authApi.setAuthToken(storedToken);
-          const userData = await authApi.getCurrentUser();
-          setUser(userData);
-        }
+        const userData = await authApi.getCurrentUser();
+        setUser(userData);
       } catch (error) {
         console.error('Failed to initialize auth:', error);
-        localStorage.removeItem('accessToken');
-        authApi.clearAuthToken();
       } finally {
         setLoading(false);
         setInitialized(true);
@@ -40,12 +34,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     try {
-      const { accessToken, user: userData } = await authApi.login(
-        email,
-        password
-      );
-      localStorage.setItem('accessToken', accessToken);
-      authApi.setAuthToken(accessToken);
+      const { user: userData } = await authApi.login(email, password);
       setUser(userData);
       notifications.show({
         title: 'Success',
@@ -70,18 +59,17 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
-      localStorage.removeItem('accessToken');
-      authApi.clearAuthToken();
       setUser(null);
     }
   }, []);
 
   const refreshToken = useCallback(async () => {
     try {
-      const { accessToken } = await authApi.refreshToken();
-      localStorage.setItem('accessToken', accessToken);
-      authApi.setAuthToken(accessToken);
-      return true;
+      const success = await authApi.refreshToken();
+      if (!success) {
+        await logout();
+      }
+      return success;
     } catch (error) {
       console.error('Token refresh failed:', error);
       await logout();

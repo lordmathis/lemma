@@ -3,7 +3,6 @@ package auth
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -35,10 +34,9 @@ type JWTConfig struct {
 
 // JWTManager defines the interface for managing JWT tokens
 type JWTManager interface {
-	GenerateAccessToken(userID int, role string) (string, error)
-	GenerateRefreshToken(userID int, role string) (string, error)
+	GenerateAccessToken(userID int, role string, sessionID string) (string, error)
+	GenerateRefreshToken(userID int, role string, sessionID string) (string, error)
 	ValidateToken(tokenString string) (*Claims, error)
-	RefreshAccessToken(refreshToken string) (string, error)
 }
 
 // jwtService handles JWT token generation and validation
@@ -63,17 +61,17 @@ func NewJWTService(config JWTConfig) (JWTManager, error) {
 }
 
 // GenerateAccessToken creates a new access token for a user with the given userID and role
-func (s *jwtService) GenerateAccessToken(userID int, role string) (string, error) {
-	return s.generateToken(userID, role, AccessToken, s.config.AccessTokenExpiry)
+func (s *jwtService) GenerateAccessToken(userID int, role, sessionID string) (string, error) {
+	return s.generateToken(userID, role, sessionID, AccessToken, s.config.AccessTokenExpiry)
 }
 
 // GenerateRefreshToken creates a new refresh token for a user with the given userID and role
-func (s *jwtService) GenerateRefreshToken(userID int, role string) (string, error) {
-	return s.generateToken(userID, role, RefreshToken, s.config.RefreshTokenExpiry)
+func (s *jwtService) GenerateRefreshToken(userID int, role, sessionID string) (string, error) {
+	return s.generateToken(userID, role, sessionID, RefreshToken, s.config.RefreshTokenExpiry)
 }
 
 // generateToken is an internal helper function that creates a new JWT token
-func (s *jwtService) generateToken(userID int, role string, tokenType TokenType, expiry time.Duration) (string, error) {
+func (s *jwtService) generateToken(userID int, role string, sessionID string, tokenType TokenType, expiry time.Duration) (string, error) {
 	now := time.Now()
 
 	// Add a random nonce to ensure uniqueness
@@ -87,7 +85,7 @@ func (s *jwtService) generateToken(userID int, role string, tokenType TokenType,
 			ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
-			ID:        hex.EncodeToString(nonce),
+			ID:        sessionID,
 		},
 		UserID: userID,
 		Role:   role,
@@ -117,18 +115,4 @@ func (s *jwtService) ValidateToken(tokenString string) (*Claims, error) {
 	}
 
 	return nil, fmt.Errorf("invalid token claims")
-}
-
-// RefreshAccessToken creates a new access token using a refreshToken
-func (s *jwtService) RefreshAccessToken(refreshToken string) (string, error) {
-	claims, err := s.ValidateToken(refreshToken)
-	if err != nil {
-		return "", fmt.Errorf("invalid refresh token: %w", err)
-	}
-
-	if claims.Type != RefreshToken {
-		return "", fmt.Errorf("invalid token type: expected refresh token")
-	}
-
-	return s.GenerateAccessToken(claims.UserID, claims.Role)
 }

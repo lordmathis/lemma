@@ -57,12 +57,10 @@ definitions:
     type: object
   handlers.LoginResponse:
     properties:
-      accessToken:
+      expiresAt:
         type: string
-      refreshToken:
+      sessionId:
         type: string
-      session:
-        $ref: '#/definitions/models.Session'
       user:
         $ref: '#/definitions/models.User'
     type: object
@@ -77,16 +75,6 @@ definitions:
     properties:
       message:
         example: Pulled changes from remote
-        type: string
-    type: object
-  handlers.RefreshRequest:
-    properties:
-      refreshToken:
-        type: string
-    type: object
-  handlers.RefreshResponse:
-    properties:
-      accessToken:
         type: string
     type: object
   handlers.SaveFileResponse:
@@ -155,24 +143,6 @@ definitions:
         type: integer
       workspaceName:
         type: string
-    type: object
-  models.Session:
-    properties:
-      createdAt:
-        description: When this session was created
-        type: string
-      expiresAt:
-        description: When this session expires
-        type: string
-      id:
-        description: Unique session identifier
-        type: string
-      refreshToken:
-        description: The refresh token associated with this session
-        type: string
-      userID:
-        description: ID of the user this session belongs to
-        type: integer
     type: object
   models.User:
     properties:
@@ -292,7 +262,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Get system statistics
       tags:
       - Admin
@@ -314,7 +284,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: List all users
       tags:
       - Admin
@@ -350,7 +320,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Create a new user
       tags:
       - Admin
@@ -384,7 +354,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Delete a specific user
       tags:
       - Admin
@@ -413,7 +383,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Get a specific user
       tags:
       - Admin
@@ -454,7 +424,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Update a specific user
       tags:
       - Admin
@@ -476,7 +446,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: List all workspaces
       tags:
       - Admin
@@ -484,8 +454,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Logs in a user
-      operationId: login
+      description: Logs in a user and returns a session with access and refresh tokens
       parameters:
       - description: Login request
         in: body
@@ -498,6 +467,10 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            X-CSRF-Token:
+              description: CSRF token for future requests
+              type: string
           schema:
             $ref: '#/definitions/handlers.LoginResponse'
         "400":
@@ -509,7 +482,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "500":
-          description: Failed to create session
+          description: Failed to generate CSRF token
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Login
@@ -530,8 +503,6 @@ paths:
           description: Failed to logout
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      security:
-      - BearerAuth: []
       summary: Logout
       tags:
       - auth
@@ -551,7 +522,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Get current user
       tags:
       - auth
@@ -561,26 +532,25 @@ paths:
       - application/json
       description: Refreshes the access token using the refresh token
       operationId: refreshToken
-      parameters:
-      - description: Refresh request
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.RefreshRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
-          schema:
-            $ref: '#/definitions/handlers.RefreshResponse'
+          headers:
+            X-CSRF-Token:
+              description: New CSRF token
+              type: string
         "400":
           description: Refresh token required
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Invalid refresh token
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Failed to generate CSRF token
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Refresh token
@@ -625,7 +595,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Delete account
       tags:
       - users
@@ -669,7 +639,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Update profile
       tags:
       - users
@@ -691,7 +661,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: List workspaces
       tags:
       - workspaces
@@ -723,7 +693,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Create workspace
       tags:
       - workspaces
@@ -753,7 +723,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Delete workspace
       tags:
       - workspaces
@@ -778,7 +748,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Get workspace
       tags:
       - workspaces
@@ -815,7 +785,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Update workspace
       tags:
       - workspaces
@@ -843,7 +813,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: List files
       tags:
       - files
@@ -878,7 +848,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Delete file
       tags:
       - files
@@ -916,7 +886,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Get file content
       tags:
       - files
@@ -952,7 +922,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Save file
       tags:
       - files
@@ -982,7 +952,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Get last opened file
       tags:
       - files
@@ -1021,7 +991,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Update last opened file
       tags:
       - files
@@ -1056,7 +1026,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Lookup file by name
       tags:
       - files
@@ -1092,7 +1062,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Stage, commit, and push changes
       tags:
       - git
@@ -1118,7 +1088,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Pull changes from remote
       tags:
       - git
@@ -1138,7 +1108,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Get last workspace name
       tags:
       - workspaces
@@ -1161,8 +1131,13 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Update last workspace name
       tags:
       - workspaces
+securityDefinitions:
+  CookieAuth:
+    in: cookie
+    name: access_token
+    type: apiKey
 swagger: "2.0"
