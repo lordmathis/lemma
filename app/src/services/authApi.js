@@ -1,39 +1,31 @@
 import { API_BASE_URL } from '../utils/constants';
 
-let authToken = null;
-
-export const setAuthToken = (token) => {
-  authToken = token;
-};
-
-export const clearAuthToken = () => {
-  authToken = null;
-};
-
-export const getAuthHeaders = () => {
-  const headers = {
-    'Content-Type': 'application/json',
-  };
-
-  if (authToken) {
-    headers['Authorization'] = `Bearer ${authToken}`;
-  }
-
-  return headers;
-};
-
-// Update the existing apiCall function to include auth headers
 export const apiCall = async (url, options = {}) => {
   try {
     const headers = {
-      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
       ...options.headers,
     };
+
+    if (options.method && options.method !== 'GET') {
+      const csrfToken = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith('csrf_token='))
+        ?.split('=')[1];
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+    }
 
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include',
     });
+
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded');
+    }
 
     // Handle 401 responses
     if (response.status === 401) {
@@ -42,13 +34,14 @@ export const apiCall = async (url, options = {}) => {
         // Attempt token refresh and retry the request
         const refreshSuccess = await refreshToken();
         if (refreshSuccess) {
-          // Retry the original request with the new token
+          // Retry the original request
           return apiCall(url, options);
         }
       }
       throw new Error('Authentication failed');
     }
 
+    // Handle other error responses
     if (!response.ok && response.status !== 204) {
       const errorData = await response.json().catch(() => null);
       throw new Error(
@@ -56,6 +49,7 @@ export const apiCall = async (url, options = {}) => {
       );
     }
 
+    // Return null for 204 responses
     if (response.status === 204) {
       return null;
     }
@@ -73,26 +67,29 @@ export const login = async (email, password) => {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
-  return response.json();
+
+  const data = await response.json();
+  // No need to store tokens as they're in cookies now
+  return data;
 };
 
 export const logout = async () => {
-  const sessionId = localStorage.getItem('sessionId');
   await apiCall(`${API_BASE_URL}/auth/logout`, {
     method: 'POST',
-    headers: {
-      'X-Session-ID': sessionId,
-    },
   });
+  return;
 };
 
 export const refreshToken = async () => {
-  const refreshToken = localStorage.getItem('refreshToken');
-  const response = await apiCall(`${API_BASE_URL}/auth/refresh`, {
-    method: 'POST',
-    body: JSON.stringify({ refreshToken }),
-  });
-  return response.json();
+  try {
+    const response = await apiCall(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+    });
+    return response.status === 200;
+  } catch (error) {
+    console.error('Token refresh failed:', error);
+    return false;
+  }
 };
 
 export const getCurrentUser = async () => {
