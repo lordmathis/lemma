@@ -43,7 +43,7 @@ func DefaultConfig() *Config {
 		IsDevelopment:     false,
 		LogDir:            "./logs",
 		LogLevel:          logging.INFO,
-		ConsoleOutput:     true,
+		ConsoleOutput:     false,
 	}
 }
 
@@ -134,8 +134,6 @@ func LoadConfig() (*Config, error) {
 		if parsed, err := strconv.ParseBool(consoleOutput); err == nil {
 			config.ConsoleOutput = parsed
 		}
-	} else if config.IsDevelopment {
-		config.ConsoleOutput = true
 	}
 
 	// Validate all settings
