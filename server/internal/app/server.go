@@ -1,7 +1,7 @@
 package app
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -11,6 +11,7 @@ import (
 type Server struct {
 	router  *chi.Mux
 	options *Options
+	logger  *slog.Logger
 }
 
 // NewServer creates a new server instance with the given options
@@ -18,6 +19,7 @@ func NewServer(options *Options) *Server {
 	return &Server{
 		router:  setupRouter(*options),
 		options: options,
+		logger:  options.Logger.App(),
 	}
 }
 
@@ -25,7 +27,7 @@ func NewServer(options *Options) *Server {
 func (s *Server) Start() error {
 	// Start server
 	addr := ":" + s.options.Config.Port
-	log.Printf("Server starting on port %s", s.options.Config.Port)
+	s.logger.Info("Starting server", "address", addr)
 	return http.ListenAndServe(addr, s.router)
 }
 
