@@ -26,9 +26,7 @@ type Config struct {
 	RateLimitRequests int
 	RateLimitWindow   time.Duration
 	IsDevelopment     bool
-	LogDir            string
 	LogLevel          logging.LogLevel
-	ConsoleOutput     bool
 }
 
 // DefaultConfig returns a new Config instance with default values
@@ -41,9 +39,6 @@ func DefaultConfig() *Config {
 		RateLimitRequests: 100,
 		RateLimitWindow:   time.Minute * 15,
 		IsDevelopment:     false,
-		LogDir:            "./logs",
-		LogLevel:          logging.INFO,
-		ConsoleOutput:     false,
 	}
 }
 
@@ -115,25 +110,14 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 
-	// Configure log directory
-	if logDir := os.Getenv("NOVAMD_LOG_DIR"); logDir != "" {
-		config.LogDir = logDir
-	}
-
 	// Configure log level, if isDevelopment is set, default to debug
 	if logLevel := os.Getenv("NOVAMD_LOG_LEVEL"); logLevel != "" {
-		if parsed, err := logging.ParseLogLevel(logLevel); err == nil {
-			config.LogLevel = parsed
-		}
+		parsed := logging.ParseLogLevel(logLevel)
+		config.LogLevel = parsed
 	} else if config.IsDevelopment {
 		config.LogLevel = logging.DEBUG
-	}
-
-	// Configure console output, if isDevelopment is set, default to true
-	if consoleOutput := os.Getenv("NOVAMD_CONSOLE_OUTPUT"); consoleOutput != "" {
-		if parsed, err := strconv.ParseBool(consoleOutput); err == nil {
-			config.ConsoleOutput = parsed
-		}
+	} else {
+		config.LogLevel = logging.INFO
 	}
 
 	// Validate all settings

@@ -12,7 +12,6 @@ type Options struct {
 	Config         *Config
 	Database       db.Database
 	Storage        storage.Manager
-	Logger         logging.Logger
 	JWTManager     auth.JWTManager
 	SessionManager auth.SessionManager
 	CookieService  auth.CookieManager
@@ -36,10 +35,7 @@ func DefaultOptions(cfg *Config) (*Options, error) {
 	storageManager := storage.NewService(cfg.WorkDir)
 
 	// Initialize logger
-	logger, err := logging.New(cfg.LogDir, cfg.LogLevel, cfg.ConsoleOutput)
-	if err != nil {
-		return nil, err
-	}
+	logging.Setup(cfg.LogLevel)
 
 	// Initialize auth services
 	jwtManager, sessionService, cookieService, err := initAuth(cfg, database)
@@ -56,7 +52,6 @@ func DefaultOptions(cfg *Config) (*Options, error) {
 		Config:         cfg,
 		Database:       database,
 		Storage:        storageManager,
-		Logger:         logger,
 		JWTManager:     jwtManager,
 		SessionManager: sessionService,
 		CookieService:  cookieService,
