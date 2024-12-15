@@ -8,8 +8,6 @@ import (
 	"novamd/internal/auth"
 )
 
-// jwt_test.go tests
-
 func TestNewJWTService(t *testing.T) {
 	testCases := []struct {
 		name    string

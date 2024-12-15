@@ -4,10 +4,15 @@ package auth
 import (
 	"crypto/rand"
 	"fmt"
+	"novamd/internal/logging"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+func getJWTLogger() logging.Logger {
+	return getAuthLogger().WithGroup("jwt")
+}
 
 // TokenType represents the type of JWT token (access or refresh)
 type TokenType string
@@ -47,16 +52,26 @@ type jwtService struct {
 // NewJWTService creates a new JWT service with the provided configuration
 // Returns an error if the signing key is missing
 func NewJWTService(config JWTConfig) (JWTManager, error) {
+	log := getJWTLogger()
+
 	if config.SigningKey == "" {
 		return nil, fmt.Errorf("signing key is required")
 	}
+
 	// Set default expiry times if not provided
 	if config.AccessTokenExpiry == 0 {
-		config.AccessTokenExpiry = 15 * time.Minute // Default to 15 minutes
+		config.AccessTokenExpiry = 15 * time.Minute
+		log.Debug("using default access token expiry", "expiry", config.AccessTokenExpiry)
 	}
 	if config.RefreshTokenExpiry == 0 {
-		config.RefreshTokenExpiry = 7 * 24 * time.Hour // Default to 7 days
+		config.RefreshTokenExpiry = 7 * 24 * time.Hour
+		log.Debug("using default refresh token expiry", "expiry", config.RefreshTokenExpiry)
 	}
+
+	log.Info("initialized JWT service",
+		"accessExpiry", config.AccessTokenExpiry,
+		"refreshExpiry", config.RefreshTokenExpiry)
+
 	return &jwtService{config: config}, nil
 }
 
@@ -72,6 +87,7 @@ func (s *jwtService) GenerateRefreshToken(userID int, role, sessionID string) (s
 
 // generateToken is an internal helper function that creates a new JWT token
 func (s *jwtService) generateToken(userID int, role string, sessionID string, tokenType TokenType, expiry time.Duration) (string, error) {
+	log := getJWTLogger()
 	now := time.Now()
 
 	// Add a random nonce to ensure uniqueness
@@ -93,11 +109,24 @@ func (s *jwtService) generateToken(userID int, role string, sessionID string, to
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.config.SigningKey))
+	signedToken, err := token.SignedString([]byte(s.config.SigningKey))
+	if err != nil {
+		return "", err
+	}
+
+	log.Debug("generated JWT token",
+		"userId", userID,
+		"role", role,
+		"tokenType", tokenType,
+		"expiresAt", claims.ExpiresAt)
+
+	return signedToken, nil
 }
 
 // ValidateToken validates and parses a JWT token
 func (s *jwtService) ValidateToken(tokenString string) (*Claims, error) {
+	log := getJWTLogger()
+
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		// Validate the signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -110,9 +139,16 @@ func (s *jwtService) ValidateToken(tokenString string) (*Claims, error) {
 		return nil, fmt.Errorf("invalid token: %w", err)
 	}
 
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		return claims, nil
+	claims, ok := token.Claims.(*Claims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid token claims")
 	}
 
-	return nil, fmt.Errorf("invalid token claims")
+	log.Debug("token validated",
+		"userId", claims.UserID,
+		"role", claims.Role,
+		"tokenType", claims.Type,
+		"expiresAt", claims.ExpiresAt)
+
+	return claims, nil
 }

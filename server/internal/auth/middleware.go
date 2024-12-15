@@ -3,9 +3,13 @@ package auth
 import (
 	"crypto/subtle"
 	"net/http"
-
 	"novamd/internal/context"
+	"novamd/internal/logging"
 )
+
+func getMiddlewareLogger() logging.Logger {
+	return getAuthLogger().WithGroup("middleware")
+}
 
 // Middleware handles JWT authentication for protected routes
 type Middleware struct {
@@ -16,6 +20,9 @@ type Middleware struct {
 
 // NewMiddleware creates a new authentication middleware
 func NewMiddleware(jwtManager JWTManager, sessionManager SessionManager, cookieManager CookieManager) *Middleware {
+	log := getMiddlewareLogger()
+	log.Info("initialized auth middleware")
+
 	return &Middleware{
 		jwtManager:     jwtManager,
 		sessionManager: sessionManager,
@@ -26,7 +33,9 @@ func NewMiddleware(jwtManager JWTManager, sessionManager SessionManager, cookieM
 // Authenticate middleware validates JWT tokens and sets user information in context
 func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Extract token from Authorization header
+		log := getMiddlewareLogger()
+
+		// Extract token from cookie
 		cookie, err := r.Cookie("access_token")
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -82,6 +91,12 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 			UserRole: claims.Role,
 		}
 
+		log.Debug("authentication completed",
+			"userId", claims.UserID,
+			"role", claims.Role,
+			"method", r.Method,
+			"path", r.URL.Path)
+
 		// Add context to request and continue
 		next.ServeHTTP(w, context.WithHandlerContext(r, hctx))
 	})
@@ -91,6 +106,8 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 func (m *Middleware) RequireRole(role string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log := getMiddlewareLogger()
+
 			ctx, ok := context.GetRequestContext(w, r)
 			if !ok {
 				return
@@ -101,6 +118,11 @@ func (m *Middleware) RequireRole(role string) func(http.Handler) http.Handler {
 				return
 			}
 
+			log.Debug("role requirement satisfied",
+				"requiredRole", role,
+				"userRole", ctx.UserRole,
+				"path", r.URL.Path)
+
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -109,6 +131,8 @@ func (m *Middleware) RequireRole(role string) func(http.Handler) http.Handler {
 // RequireWorkspaceAccess returns a middleware that ensures the user has access to the workspace
 func (m *Middleware) RequireWorkspaceAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log := getMiddlewareLogger()
+
 		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
@@ -125,6 +149,11 @@ func (m *Middleware) RequireWorkspaceAccess(next http.Handler) http.Handler {
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
 		}
+
+		log.Debug("workspace access granted",
+			"userId", ctx.UserID,
+			"workspaceId", ctx.Workspace.ID,
+			"path", r.URL.Path)
 
 		next.ServeHTTP(w, r)
 	})

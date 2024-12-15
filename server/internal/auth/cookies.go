@@ -3,7 +3,21 @@ package auth
 
 import (
 	"net/http"
+	"novamd/internal/logging"
 )
+
+var logger logging.Logger
+
+func getAuthLogger() logging.Logger {
+	if logger == nil {
+		logger = logging.WithGroup("auth")
+	}
+	return logger
+}
+
+func getCookieLogger() logging.Logger {
+	return getAuthLogger().WithGroup("cookie")
+}
 
 // CookieManager interface defines methods for generating cookies
 type CookieManager interface {
@@ -22,6 +36,8 @@ type cookieManager struct {
 
 // NewCookieService creates a new cookie service
 func NewCookieService(isDevelopment bool, domain string) CookieManager {
+	log := getCookieLogger()
+
 	secure := !isDevelopment
 	var sameSite http.SameSite
 
@@ -30,6 +46,11 @@ func NewCookieService(isDevelopment bool, domain string) CookieManager {
 	} else {
 		sameSite = http.SameSiteStrictMode
 	}
+
+	log.Debug("creating cookie service",
+		"secure", secure,
+		"sameSite", sameSite,
+		"domain", domain)
 
 	return &cookieManager{
 		Domain:   domain,
@@ -40,6 +61,12 @@ func NewCookieService(isDevelopment bool, domain string) CookieManager {
 
 // GenerateAccessTokenCookie creates a new cookie for the access token
 func (c *cookieManager) GenerateAccessTokenCookie(token string) *http.Cookie {
+	log := getCookieLogger()
+	log.Debug("generating access token cookie",
+		"secure", c.Secure,
+		"sameSite", c.SameSite,
+		"maxAge", 900)
+
 	return &http.Cookie{
 		Name:     "access_token",
 		Value:    token,
@@ -53,6 +80,12 @@ func (c *cookieManager) GenerateAccessTokenCookie(token string) *http.Cookie {
 
 // GenerateRefreshTokenCookie creates a new cookie for the refresh token
 func (c *cookieManager) GenerateRefreshTokenCookie(token string) *http.Cookie {
+	log := getCookieLogger()
+	log.Debug("generating refresh token cookie",
+		"secure", c.Secure,
+		"sameSite", c.SameSite,
+		"maxAge", 604800)
+
 	return &http.Cookie{
 		Name:     "refresh_token",
 		Value:    token,
@@ -66,6 +99,13 @@ func (c *cookieManager) GenerateRefreshTokenCookie(token string) *http.Cookie {
 
 // GenerateCSRFCookie creates a new cookie for the CSRF token
 func (c *cookieManager) GenerateCSRFCookie(token string) *http.Cookie {
+	log := getCookieLogger()
+	log.Debug("generating CSRF cookie",
+		"secure", c.Secure,
+		"sameSite", c.SameSite,
+		"maxAge", 900,
+		"httpOnly", false)
+
 	return &http.Cookie{
 		Name:     "csrf_token",
 		Value:    token,
@@ -79,6 +119,12 @@ func (c *cookieManager) GenerateCSRFCookie(token string) *http.Cookie {
 
 // InvalidateCookie creates a new cookie with a MaxAge of -1 to invalidate the cookie
 func (c *cookieManager) InvalidateCookie(cookieType string) *http.Cookie {
+	log := getCookieLogger()
+	log.Debug("invalidating cookie",
+		"type", cookieType,
+		"secure", c.Secure,
+		"sameSite", c.SameSite)
+
 	return &http.Cookie{
 		Name:     cookieType,
 		Value:    "",
