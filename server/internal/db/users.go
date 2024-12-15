@@ -9,13 +9,12 @@ import (
 // CreateUser inserts a new user record into the database
 func (db *database) CreateUser(user *models.User) (*models.User, error) {
 	log := getLogger().WithGroup("users")
-	log.Info("creating new user",
+	log.Debug("creating new user",
 		"email", user.Email,
 		"role", user.Role)
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Error("failed to begin transaction", "error", err)
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
@@ -25,15 +24,11 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
         VALUES (?, ?, ?, ?)`,
 		user.Email, user.DisplayName, user.PasswordHash, user.Role)
 	if err != nil {
-		log.Error("failed to insert user",
-			"error", err,
-			"email", user.Email)
 		return nil, fmt.Errorf("failed to insert user: %w", err)
 	}
 
 	userID, err := result.LastInsertId()
 	if err != nil {
-		log.Error("failed to get last insert ID", "error", err)
 		return nil, fmt.Errorf("failed to get last insert ID: %w", err)
 	}
 	user.ID = int(userID)
@@ -41,9 +36,6 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 	// Retrieve the created_at timestamp
 	err = tx.QueryRow("SELECT created_at FROM users WHERE id = ?", user.ID).Scan(&user.CreatedAt)
 	if err != nil {
-		log.Error("failed to get created timestamp",
-			"error", err,
-			"user_id", user.ID)
 		return nil, fmt.Errorf("failed to get created timestamp: %w", err)
 	}
 
@@ -58,9 +50,6 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 	// Create workspace with settings
 	err = db.createWorkspaceTx(tx, defaultWorkspace)
 	if err != nil {
-		log.Error("failed to create default workspace",
-			"error", err,
-			"user_id", user.ID)
 		return nil, fmt.Errorf("failed to create default workspace: %w", err)
 	}
 
@@ -70,23 +59,16 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 		"workspace_id", defaultWorkspace.ID)
 	_, err = tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", defaultWorkspace.ID, user.ID)
 	if err != nil {
-		log.Error("failed to update last workspace ID",
-			"error", err,
-			"user_id", user.ID,
-			"workspace_id", defaultWorkspace.ID)
 		return nil, fmt.Errorf("failed to update last workspace ID: %w", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error("failed to commit transaction",
-			"error", err,
-			"user_id", user.ID)
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	user.LastWorkspaceID = defaultWorkspace.ID
-	log.Info("user created successfully",
+	log.Info("user created",
 		"user_id", user.ID,
 		"email", user.Email,
 		"workspace_id", defaultWorkspace.ID)
@@ -115,15 +97,11 @@ func (db *database) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) e
 		workspace.GitCommitName, workspace.GitCommitEmail,
 	)
 	if err != nil {
-		log.Error("failed to insert workspace",
-			"error", err,
-			"user_id", workspace.UserID)
 		return fmt.Errorf("failed to insert workspace: %w", err)
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		log.Error("failed to get workspace ID", "error", err)
 		return fmt.Errorf("failed to get workspace ID: %w", err)
 	}
 	workspace.ID = int(id)
@@ -153,9 +131,6 @@ func (db *database) GetUserByID(id int) (*models.User, error) {
 		return nil, fmt.Errorf("user not found")
 	}
 	if err != nil {
-		log.Error("failed to fetch user",
-			"error", err,
-			"user_id", id)
 		return nil, fmt.Errorf("failed to fetch user: %w", err)
 	}
 
@@ -182,9 +157,6 @@ func (db *database) GetUserByEmail(email string) (*models.User, error) {
 		return nil, fmt.Errorf("user not found")
 	}
 	if err != nil {
-		log.Error("failed to fetch user",
-			"error", err,
-			"email", email)
 		return nil, fmt.Errorf("failed to fetch user: %w", err)
 	}
 
@@ -194,10 +166,6 @@ func (db *database) GetUserByEmail(email string) (*models.User, error) {
 
 func (db *database) UpdateUser(user *models.User) error {
 	log := getLogger().WithGroup("users")
-	log.Info("updating user",
-		"user_id", user.ID,
-		"email", user.Email)
-
 	result, err := db.Exec(`
         UPDATE users
         SET email = ?, display_name = ?, password_hash = ?, role = ?, last_workspace_id = ?
@@ -206,17 +174,11 @@ func (db *database) UpdateUser(user *models.User) error {
 		user.LastWorkspaceID, user.ID)
 
 	if err != nil {
-		log.Error("failed to update user",
-			"error", err,
-			"user_id", user.ID)
 		return fmt.Errorf("failed to update user: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Error("failed to get rows affected",
-			"error", err,
-			"user_id", user.ID)
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 
@@ -225,7 +187,7 @@ func (db *database) UpdateUser(user *models.User) error {
 		return fmt.Errorf("user not found")
 	}
 
-	log.Info("user updated successfully", "user_id", user.ID)
+	log.Info("user updated", "user_id", user.ID)
 	return nil
 }
 
@@ -240,7 +202,6 @@ func (db *database) GetAllUsers() ([]*models.User, error) {
         FROM users
         ORDER BY id ASC`)
 	if err != nil {
-		log.Error("failed to query users", "error", err)
 		return nil, fmt.Errorf("failed to query users: %w", err)
 	}
 	defer rows.Close()
@@ -253,7 +214,6 @@ func (db *database) GetAllUsers() ([]*models.User, error) {
 			&user.CreatedAt, &user.LastWorkspaceID,
 		)
 		if err != nil {
-			log.Error("failed to scan user row", "error", err)
 			return nil, fmt.Errorf("failed to scan user row: %w", err)
 		}
 		users = append(users, user)
@@ -271,7 +231,6 @@ func (db *database) UpdateLastWorkspace(userID int, workspaceName string) error 
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Error("failed to begin transaction", "error", err)
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
@@ -280,30 +239,21 @@ func (db *database) UpdateLastWorkspace(userID int, workspaceName string) error 
 	err = tx.QueryRow("SELECT id FROM workspaces WHERE user_id = ? AND name = ?",
 		userID, workspaceName).Scan(&workspaceID)
 	if err != nil {
-		log.Error("failed to find workspace",
-			"error", err,
-			"user_id", userID,
-			"workspace_name", workspaceName)
 		return fmt.Errorf("failed to find workspace: %w", err)
 	}
 
 	_, err = tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?",
 		workspaceID, userID)
 	if err != nil {
-		log.Error("failed to update last workspace",
-			"error", err,
-			"user_id", userID,
-			"workspace_id", workspaceID)
 		return fmt.Errorf("failed to update last workspace: %w", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error("failed to commit transaction", "error", err)
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	log.Info("last workspace updated successfully",
+	log.Info("last workspace updated",
 		"user_id", userID,
 		"workspace_id", workspaceID)
 	return nil
@@ -311,11 +261,10 @@ func (db *database) UpdateLastWorkspace(userID int, workspaceName string) error 
 
 func (db *database) DeleteUser(id int) error {
 	log := getLogger().WithGroup("users")
-	log.Info("deleting user", "user_id", id)
+	log.Debug("deleting user", "user_id", id)
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Error("failed to begin transaction", "error", err)
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
@@ -324,15 +273,11 @@ func (db *database) DeleteUser(id int) error {
 	log.Debug("deleting user workspaces", "user_id", id)
 	result, err := tx.Exec("DELETE FROM workspaces WHERE user_id = ?", id)
 	if err != nil {
-		log.Error("failed to delete workspaces",
-			"error", err,
-			"user_id", id)
 		return fmt.Errorf("failed to delete workspaces: %w", err)
 	}
 
 	workspacesDeleted, err := result.RowsAffected()
 	if err != nil {
-		log.Error("failed to get deleted workspaces count", "error", err)
 		return fmt.Errorf("failed to get deleted workspaces count: %w", err)
 	}
 
@@ -340,15 +285,11 @@ func (db *database) DeleteUser(id int) error {
 	log.Debug("deleting user record", "user_id", id)
 	result, err = tx.Exec("DELETE FROM users WHERE id = ?", id)
 	if err != nil {
-		log.Error("failed to delete user",
-			"error", err,
-			"user_id", id)
 		return fmt.Errorf("failed to delete user: %w", err)
 	}
 
 	userDeleted, err := result.RowsAffected()
 	if err != nil {
-		log.Error("failed to get deleted user count", "error", err)
 		return fmt.Errorf("failed to get deleted user count: %w", err)
 	}
 
@@ -359,11 +300,10 @@ func (db *database) DeleteUser(id int) error {
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error("failed to commit transaction", "error", err)
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	log.Info("user deleted successfully",
+	log.Info("user deleted",
 		"user_id", id,
 		"workspaces_deleted", workspacesDeleted)
 	return nil
@@ -387,9 +327,6 @@ func (db *database) GetLastWorkspaceName(userID int) (string, error) {
 		return "", fmt.Errorf("no last workspace found")
 	}
 	if err != nil {
-		log.Error("failed to fetch last workspace name",
-			"error", err,
-			"user_id", userID)
 		return "", fmt.Errorf("failed to fetch last workspace name: %w", err)
 	}
 
@@ -407,7 +344,6 @@ func (db *database) CountAdminUsers() (int, error) {
 	var count int
 	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'admin'").Scan(&count)
 	if err != nil {
-		log.Error("failed to count admin users", "error", err)
 		return 0, fmt.Errorf("failed to count admin users: %w", err)
 	}
 

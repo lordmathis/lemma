@@ -87,7 +87,6 @@ func (db *database) Migrate() error {
         version INTEGER PRIMARY KEY
     )`)
 	if err != nil {
-		log.Error("failed to create migrations table", "error", err)
 		return fmt.Errorf("failed to create migrations table: %w", err)
 	}
 
@@ -96,7 +95,6 @@ func (db *database) Migrate() error {
 	var currentVersion int
 	err = db.QueryRow("SELECT COALESCE(MAX(version), 0) FROM migrations").Scan(&currentVersion)
 	if err != nil {
-		log.Error("failed to get current migration version", "error", err)
 		return fmt.Errorf("failed to get current migration version: %w", err)
 	}
 	log.Info("current database version", "version", currentVersion)
@@ -109,7 +107,6 @@ func (db *database) Migrate() error {
 
 			tx, err := db.Begin()
 			if err != nil {
-				log.Error("failed to begin transaction", "error", err)
 				return fmt.Errorf("failed to begin transaction for migration %d: %w", migration.Version, err)
 			}
 
@@ -117,11 +114,7 @@ func (db *database) Migrate() error {
 			log.Debug("executing migration SQL")
 			_, err = tx.Exec(migration.SQL)
 			if err != nil {
-				log.Error("migration failed", "error", err)
 				if rbErr := tx.Rollback(); rbErr != nil {
-					log.Error("rollback failed after migration error",
-						"migration_error", err,
-						"rollback_error", rbErr)
 					return fmt.Errorf("migration %d failed: %v, rollback failed: %v",
 						migration.Version, err, rbErr)
 				}
@@ -133,11 +126,7 @@ func (db *database) Migrate() error {
 			log.Debug("updating migrations version")
 			_, err = tx.Exec("INSERT INTO migrations (version) VALUES (?)", migration.Version)
 			if err != nil {
-				log.Error("failed to update migration version", "error", err)
 				if rbErr := tx.Rollback(); rbErr != nil {
-					log.Error("rollback failed after version update error",
-						"update_error", err,
-						"rollback_error", rbErr)
 					return fmt.Errorf("failed to update migration version: %v, rollback failed: %v",
 						err, rbErr)
 				}
@@ -149,7 +138,6 @@ func (db *database) Migrate() error {
 			log.Debug("committing migration")
 			err = tx.Commit()
 			if err != nil {
-				log.Error("failed to commit migration", "error", err)
 				return fmt.Errorf("failed to commit migration %d: %w", migration.Version, err)
 			}
 

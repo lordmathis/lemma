@@ -9,7 +9,7 @@ import (
 // CreateWorkspace inserts a new workspace record into the database
 func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 	log := getLogger().WithGroup("workspaces")
-	log.Info("creating new workspace",
+	log.Debug("creating new workspace",
 		"user_id", workspace.UserID,
 		"name", workspace.Name,
 		"git_enabled", workspace.GitEnabled)
@@ -23,7 +23,6 @@ func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 	// Encrypt token if present
 	encryptedToken, err := db.encryptToken(workspace.GitToken)
 	if err != nil {
-		log.Error("failed to encrypt git token", "error", err)
 		return fmt.Errorf("failed to encrypt token: %w", err)
 	}
 
@@ -39,18 +38,16 @@ func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 		workspace.GitAutoCommit, workspace.GitCommitMsgTemplate, workspace.GitCommitName, workspace.GitCommitEmail,
 	)
 	if err != nil {
-		log.Error("failed to insert workspace", "error", err)
 		return fmt.Errorf("failed to insert workspace: %w", err)
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		log.Error("failed to get workspace ID", "error", err)
 		return fmt.Errorf("failed to get workspace ID: %w", err)
 	}
 	workspace.ID = int(id)
 
-	log.Info("workspace created successfully",
+	log.Info("workspace created",
 		"workspace_id", workspace.ID,
 		"user_id", workspace.UserID)
 	return nil
@@ -87,22 +84,16 @@ func (db *database) GetWorkspaceByID(id int) (*models.Workspace, error) {
 		return nil, fmt.Errorf("workspace not found")
 	}
 	if err != nil {
-		log.Error("failed to fetch workspace",
-			"error", err,
-			"workspace_id", id)
 		return nil, fmt.Errorf("failed to fetch workspace: %w", err)
 	}
 
 	// Decrypt token
 	workspace.GitToken, err = db.decryptToken(encryptedToken)
 	if err != nil {
-		log.Error("failed to decrypt git token",
-			"error", err,
-			"workspace_id", id)
 		return nil, fmt.Errorf("failed to decrypt token: %w", err)
 	}
 
-	log.Debug("workspace retrieved successfully",
+	log.Debug("workspace retrieved",
 		"workspace_id", id,
 		"user_id", workspace.UserID)
 	return workspace, nil
@@ -143,19 +134,12 @@ func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*model
 		return nil, fmt.Errorf("workspace not found")
 	}
 	if err != nil {
-		log.Error("failed to fetch workspace",
-			"error", err,
-			"user_id", userID,
-			"workspace_name", workspaceName)
 		return nil, fmt.Errorf("failed to fetch workspace: %w", err)
 	}
 
 	// Decrypt token
 	workspace.GitToken, err = db.decryptToken(encryptedToken)
 	if err != nil {
-		log.Error("failed to decrypt git token",
-			"error", err,
-			"workspace_id", workspace.ID)
 		return nil, fmt.Errorf("failed to decrypt token: %w", err)
 	}
 
@@ -168,7 +152,7 @@ func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*model
 // UpdateWorkspace updates a workspace record in the database
 func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
 	log := getLogger().WithGroup("workspaces")
-	log.Info("updating workspace",
+	log.Debug("updating workspace",
 		"workspace_id", workspace.ID,
 		"user_id", workspace.UserID,
 		"git_enabled", workspace.GitEnabled)
@@ -176,7 +160,6 @@ func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
 	// Encrypt token before storing
 	encryptedToken, err := db.encryptToken(workspace.GitToken)
 	if err != nil {
-		log.Error("failed to encrypt git token", "error", err)
 		return fmt.Errorf("failed to encrypt token: %w", err)
 	}
 
@@ -212,17 +195,11 @@ func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
 		workspace.UserID,
 	)
 	if err != nil {
-		log.Error("failed to update workspace",
-			"error", err,
-			"workspace_id", workspace.ID)
 		return fmt.Errorf("failed to update workspace: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Error("failed to get rows affected",
-			"error", err,
-			"workspace_id", workspace.ID)
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 
@@ -233,7 +210,7 @@ func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
 		return fmt.Errorf("workspace not found")
 	}
 
-	log.Info("workspace updated successfully",
+	log.Debug("workspace updated",
 		"workspace_id", workspace.ID,
 		"user_id", workspace.UserID)
 	return nil
@@ -256,9 +233,6 @@ func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, erro
 		userID,
 	)
 	if err != nil {
-		log.Error("failed to query workspaces",
-			"error", err,
-			"user_id", userID)
 		return nil, fmt.Errorf("failed to query workspaces: %w", err)
 	}
 	defer rows.Close()
@@ -275,16 +249,12 @@ func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, erro
 			&workspace.GitCommitName, &workspace.GitCommitEmail,
 		)
 		if err != nil {
-			log.Error("failed to scan workspace row", "error", err)
 			return nil, fmt.Errorf("failed to scan workspace row: %w", err)
 		}
 
 		// Decrypt token
 		workspace.GitToken, err = db.decryptToken(encryptedToken)
 		if err != nil {
-			log.Error("failed to decrypt git token",
-				"error", err,
-				"workspace_id", workspace.ID)
 			return nil, fmt.Errorf("failed to decrypt token: %w", err)
 		}
 
@@ -292,9 +262,6 @@ func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, erro
 	}
 
 	if err = rows.Err(); err != nil {
-		log.Error("error iterating workspace rows",
-			"error", err,
-			"user_id", userID)
 		return nil, fmt.Errorf("error iterating workspace rows: %w", err)
 	}
 
@@ -307,7 +274,7 @@ func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, erro
 // UpdateWorkspaceSettings updates only the settings portion of a workspace
 func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 	log := getLogger().WithGroup("workspaces")
-	log.Info("updating workspace settings",
+	log.Debug("updating workspace settings",
 		"workspace_id", workspace.ID,
 		"git_enabled", workspace.GitEnabled)
 
@@ -340,17 +307,11 @@ func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 		workspace.ID,
 	)
 	if err != nil {
-		log.Error("failed to update workspace settings",
-			"error", err,
-			"workspace_id", workspace.ID)
 		return fmt.Errorf("failed to update workspace settings: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Error("failed to get rows affected",
-			"error", err,
-			"workspace_id", workspace.ID)
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 
@@ -360,7 +321,7 @@ func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 		return fmt.Errorf("workspace not found")
 	}
 
-	log.Info("workspace settings updated successfully",
+	log.Info("workspace settings updated",
 		"workspace_id", workspace.ID)
 	return nil
 }
@@ -368,21 +329,15 @@ func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 // DeleteWorkspace removes a workspace record from the database
 func (db *database) DeleteWorkspace(id int) error {
 	log := getLogger().WithGroup("workspaces")
-	log.Info("deleting workspace", "workspace_id", id)
+	log.Debug("deleting workspace", "workspace_id", id)
 
 	result, err := db.Exec("DELETE FROM workspaces WHERE id = ?", id)
 	if err != nil {
-		log.Error("failed to delete workspace",
-			"error", err,
-			"workspace_id", id)
 		return fmt.Errorf("failed to delete workspace: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Error("failed to get rows affected",
-			"error", err,
-			"workspace_id", id)
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 
@@ -391,7 +346,7 @@ func (db *database) DeleteWorkspace(id int) error {
 		return fmt.Errorf("workspace not found")
 	}
 
-	log.Info("workspace deleted successfully", "workspace_id", id)
+	log.Info("workspace deleted", "workspace_id", id)
 	return nil
 }
 
@@ -402,17 +357,11 @@ func (db *database) DeleteWorkspaceTx(tx *sql.Tx, id int) error {
 
 	result, err := tx.Exec("DELETE FROM workspaces WHERE id = ?", id)
 	if err != nil {
-		log.Error("failed to delete workspace in transaction",
-			"error", err,
-			"workspace_id", id)
 		return fmt.Errorf("failed to delete workspace in transaction: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Error("failed to get rows affected in transaction",
-			"error", err,
-			"workspace_id", id)
 		return fmt.Errorf("failed to get rows affected in transaction: %w", err)
 	}
 
@@ -437,18 +386,11 @@ func (db *database) UpdateLastWorkspaceTx(tx *sql.Tx, userID, workspaceID int) e
 	result, err := tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?",
 		workspaceID, userID)
 	if err != nil {
-		log.Error("failed to update last workspace in transaction",
-			"error", err,
-			"user_id", userID,
-			"workspace_id", workspaceID)
 		return fmt.Errorf("failed to update last workspace in transaction: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Error("failed to get rows affected in transaction",
-			"error", err,
-			"user_id", userID)
 		return fmt.Errorf("failed to get rows affected in transaction: %w", err)
 	}
 
@@ -474,17 +416,11 @@ func (db *database) UpdateLastOpenedFile(workspaceID int, filePath string) error
 	result, err := db.Exec("UPDATE workspaces SET last_opened_file_path = ? WHERE id = ?",
 		filePath, workspaceID)
 	if err != nil {
-		log.Error("failed to update last opened file",
-			"error", err,
-			"workspace_id", workspaceID)
 		return fmt.Errorf("failed to update last opened file: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Error("failed to get rows affected",
-			"error", err,
-			"workspace_id", workspaceID)
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 
@@ -513,9 +449,6 @@ func (db *database) GetLastOpenedFile(workspaceID int) (string, error) {
 		return "", fmt.Errorf("workspace not found")
 	}
 	if err != nil {
-		log.Error("failed to fetch last opened file",
-			"error", err,
-			"workspace_id", workspaceID)
 		return "", fmt.Errorf("failed to fetch last opened file: %w", err)
 	}
 
@@ -545,7 +478,6 @@ func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
         FROM workspaces`,
 	)
 	if err != nil {
-		log.Error("failed to query workspaces", "error", err)
 		return nil, fmt.Errorf("failed to query workspaces: %w", err)
 	}
 	defer rows.Close()
@@ -562,16 +494,12 @@ func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
 			&workspace.GitCommitName, &workspace.GitCommitEmail,
 		)
 		if err != nil {
-			log.Error("failed to scan workspace row", "error", err)
 			return nil, fmt.Errorf("failed to scan workspace row: %w", err)
 		}
 
 		// Decrypt token
 		workspace.GitToken, err = db.decryptToken(encryptedToken)
 		if err != nil {
-			log.Error("failed to decrypt git token",
-				"error", err,
-				"workspace_id", workspace.ID)
 			return nil, fmt.Errorf("failed to decrypt token: %w", err)
 		}
 
@@ -579,7 +507,6 @@ func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
 	}
 
 	if err = rows.Err(); err != nil {
-		log.Error("error iterating workspace rows", "error", err)
 		return nil, fmt.Errorf("error iterating workspace rows: %w", err)
 	}
 

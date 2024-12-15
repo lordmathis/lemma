@@ -2,7 +2,6 @@ package db
 
 import (
 	"crypto/rand"
-	"database/sql"
 	"encoding/base64"
 	"fmt"
 )
@@ -37,14 +36,12 @@ func (db *database) EnsureJWTSecret() (string, error) {
 	// Generate new secret if none exists
 	newSecret, err := generateRandomSecret(32) // 256 bits
 	if err != nil {
-		log.Error("failed to generate JWT secret", "error", err)
 		return "", fmt.Errorf("failed to generate JWT secret: %w", err)
 	}
 
 	// Store the new secret
 	err = db.SetSystemSetting(JWTSecretKey, newSecret)
 	if err != nil {
-		log.Error("failed to store JWT secret", "error", err)
 		return "", fmt.Errorf("failed to store JWT secret: %w", err)
 	}
 
@@ -60,13 +57,6 @@ func (db *database) GetSystemSetting(key string) (string, error) {
 	var value string
 	err := db.QueryRow("SELECT value FROM system_settings WHERE key = ?", key).Scan(&value)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			log.Debug("system setting not found", "key", key)
-		} else {
-			log.Error("failed to retrieve system setting",
-				"error", err,
-				"key", key)
-		}
 		return "", err
 	}
 
@@ -86,9 +76,6 @@ func (db *database) SetSystemSetting(key, value string) error {
 		key, value, value)
 
 	if err != nil {
-		log.Error("failed to store system setting",
-			"error", err,
-			"key", key)
 		return fmt.Errorf("failed to store system setting: %w", err)
 	}
 
@@ -104,9 +91,6 @@ func generateRandomSecret(bytes int) (string, error) {
 	b := make([]byte, bytes)
 	_, err := rand.Read(b)
 	if err != nil {
-		log.Error("failed to generate random bytes",
-			"error", err,
-			"bytes", bytes)
 		return "", fmt.Errorf("failed to generate random bytes: %w", err)
 	}
 
@@ -125,7 +109,6 @@ func (db *database) GetSystemStats() (*UserStats, error) {
 	// Get total users
 	err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&stats.TotalUsers)
 	if err != nil {
-		log.Error("failed to get total users count", "error", err)
 		return nil, fmt.Errorf("failed to get total users count: %w", err)
 	}
 	log.Debug("got total users count", "count", stats.TotalUsers)
@@ -133,7 +116,6 @@ func (db *database) GetSystemStats() (*UserStats, error) {
 	// Get total workspaces
 	err = db.QueryRow("SELECT COUNT(*) FROM workspaces").Scan(&stats.TotalWorkspaces)
 	if err != nil {
-		log.Error("failed to get total workspaces count", "error", err)
 		return nil, fmt.Errorf("failed to get total workspaces count: %w", err)
 	}
 	log.Debug("got total workspaces count", "count", stats.TotalWorkspaces)
@@ -145,14 +127,8 @@ func (db *database) GetSystemStats() (*UserStats, error) {
         WHERE created_at > datetime('now', '-30 days')`).
 		Scan(&stats.ActiveUsers)
 	if err != nil {
-		log.Error("failed to get active users count", "error", err)
 		return nil, fmt.Errorf("failed to get active users count: %w", err)
 	}
 	log.Debug("got active users count", "count", stats.ActiveUsers)
-
-	log.Info("system statistics collected successfully",
-		"total_users", stats.TotalUsers,
-		"total_workspaces", stats.TotalWorkspaces,
-		"active_users", stats.ActiveUsers)
 	return stats, nil
 }

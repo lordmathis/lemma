@@ -117,19 +117,16 @@ func Init(dbPath string, secretsService secrets.Service) (Database, error) {
 
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		log.Error("failed to open database", "error", err)
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
 	if err := db.Ping(); err != nil {
-		log.Error("failed to ping database", "error", err)
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 	log.Debug("database ping successful")
 
 	// Enable foreign keys for this connection
 	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
-		log.Error("failed to enable foreign keys", "error", err)
 		return nil, fmt.Errorf("failed to enable foreign keys: %w", err)
 	}
 	log.Debug("foreign keys enabled")
@@ -149,7 +146,6 @@ func (db *database) Close() error {
 	log.Info("closing database connection")
 
 	if err := db.DB.Close(); err != nil {
-		log.Error("failed to close database", "error", err)
 		return fmt.Errorf("failed to close database: %w", err)
 	}
 
@@ -168,7 +164,6 @@ func (db *database) encryptToken(token string) (string, error) {
 
 	encrypted, err := db.secretsService.Encrypt(token)
 	if err != nil {
-		log.Error("failed to encrypt token", "error", err)
 		return "", fmt.Errorf("failed to encrypt token: %w", err)
 	}
 
@@ -186,7 +181,6 @@ func (db *database) decryptToken(token string) (string, error) {
 
 	decrypted, err := db.secretsService.Decrypt(token)
 	if err != nil {
-		log.Error("failed to decrypt token", "error", err)
 		return "", fmt.Errorf("failed to decrypt token: %w", err)
 	}
 
