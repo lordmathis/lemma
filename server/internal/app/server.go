@@ -25,13 +25,13 @@ func NewServer(options *Options) *Server {
 func (s *Server) Start() error {
 	// Start server
 	addr := ":" + s.options.Config.Port
-	logging.Info("Starting server", "address", addr)
+	logging.Info("starting server", "address", addr)
 	return http.ListenAndServe(addr, s.router)
 }
 
 // Close handles graceful shutdown of server dependencies
 func (s *Server) Close() error {
-	logging.Info("Shutting down server")
+	logging.Info("shutting down server")
 	return s.options.Database.Close()
 }
 

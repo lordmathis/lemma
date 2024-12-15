@@ -20,7 +20,7 @@ import (
 
 // setupRouter creates and configures the chi router with middleware and routes
 func setupRouter(o Options) *chi.Mux {
-	logging.Debug("Setting up router")
+	logging.Debug("setting up router")
 	r := chi.NewRouter()
 
 	// Basic middleware
@@ -31,7 +31,7 @@ func setupRouter(o Options) *chi.Mux {
 	r.Use(middleware.Timeout(30 * time.Second))
 
 	// Security headers
-	logging.Debug("Setting up security headers")
+	logging.Debug("setting up security headers")
 	r.Use(secure.New(secure.Options{
 		SSLRedirect:     false,
 		SSLProxyHeaders: map[string]string{"X-Forwarded-Proto": "https"},
@@ -39,7 +39,7 @@ func setupRouter(o Options) *chi.Mux {
 	}).Handler)
 
 	// CORS if origins are configured
-	logging.Debug("Setting up CORS")
+	logging.Debug("setting up CORS")
 	if len(o.Config.CORSOrigins) > 0 {
 		r.Use(cors.Handler(cors.Options{
 			AllowedOrigins:   o.Config.CORSOrigins,
@@ -52,7 +52,7 @@ func setupRouter(o Options) *chi.Mux {
 	}
 
 	// Initialize auth middleware and handler
-	logging.Debug("Setting up authentication middleware")
+	logging.Debug("setting up authentication middleware")
 	authMiddleware := auth.NewMiddleware(o.JWTManager, o.SessionManager, o.CookieService)
 	handler := &handlers.Handler{
 		DB:      o.Database,
@@ -60,14 +60,14 @@ func setupRouter(o Options) *chi.Mux {
 	}
 
 	if o.Config.IsDevelopment {
-		logging.Debug("Setting up Swagger docs")
+		logging.Debug("setting up Swagger docs")
 		r.Get("/swagger/*", httpSwagger.Handler(
 			httpSwagger.URL("/swagger/doc.json"), // The URL pointing to API definition
 		))
 	}
 
 	// API routes
-	logging.Debug("Setting up API routes")
+	logging.Debug("setting up API routes")
 	r.Route("/api/v1", func(r chi.Router) {
 		// Rate limiting for API routes
 		if o.Config.RateLimitRequests > 0 {
@@ -154,7 +154,7 @@ func setupRouter(o Options) *chi.Mux {
 	})
 
 	// Handle all other routes with static file server
-	logging.Debug("Setting up static file server")
+	logging.Debug("setting up static file server")
 	r.Get("/*", handlers.NewStaticHandler(o.Config.StaticPath).ServeHTTP)
 
 	return r

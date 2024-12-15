@@ -18,41 +18,44 @@ import (
 
 // initSecretsService initializes the secrets service
 func initSecretsService(cfg *Config) (secrets.Service, error) {
-	logging.Debug("Initializing secrets service")
+	logging.Debug("initializing secrets service")
 	secretsService, err := secrets.NewService(cfg.EncryptionKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize secrets service: %w", err)
 	}
-	logging.Debug("Secrets service initialized")
+	logging.Debug("secrets service initialized")
 	return secretsService, nil
 }
 
 // initDatabase initializes and migrates the database
 func initDatabase(cfg *Config, secretsService secrets.Service) (db.Database, error) {
-	logging.Debug("Initializing database", "path", cfg.DBPath)
+	logging.Debug("initializing database", "path", cfg.DBPath)
 
 	database, err := db.Init(cfg.DBPath, secretsService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	logging.Debug("Running database migrations")
+	logging.Debug("running database migrations")
 	if err := database.Migrate(); err != nil {
 		return nil, fmt.Errorf("failed to apply database migrations: %w", err)
 	}
 
-	logging.Debug("Database initialization complete")
+	logging.Debug("database initialization complete")
 	return database, nil
 }
 
 // initAuth initializes JWT and session services
 func initAuth(cfg *Config, database db.Database) (auth.JWTManager, auth.SessionManager, auth.CookieManager, error) {
-	logging.Debug("Initializing authentication services")
+	logging.Debug("initializing authentication services")
+
+	accessTokeExpiry := 15 * time.Minute
+	refreshTokenExpiry := 7 * 24 * time.Hour
 
 	// Get or generate JWT signing key
 	signingKey := cfg.JWTSigningKey
 	if signingKey == "" {
-		logging.Debug("No JWT signing key provided, generating new key")
+		logging.Debug("no JWT signing key provided, generating new key")
 		var err error
 		signingKey, err = database.EnsureJWTSecret()
 		if err != nil {
@@ -61,37 +64,37 @@ func initAuth(cfg *Config, database db.Database) (auth.JWTManager, auth.SessionM
 		logging.Debug("JWT signing key generated")
 	}
 
-	logging.Debug("Initializing JWT service",
-		"accessTokenExpiry", "15m",
-		"refreshTokenExpiry", "168h")
+	logging.Debug("initializing JWT service",
+		"accessTokenExpiry", accessTokeExpiry.String(),
+		"refreshTokenExpiry", refreshTokenExpiry.String())
 
 	// Initialize JWT service
 	jwtManager, err := auth.NewJWTService(auth.JWTConfig{
 		SigningKey:         signingKey,
-		AccessTokenExpiry:  15 * time.Minute,
-		RefreshTokenExpiry: 7 * 24 * time.Hour,
+		AccessTokenExpiry:  accessTokeExpiry,
+		RefreshTokenExpiry: refreshTokenExpiry,
 	})
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to initialize JWT service: %w", err)
 	}
 
 	// Initialize session service
-	logging.Debug("Initializing session service")
+	logging.Debug("initializing session service")
 	sessionManager := auth.NewSessionService(database, jwtManager)
 
 	// Initialize cookie service
-	logging.Debug("Initializing cookie service",
+	logging.Debug("initializing cookie service",
 		"isDevelopment", cfg.IsDevelopment,
 		"domain", cfg.Domain)
 	cookieService := auth.NewCookieService(cfg.IsDevelopment, cfg.Domain)
 
-	logging.Debug("Authentication services initialized")
+	logging.Debug("authentication services initialized")
 	return jwtManager, sessionManager, cookieService, nil
 }
 
 // setupAdminUser creates the admin user if it doesn't exist
 func setupAdminUser(database db.Database, storageManager storage.Manager, cfg *Config) error {
-	logging.Debug("Checking for existing admin user", "email", cfg.AdminEmail)
+	logging.Debug("checking for existing admin user", "email", cfg.AdminEmail)
 
 	// Check if admin user exists
 	adminUser, err := database.GetUserByEmail(cfg.AdminEmail)
@@ -100,11 +103,11 @@ func setupAdminUser(database db.Database, storageManager storage.Manager, cfg *C
 	}
 
 	if adminUser != nil {
-		logging.Debug("Admin user already exists", "userId", adminUser.ID)
+		logging.Debug("admin user already exists", "userId", adminUser.ID)
 		return nil
 	}
 
-	logging.Debug("Creating new admin user")
+	logging.Debug("creating new admin user")
 
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(cfg.AdminPassword), bcrypt.DefaultCost)
@@ -125,12 +128,12 @@ func setupAdminUser(database db.Database, storageManager storage.Manager, cfg *C
 		return fmt.Errorf("failed to create admin user: %w", err)
 	}
 
-	logging.Debug("Admin user created",
+	logging.Debug("admin user created",
 		"userId", createdUser.ID,
 		"workspaceId", createdUser.LastWorkspaceID)
 
 	// Initialize workspace directory
-	logging.Debug("Initializing admin workspace directory",
+	logging.Debug("initializing admin workspace directory",
 		"userId", createdUser.ID,
 		"workspaceId", createdUser.LastWorkspaceID)
 
@@ -139,7 +142,7 @@ func setupAdminUser(database db.Database, storageManager storage.Manager, cfg *C
 		return fmt.Errorf("failed to initialize admin workspace: %w", err)
 	}
 
-	logging.Info("Admin user setup completed",
+	logging.Info("admin user setup completed",
 		"userId", createdUser.ID,
 		"workspaceId", createdUser.LastWorkspaceID)
 
