@@ -58,37 +58,46 @@ func (c *Config) validate() error {
 
 // LoadConfig creates a new Config instance with values from environment variables
 func LoadConfig() (*Config, error) {
+	logging.Info("Loading configuration from environment variables")
 	config := DefaultConfig()
 
 	if env := os.Getenv("NOVAMD_ENV"); env != "" {
+		logging.Debug("Loading config for environment", "env", env)
 		config.IsDevelopment = env == "development"
 	}
 
 	if dbPath := os.Getenv("NOVAMD_DB_PATH"); dbPath != "" {
+		logging.Debug("Loading config for database path", "path", dbPath)
 		config.DBPath = dbPath
 	}
 
 	if workDir := os.Getenv("NOVAMD_WORKDIR"); workDir != "" {
+		logging.Debug("Loading config for work directory", "dir", workDir)
 		config.WorkDir = workDir
 	}
 
 	if staticPath := os.Getenv("NOVAMD_STATIC_PATH"); staticPath != "" {
+		logging.Debug("Loading config for static path", "path", staticPath)
 		config.StaticPath = staticPath
 	}
 
 	if port := os.Getenv("NOVAMD_PORT"); port != "" {
+		logging.Debug("Loading config for port", "port", port)
 		config.Port = port
 	}
 
 	if rootURL := os.Getenv("NOVAMD_ROOT_URL"); rootURL != "" {
+		logging.Debug("Loading config for root URL", "url", rootURL)
 		config.RootURL = rootURL
 	}
 
 	if domain := os.Getenv("NOVAMD_DOMAIN"); domain != "" {
+		logging.Debug("Loading config for domain", "domain", domain)
 		config.Domain = domain
 	}
 
 	if corsOrigins := os.Getenv("NOVAMD_CORS_ORIGINS"); corsOrigins != "" {
+		logging.Debug("Loading config for CORS origins", "origins", corsOrigins)
 		config.CORSOrigins = strings.Split(corsOrigins, ",")
 	}
 
@@ -97,15 +106,35 @@ func LoadConfig() (*Config, error) {
 	config.EncryptionKey = os.Getenv("NOVAMD_ENCRYPTION_KEY")
 	config.JWTSigningKey = os.Getenv("NOVAMD_JWT_SIGNING_KEY")
 
+	logging.Debug("Sensitive configuration loaded",
+		"adminEmailSet", config.AdminEmail != "",
+		"adminPasswordSet", config.AdminPassword != "",
+		"encryptionKeySet", config.EncryptionKey != "",
+		"jwtSigningKeySet", config.JWTSigningKey != "")
+
 	// Configure rate limiting
 	if reqStr := os.Getenv("NOVAMD_RATE_LIMIT_REQUESTS"); reqStr != "" {
-		if parsed, err := strconv.Atoi(reqStr); err == nil {
+		parsed, err := strconv.Atoi(reqStr)
+		if err != nil {
+			logging.Warn("Invalid rate limit requests value, using default",
+				"value", reqStr,
+				"default", config.RateLimitRequests,
+				"error", err)
+		} else {
+			logging.Debug("Loading config for rate limit requests", "requests", parsed)
 			config.RateLimitRequests = parsed
 		}
 	}
 
 	if windowStr := os.Getenv("NOVAMD_RATE_LIMIT_WINDOW"); windowStr != "" {
-		if parsed, err := time.ParseDuration(windowStr); err == nil {
+		parsed, err := time.ParseDuration(windowStr)
+		if err != nil {
+			logging.Warn("Invalid rate limit window value, using default",
+				"value", windowStr,
+				"default", config.RateLimitWindow,
+				"error", err)
+		} else {
+			logging.Debug("Loading config for rate limit window", "window", parsed)
 			config.RateLimitWindow = parsed
 		}
 	}
@@ -113,10 +142,13 @@ func LoadConfig() (*Config, error) {
 	// Configure log level, if isDevelopment is set, default to debug
 	if logLevel := os.Getenv("NOVAMD_LOG_LEVEL"); logLevel != "" {
 		parsed := logging.ParseLogLevel(logLevel)
+		logging.Debug("Loading config for log level", "level", parsed)
 		config.LogLevel = parsed
 	} else if config.IsDevelopment {
+		logging.Debug("Setting log level to debug for development")
 		config.LogLevel = logging.DEBUG
 	} else {
+		logging.Debug("Setting log level to info for production")
 		config.LogLevel = logging.INFO
 	}
 
@@ -125,5 +157,6 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 
+	logging.Info("Configuration loaded successfully")
 	return config, nil
 }
