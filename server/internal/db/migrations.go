@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"log"
 )
 
 // Migration represents a database migration
@@ -79,56 +78,86 @@ var migrations = []Migration{
 
 // Migrate applies all database migrations
 func (db *database) Migrate() error {
+	log := getLogger().WithGroup("migrations")
+	log.Info("starting database migration")
+
 	// Create migrations table if it doesn't exist
+	log.Debug("ensuring migrations table exists")
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS migrations (
-		version INTEGER PRIMARY KEY
-	)`)
+        version INTEGER PRIMARY KEY
+    )`)
 	if err != nil {
-		return err
+		log.Error("failed to create migrations table", "error", err)
+		return fmt.Errorf("failed to create migrations table: %w", err)
 	}
 
 	// Get current version
+	log.Debug("checking current migration version")
 	var currentVersion int
 	err = db.QueryRow("SELECT COALESCE(MAX(version), 0) FROM migrations").Scan(&currentVersion)
 	if err != nil {
-		return err
+		log.Error("failed to get current migration version", "error", err)
+		return fmt.Errorf("failed to get current migration version: %w", err)
 	}
+	log.Info("current database version", "version", currentVersion)
 
 	// Apply new migrations
 	for _, migration := range migrations {
 		if migration.Version > currentVersion {
-			log.Printf("Applying migration %d", migration.Version)
+			log := log.With("migration_version", migration.Version)
+			log.Info("applying migration")
 
 			tx, err := db.Begin()
 			if err != nil {
-				return err
+				log.Error("failed to begin transaction", "error", err)
+				return fmt.Errorf("failed to begin transaction for migration %d: %w", migration.Version, err)
 			}
 
+			// Execute migration SQL
+			log.Debug("executing migration SQL")
 			_, err = tx.Exec(migration.SQL)
 			if err != nil {
+				log.Error("migration failed", "error", err)
 				if rbErr := tx.Rollback(); rbErr != nil {
-					return fmt.Errorf("migration %d failed: %v, rollback failed: %v", migration.Version, err, rbErr)
+					log.Error("rollback failed after migration error",
+						"migration_error", err,
+						"rollback_error", rbErr)
+					return fmt.Errorf("migration %d failed: %v, rollback failed: %v",
+						migration.Version, err, rbErr)
 				}
-				return fmt.Errorf("migration %d failed: %v", migration.Version, err)
+				log.Debug("successfully rolled back failed migration")
+				return fmt.Errorf("migration %d failed: %w", migration.Version, err)
 			}
 
+			// Update migrations table
+			log.Debug("updating migrations version")
 			_, err = tx.Exec("INSERT INTO migrations (version) VALUES (?)", migration.Version)
 			if err != nil {
+				log.Error("failed to update migration version", "error", err)
 				if rbErr := tx.Rollback(); rbErr != nil {
-					return fmt.Errorf("failed to update migration version: %v, rollback failed: %v", err, rbErr)
+					log.Error("rollback failed after version update error",
+						"update_error", err,
+						"rollback_error", rbErr)
+					return fmt.Errorf("failed to update migration version: %v, rollback failed: %v",
+						err, rbErr)
 				}
-				return fmt.Errorf("failed to update migration version: %v", err)
+				log.Debug("successfully rolled back failed version update")
+				return fmt.Errorf("failed to update migration version: %w", err)
 			}
 
+			// Commit transaction
+			log.Debug("committing migration")
 			err = tx.Commit()
 			if err != nil {
-				return fmt.Errorf("failed to commit migration %d: %v", migration.Version, err)
+				log.Error("failed to commit migration", "error", err)
+				return fmt.Errorf("failed to commit migration %d: %w", migration.Version, err)
 			}
 
 			currentVersion = migration.Version
+			log.Info("migration applied successfully", "new_version", currentVersion)
 		}
 	}
 
-	log.Printf("Database is at version %d", currentVersion)
+	log.Info("database migration completed", "final_version", currentVersion)
 	return nil
 }

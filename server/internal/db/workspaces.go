@@ -8,88 +8,125 @@ import (
 
 // CreateWorkspace inserts a new workspace record into the database
 func (db *database) CreateWorkspace(workspace *models.Workspace) error {
+	log := getLogger().WithGroup("workspaces")
+	log.Info("creating new workspace",
+		"user_id", workspace.UserID,
+		"name", workspace.Name,
+		"git_enabled", workspace.GitEnabled)
+
 	// Set default settings if not provided
 	if workspace.Theme == "" {
+		log.Debug("setting default workspace settings")
 		workspace.SetDefaultSettings()
 	}
 
 	// Encrypt token if present
 	encryptedToken, err := db.encryptToken(workspace.GitToken)
 	if err != nil {
+		log.Error("failed to encrypt git token", "error", err)
 		return fmt.Errorf("failed to encrypt token: %w", err)
 	}
 
 	result, err := db.Exec(`
-		INSERT INTO workspaces (
-			user_id, name, theme, auto_save, show_hidden_files,
-			git_enabled, git_url, git_user, git_token, 
-			git_auto_commit, git_commit_msg_template,
-			git_commit_name, git_commit_email
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        INSERT INTO workspaces (
+            user_id, name, theme, auto_save, show_hidden_files,
+            git_enabled, git_url, git_user, git_token, 
+            git_auto_commit, git_commit_msg_template,
+            git_commit_name, git_commit_email
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		workspace.UserID, workspace.Name, workspace.Theme, workspace.AutoSave, workspace.ShowHiddenFiles,
 		workspace.GitEnabled, workspace.GitURL, workspace.GitUser, encryptedToken,
 		workspace.GitAutoCommit, workspace.GitCommitMsgTemplate, workspace.GitCommitName, workspace.GitCommitEmail,
 	)
 	if err != nil {
-		return err
+		log.Error("failed to insert workspace", "error", err)
+		return fmt.Errorf("failed to insert workspace: %w", err)
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		return err
+		log.Error("failed to get workspace ID", "error", err)
+		return fmt.Errorf("failed to get workspace ID: %w", err)
 	}
 	workspace.ID = int(id)
+
+	log.Info("workspace created successfully",
+		"workspace_id", workspace.ID,
+		"user_id", workspace.UserID)
 	return nil
 }
 
 // GetWorkspaceByID retrieves a workspace by its ID
 func (db *database) GetWorkspaceByID(id int) (*models.Workspace, error) {
+	log := getLogger().WithGroup("workspaces")
+	log.Debug("fetching workspace by ID", "workspace_id", id)
+
 	workspace := &models.Workspace{}
 	var encryptedToken string
 
 	err := db.QueryRow(`
-		SELECT 
-			id, user_id, name, created_at, 
-			theme, auto_save, show_hidden_files,
-			git_enabled, git_url, git_user, git_token, 
-			git_auto_commit, git_commit_msg_template,
-			git_commit_name, git_commit_email
-		FROM workspaces 
-		WHERE id = ?`,
+        SELECT 
+            id, user_id, name, created_at, 
+            theme, auto_save, show_hidden_files,
+            git_enabled, git_url, git_user, git_token, 
+            git_auto_commit, git_commit_msg_template,
+            git_commit_name, git_commit_email
+        FROM workspaces 
+        WHERE id = ?`,
 		id,
 	).Scan(
 		&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
 		&workspace.Theme, &workspace.AutoSave, &workspace.ShowHiddenFiles,
 		&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
-		&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate, &workspace.GitCommitName, &workspace.GitCommitEmail,
+		&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
+		&workspace.GitCommitName, &workspace.GitCommitEmail,
 	)
+
+	if err == sql.ErrNoRows {
+		log.Debug("workspace not found", "workspace_id", id)
+		return nil, fmt.Errorf("workspace not found")
+	}
 	if err != nil {
-		return nil, err
+		log.Error("failed to fetch workspace",
+			"error", err,
+			"workspace_id", id)
+		return nil, fmt.Errorf("failed to fetch workspace: %w", err)
 	}
 
 	// Decrypt token
 	workspace.GitToken, err = db.decryptToken(encryptedToken)
 	if err != nil {
+		log.Error("failed to decrypt git token",
+			"error", err,
+			"workspace_id", id)
 		return nil, fmt.Errorf("failed to decrypt token: %w", err)
 	}
 
+	log.Debug("workspace retrieved successfully",
+		"workspace_id", id,
+		"user_id", workspace.UserID)
 	return workspace, nil
 }
 
 // GetWorkspaceByName retrieves a workspace by its name and user ID
 func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*models.Workspace, error) {
+	log := getLogger().WithGroup("workspaces")
+	log.Debug("fetching workspace by name",
+		"user_id", userID,
+		"workspace_name", workspaceName)
+
 	workspace := &models.Workspace{}
 	var encryptedToken string
 
 	err := db.QueryRow(`
-		SELECT 
-			id, user_id, name, created_at, 
-			theme, auto_save, show_hidden_files,
-			git_enabled, git_url, git_user, git_token, 
-			git_auto_commit, git_commit_msg_template,
-			git_commit_name, git_commit_email
-		FROM workspaces 
-		WHERE user_id = ? AND name = ?`,
+        SELECT 
+            id, user_id, name, created_at, 
+            theme, auto_save, show_hidden_files,
+            git_enabled, git_url, git_user, git_token, 
+            git_auto_commit, git_commit_msg_template,
+            git_commit_name, git_commit_email
+        FROM workspaces 
+        WHERE user_id = ? AND name = ?`,
 		userID, workspaceName,
 	).Scan(
 		&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
@@ -98,43 +135,67 @@ func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*model
 		&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
 		&workspace.GitCommitName, &workspace.GitCommitEmail,
 	)
+
+	if err == sql.ErrNoRows {
+		log.Debug("workspace not found",
+			"user_id", userID,
+			"workspace_name", workspaceName)
+		return nil, fmt.Errorf("workspace not found")
+	}
 	if err != nil {
-		return nil, err
+		log.Error("failed to fetch workspace",
+			"error", err,
+			"user_id", userID,
+			"workspace_name", workspaceName)
+		return nil, fmt.Errorf("failed to fetch workspace: %w", err)
 	}
 
 	// Decrypt token
 	workspace.GitToken, err = db.decryptToken(encryptedToken)
 	if err != nil {
+		log.Error("failed to decrypt git token",
+			"error", err,
+			"workspace_id", workspace.ID)
 		return nil, fmt.Errorf("failed to decrypt token: %w", err)
 	}
 
+	log.Debug("workspace retrieved successfully",
+		"workspace_id", workspace.ID,
+		"user_id", userID)
 	return workspace, nil
 }
 
 // UpdateWorkspace updates a workspace record in the database
 func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
+	log := getLogger().WithGroup("workspaces")
+	log.Info("updating workspace",
+		"workspace_id", workspace.ID,
+		"user_id", workspace.UserID,
+		"git_enabled", workspace.GitEnabled)
+
 	// Encrypt token before storing
 	encryptedToken, err := db.encryptToken(workspace.GitToken)
 	if err != nil {
+		log.Error("failed to encrypt git token", "error", err)
 		return fmt.Errorf("failed to encrypt token: %w", err)
 	}
 
-	_, err = db.Exec(`
-		UPDATE workspaces 
-		SET 
-			name = ?,
-			theme = ?,
-			auto_save = ?,
-			show_hidden_files = ?,
-			git_enabled = ?,
-			git_url = ?,
-			git_user = ?,
-			git_token = ?,
-			git_auto_commit = ?,
-			git_commit_msg_template = ?,
-			git_commit_name = ?,
-			git_commit_email = ?
-		WHERE id = ? AND user_id = ?`,
+	result, err := db.Exec(`
+        UPDATE workspaces 
+        SET 
+            name = ?,
+            theme = ?,
+            auto_save = ?,
+            show_hidden_files = ?,
+            git_enabled = ?,
+            git_url = ?,
+            git_user = ?,
+            git_token = ?,
+            git_auto_commit = ?,
+            git_commit_msg_template = ?,
+            git_commit_name = ?,
+            git_commit_email = ?
+        WHERE id = ? AND user_id = ?`,
 		workspace.Name,
 		workspace.Theme,
 		workspace.AutoSave,
@@ -150,24 +211,55 @@ func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
 		workspace.ID,
 		workspace.UserID,
 	)
-	return err
+	if err != nil {
+		log.Error("failed to update workspace",
+			"error", err,
+			"workspace_id", workspace.ID)
+		return fmt.Errorf("failed to update workspace: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Error("failed to get rows affected",
+			"error", err,
+			"workspace_id", workspace.ID)
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Warn("no workspace found to update",
+			"workspace_id", workspace.ID,
+			"user_id", workspace.UserID)
+		return fmt.Errorf("workspace not found")
+	}
+
+	log.Info("workspace updated successfully",
+		"workspace_id", workspace.ID,
+		"user_id", workspace.UserID)
+	return nil
 }
 
 // GetWorkspacesByUserID retrieves all workspaces for a user
 func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
+	log := getLogger().WithGroup("workspaces")
+	log.Debug("fetching workspaces for user", "user_id", userID)
+
 	rows, err := db.Query(`
-		SELECT 
-			id, user_id, name, created_at,
-			theme, auto_save, show_hidden_files,
-			git_enabled, git_url, git_user, git_token, 
-			git_auto_commit, git_commit_msg_template,
-			git_commit_name, git_commit_email
-		FROM workspaces 
-		WHERE user_id = ?`,
+        SELECT 
+            id, user_id, name, created_at,
+            theme, auto_save, show_hidden_files,
+            git_enabled, git_url, git_user, git_token, 
+            git_auto_commit, git_commit_msg_template,
+            git_commit_name, git_commit_email
+        FROM workspaces 
+        WHERE user_id = ?`,
 		userID,
 	)
 	if err != nil {
-		return nil, err
+		log.Error("failed to query workspaces",
+			"error", err,
+			"user_id", userID)
+		return nil, fmt.Errorf("failed to query workspaces: %w", err)
 	}
 	defer rows.Close()
 
@@ -183,38 +275,57 @@ func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, erro
 			&workspace.GitCommitName, &workspace.GitCommitEmail,
 		)
 		if err != nil {
-			return nil, err
+			log.Error("failed to scan workspace row", "error", err)
+			return nil, fmt.Errorf("failed to scan workspace row: %w", err)
 		}
 
 		// Decrypt token
 		workspace.GitToken, err = db.decryptToken(encryptedToken)
 		if err != nil {
+			log.Error("failed to decrypt git token",
+				"error", err,
+				"workspace_id", workspace.ID)
 			return nil, fmt.Errorf("failed to decrypt token: %w", err)
 		}
 
 		workspaces = append(workspaces, workspace)
 	}
+
+	if err = rows.Err(); err != nil {
+		log.Error("error iterating workspace rows",
+			"error", err,
+			"user_id", userID)
+		return nil, fmt.Errorf("error iterating workspace rows: %w", err)
+	}
+
+	log.Debug("workspaces retrieved successfully",
+		"user_id", userID,
+		"count", len(workspaces))
 	return workspaces, nil
 }
 
 // UpdateWorkspaceSettings updates only the settings portion of a workspace
-// This is useful when you don't want to modify the name or other core workspace properties
 func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
-	_, err := db.Exec(`
-		UPDATE workspaces 
-		SET 
-			theme = ?,
-			auto_save = ?,
-			show_hidden_files = ?,
-			git_enabled = ?,
-			git_url = ?,
-			git_user = ?,
-			git_token = ?,
-			git_auto_commit = ?,
-			git_commit_msg_template = ?,
-			git_commit_name = ?,
-			git_commit_email = ?
-		WHERE id = ?`,
+	log := getLogger().WithGroup("workspaces")
+	log.Info("updating workspace settings",
+		"workspace_id", workspace.ID,
+		"git_enabled", workspace.GitEnabled)
+
+	result, err := db.Exec(`
+        UPDATE workspaces 
+        SET 
+            theme = ?,
+            auto_save = ?,
+            show_hidden_files = ?,
+            git_enabled = ?,
+            git_url = ?,
+            git_user = ?,
+            git_token = ?,
+            git_auto_commit = ?,
+            git_commit_msg_template = ?,
+            git_commit_name = ?,
+            git_commit_email = ?
+        WHERE id = ?`,
 		workspace.Theme,
 		workspace.AutoSave,
 		workspace.ShowHiddenFiles,
@@ -228,59 +339,214 @@ func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 		workspace.GitCommitEmail,
 		workspace.ID,
 	)
-	return err
+	if err != nil {
+		log.Error("failed to update workspace settings",
+			"error", err,
+			"workspace_id", workspace.ID)
+		return fmt.Errorf("failed to update workspace settings: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Error("failed to get rows affected",
+			"error", err,
+			"workspace_id", workspace.ID)
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Warn("no workspace found to update settings",
+			"workspace_id", workspace.ID)
+		return fmt.Errorf("workspace not found")
+	}
+
+	log.Info("workspace settings updated successfully",
+		"workspace_id", workspace.ID)
+	return nil
 }
 
 // DeleteWorkspace removes a workspace record from the database
 func (db *database) DeleteWorkspace(id int) error {
-	_, err := db.Exec("DELETE FROM workspaces WHERE id = ?", id)
-	return err
+	log := getLogger().WithGroup("workspaces")
+	log.Info("deleting workspace", "workspace_id", id)
+
+	result, err := db.Exec("DELETE FROM workspaces WHERE id = ?", id)
+	if err != nil {
+		log.Error("failed to delete workspace",
+			"error", err,
+			"workspace_id", id)
+		return fmt.Errorf("failed to delete workspace: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Error("failed to get rows affected",
+			"error", err,
+			"workspace_id", id)
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Warn("no workspace found to delete", "workspace_id", id)
+		return fmt.Errorf("workspace not found")
+	}
+
+	log.Info("workspace deleted successfully", "workspace_id", id)
+	return nil
 }
 
 // DeleteWorkspaceTx removes a workspace record from the database within a transaction
 func (db *database) DeleteWorkspaceTx(tx *sql.Tx, id int) error {
-	_, err := tx.Exec("DELETE FROM workspaces WHERE id = ?", id)
-	return err
+	log := getLogger().WithGroup("workspaces")
+	log.Debug("deleting workspace in transaction", "workspace_id", id)
+
+	result, err := tx.Exec("DELETE FROM workspaces WHERE id = ?", id)
+	if err != nil {
+		log.Error("failed to delete workspace in transaction",
+			"error", err,
+			"workspace_id", id)
+		return fmt.Errorf("failed to delete workspace in transaction: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Error("failed to get rows affected in transaction",
+			"error", err,
+			"workspace_id", id)
+		return fmt.Errorf("failed to get rows affected in transaction: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Warn("no workspace found to delete in transaction",
+			"workspace_id", id)
+		return fmt.Errorf("workspace not found")
+	}
+
+	log.Debug("workspace deleted successfully in transaction",
+		"workspace_id", id)
+	return nil
 }
 
-// UpdateLastWorkspaceTx sets the last workspace for a user in with a transaction
+// UpdateLastWorkspaceTx sets the last workspace for a user in a transaction
 func (db *database) UpdateLastWorkspaceTx(tx *sql.Tx, userID, workspaceID int) error {
-	_, err := tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", workspaceID, userID)
-	return err
+	log := getLogger().WithGroup("workspaces")
+	log.Debug("updating last workspace in transaction",
+		"user_id", userID,
+		"workspace_id", workspaceID)
+
+	result, err := tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?",
+		workspaceID, userID)
+	if err != nil {
+		log.Error("failed to update last workspace in transaction",
+			"error", err,
+			"user_id", userID,
+			"workspace_id", workspaceID)
+		return fmt.Errorf("failed to update last workspace in transaction: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Error("failed to get rows affected in transaction",
+			"error", err,
+			"user_id", userID)
+		return fmt.Errorf("failed to get rows affected in transaction: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Warn("no user found to update last workspace",
+			"user_id", userID)
+		return fmt.Errorf("user not found")
+	}
+
+	log.Debug("last workspace updated successfully in transaction",
+		"user_id", userID,
+		"workspace_id", workspaceID)
+	return nil
 }
 
 // UpdateLastOpenedFile updates the last opened file path for a workspace
 func (db *database) UpdateLastOpenedFile(workspaceID int, filePath string) error {
-	_, err := db.Exec("UPDATE workspaces SET last_opened_file_path = ? WHERE id = ?", filePath, workspaceID)
-	return err
+	log := getLogger().WithGroup("workspaces")
+	log.Debug("updating last opened file",
+		"workspace_id", workspaceID,
+		"file_path", filePath)
+
+	result, err := db.Exec("UPDATE workspaces SET last_opened_file_path = ? WHERE id = ?",
+		filePath, workspaceID)
+	if err != nil {
+		log.Error("failed to update last opened file",
+			"error", err,
+			"workspace_id", workspaceID)
+		return fmt.Errorf("failed to update last opened file: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Error("failed to get rows affected",
+			"error", err,
+			"workspace_id", workspaceID)
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Warn("no workspace found to update last opened file",
+			"workspace_id", workspaceID)
+		return fmt.Errorf("workspace not found")
+	}
+
+	log.Debug("last opened file updated successfully",
+		"workspace_id", workspaceID)
+	return nil
 }
 
 // GetLastOpenedFile retrieves the last opened file path for a workspace
 func (db *database) GetLastOpenedFile(workspaceID int) (string, error) {
+	log := getLogger().WithGroup("workspaces")
+	log.Debug("fetching last opened file", "workspace_id", workspaceID)
+
 	var filePath sql.NullString
-	err := db.QueryRow("SELECT last_opened_file_path FROM workspaces WHERE id = ?", workspaceID).Scan(&filePath)
-	if err != nil {
-		return "", err
+	err := db.QueryRow("SELECT last_opened_file_path FROM workspaces WHERE id = ?",
+		workspaceID).Scan(&filePath)
+
+	if err == sql.ErrNoRows {
+		log.Debug("workspace not found", "workspace_id", workspaceID)
+		return "", fmt.Errorf("workspace not found")
 	}
+	if err != nil {
+		log.Error("failed to fetch last opened file",
+			"error", err,
+			"workspace_id", workspaceID)
+		return "", fmt.Errorf("failed to fetch last opened file: %w", err)
+	}
+
 	if !filePath.Valid {
+		log.Debug("no last opened file found", "workspace_id", workspaceID)
 		return "", nil
 	}
+
+	log.Debug("last opened file retrieved successfully",
+		"workspace_id", workspaceID,
+		"file_path", filePath.String)
 	return filePath.String, nil
 }
 
 // GetAllWorkspaces retrieves all workspaces in the database
 func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
+	log := getLogger().WithGroup("workspaces")
+	log.Debug("fetching all workspaces")
+
 	rows, err := db.Query(`
-		SELECT 
-			id, user_id, name, created_at,
-			theme, auto_save, show_hidden_files,
-			git_enabled, git_url, git_user, git_token, 
-			git_auto_commit, git_commit_msg_template,
-			git_commit_name, git_commit_email
-		FROM workspaces`,
+        SELECT 
+            id, user_id, name, created_at,
+            theme, auto_save, show_hidden_files,
+            git_enabled, git_url, git_user, git_token,
+            git_auto_commit, git_commit_msg_template,
+            git_commit_name, git_commit_email
+        FROM workspaces`,
 	)
 	if err != nil {
-		return nil, err
+		log.Error("failed to query workspaces", "error", err)
+		return nil, fmt.Errorf("failed to query workspaces: %w", err)
 	}
 	defer rows.Close()
 
@@ -296,16 +562,27 @@ func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
 			&workspace.GitCommitName, &workspace.GitCommitEmail,
 		)
 		if err != nil {
-			return nil, err
+			log.Error("failed to scan workspace row", "error", err)
+			return nil, fmt.Errorf("failed to scan workspace row: %w", err)
 		}
 
 		// Decrypt token
 		workspace.GitToken, err = db.decryptToken(encryptedToken)
 		if err != nil {
+			log.Error("failed to decrypt git token",
+				"error", err,
+				"workspace_id", workspace.ID)
 			return nil, fmt.Errorf("failed to decrypt token: %w", err)
 		}
 
 		workspaces = append(workspaces, workspace)
 	}
+
+	if err = rows.Err(); err != nil {
+		log.Error("error iterating workspace rows", "error", err)
+		return nil, fmt.Errorf("error iterating workspace rows: %w", err)
+	}
+
+	log.Debug("all workspaces retrieved successfully", "count", len(workspaces))
 	return workspaces, nil
 }
