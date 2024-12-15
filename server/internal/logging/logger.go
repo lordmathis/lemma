@@ -6,8 +6,23 @@ import (
 	"os"
 )
 
+// Logger represents the interface for logging operations
+type Logger interface {
+	Debug(msg string, args ...any)
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Error(msg string, args ...any)
+	WithGroup(name string) Logger
+	With(args ...any) Logger
+}
+
+// Implementation of the Logger interface using slog
+type logger struct {
+	logger *slog.Logger
+}
+
 // Logger is the global logger instance
-var Logger *slog.Logger
+var defaultLogger Logger
 
 // LogLevel represents the log level
 type LogLevel slog.Level
@@ -26,7 +41,9 @@ func Setup(minLevel LogLevel) {
 		Level: slog.Level(minLevel),
 	}
 
-	Logger = slog.New(slog.NewTextHandler(os.Stdout, opts))
+	defaultLogger = &logger{
+		logger: slog.New(slog.NewTextHandler(os.Stdout, opts)),
+	}
 }
 
 // ParseLogLevel converts a string to a LogLevel
@@ -43,32 +60,57 @@ func ParseLogLevel(level string) LogLevel {
 	}
 }
 
+// Implementation of Logger interface methods
+func (l *logger) Debug(msg string, args ...any) {
+	l.logger.Debug(msg, args...)
+}
+
+func (l *logger) Info(msg string, args ...any) {
+	l.logger.Info(msg, args...)
+}
+
+func (l *logger) Warn(msg string, args ...any) {
+	l.logger.Warn(msg, args...)
+}
+
+func (l *logger) Error(msg string, args ...any) {
+	l.logger.Error(msg, args...)
+}
+
+func (l *logger) WithGroup(name string) Logger {
+	return &logger{logger: l.logger.WithGroup(name)}
+}
+
+func (l *logger) With(args ...any) Logger {
+	return &logger{logger: l.logger.With(args...)}
+}
+
 // Debug logs a debug message
 func Debug(msg string, args ...any) {
-	Logger.Debug(msg, args...)
+	defaultLogger.Debug(msg, args...)
 }
 
 // Info logs an info message
 func Info(msg string, args ...any) {
-	Logger.Info(msg, args...)
+	defaultLogger.Info(msg, args...)
 }
 
 // Warn logs a warning message
 func Warn(msg string, args ...any) {
-	Logger.Warn(msg, args...)
+	defaultLogger.Warn(msg, args...)
 }
 
 // Error logs an error message
 func Error(msg string, args ...any) {
-	Logger.Error(msg, args...)
+	defaultLogger.Error(msg, args...)
 }
 
 // WithGroup adds a group to the logger context
-func WithGroup(name string) *slog.Logger {
-	return Logger.WithGroup(name)
+func WithGroup(name string) Logger {
+	return defaultLogger.WithGroup(name)
 }
 
 // With adds key-value pairs to the logger context
-func With(args ...any) *slog.Logger {
-	return Logger.With(args...)
+func With(args ...any) Logger {
+	return defaultLogger.With(args...)
 }
