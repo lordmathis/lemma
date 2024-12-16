@@ -79,7 +79,8 @@ func New(url, username, token, workDir, commitName, commitEmail string) Client {
 
 // Clone clones the Git repository to the local directory
 func (c *client) Clone() error {
-	getLogger().Info("cloning git repository",
+	log := getLogger()
+	log.Info("cloning git repository",
 		"url", c.URL,
 		"workDir", c.WorkDir)
 
@@ -98,7 +99,7 @@ func (c *client) Clone() error {
 		return fmt.Errorf("failed to clone repository: %w", err)
 	}
 
-	getLogger().Info("repository cloned",
+	log.Info("repository cloned",
 		"url", c.URL,
 		"workDir", c.WorkDir)
 	return nil
@@ -106,11 +107,13 @@ func (c *client) Clone() error {
 
 // Pull pulls the latest changes from the remote repository
 func (c *client) Pull() error {
+	log := getLogger()
+
 	if c.repo == nil {
 		return fmt.Errorf("repository not initialized")
 	}
 
-	getLogger().Debug("pulling repository changes",
+	log.Debug("pulling repository changes",
 		"workDir", c.WorkDir)
 
 	w, err := c.repo.Worktree()
@@ -132,10 +135,10 @@ func (c *client) Pull() error {
 	}
 
 	if err == git.NoErrAlreadyUpToDate {
-		getLogger().Debug("repository already up to date",
+		log.Debug("repository already up to date",
 			"workDir", c.WorkDir)
 	} else {
-		getLogger().Info("pulled repository changes",
+		log.Info("pulled repository changes",
 			"workDir", c.WorkDir)
 	}
 	return nil
@@ -143,11 +146,13 @@ func (c *client) Pull() error {
 
 // Commit commits the changes in the repository with the given message
 func (c *client) Commit(message string) (CommitHash, error) {
+	log := getLogger()
+
 	if c.repo == nil {
 		return CommitHash(plumbing.ZeroHash), fmt.Errorf("repository not initialized")
 	}
 
-	getLogger().Debug("preparing to commit changes",
+	log.Debug("preparing to commit changes",
 		"workDir", c.WorkDir,
 		"message", message)
 
@@ -172,7 +177,7 @@ func (c *client) Commit(message string) (CommitHash, error) {
 		return CommitHash(plumbing.ZeroHash), fmt.Errorf("failed to commit changes: %w", err)
 	}
 
-	getLogger().Info("changes committed",
+	log.Info("changes committed",
 		"hash", hash.String(),
 		"workDir", c.WorkDir,
 		"message", message)
@@ -181,11 +186,13 @@ func (c *client) Commit(message string) (CommitHash, error) {
 
 // Push pushes the changes to the remote repository
 func (c *client) Push() error {
+	log := getLogger()
+
 	if c.repo == nil {
 		return fmt.Errorf("repository not initialized")
 	}
 
-	getLogger().Debug("pushing repository changes",
+	log.Debug("pushing repository changes",
 		"workDir", c.WorkDir)
 
 	auth := &http.BasicAuth{
@@ -202,10 +209,10 @@ func (c *client) Push() error {
 	}
 
 	if err == git.NoErrAlreadyUpToDate {
-		getLogger().Debug("remote already up to date",
+		log.Debug("remote already up to date",
 			"workDir", c.WorkDir)
 	} else {
-		getLogger().Info("pushed repository changes",
+		log.Info("pushed repository changes",
 			"workDir", c.WorkDir)
 	}
 	return nil
@@ -213,11 +220,13 @@ func (c *client) Push() error {
 
 // EnsureRepo ensures the local repository is cloned and up-to-date
 func (c *client) EnsureRepo() error {
-	getLogger().Debug("ensuring repository exists and is up to date",
+	log := getLogger()
+
+	log.Debug("ensuring repository exists and is up to date",
 		"workDir", c.WorkDir)
 
 	if _, err := os.Stat(filepath.Join(c.WorkDir, ".git")); os.IsNotExist(err) {
-		getLogger().Info("repository not found, initiating clone",
+		log.Info("repository not found, initiating clone",
 			"workDir", c.WorkDir)
 		return c.Clone()
 	}
@@ -228,7 +237,7 @@ func (c *client) EnsureRepo() error {
 		return fmt.Errorf("failed to open existing repository: %w", err)
 	}
 
-	getLogger().Debug("repository opened, pulling latest changes",
+	log.Debug("repository opened, pulling latest changes",
 		"workDir", c.WorkDir)
 	return c.Pull()
 }

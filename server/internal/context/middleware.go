@@ -10,10 +10,11 @@ import (
 // WithUserContextMiddleware extracts user information from JWT claims
 // and adds it to the request context
 func WithUserContextMiddleware(next http.Handler) http.Handler {
+	log := getLogger()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		claims, err := GetUserFromContext(r.Context())
 		if err != nil {
-			getLogger().Error("failed to get user from context",
+			log.Error("failed to get user from context",
 				"error", err,
 				"path", r.URL.Path)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -25,7 +26,7 @@ func WithUserContextMiddleware(next http.Handler) http.Handler {
 			UserRole: claims.Role,
 		}
 
-		getLogger().Debug("user context extracted from claims",
+		log.Debug("user context extracted from claims",
 			"userID", claims.UserID,
 			"role", claims.Role,
 			"path", r.URL.Path)
@@ -38,6 +39,7 @@ func WithUserContextMiddleware(next http.Handler) http.Handler {
 // WithWorkspaceContextMiddleware adds workspace information to the request context
 func WithWorkspaceContextMiddleware(db db.WorkspaceReader) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
+		log := getLogger()
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx, ok := GetRequestContext(w, r)
 			if !ok {
@@ -47,7 +49,7 @@ func WithWorkspaceContextMiddleware(db db.WorkspaceReader) func(http.Handler) ht
 			workspaceName := chi.URLParam(r, "workspaceName")
 			workspace, err := db.GetWorkspaceByName(ctx.UserID, workspaceName)
 			if err != nil {
-				getLogger().Error("failed to get workspace",
+				log.Error("failed to get workspace",
 					"error", err,
 					"userID", ctx.UserID,
 					"workspace", workspaceName,
@@ -56,7 +58,7 @@ func WithWorkspaceContextMiddleware(db db.WorkspaceReader) func(http.Handler) ht
 				return
 			}
 
-			getLogger().Debug("workspace context added",
+			log.Debug("workspace context added",
 				"userID", ctx.UserID,
 				"workspaceID", workspace.ID,
 				"workspaceName", workspace.Name,
