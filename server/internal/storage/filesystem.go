@@ -2,6 +2,7 @@ package storage
 
 import (
 	"io/fs"
+	"novamd/internal/logging"
 	"os"
 )
 
@@ -15,6 +16,15 @@ type fileSystem interface {
 	ReadDir(path string) ([]fs.DirEntry, error)
 	Stat(path string) (fs.FileInfo, error)
 	IsNotExist(err error) bool
+}
+
+var logger logging.Logger
+
+func getLogger() logging.Logger {
+	if logger == nil {
+		logger = logging.WithGroup("storage")
+	}
+	return logger
 }
 
 // osFS implements the FileSystem interface using the real filesystem.
