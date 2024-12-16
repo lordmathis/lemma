@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"novamd/internal/logging"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -46,8 +48,23 @@ type client struct {
 	repo *git.Repository
 }
 
+var logger logging.Logger
+
+func getLogger() logging.Logger {
+	if logger == nil {
+		logger = logging.WithGroup("git")
+	}
+	return logger
+}
+
 // New creates a new git Client instance
 func New(url, username, token, workDir, commitName, commitEmail string) Client {
+	getLogger().Debug("creating new git client",
+		"url", url,
+		"username", username,
+		"workDir", workDir,
+		"commitName", commitName,
+		"commitEmail", commitEmail)
 	return &client{
 		Config: Config{
 			URL:         url,
@@ -62,6 +79,10 @@ func New(url, username, token, workDir, commitName, commitEmail string) Client {
 
 // Clone clones the Git repository to the local directory
 func (c *client) Clone() error {
+	getLogger().Info("cloning git repository",
+		"url", c.URL,
+		"workDir", c.WorkDir)
+
 	auth := &http.BasicAuth{
 		Username: c.Username,
 		Password: c.Token,
@@ -73,11 +94,13 @@ func (c *client) Clone() error {
 		Auth:     auth,
 		Progress: os.Stdout,
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to clone repository: %w", err)
 	}
 
+	getLogger().Info("repository cloned",
+		"url", c.URL,
+		"workDir", c.WorkDir)
 	return nil
 }
 
@@ -86,6 +109,9 @@ func (c *client) Pull() error {
 	if c.repo == nil {
 		return fmt.Errorf("repository not initialized")
 	}
+
+	getLogger().Debug("pulling repository changes",
+		"workDir", c.WorkDir)
 
 	w, err := c.repo.Worktree()
 	if err != nil {
@@ -101,11 +127,17 @@ func (c *client) Pull() error {
 		Auth:     auth,
 		Progress: os.Stdout,
 	})
-
 	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return fmt.Errorf("failed to pull changes: %w", err)
 	}
 
+	if err == git.NoErrAlreadyUpToDate {
+		getLogger().Debug("repository already up to date",
+			"workDir", c.WorkDir)
+	} else {
+		getLogger().Info("pulled repository changes",
+			"workDir", c.WorkDir)
+	}
 	return nil
 }
 
@@ -114,6 +146,10 @@ func (c *client) Commit(message string) (CommitHash, error) {
 	if c.repo == nil {
 		return CommitHash(plumbing.ZeroHash), fmt.Errorf("repository not initialized")
 	}
+
+	getLogger().Debug("preparing to commit changes",
+		"workDir", c.WorkDir,
+		"message", message)
 
 	w, err := c.repo.Worktree()
 	if err != nil {
@@ -136,6 +172,10 @@ func (c *client) Commit(message string) (CommitHash, error) {
 		return CommitHash(plumbing.ZeroHash), fmt.Errorf("failed to commit changes: %w", err)
 	}
 
+	getLogger().Info("changes committed",
+		"hash", hash.String(),
+		"workDir", c.WorkDir,
+		"message", message)
 	return CommitHash(hash), nil
 }
 
@@ -144,6 +184,9 @@ func (c *client) Push() error {
 	if c.repo == nil {
 		return fmt.Errorf("repository not initialized")
 	}
+
+	getLogger().Debug("pushing repository changes",
+		"workDir", c.WorkDir)
 
 	auth := &http.BasicAuth{
 		Username: c.Username,
@@ -154,17 +197,28 @@ func (c *client) Push() error {
 		Auth:     auth,
 		Progress: os.Stdout,
 	})
-
 	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return fmt.Errorf("failed to push changes: %w", err)
 	}
 
+	if err == git.NoErrAlreadyUpToDate {
+		getLogger().Debug("remote already up to date",
+			"workDir", c.WorkDir)
+	} else {
+		getLogger().Info("pushed repository changes",
+			"workDir", c.WorkDir)
+	}
 	return nil
 }
 
 // EnsureRepo ensures the local repository is cloned and up-to-date
 func (c *client) EnsureRepo() error {
+	getLogger().Debug("ensuring repository exists and is up to date",
+		"workDir", c.WorkDir)
+
 	if _, err := os.Stat(filepath.Join(c.WorkDir, ".git")); os.IsNotExist(err) {
+		getLogger().Info("repository not found, initiating clone",
+			"workDir", c.WorkDir)
 		return c.Clone()
 	}
 
@@ -174,5 +228,7 @@ func (c *client) EnsureRepo() error {
 		return fmt.Errorf("failed to open existing repository: %w", err)
 	}
 
+	getLogger().Debug("repository opened, pulling latest changes",
+		"workDir", c.WorkDir)
 	return c.Pull()
 }
