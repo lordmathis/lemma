@@ -1,5 +1,4 @@
-// storage/errors.go
-
+// Package storage provides functionalities to interact with the storage system (filesystem).
 package storage
 
 import (
