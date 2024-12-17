@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"novamd/internal/context"
 	"novamd/internal/db"
+	"novamd/internal/logging"
 	"novamd/internal/models"
 	"novamd/internal/storage"
 	"strconv"
@@ -47,6 +48,10 @@ type SystemStats struct {
 	*storage.FileCountStats
 }
 
+func getAdminLogger() logging.Logger {
+	return getHandlersLogger().WithGroup("admin")
+}
+
 // AdminListUsers godoc
 // @Summary List all users
 // @Description Returns the list of all users
@@ -58,9 +63,22 @@ type SystemStats struct {
 // @Failure 500 {object} ErrorResponse "Failed to list users"
 // @Router /admin/users [get]
 func (h *Handler) AdminListUsers() http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, ok := context.GetRequestContext(w, r)
+		if !ok {
+			return
+		}
+		log := getAdminLogger().With(
+			"handler", "AdminListUsers",
+			"adminID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
+
 		users, err := h.DB.GetAllUsers()
 		if err != nil {
+			log.Error("failed to fetch users from database",
+				"error", err.Error(),
+			)
 			respondError(w, "Failed to list users", http.StatusInternalServerError)
 			return
 		}
@@ -89,39 +107,63 @@ func (h *Handler) AdminListUsers() http.HandlerFunc {
 // @Router /admin/users [post]
 func (h *Handler) AdminCreateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, ok := context.GetRequestContext(w, r)
+		if !ok {
+			return
+		}
+		log := getAdminLogger().With(
+			"handler", "AdminCreateUser",
+			"adminID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
+
 		var req CreateUserRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Debug("failed to decode request body",
+				"error", err.Error(),
+			)
 			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		// Validate request
+		// Validation logging
 		if req.Email == "" || req.Password == "" || req.Role == "" {
+			log.Debug("missing required fields",
+				"hasEmail", req.Email != "",
+				"hasPassword", req.Password != "",
+				"hasRole", req.Role != "",
+			)
 			respondError(w, "Email, password, and role are required", http.StatusBadRequest)
 			return
 		}
 
-		// Check if email already exists
+		// Email existence check
 		existingUser, err := h.DB.GetUserByEmail(req.Email)
 		if err == nil && existingUser != nil {
+			log.Warn("attempted to create user with existing email",
+				"email", req.Email,
+			)
 			respondError(w, "Email already exists", http.StatusConflict)
 			return
 		}
 
-		// Check if password is long enough
 		if len(req.Password) < 8 {
+			log.Debug("password too short",
+				"passwordLength", len(req.Password),
+			)
 			respondError(w, "Password must be at least 8 characters", http.StatusBadRequest)
 			return
 		}
 
-		// Hash password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
+			log.Error("failed to hash password",
+				"error", err.Error(),
+			)
 			respondError(w, "Failed to hash password", http.StatusInternalServerError)
 			return
 		}
 
-		// Create user
 		user := &models.User{
 			Email:        req.Email,
 			DisplayName:  req.DisplayName,
@@ -131,16 +173,30 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 
 		insertedUser, err := h.DB.CreateUser(user)
 		if err != nil {
+			log.Error("failed to create user in database",
+				"error", err.Error(),
+				"email", req.Email,
+				"role", req.Role,
+			)
 			respondError(w, "Failed to create user", http.StatusInternalServerError)
 			return
 		}
 
-		// Initialize user workspace
 		if err := h.Storage.InitializeUserWorkspace(insertedUser.ID, insertedUser.LastWorkspaceID); err != nil {
+			log.Error("failed to initialize user workspace",
+				"error", err.Error(),
+				"userID", insertedUser.ID,
+				"workspaceID", insertedUser.LastWorkspaceID,
+			)
 			respondError(w, "Failed to initialize user workspace", http.StatusInternalServerError)
 			return
 		}
 
+		log.Info("user created",
+			"newUserID", insertedUser.ID,
+			"email", insertedUser.Email,
+			"role", insertedUser.Role,
+		)
 		respondJSON(w, insertedUser)
 	}
 }
@@ -159,14 +215,32 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 // @Router /admin/users/{userId} [get]
 func (h *Handler) AdminGetUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, ok := context.GetRequestContext(w, r)
+		if !ok {
+			return
+		}
+		log := getAdminLogger().With(
+			"handler", "AdminGetUser",
+			"adminID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
+
 		userID, err := strconv.Atoi(chi.URLParam(r, "userId"))
 		if err != nil {
+			log.Debug("invalid user ID format",
+				"userIDParam", chi.URLParam(r, "userId"),
+				"error", err.Error(),
+			)
 			respondError(w, "Invalid user ID", http.StatusBadRequest)
 			return
 		}
 
 		user, err := h.DB.GetUserByID(userID)
 		if err != nil {
+			log.Debug("user not found",
+				"targetUserID", userID,
+				"error", err.Error(),
+			)
 			respondError(w, "User not found", http.StatusNotFound)
 			return
 		}
@@ -194,49 +268,86 @@ func (h *Handler) AdminGetUser() http.HandlerFunc {
 // @Router /admin/users/{userId} [put]
 func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, ok := context.GetRequestContext(w, r)
+		if !ok {
+			return
+		}
+		log := getAdminLogger().With(
+			"handler", "AdminUpdateUser",
+			"adminID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
+
 		userID, err := strconv.Atoi(chi.URLParam(r, "userId"))
 		if err != nil {
+			log.Debug("invalid user ID format",
+				"userIDParam", chi.URLParam(r, "userId"),
+				"error", err.Error(),
+			)
 			respondError(w, "Invalid user ID", http.StatusBadRequest)
 			return
 		}
 
-		// Get existing user
 		user, err := h.DB.GetUserByID(userID)
 		if err != nil {
+			log.Debug("user not found",
+				"targetUserID", userID,
+				"error", err.Error(),
+			)
 			respondError(w, "User not found", http.StatusNotFound)
 			return
 		}
 
 		var req UpdateUserRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Debug("failed to decode request body",
+				"error", err.Error(),
+			)
 			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		// Update fields if provided
+		// Track what's being updated for logging
+		updates := make(map[string]interface{})
+
 		if req.Email != "" {
 			user.Email = req.Email
+			updates["email"] = req.Email
 		}
 		if req.DisplayName != "" {
 			user.DisplayName = req.DisplayName
+			updates["displayName"] = req.DisplayName
 		}
 		if req.Role != "" {
 			user.Role = req.Role
+			updates["role"] = req.Role
 		}
 		if req.Password != "" {
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 			if err != nil {
+				log.Error("failed to hash password",
+					"error", err.Error(),
+				)
 				respondError(w, "Failed to hash password", http.StatusInternalServerError)
 				return
 			}
 			user.PasswordHash = string(hashedPassword)
+			updates["passwordUpdated"] = true
 		}
 
 		if err := h.DB.UpdateUser(user); err != nil {
+			log.Error("failed to update user in database",
+				"error", err.Error(),
+				"targetUserID", userID,
+			)
 			respondError(w, "Failed to update user", http.StatusInternalServerError)
 			return
 		}
 
+		log.Info("user updated",
+			"targetUserID", userID,
+			"updates", updates,
+		)
 		respondJSON(w, user)
 	}
 }
@@ -261,37 +372,61 @@ func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 		if !ok {
 			return
 		}
+		log := getAdminLogger().With(
+			"handler", "AdminDeleteUser",
+			"adminID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
 
 		userID, err := strconv.Atoi(chi.URLParam(r, "userId"))
 		if err != nil {
+			log.Debug("invalid user ID format",
+				"userIDParam", chi.URLParam(r, "userId"),
+				"error", err.Error(),
+			)
 			respondError(w, "Invalid user ID", http.StatusBadRequest)
 			return
 		}
 
-		// Prevent admin from deleting themselves
 		if userID == ctx.UserID {
+			log.Warn("admin attempted to delete own account")
 			respondError(w, "Cannot delete your own account", http.StatusBadRequest)
 			return
 		}
 
-		// Get user before deletion to check role
 		user, err := h.DB.GetUserByID(userID)
 		if err != nil {
+			log.Debug("user not found",
+				"targetUserID", userID,
+				"error", err.Error(),
+			)
 			respondError(w, "User not found", http.StatusNotFound)
 			return
 		}
 
-		// Prevent deletion of other admin users
 		if user.Role == models.RoleAdmin && ctx.UserID != userID {
+			log.Warn("attempted to delete another admin user",
+				"targetUserID", userID,
+				"targetUserEmail", user.Email,
+			)
 			respondError(w, "Cannot delete other admin users", http.StatusForbidden)
 			return
 		}
 
 		if err := h.DB.DeleteUser(userID); err != nil {
+			log.Error("failed to delete user from database",
+				"error", err.Error(),
+				"targetUserID", userID,
+			)
 			respondError(w, "Failed to delete user", http.StatusInternalServerError)
 			return
 		}
 
+		log.Info("user deleted",
+			"targetUserID", userID,
+			"targetUserEmail", user.Email,
+			"targetUserRole", user.Role,
+		)
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
@@ -309,9 +444,22 @@ func (h *Handler) AdminDeleteUser() http.HandlerFunc {
 // @Failure 500 {object} ErrorResponse "Failed to get file stats"
 // @Router /admin/workspaces [get]
 func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, ok := context.GetRequestContext(w, r)
+		if !ok {
+			return
+		}
+		log := getAdminLogger().With(
+			"handler", "AdminListWorkspaces",
+			"adminID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
+
 		workspaces, err := h.DB.GetAllWorkspaces()
 		if err != nil {
+			log.Error("failed to fetch workspaces from database",
+				"error", err.Error(),
+			)
 			respondError(w, "Failed to list workspaces", http.StatusInternalServerError)
 			return
 		}
@@ -319,11 +467,15 @@ func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 		workspacesStats := make([]*WorkspaceStats, 0, len(workspaces))
 
 		for _, ws := range workspaces {
-
 			workspaceData := &WorkspaceStats{}
 
 			user, err := h.DB.GetUserByID(ws.UserID)
 			if err != nil {
+				log.Error("failed to fetch user for workspace",
+					"error", err.Error(),
+					"workspaceID", ws.ID,
+					"userID", ws.UserID,
+				)
 				respondError(w, "Failed to get user", http.StatusInternalServerError)
 				return
 			}
@@ -336,12 +488,16 @@ func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 
 			fileStats, err := h.Storage.GetFileStats(ws.UserID, ws.ID)
 			if err != nil {
+				log.Error("failed to fetch file stats for workspace",
+					"error", err.Error(),
+					"workspaceID", ws.ID,
+					"userID", ws.UserID,
+				)
 				respondError(w, "Failed to get file stats", http.StatusInternalServerError)
 				return
 			}
 
 			workspaceData.FileCountStats = fileStats
-
 			workspacesStats = append(workspacesStats, workspaceData)
 		}
 
@@ -361,15 +517,31 @@ func (h *Handler) AdminListWorkspaces() http.HandlerFunc {
 // @Failure 500 {object} ErrorResponse "Failed to get file stats"
 // @Router /admin/stats [get]
 func (h *Handler) AdminGetSystemStats() http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, ok := context.GetRequestContext(w, r)
+		if !ok {
+			return
+		}
+		log := getAdminLogger().With(
+			"handler", "AdminGetSystemStats",
+			"adminID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
+
 		userStats, err := h.DB.GetSystemStats()
 		if err != nil {
+			log.Error("failed to fetch user statistics",
+				"error", err.Error(),
+			)
 			respondError(w, "Failed to get user stats", http.StatusInternalServerError)
 			return
 		}
 
 		fileStats, err := h.Storage.GetTotalFileStats()
 		if err != nil {
+			log.Error("failed to fetch file statistics",
+				"error", err.Error(),
+			)
 			respondError(w, "Failed to get file stats", http.StatusInternalServerError)
 			return
 		}

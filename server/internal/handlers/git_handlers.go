@@ -3,8 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-
 	"novamd/internal/context"
+	"novamd/internal/logging"
 )
 
 // CommitRequest represents a request to commit changes
@@ -20,6 +20,10 @@ type CommitResponse struct {
 // PullResponse represents a response to a pull http request
 type PullResponse struct {
 	Message string `json:"message" example:"Pulled changes from remote"`
+}
+
+func getGitLogger() logging.Logger {
+	return getHandlersLogger().WithGroup("git")
 }
 
 // StageCommitAndPush godoc
@@ -42,24 +46,42 @@ func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 		if !ok {
 			return
 		}
+		log := getGitLogger().With(
+			"handler", "StageCommitAndPush",
+			"userID", ctx.UserID,
+			"workspaceID", ctx.Workspace.ID,
+			"clientIP", r.RemoteAddr,
+		)
 
 		var requestBody CommitRequest
-
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+			log.Error("failed to decode request body",
+				"error", err.Error(),
+			)
 			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		if requestBody.Message == "" {
+			log.Debug("empty commit message provided")
 			respondError(w, "Commit message is required", http.StatusBadRequest)
 			return
 		}
 
 		hash, err := h.Storage.StageCommitAndPush(ctx.UserID, ctx.Workspace.ID, requestBody.Message)
 		if err != nil {
+			log.Error("failed to perform git operations",
+				"error", err.Error(),
+				"commitMessage", requestBody.Message,
+			)
 			respondError(w, "Failed to stage, commit, and push changes: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		log.Debug("git operations completed successfully",
+			"commitHash", hash.String(),
+			"commitMessage", requestBody.Message,
+		)
 
 		respondJSON(w, CommitResponse{CommitHash: hash.String()})
 	}
@@ -82,13 +104,23 @@ func (h *Handler) PullChanges() http.HandlerFunc {
 		if !ok {
 			return
 		}
+		log := getGitLogger().With(
+			"handler", "PullChanges",
+			"userID", ctx.UserID,
+			"workspaceID", ctx.Workspace.ID,
+			"clientIP", r.RemoteAddr,
+		)
 
 		err := h.Storage.Pull(ctx.UserID, ctx.Workspace.ID)
 		if err != nil {
+			log.Error("failed to pull changes from remote",
+				"error", err.Error(),
+			)
 			respondError(w, "Failed to pull changes: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		log.Debug("successfully pulled changes from remote")
 		respondJSON(w, PullResponse{Message: "Successfully pulled changes from remote"})
 	}
 }

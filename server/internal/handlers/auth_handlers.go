@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"novamd/internal/auth"
 	"novamd/internal/context"
+	"novamd/internal/logging"
 	"novamd/internal/models"
 	"time"
 
@@ -26,6 +27,10 @@ type LoginResponse struct {
 	ExpiresAt time.Time    `json:"expiresAt,omitempty"`
 }
 
+func getAuthLogger() logging.Logger {
+	return getHandlersLogger().WithGroup("auth")
+}
+
 // Login godoc
 // @Summary Login
 // @Description Logs in a user and returns a session with access and refresh tokens
@@ -43,62 +48,88 @@ type LoginResponse struct {
 // @Router /auth/login [post]
 func (h *Handler) Login(authManager auth.SessionManager, cookieService auth.CookieManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log := getAuthLogger().With(
+			"handler", "Login",
+			"clientIP", r.RemoteAddr,
+		)
+
 		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Debug("failed to decode request body",
+				"error", err.Error(),
+			)
 			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		// Validate request
 		if req.Email == "" || req.Password == "" {
+			log.Debug("missing required fields",
+				"hasEmail", req.Email != "",
+				"hasPassword", req.Password != "",
+			)
 			respondError(w, "Email and password are required", http.StatusBadRequest)
 			return
 		}
 
-		// Get user from database
 		user, err := h.DB.GetUserByEmail(req.Email)
 		if err != nil {
+			log.Debug("user not found",
+				"email", req.Email,
+				"error", err.Error(),
+			)
 			respondError(w, "Invalid credentials", http.StatusUnauthorized)
 			return
 		}
 
-		// Verify password
 		err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
 		if err != nil {
+			log.Warn("invalid password attempt",
+				"userID", user.ID,
+				"email", user.Email,
+			)
 			respondError(w, "Invalid credentials", http.StatusUnauthorized)
 			return
 		}
 
-		// Create session and generate tokens
 		session, accessToken, err := authManager.CreateSession(user.ID, string(user.Role))
 		if err != nil {
+			log.Error("failed to create session",
+				"error", err.Error(),
+				"userID", user.ID,
+			)
 			respondError(w, "Failed to create session", http.StatusInternalServerError)
 			return
 		}
 
-		// Generate CSRF token
 		csrfToken := make([]byte, 32)
 		if _, err := rand.Read(csrfToken); err != nil {
+			log.Error("failed to generate CSRF token",
+				"error", err.Error(),
+				"userID", user.ID,
+			)
 			respondError(w, "Failed to generate CSRF token", http.StatusInternalServerError)
 			return
 		}
 		csrfTokenString := hex.EncodeToString(csrfToken)
 
-		// Set cookies
 		http.SetCookie(w, cookieService.GenerateAccessTokenCookie(accessToken))
 		http.SetCookie(w, cookieService.GenerateRefreshTokenCookie(session.RefreshToken))
 		http.SetCookie(w, cookieService.GenerateCSRFCookie(csrfTokenString))
 
-		// Send CSRF token in header for initial setup
 		w.Header().Set("X-CSRF-Token", csrfTokenString)
 
-		// Only send user info in response, not tokens
 		response := LoginResponse{
 			User:      user,
 			SessionID: session.ID,
 			ExpiresAt: session.ExpiresAt,
 		}
 
+		log.Info("user logged in successfully",
+			"userID", user.ID,
+			"email", user.Email,
+			"role", user.Role,
+			"sessionID", session.ID,
+		)
 		respondJSON(w, response)
 	}
 }
@@ -114,24 +145,41 @@ func (h *Handler) Login(authManager auth.SessionManager, cookieService auth.Cook
 // @Router /auth/logout [post]
 func (h *Handler) Logout(authManager auth.SessionManager, cookieService auth.CookieManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Get session ID from cookie
+		ctx, ok := context.GetRequestContext(w, r)
+		if !ok {
+			return
+		}
+		log := getAuthLogger().With(
+			"handler", "Logout",
+			"userID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
+
 		sessionCookie, err := r.Cookie("access_token")
 		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			log.Debug("missing access token cookie",
+				"error", err.Error(),
+			)
+			respondError(w, "Access token required", http.StatusBadRequest)
 			return
 		}
 
-		// Invalidate the session in the database
 		if err := authManager.InvalidateSession(sessionCookie.Value); err != nil {
+			log.Error("failed to invalidate session",
+				"error", err.Error(),
+				"sessionID", sessionCookie.Value,
+			)
 			respondError(w, "Failed to invalidate session", http.StatusInternalServerError)
 			return
 		}
 
-		// Clear cookies
 		http.SetCookie(w, cookieService.InvalidateCookie("access_token"))
 		http.SetCookie(w, cookieService.InvalidateCookie("refresh_token"))
 		http.SetCookie(w, cookieService.InvalidateCookie("csrf_token"))
 
+		log.Info("user logged out successfully",
+			"sessionID", sessionCookie.Value,
+		)
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
@@ -151,22 +199,39 @@ func (h *Handler) Logout(authManager auth.SessionManager, cookieService auth.Coo
 // @Router /auth/refresh [post]
 func (h *Handler) RefreshToken(authManager auth.SessionManager, cookieService auth.CookieManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, ok := context.GetRequestContext(w, r)
+		if !ok {
+			return
+		}
+		log := getAuthLogger().With(
+			"handler", "RefreshToken",
+			"userID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
+
 		refreshCookie, err := r.Cookie("refresh_token")
 		if err != nil {
+			log.Debug("missing refresh token cookie",
+				"error", err.Error(),
+			)
 			respondError(w, "Refresh token required", http.StatusBadRequest)
 			return
 		}
 
-		// Generate new access token
 		accessToken, err := authManager.RefreshSession(refreshCookie.Value)
 		if err != nil {
+			log.Error("failed to refresh session",
+				"error", err.Error(),
+			)
 			respondError(w, "Invalid refresh token", http.StatusUnauthorized)
 			return
 		}
 
-		// Generate new CSRF token
 		csrfToken := make([]byte, 32)
 		if _, err := rand.Read(csrfToken); err != nil {
+			log.Error("failed to generate CSRF token",
+				"error", err.Error(),
+			)
 			respondError(w, "Failed to generate CSRF token", http.StatusInternalServerError)
 			return
 		}
@@ -196,10 +261,17 @@ func (h *Handler) GetCurrentUser() http.HandlerFunc {
 		if !ok {
 			return
 		}
+		log := getAuthLogger().With(
+			"handler", "GetCurrentUser",
+			"userID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
 
-		// Get user from database
 		user, err := h.DB.GetUserByID(ctx.UserID)
 		if err != nil {
+			log.Error("failed to fetch user",
+				"error", err.Error(),
+			)
 			respondError(w, "User not found", http.StatusNotFound)
 			return
 		}

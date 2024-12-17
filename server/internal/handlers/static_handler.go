@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"novamd/internal/logging"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,8 +20,19 @@ func NewStaticHandler(staticPath string) *StaticHandler {
 	}
 }
 
+func getStaticLogger() logging.Logger {
+	return logging.WithGroup("static")
+}
+
 // ServeHTTP serves the static files
 func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log := getStaticLogger().With(
+		"handler", "ServeHTTP",
+		"clientIP", r.RemoteAddr,
+		"method", r.Method,
+		"url", r.URL.Path,
+	)
+
 	// Get the requested path
 	requestedPath := r.URL.Path
 	fullPath := filepath.Join(h.staticPath, requestedPath)
@@ -28,6 +40,10 @@ func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Security check to prevent directory traversal
 	if !strings.HasPrefix(cleanPath, h.staticPath) {
+		log.Warn("directory traversal attempt detected",
+			"requestedPath", requestedPath,
+			"cleanPath", cleanPath,
+		)
 		respondError(w, "Invalid path", http.StatusBadRequest)
 		return
 	}
@@ -35,11 +51,29 @@ func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Set cache headers for assets
 	if strings.HasPrefix(requestedPath, "/assets/") {
 		w.Header().Set("Cache-Control", "public, max-age=31536000") // 1 year
+		log.Debug("cache headers set for asset",
+			"path", requestedPath,
+		)
 	}
 
 	// Check if file exists (not counting .gz files)
 	stat, err := os.Stat(cleanPath)
 	if err != nil || stat.IsDir() {
+		if os.IsNotExist(err) {
+			log.Debug("file not found, serving index.html",
+				"requestedPath", requestedPath,
+			)
+		} else if stat != nil && stat.IsDir() {
+			log.Debug("directory requested, serving index.html",
+				"requestedPath", requestedPath,
+			)
+		} else {
+			log.Error("error checking file status",
+				"requestedPath", requestedPath,
+				"error", err.Error(),
+			)
+		}
+
 		// Serve index.html for SPA routing
 		indexPath := filepath.Join(h.staticPath, "index.html")
 		http.ServeFile(w, r, indexPath)
@@ -53,20 +87,32 @@ func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Encoding", "gzip")
 
 			// Set proper content type based on original file
+			contentType := "application/octet-stream"
 			switch filepath.Ext(cleanPath) {
 			case ".js":
-				w.Header().Set("Content-Type", "application/javascript")
+				contentType = "application/javascript"
 			case ".css":
-				w.Header().Set("Content-Type", "text/css")
+				contentType = "text/css"
 			case ".html":
-				w.Header().Set("Content-Type", "text/html")
+				contentType = "text/html"
 			}
+			w.Header().Set("Content-Type", contentType)
 
+			log.Debug("serving gzipped file",
+				"path", requestedPath,
+				"gzPath", gzPath,
+				"contentType", contentType,
+			)
 			http.ServeFile(w, r, gzPath)
 			return
 		}
 	}
 
 	// Serve original file
+	log.Debug("serving original file",
+		"path", requestedPath,
+		"size", stat.Size(),
+		"modTime", stat.ModTime(),
+	)
 	http.ServeFile(w, r, cleanPath)
 }

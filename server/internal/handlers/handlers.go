@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"novamd/internal/db"
+	"novamd/internal/logging"
 	"novamd/internal/storage"
 )
 
@@ -16,6 +17,15 @@ type ErrorResponse struct {
 type Handler struct {
 	DB      db.Database
 	Storage storage.Manager
+}
+
+var logger logging.Logger
+
+func getHandlersLogger() logging.Logger {
+	if logger == nil {
+		logger = logging.WithGroup("handlers")
+	}
+	return logger
 }
 
 // NewHandler creates a new handler with the given dependencies
