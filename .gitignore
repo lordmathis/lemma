@@ -157,6 +157,7 @@ go.work.sum
 
 # env file
 .env
+.env.dev
 
 main
 *.db
