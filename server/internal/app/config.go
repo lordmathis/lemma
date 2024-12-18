@@ -19,10 +19,10 @@ type Config struct {
 	RootURL           string
 	Domain            string
 	CORSOrigins       []string
-	AdminEmail        string
-	AdminPassword     string
-	EncryptionKey     string
-	JWTSigningKey     string
+	AdminEmail        string `log:"redact"`
+	AdminPassword     string `log:"redact"`
+	EncryptionKey     string `log:"redact"`
+	JWTSigningKey     string `log:"redact"`
 	RateLimitRequests int
 	RateLimitWindow   time.Duration
 	IsDevelopment     bool
@@ -58,46 +58,37 @@ func (c *Config) validate() error {
 
 // LoadConfig creates a new Config instance with values from environment variables
 func LoadConfig() (*Config, error) {
-	logging.Info("loading configuration from environment variables")
 	config := DefaultConfig()
 
 	if env := os.Getenv("NOVAMD_ENV"); env != "" {
-		logging.Debug("loading config for environment", "env", env)
 		config.IsDevelopment = env == "development"
 	}
 
 	if dbPath := os.Getenv("NOVAMD_DB_PATH"); dbPath != "" {
-		logging.Debug("loading config for database path", "path", dbPath)
 		config.DBPath = dbPath
 	}
 
 	if workDir := os.Getenv("NOVAMD_WORKDIR"); workDir != "" {
-		logging.Debug("loading config for work directory", "dir", workDir)
 		config.WorkDir = workDir
 	}
 
 	if staticPath := os.Getenv("NOVAMD_STATIC_PATH"); staticPath != "" {
-		logging.Debug("loading config for static path", "path", staticPath)
 		config.StaticPath = staticPath
 	}
 
 	if port := os.Getenv("NOVAMD_PORT"); port != "" {
-		logging.Debug("loading config for port", "port", port)
 		config.Port = port
 	}
 
 	if rootURL := os.Getenv("NOVAMD_ROOT_URL"); rootURL != "" {
-		logging.Debug("loading config for root URL", "url", rootURL)
 		config.RootURL = rootURL
 	}
 
 	if domain := os.Getenv("NOVAMD_DOMAIN"); domain != "" {
-		logging.Debug("loading config for domain", "domain", domain)
 		config.Domain = domain
 	}
 
 	if corsOrigins := os.Getenv("NOVAMD_CORS_ORIGINS"); corsOrigins != "" {
-		logging.Debug("loading config for CORS origins", "origins", corsOrigins)
 		config.CORSOrigins = strings.Split(corsOrigins, ",")
 	}
 
@@ -106,35 +97,17 @@ func LoadConfig() (*Config, error) {
 	config.EncryptionKey = os.Getenv("NOVAMD_ENCRYPTION_KEY")
 	config.JWTSigningKey = os.Getenv("NOVAMD_JWT_SIGNING_KEY")
 
-	logging.Debug("sensitive configuration loaded",
-		"adminEmailSet", config.AdminEmail != "",
-		"adminPasswordSet", config.AdminPassword != "",
-		"encryptionKeySet", config.EncryptionKey != "",
-		"jwtSigningKeySet", config.JWTSigningKey != "")
-
 	// Configure rate limiting
 	if reqStr := os.Getenv("NOVAMD_RATE_LIMIT_REQUESTS"); reqStr != "" {
 		parsed, err := strconv.Atoi(reqStr)
-		if err != nil {
-			logging.Warn("invalid rate limit requests value, using default",
-				"value", reqStr,
-				"default", config.RateLimitRequests,
-				"error", err)
-		} else {
-			logging.Debug("loading config for rate limit requests", "requests", parsed)
+		if err == nil {
 			config.RateLimitRequests = parsed
 		}
 	}
 
 	if windowStr := os.Getenv("NOVAMD_RATE_LIMIT_WINDOW"); windowStr != "" {
 		parsed, err := time.ParseDuration(windowStr)
-		if err != nil {
-			logging.Warn("invalid rate limit window value, using default",
-				"value", windowStr,
-				"default", config.RateLimitWindow,
-				"error", err)
-		} else {
-			logging.Debug("loading config for rate limit window", "window", parsed)
+		if err == nil {
 			config.RateLimitWindow = parsed
 		}
 	}
@@ -142,13 +115,10 @@ func LoadConfig() (*Config, error) {
 	// Configure log level, if isDevelopment is set, default to debug
 	if logLevel := os.Getenv("NOVAMD_LOG_LEVEL"); logLevel != "" {
 		parsed := logging.ParseLogLevel(logLevel)
-		logging.Debug("loading config for log level", "level", parsed)
 		config.LogLevel = parsed
 	} else if config.IsDevelopment {
-		logging.Debug("setting log level to debug for development")
 		config.LogLevel = logging.DEBUG
 	} else {
-		logging.Debug("setting log level to info for production")
 		config.LogLevel = logging.INFO
 	}
 
@@ -157,6 +127,5 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 
-	logging.Info("configuration loaded successfully")
 	return config, nil
 }

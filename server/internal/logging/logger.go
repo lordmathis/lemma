@@ -4,6 +4,7 @@ package logging
 import (
 	"log/slog"
 	"os"
+	"reflect"
 )
 
 // Logger represents the interface for logging operations
@@ -58,6 +59,27 @@ func ParseLogLevel(level string) LogLevel {
 	default:
 		return INFO
 	}
+}
+
+// Redact redacts sensitive fields from a struct based on the `log` struct tag
+// if the tag is set to "redact" the field value is replaced with "[REDACTED]"
+func Redact(v any) map[string]any {
+	result := make(map[string]any)
+	val := reflect.ValueOf(v)
+	typ := val.Type()
+
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		if tag := field.Tag.Get("log"); tag != "" {
+			switch tag {
+			case "redact":
+				result[field.Name] = "[REDACTED]"
+			default:
+				result[field.Name] = val.Field(i).Interface()
+			}
+		}
+	}
+	return result
 }
 
 // Implementation of Logger interface methods

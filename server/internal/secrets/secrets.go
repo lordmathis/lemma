@@ -33,8 +33,6 @@ func getLogger() logging.Logger {
 
 // ValidateKey checks if the provided base64-encoded key is suitable for AES-256
 func ValidateKey(key string) error {
-	log := getLogger()
-	log.Debug("validating encryption key")
 	_, err := decodeAndValidateKey(key)
 	return err
 }
