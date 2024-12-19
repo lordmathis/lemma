@@ -6,6 +6,7 @@ import (
 
 	"novamd/internal/db"
 	"novamd/internal/models"
+	_ "novamd/internal/testenv"
 )
 
 func TestUserOperations(t *testing.T) {

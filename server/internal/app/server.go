@@ -1,8 +1,8 @@
 package app
 
 import (
-	"log"
 	"net/http"
+	"novamd/internal/logging"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -25,12 +25,13 @@ func NewServer(options *Options) *Server {
 func (s *Server) Start() error {
 	// Start server
 	addr := ":" + s.options.Config.Port
-	log.Printf("Server starting on port %s", s.options.Config.Port)
+	logging.Info("starting server", "address", addr)
 	return http.ListenAndServe(addr, s.router)
 }
 
 // Close handles graceful shutdown of server dependencies
 func (s *Server) Close() error {
+	logging.Info("shutting down server")
 	return s.options.Database.Close()
 }
 

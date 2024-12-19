@@ -9,6 +9,7 @@ import (
 
 	"novamd/internal/context"
 	"novamd/internal/models"
+	_ "novamd/internal/testenv"
 )
 
 // MockDB implements the minimal database interface needed for testing
@@ -89,6 +90,10 @@ func TestWithUserContextMiddleware(t *testing.T) {
 	}
 }
 
+type contextKey string
+
+const workspaceNameKey contextKey = "workspaceName"
+
 func TestWithWorkspaceContextMiddleware(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -158,7 +163,7 @@ func TestWithWorkspaceContextMiddleware(t *testing.T) {
 			}
 
 			// Add workspace name to request context via chi URL params
-			req = req.WithContext(stdctx.WithValue(req.Context(), "workspaceName", tt.workspaceName))
+			req = req.WithContext(stdctx.WithValue(req.Context(), workspaceNameKey, tt.workspaceName))
 
 			nextCalled := false
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

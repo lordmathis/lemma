@@ -3,6 +3,7 @@ package app
 import (
 	"novamd/internal/auth"
 	"novamd/internal/db"
+	"novamd/internal/logging"
 	"novamd/internal/storage"
 )
 
@@ -32,6 +33,9 @@ func DefaultOptions(cfg *Config) (*Options, error) {
 
 	// Initialize storage
 	storageManager := storage.NewService(cfg.WorkDir)
+
+	// Initialize logger
+	logging.Setup(cfg.LogLevel)
 
 	// Initialize auth services
 	jwtManager, sessionService, cookieService, err := initAuth(cfg, database)

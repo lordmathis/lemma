@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"novamd/internal/context"
+	"novamd/internal/logging"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,6 +21,10 @@ type UpdateProfileRequest struct {
 // DeleteAccountRequest represents a user account deletion request
 type DeleteAccountRequest struct {
 	Password string `json:"password"`
+}
+
+func getProfileLogger() logging.Logger {
+	return getHandlersLogger().WithGroup("profile")
 }
 
 // UpdateProfile godoc
@@ -48,9 +53,17 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 		if !ok {
 			return
 		}
+		log := getProfileLogger().With(
+			"handler", "UpdateProfile",
+			"userID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
 
 		var req UpdateProfileRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Debug("failed to decode request body",
+				"error", err.Error(),
+			)
 			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
@@ -58,76 +71,94 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 		// Get current user
 		user, err := h.DB.GetUserByID(ctx.UserID)
 		if err != nil {
+			log.Error("failed to fetch user from database",
+				"error", err.Error(),
+			)
 			respondError(w, "User not found", http.StatusNotFound)
 			return
 		}
 
+		// Track what's being updated for logging
+		updates := make(map[string]bool)
+
 		// Handle password update if requested
 		if req.NewPassword != "" {
-			// Current password must be provided to change password
 			if req.CurrentPassword == "" {
+				log.Debug("password change attempted without current password")
 				respondError(w, "Current password is required to change password", http.StatusBadRequest)
 				return
 			}
 
-			// Verify current password
 			if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.CurrentPassword)); err != nil {
+				log.Warn("incorrect password provided for password change")
 				respondError(w, "Current password is incorrect", http.StatusUnauthorized)
 				return
 			}
 
-			// Validate new password
 			if len(req.NewPassword) < 8 {
+				log.Debug("password change rejected - too short",
+					"passwordLength", len(req.NewPassword),
+				)
 				respondError(w, "New password must be at least 8 characters long", http.StatusBadRequest)
 				return
 			}
 
-			// Hash new password
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 			if err != nil {
+				log.Error("failed to hash new password",
+					"error", err.Error(),
+				)
 				respondError(w, "Failed to process new password", http.StatusInternalServerError)
 				return
 			}
 			user.PasswordHash = string(hashedPassword)
+			updates["passwordChanged"] = true
 		}
 
 		// Handle email update if requested
 		if req.Email != "" && req.Email != user.Email {
-			// Check if email change requires password verification
 			if req.CurrentPassword == "" {
+				log.Warn("attempted email change without current password")
 				respondError(w, "Current password is required to change email", http.StatusBadRequest)
 				return
 			}
 
-			// Verify current password if not already verified for password change
 			if req.NewPassword == "" {
 				if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.CurrentPassword)); err != nil {
+					log.Warn("incorrect password provided for email change")
 					respondError(w, "Current password is incorrect", http.StatusUnauthorized)
 					return
 				}
 			}
 
-			// Check if new email is already in use
 			existingUser, err := h.DB.GetUserByEmail(req.Email)
 			if err == nil && existingUser.ID != user.ID {
+				log.Debug("email change rejected - already in use",
+					"requestedEmail", req.Email,
+				)
 				respondError(w, "Email already in use", http.StatusConflict)
 				return
 			}
 			user.Email = req.Email
+			updates["emailChanged"] = true
 		}
 
-		// Update display name if provided (no password required)
+		// Update display name if provided
 		if req.DisplayName != "" {
 			user.DisplayName = req.DisplayName
+			updates["displayNameChanged"] = true
 		}
 
 		// Update user in database
 		if err := h.DB.UpdateUser(user); err != nil {
+			log.Error("failed to update user in database",
+				"error", err.Error(),
+				"updates", updates,
+			)
 			respondError(w, "Failed to update profile", http.StatusInternalServerError)
 			return
 		}
 
-		// Return updated user data
 		respondJSON(w, user)
 	}
 }
@@ -155,9 +186,17 @@ func (h *Handler) DeleteAccount() http.HandlerFunc {
 		if !ok {
 			return
 		}
+		log := getProfileLogger().With(
+			"handler", "DeleteAccount",
+			"userID", ctx.UserID,
+			"clientIP", r.RemoteAddr,
+		)
 
 		var req DeleteAccountRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Debug("failed to decode request body",
+				"error", err.Error(),
+			)
 			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
@@ -165,25 +204,32 @@ func (h *Handler) DeleteAccount() http.HandlerFunc {
 		// Get current user
 		user, err := h.DB.GetUserByID(ctx.UserID)
 		if err != nil {
+			log.Error("failed to fetch user from database",
+				"error", err.Error(),
+			)
 			respondError(w, "User not found", http.StatusNotFound)
 			return
 		}
 
 		// Verify password
 		if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-			respondError(w, "Password is incorrect", http.StatusUnauthorized)
+			log.Warn("incorrect password provided for account deletion")
+			respondError(w, "Incorrect password", http.StatusUnauthorized)
 			return
 		}
 
 		// Prevent admin from deleting their own account if they're the last admin
 		if user.Role == "admin" {
-			// Count number of admin users
 			adminCount, err := h.DB.CountAdminUsers()
 			if err != nil {
-				respondError(w, "Failed to verify admin status", http.StatusInternalServerError)
+				log.Error("failed to count admin users",
+					"error", err.Error(),
+				)
+				respondError(w, "Failed to get admin count", http.StatusInternalServerError)
 				return
 			}
 			if adminCount <= 1 {
+				log.Warn("attempted to delete last admin account")
 				respondError(w, "Cannot delete the last admin account", http.StatusForbidden)
 				return
 			}
@@ -192,6 +238,9 @@ func (h *Handler) DeleteAccount() http.HandlerFunc {
 		// Get user's workspaces for cleanup
 		workspaces, err := h.DB.GetWorkspacesByUserID(ctx.UserID)
 		if err != nil {
+			log.Error("failed to fetch user workspaces",
+				"error", err.Error(),
+			)
 			respondError(w, "Failed to get user workspaces", http.StatusInternalServerError)
 			return
 		}
@@ -199,17 +248,31 @@ func (h *Handler) DeleteAccount() http.HandlerFunc {
 		// Delete workspace directories
 		for _, workspace := range workspaces {
 			if err := h.Storage.DeleteUserWorkspace(ctx.UserID, workspace.ID); err != nil {
+				log.Error("failed to delete workspace directory",
+					"error", err.Error(),
+					"workspaceID", workspace.ID,
+				)
 				respondError(w, "Failed to delete workspace files", http.StatusInternalServerError)
 				return
 			}
+			log.Debug("workspace deleted",
+				"workspaceID", workspace.ID,
+			)
 		}
 
-		// Delete user from database (this will cascade delete workspaces and sessions)
+		// Delete user from database
 		if err := h.DB.DeleteUser(ctx.UserID); err != nil {
+			log.Error("failed to delete user from database",
+				"error", err.Error(),
+			)
 			respondError(w, "Failed to delete account", http.StatusInternalServerError)
 			return
 		}
 
+		log.Info("user account deleted",
+			"email", user.Email,
+			"role", user.Role,
+		)
 		w.WriteHeader(http.StatusNoContent)
 	}
 }

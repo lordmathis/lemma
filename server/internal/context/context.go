@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"novamd/internal/logging"
 	"novamd/internal/models"
 )
 
@@ -28,10 +29,22 @@ type HandlerContext struct {
 	Workspace *models.Workspace // Optional, only set for workspace routes
 }
 
+var logger logging.Logger
+
+func getLogger() logging.Logger {
+	if logger == nil {
+		logger = logging.WithGroup("context")
+	}
+	return logger
+}
+
 // GetRequestContext retrieves the handler context from the request
 func GetRequestContext(w http.ResponseWriter, r *http.Request) (*HandlerContext, bool) {
 	ctx := r.Context().Value(HandlerContextKey)
 	if ctx == nil {
+		getLogger().Error("missing handler context in request",
+			"path", r.URL.Path,
+			"method", r.Method)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return nil, false
 	}

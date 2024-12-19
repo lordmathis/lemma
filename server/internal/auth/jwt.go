@@ -4,10 +4,15 @@ package auth
 import (
 	"crypto/rand"
 	"fmt"
+	"novamd/internal/logging"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+func getJWTLogger() logging.Logger {
+	return getAuthLogger().WithGroup("jwt")
+}
 
 // TokenType represents the type of JWT token (access or refresh)
 type TokenType string
@@ -50,13 +55,15 @@ func NewJWTService(config JWTConfig) (JWTManager, error) {
 	if config.SigningKey == "" {
 		return nil, fmt.Errorf("signing key is required")
 	}
+
 	// Set default expiry times if not provided
 	if config.AccessTokenExpiry == 0 {
-		config.AccessTokenExpiry = 15 * time.Minute // Default to 15 minutes
+		config.AccessTokenExpiry = 15 * time.Minute
 	}
 	if config.RefreshTokenExpiry == 0 {
-		config.RefreshTokenExpiry = 7 * 24 * time.Hour // Default to 7 days
+		config.RefreshTokenExpiry = 7 * 24 * time.Hour
 	}
+
 	return &jwtService{config: config}, nil
 }
 
@@ -93,11 +100,18 @@ func (s *jwtService) generateToken(userID int, role string, sessionID string, to
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.config.SigningKey))
+	signedToken, err := token.SignedString([]byte(s.config.SigningKey))
+	if err != nil {
+		return "", err
+	}
+
+	return signedToken, nil
 }
 
 // ValidateToken validates and parses a JWT token
 func (s *jwtService) ValidateToken(tokenString string) (*Claims, error) {
+	log := getJWTLogger()
+
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		// Validate the signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -110,9 +124,16 @@ func (s *jwtService) ValidateToken(tokenString string) (*Claims, error) {
 		return nil, fmt.Errorf("invalid token: %w", err)
 	}
 
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		return claims, nil
+	claims, ok := token.Claims.(*Claims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid token claims")
 	}
 
-	return nil, fmt.Errorf("invalid token claims")
+	log.Debug("token validated",
+		"userId", claims.UserID,
+		"role", claims.Role,
+		"tokenType", claims.Type,
+		"expiresAt", claims.ExpiresAt)
+
+	return claims, nil
 }

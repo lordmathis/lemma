@@ -4,13 +4,13 @@ package app
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"novamd/internal/auth"
 	"novamd/internal/db"
+	"novamd/internal/logging"
 	"novamd/internal/models"
 	"novamd/internal/secrets"
 	"novamd/internal/storage"
@@ -18,6 +18,7 @@ import (
 
 // initSecretsService initializes the secrets service
 func initSecretsService(cfg *Config) (secrets.Service, error) {
+	logging.Debug("initializing secrets service")
 	secretsService, err := secrets.NewService(cfg.EncryptionKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize secrets service: %w", err)
@@ -27,6 +28,8 @@ func initSecretsService(cfg *Config) (secrets.Service, error) {
 
 // initDatabase initializes and migrates the database
 func initDatabase(cfg *Config, secretsService secrets.Service) (db.Database, error) {
+	logging.Debug("initializing database", "path", cfg.DBPath)
+
 	database, err := db.Init(cfg.DBPath, secretsService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
@@ -41,9 +44,15 @@ func initDatabase(cfg *Config, secretsService secrets.Service) (db.Database, err
 
 // initAuth initializes JWT and session services
 func initAuth(cfg *Config, database db.Database) (auth.JWTManager, auth.SessionManager, auth.CookieManager, error) {
+	logging.Debug("initializing authentication services")
+
+	accessTokeExpiry := 15 * time.Minute
+	refreshTokenExpiry := 7 * 24 * time.Hour
+
 	// Get or generate JWT signing key
 	signingKey := cfg.JWTSigningKey
 	if signingKey == "" {
+		logging.Debug("no JWT signing key provided, generating new key")
 		var err error
 		signingKey, err = database.EnsureJWTSecret()
 		if err != nil {
@@ -51,20 +60,16 @@ func initAuth(cfg *Config, database db.Database) (auth.JWTManager, auth.SessionM
 		}
 	}
 
-	// Initialize JWT service
 	jwtManager, err := auth.NewJWTService(auth.JWTConfig{
 		SigningKey:         signingKey,
-		AccessTokenExpiry:  15 * time.Minute,
-		RefreshTokenExpiry: 7 * 24 * time.Hour,
+		AccessTokenExpiry:  accessTokeExpiry,
+		RefreshTokenExpiry: refreshTokenExpiry,
 	})
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to initialize JWT service: %w", err)
 	}
 
-	// Initialize session service
 	sessionManager := auth.NewSessionService(database, jwtManager)
-
-	// Cookie service
 	cookieService := auth.NewCookieService(cfg.IsDevelopment, cfg.Domain)
 
 	return jwtManager, sessionManager, cookieService, nil
@@ -72,26 +77,26 @@ func initAuth(cfg *Config, database db.Database) (auth.JWTManager, auth.SessionM
 
 // setupAdminUser creates the admin user if it doesn't exist
 func setupAdminUser(database db.Database, storageManager storage.Manager, cfg *Config) error {
-	adminEmail := cfg.AdminEmail
-	adminPassword := cfg.AdminPassword
-
 	// Check if admin user exists
-	adminUser, err := database.GetUserByEmail(adminEmail)
+	adminUser, err := database.GetUserByEmail(cfg.AdminEmail)
+	if err != nil && err != sql.ErrNoRows {
+		return fmt.Errorf("failed to check for existing admin user: %w", err)
+	}
+
 	if adminUser != nil {
-		return nil // Admin user already exists
-	} else if err != sql.ErrNoRows {
-		return err
+		logging.Debug("admin user already exists", "userId", adminUser.ID)
+		return nil
 	}
 
 	// Hash the password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(cfg.AdminPassword), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("failed to hash password: %w", err)
+		return fmt.Errorf("failed to hash admin password: %w", err)
 	}
 
 	// Create admin user
 	adminUser = &models.User{
-		Email:        adminEmail,
+		Email:        cfg.AdminEmail,
 		DisplayName:  "Admin",
 		PasswordHash: string(hashedPassword),
 		Role:         models.RoleAdmin,
@@ -102,13 +107,14 @@ func setupAdminUser(database db.Database, storageManager storage.Manager, cfg *C
 		return fmt.Errorf("failed to create admin user: %w", err)
 	}
 
-	// Initialize workspace directory
 	err = storageManager.InitializeUserWorkspace(createdUser.ID, createdUser.LastWorkspaceID)
 	if err != nil {
 		return fmt.Errorf("failed to initialize admin workspace: %w", err)
 	}
 
-	log.Printf("Created admin user with ID: %d and default workspace with ID: %d", createdUser.ID, createdUser.LastWorkspaceID)
+	logging.Info("admin user setup completed",
+		"userId", createdUser.ID,
+		"workspaceId", createdUser.LastWorkspaceID)
 
 	return nil
 }

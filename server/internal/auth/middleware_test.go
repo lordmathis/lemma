@@ -11,6 +11,7 @@ import (
 	"novamd/internal/auth"
 	"novamd/internal/context"
 	"novamd/internal/models"
+	_ "novamd/internal/testenv"
 )
 
 // Mock SessionManager

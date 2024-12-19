@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"novamd/internal/storage"
+	_ "novamd/internal/testenv"
 )
 
 func TestValidatePath(t *testing.T) {

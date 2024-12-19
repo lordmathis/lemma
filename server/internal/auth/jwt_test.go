@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"novamd/internal/auth"
+	_ "novamd/internal/testenv"
 )
-
-// jwt_test.go tests
 
 func TestNewJWTService(t *testing.T) {
 	testCases := []struct {

@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"novamd/internal/logging"
 	"novamd/internal/secrets"
 	"os"
 	"strconv"
@@ -25,6 +26,7 @@ type Config struct {
 	RateLimitRequests int
 	RateLimitWindow   time.Duration
 	IsDevelopment     bool
+	LogLevel          logging.LogLevel
 }
 
 // DefaultConfig returns a new Config instance with default values
@@ -52,6 +54,16 @@ func (c *Config) validate() error {
 	}
 
 	return nil
+}
+
+// Redact redacts sensitive fields from a Config instance
+func (c *Config) Redact() *Config {
+	redacted := *c
+	redacted.AdminPassword = "[REDACTED]"
+	redacted.AdminEmail = "[REDACTED]"
+	redacted.EncryptionKey = "[REDACTED]"
+	redacted.JWTSigningKey = "[REDACTED]"
+	return &redacted
 }
 
 // LoadConfig creates a new Config instance with values from environment variables
@@ -97,15 +109,27 @@ func LoadConfig() (*Config, error) {
 
 	// Configure rate limiting
 	if reqStr := os.Getenv("NOVAMD_RATE_LIMIT_REQUESTS"); reqStr != "" {
-		if parsed, err := strconv.Atoi(reqStr); err == nil {
+		parsed, err := strconv.Atoi(reqStr)
+		if err == nil {
 			config.RateLimitRequests = parsed
 		}
 	}
 
 	if windowStr := os.Getenv("NOVAMD_RATE_LIMIT_WINDOW"); windowStr != "" {
-		if parsed, err := time.ParseDuration(windowStr); err == nil {
+		parsed, err := time.ParseDuration(windowStr)
+		if err == nil {
 			config.RateLimitWindow = parsed
 		}
+	}
+
+	// Configure log level, if isDevelopment is set, default to debug
+	if logLevel := os.Getenv("NOVAMD_LOG_LEVEL"); logLevel != "" {
+		parsed := logging.ParseLogLevel(logLevel)
+		config.LogLevel = parsed
+	} else if config.IsDevelopment {
+		config.LogLevel = logging.DEBUG
+	} else {
+		config.LogLevel = logging.INFO
 	}
 
 	// Validate all settings

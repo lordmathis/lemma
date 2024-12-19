@@ -17,15 +17,23 @@ type RepositoryManager interface {
 // The repository is cloned from the given gitURL using the given gitUser and gitToken.
 func (s *Service) SetupGitRepo(userID, workspaceID int, gitURL, gitUser, gitToken, commitName, commitEmail string) error {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
+
 	if _, ok := s.GitRepos[userID]; !ok {
 		s.GitRepos[userID] = make(map[int]git.Client)
 	}
+
 	s.GitRepos[userID][workspaceID] = s.newGitClient(gitURL, gitUser, gitToken, workspacePath, commitName, commitEmail)
+
 	return s.GitRepos[userID][workspaceID].EnsureRepo()
 }
 
 // DisableGitRepo disables the Git repository for the given userID and workspaceID.
 func (s *Service) DisableGitRepo(userID, workspaceID int) {
+	log := getLogger().WithGroup("git")
+	log.Debug("disabling git repository",
+		"userID", userID,
+		"workspaceID", workspaceID)
+
 	if userRepos, ok := s.GitRepos[userID]; ok {
 		delete(userRepos, workspaceID)
 		if len(userRepos) == 0 {
@@ -47,8 +55,11 @@ func (s *Service) StageCommitAndPush(userID, workspaceID int, message string) (g
 		return git.CommitHash{}, err
 	}
 
-	err = repo.Push()
-	return hash, err
+	if err = repo.Push(); err != nil {
+		return hash, err
+	}
+
+	return hash, nil
 }
 
 // Pull pulls the changes from the remote Git repository.
@@ -59,7 +70,12 @@ func (s *Service) Pull(userID, workspaceID int) error {
 		return fmt.Errorf("git settings not configured for this workspace")
 	}
 
-	return repo.Pull()
+	err := repo.Pull()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // getGitRepo returns the Git repository for the given user and workspace IDs.

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"novamd/internal/context"
+	_ "novamd/internal/testenv"
 )
 
 func TestGetRequestContext(t *testing.T) {

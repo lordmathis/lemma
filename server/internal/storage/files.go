@@ -1,5 +1,3 @@
-// Package storage provides functionalities to interact with the file system,
-// including listing files, finding files by name, getting file content, saving files, and deleting files.
 package storage
 
 import (
@@ -33,7 +31,12 @@ type FileNode struct {
 // Workspace is identified by the given userID and workspaceID.
 func (s *Service) ListFilesRecursively(userID, workspaceID int) ([]FileNode, error) {
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
-	return s.walkDirectory(workspacePath, "")
+	nodes, err := s.walkDirectory(workspacePath, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return nodes, nil
 }
 
 // walkDirectory recursively walks the directory and returns a list of files and directories.
@@ -147,6 +150,8 @@ func (s *Service) GetFileContent(userID, workspaceID int, filePath string) ([]by
 // SaveFile writes the content to the file at the given filePath.
 // Path must be a relative path within the workspace directory given by userID and workspaceID.
 func (s *Service) SaveFile(userID, workspaceID int, filePath string, content []byte) error {
+	log := getLogger()
+
 	fullPath, err := s.ValidatePath(userID, workspaceID, filePath)
 	if err != nil {
 		return err
@@ -157,17 +162,36 @@ func (s *Service) SaveFile(userID, workspaceID int, filePath string, content []b
 		return err
 	}
 
-	return s.fs.WriteFile(fullPath, content, 0644)
+	if err := s.fs.WriteFile(fullPath, content, 0644); err != nil {
+		return err
+	}
+
+	log.Debug("file saved",
+		"userID", userID,
+		"workspaceID", workspaceID,
+		"path", filePath,
+		"size", len(content))
+	return nil
 }
 
 // DeleteFile deletes the file at the given filePath.
 // Path must be a relative path within the workspace directory given by userID and workspaceID.
 func (s *Service) DeleteFile(userID, workspaceID int, filePath string) error {
+	log := getLogger()
 	fullPath, err := s.ValidatePath(userID, workspaceID, filePath)
 	if err != nil {
 		return err
 	}
-	return s.fs.Remove(fullPath)
+
+	if err := s.fs.Remove(fullPath); err != nil {
+		return err
+	}
+
+	log.Debug("file deleted",
+		"userID", userID,
+		"workspaceID", workspaceID,
+		"path", filePath)
+	return nil
 }
 
 // FileCountStats holds statistics about files in a workspace
@@ -186,13 +210,22 @@ func (s *Service) GetFileStats(userID, workspaceID int) (*FileCountStats, error)
 		return nil, fmt.Errorf("workspace directory does not exist")
 	}
 
-	return s.countFilesInPath(workspacePath)
+	stats, err := s.countFilesInPath(workspacePath)
+	if err != nil {
+		return nil, err
+	}
 
+	return stats, nil
 }
 
 // GetTotalFileStats returns the total file statistics for the storage.
 func (s *Service) GetTotalFileStats() (*FileCountStats, error) {
-	return s.countFilesInPath(s.RootDir)
+	stats, err := s.countFilesInPath(s.RootDir)
+	if err != nil {
+		return nil, err
+	}
+
+	return stats, nil
 }
 
 // countFilesInPath counts the total number of files and the total size of files in the given directory.

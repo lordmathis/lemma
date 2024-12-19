@@ -8,6 +8,7 @@ import (
 
 	"novamd/internal/auth"
 	"novamd/internal/models"
+	_ "novamd/internal/testenv"
 )
 
 // Mock SessionStore

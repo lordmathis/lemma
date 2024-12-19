@@ -5,6 +5,8 @@ import (
 	"novamd/internal/storage"
 	"path/filepath"
 	"testing"
+
+	_ "novamd/internal/testenv"
 )
 
 // TestFileNode ensures FileNode structs are created correctly

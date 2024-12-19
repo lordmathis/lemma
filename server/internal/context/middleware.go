@@ -10,9 +10,13 @@ import (
 // WithUserContextMiddleware extracts user information from JWT claims
 // and adds it to the request context
 func WithUserContextMiddleware(next http.Handler) http.Handler {
+	log := getLogger()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		claims, err := GetUserFromContext(r.Context())
 		if err != nil {
+			log.Error("failed to get user from context",
+				"error", err,
+				"path", r.URL.Path)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -30,6 +34,7 @@ func WithUserContextMiddleware(next http.Handler) http.Handler {
 // WithWorkspaceContextMiddleware adds workspace information to the request context
 func WithWorkspaceContextMiddleware(db db.WorkspaceReader) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
+		log := getLogger()
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx, ok := GetRequestContext(w, r)
 			if !ok {
@@ -39,11 +44,15 @@ func WithWorkspaceContextMiddleware(db db.WorkspaceReader) func(http.Handler) ht
 			workspaceName := chi.URLParam(r, "workspaceName")
 			workspace, err := db.GetWorkspaceByName(ctx.UserID, workspaceName)
 			if err != nil {
-				http.Error(w, "Workspace not found", http.StatusNotFound)
+				log.Error("failed to get workspace",
+					"error", err,
+					"userID", ctx.UserID,
+					"workspace", workspaceName,
+					"path", r.URL.Path)
+				http.Error(w, "Failed to get workspace", http.StatusNotFound)
 				return
 			}
 
-			// Update existing context with workspace
 			ctx.Workspace = workspace
 			r = WithHandlerContext(r, ctx)
 			next.ServeHTTP(w, r)

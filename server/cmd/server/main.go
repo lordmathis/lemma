@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"novamd/internal/app"
+	"novamd/internal/logging"
 )
 
 // @title NovaMD API
@@ -23,6 +24,10 @@ func main() {
 		log.Fatal("Failed to load configuration:", err)
 	}
 
+	// Setup logging
+	logging.Setup(cfg.LogLevel)
+	logging.Debug("Configuration loaded", "config", cfg.Redact())
+
 	// Initialize and start server
 	options, err := app.DefaultOptions(cfg)
 	if err != nil {
@@ -32,7 +37,7 @@ func main() {
 	server := app.NewServer(options)
 	defer func() {
 		if err := server.Close(); err != nil {
-			log.Println("Error closing server:", err)
+			logging.Error("Failed to close server:", err)
 		}
 	}()
 

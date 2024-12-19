@@ -1,12 +1,12 @@
 package db_test
 
 import (
-	"database/sql"
 	"strings"
 	"testing"
 
 	"novamd/internal/db"
 	"novamd/internal/models"
+	_ "novamd/internal/testenv"
 )
 
 func TestWorkspaceOperations(t *testing.T) {
@@ -385,8 +385,8 @@ func TestWorkspaceOperations(t *testing.T) {
 
 		// Verify workspace is gone
 		_, err = database.GetWorkspaceByID(workspace.ID)
-		if err != sql.ErrNoRows {
-			t.Errorf("expected sql.ErrNoRows, got %v", err)
+		if !strings.Contains(err.Error(), "workspace not found") {
+			t.Errorf("expected workspace not found, got %v", err)
 		}
 	})
 }

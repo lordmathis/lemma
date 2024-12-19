@@ -43,6 +43,11 @@ func (s *Service) GetWorkspacePath(userID, workspaceID int) string {
 
 // InitializeUserWorkspace creates the workspace directory for the given userID and workspaceID.
 func (s *Service) InitializeUserWorkspace(userID, workspaceID int) error {
+	log := getLogger()
+	log.Debug("initializing workspace directory",
+		"userID", userID,
+		"workspaceID", workspaceID)
+
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 	err := s.fs.MkdirAll(workspacePath, 0755)
 	if err != nil {
@@ -54,6 +59,11 @@ func (s *Service) InitializeUserWorkspace(userID, workspaceID int) error {
 
 // DeleteUserWorkspace deletes the workspace directory for the given userID and workspaceID.
 func (s *Service) DeleteUserWorkspace(userID, workspaceID int) error {
+	log := getLogger()
+	log.Debug("deleting workspace directory",
+		"userID", userID,
+		"workspaceID", workspaceID)
+
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 	err := s.fs.RemoveAll(workspacePath)
 	if err != nil {

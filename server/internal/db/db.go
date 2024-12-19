@@ -3,7 +3,9 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 
+	"novamd/internal/logging"
 	"novamd/internal/models"
 	"novamd/internal/secrets"
 
@@ -77,6 +79,7 @@ type Database interface {
 	Migrate() error
 }
 
+// Verify that the database implements the required interfaces
 var (
 	// Main Database interface
 	_ Database = (*database)(nil)
@@ -92,6 +95,15 @@ var (
 	_ WorkspaceWriter = (*database)(nil)
 )
 
+var logger logging.Logger
+
+func getLogger() logging.Logger {
+	if logger == nil {
+		logger = logging.WithGroup("db")
+	}
+	return logger
+}
+
 // database represents the database connection
 type database struct {
 	*sql.DB
@@ -100,19 +112,22 @@ type database struct {
 
 // Init initializes the database connection
 func Init(dbPath string, secretsService secrets.Service) (Database, error) {
+	log := getLogger()
+
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
 	if err := db.Ping(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
 	// Enable foreign keys for this connection
 	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to enable foreign keys: %w", err)
 	}
+	log.Debug("foreign keys enabled")
 
 	database := &database{
 		DB:             db,
@@ -124,7 +139,13 @@ func Init(dbPath string, secretsService secrets.Service) (Database, error) {
 
 // Close closes the database connection
 func (db *database) Close() error {
-	return db.DB.Close()
+	log := getLogger()
+	log.Info("closing database connection")
+
+	if err := db.DB.Close(); err != nil {
+		return fmt.Errorf("failed to close database: %w", err)
+	}
+	return nil
 }
 
 // Helper methods for token encryption/decryption
@@ -132,12 +153,24 @@ func (db *database) encryptToken(token string) (string, error) {
 	if token == "" {
 		return "", nil
 	}
-	return db.secretsService.Encrypt(token)
+
+	encrypted, err := db.secretsService.Encrypt(token)
+	if err != nil {
+		return "", fmt.Errorf("failed to encrypt token: %w", err)
+	}
+
+	return encrypted, nil
 }
 
 func (db *database) decryptToken(token string) (string, error) {
 	if token == "" {
 		return "", nil
 	}
-	return db.secretsService.Decrypt(token)
+
+	decrypted, err := db.secretsService.Decrypt(token)
+	if err != nil {
+		return "", fmt.Errorf("failed to decrypt token: %w", err)
+	}
+
+	return decrypted, nil
 }

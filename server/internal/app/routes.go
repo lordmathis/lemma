@@ -4,6 +4,7 @@ import (
 	"novamd/internal/auth"
 	"novamd/internal/context"
 	"novamd/internal/handlers"
+	"novamd/internal/logging"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -19,6 +20,7 @@ import (
 
 // setupRouter creates and configures the chi router with middleware and routes
 func setupRouter(o Options) *chi.Mux {
+	logging.Debug("setting up router")
 	r := chi.NewRouter()
 
 	// Basic middleware

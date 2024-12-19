@@ -21,6 +21,8 @@ type UserStats struct {
 // EnsureJWTSecret makes sure a JWT signing secret exists in the database
 // If no secret exists, it generates and stores a new one
 func (db *database) EnsureJWTSecret() (string, error) {
+	log := getLogger().WithGroup("system")
+
 	// First, try to get existing secret
 	secret, err := db.GetSystemSetting(JWTSecretKey)
 	if err == nil {
@@ -39,6 +41,8 @@ func (db *database) EnsureJWTSecret() (string, error) {
 		return "", fmt.Errorf("failed to store JWT secret: %w", err)
 	}
 
+	log.Info("new JWT secret generated and stored")
+
 	return newSecret, nil
 }
 
@@ -49,27 +53,38 @@ func (db *database) GetSystemSetting(key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return value, nil
 }
 
 // SetSystemSetting stores or updates a system setting
 func (db *database) SetSystemSetting(key, value string) error {
 	_, err := db.Exec(`
-		INSERT INTO system_settings (key, value)
-		VALUES (?, ?)
-		ON CONFLICT(key) DO UPDATE SET value = ?`,
+        INSERT INTO system_settings (key, value)
+        VALUES (?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = ?`,
 		key, value, value)
-	return err
+
+	if err != nil {
+		return fmt.Errorf("failed to store system setting: %w", err)
+	}
+
+	return nil
 }
 
 // generateRandomSecret generates a cryptographically secure random string
 func generateRandomSecret(bytes int) (string, error) {
+	log := getLogger().WithGroup("system")
+	log.Debug("generating random secret", "bytes", bytes)
+
 	b := make([]byte, bytes)
 	_, err := rand.Read(b)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to generate random bytes: %w", err)
 	}
-	return base64.StdEncoding.EncodeToString(b), nil
+
+	secret := base64.StdEncoding.EncodeToString(b)
+	return secret, nil
 }
 
 // GetSystemStats returns system-wide statistics
@@ -79,24 +94,23 @@ func (db *database) GetSystemStats() (*UserStats, error) {
 	// Get total users
 	err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&stats.TotalUsers)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get total users count: %w", err)
 	}
 
 	// Get total workspaces
 	err = db.QueryRow("SELECT COUNT(*) FROM workspaces").Scan(&stats.TotalWorkspaces)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get total workspaces count: %w", err)
 	}
 
 	// Get active users (users with activity in last 30 days)
 	err = db.QueryRow(`
-		SELECT COUNT(DISTINCT user_id) 
-		FROM sessions 
-		WHERE created_at > datetime('now', '-30 days')`).
+        SELECT COUNT(DISTINCT user_id)
+        FROM sessions
+        WHERE created_at > datetime('now', '-30 days')`).
 		Scan(&stats.ActiveUsers)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get active users count: %w", err)
 	}
-
 	return stats, nil
 }

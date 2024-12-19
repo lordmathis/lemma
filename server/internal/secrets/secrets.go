@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+
+	"novamd/internal/logging"
 )
 
 // Service is an interface for encrypting and decrypting strings
@@ -18,6 +20,15 @@ type Service interface {
 
 type encryptor struct {
 	gcm cipher.AEAD
+}
+
+var logger logging.Logger
+
+func getLogger() logging.Logger {
+	if logger == nil {
+		logger = logging.WithGroup("secrets")
+	}
+	return logger
 }
 
 // ValidateKey checks if the provided base64-encoded key is suitable for AES-256
@@ -73,7 +84,10 @@ func NewService(key string) (Service, error) {
 
 // Encrypt encrypts the plaintext using AES-256-GCM
 func (e *encryptor) Encrypt(plaintext string) (string, error) {
+	log := getLogger()
+
 	if plaintext == "" {
+		log.Debug("empty plaintext provided, returning empty string")
 		return "", nil
 	}
 
@@ -83,12 +97,18 @@ func (e *encryptor) Encrypt(plaintext string) (string, error) {
 	}
 
 	ciphertext := e.gcm.Seal(nonce, nonce, []byte(plaintext), nil)
-	return base64.StdEncoding.EncodeToString(ciphertext), nil
+	encoded := base64.StdEncoding.EncodeToString(ciphertext)
+
+	log.Debug("data encrypted", "inputLength", len(plaintext), "outputLength", len(encoded))
+	return encoded, nil
 }
 
 // Decrypt decrypts the ciphertext using AES-256-GCM
 func (e *encryptor) Decrypt(ciphertext string) (string, error) {
+	log := getLogger()
+
 	if ciphertext == "" {
+		log.Debug("empty ciphertext provided, returning empty string")
 		return "", nil
 	}
 
@@ -108,5 +128,6 @@ func (e *encryptor) Decrypt(ciphertext string) (string, error) {
 		return "", err
 	}
 
+	log.Debug("data decrypted", "inputLength", len(ciphertext), "outputLength", len(plaintext))
 	return string(plaintext), nil
 }

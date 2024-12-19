@@ -11,13 +11,14 @@ import (
 // CreateSession inserts a new session record into the database
 func (db *database) CreateSession(session *models.Session) error {
 	_, err := db.Exec(`
-		INSERT INTO sessions (id, user_id, refresh_token, expires_at, created_at)
-		VALUES (?, ?, ?, ?, ?)`,
+        INSERT INTO sessions (id, user_id, refresh_token, expires_at, created_at)
+        VALUES (?, ?, ?, ?, ?)`,
 		session.ID, session.UserID, session.RefreshToken, session.ExpiresAt, session.CreatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to store session: %w", err)
 	}
+
 	return nil
 }
 
@@ -45,9 +46,9 @@ func (db *database) GetSessionByRefreshToken(refreshToken string) (*models.Sessi
 func (db *database) GetSessionByID(sessionID string) (*models.Session, error) {
 	session := &models.Session{}
 	err := db.QueryRow(`
-		SELECT id, user_id, refresh_token, expires_at, created_at
-		FROM sessions
-		WHERE id = ? AND expires_at > ?`,
+        SELECT id, user_id, refresh_token, expires_at, created_at
+        FROM sessions
+        WHERE id = ? AND expires_at > ?`,
 		sessionID, time.Now(),
 	).Scan(&session.ID, &session.UserID, &session.RefreshToken, &session.ExpiresAt, &session.CreatedAt)
 
@@ -82,9 +83,17 @@ func (db *database) DeleteSession(sessionID string) error {
 
 // CleanExpiredSessions removes all expired sessions from the database
 func (db *database) CleanExpiredSessions() error {
-	_, err := db.Exec("DELETE FROM sessions WHERE expires_at <= ?", time.Now())
+	log := getLogger().WithGroup("sessions")
+	result, err := db.Exec("DELETE FROM sessions WHERE expires_at <= ?", time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to clean expired sessions: %w", err)
 	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	log.Info("cleaned expired sessions", "sessions_removed", rowsAffected)
 	return nil
 }

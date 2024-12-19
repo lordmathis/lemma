@@ -21,6 +21,8 @@ import (
 	"novamd/internal/models"
 	"novamd/internal/secrets"
 	"novamd/internal/storage"
+
+	_ "novamd/internal/testenv"
 )
 
 // testHarness encapsulates all the dependencies needed for testing
