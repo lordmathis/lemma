@@ -26,7 +26,7 @@ func main() {
 
 	// Setup logging
 	logging.Setup(cfg.LogLevel)
-	logging.Debug("Configuration loaded", "config", logging.Redact(cfg))
+	logging.Debug("Configuration loaded", "config", cfg.Redact())
 
 	// Initialize and start server
 	options, err := app.DefaultOptions(cfg)

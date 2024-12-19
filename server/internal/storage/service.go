@@ -27,9 +27,6 @@ type Options struct {
 
 // NewService creates a new Storage instance with the default options and the given rootDir root directory.
 func NewService(rootDir string) *Service {
-	getLogger().Debug("creating new storage service",
-		"rootDir", rootDir,
-		"options", "default")
 	return NewServiceWithOptions(rootDir, Options{
 		Fs:           &osFS{},
 		NewGitClient: git.New,
@@ -38,10 +35,6 @@ func NewService(rootDir string) *Service {
 
 // NewServiceWithOptions creates a new Storage instance with the given options and the given rootDir root directory.
 func NewServiceWithOptions(rootDir string, options Options) *Service {
-	log := getLogger()
-	log.Debug("creating new storage service with custom options",
-		"rootDir", rootDir)
-
 	if options.Fs == nil {
 		options.Fs = &osFS{}
 	}

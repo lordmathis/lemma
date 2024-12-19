@@ -122,7 +122,6 @@ func Init(dbPath string, secretsService secrets.Service) (Database, error) {
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
-	log.Debug("database ping successful")
 
 	// Enable foreign keys for this connection
 	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {

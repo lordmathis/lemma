@@ -19,10 +19,10 @@ type Config struct {
 	RootURL           string
 	Domain            string
 	CORSOrigins       []string
-	AdminEmail        string `log:"redact"`
-	AdminPassword     string `log:"redact"`
-	EncryptionKey     string `log:"redact"`
-	JWTSigningKey     string `log:"redact"`
+	AdminEmail        string
+	AdminPassword     string
+	EncryptionKey     string
+	JWTSigningKey     string
 	RateLimitRequests int
 	RateLimitWindow   time.Duration
 	IsDevelopment     bool
@@ -54,6 +54,16 @@ func (c *Config) validate() error {
 	}
 
 	return nil
+}
+
+// Redact redacts sensitive fields from a Config instance
+func (c *Config) Redact() *Config {
+	redacted := *c
+	redacted.AdminPassword = "[REDACTED]"
+	redacted.AdminEmail = "[REDACTED]"
+	redacted.EncryptionKey = "[REDACTED]"
+	redacted.JWTSigningKey = "[REDACTED]"
+	return &redacted
 }
 
 // LoadConfig creates a new Config instance with values from environment variables

@@ -52,8 +52,6 @@ type jwtService struct {
 // NewJWTService creates a new JWT service with the provided configuration
 // Returns an error if the signing key is missing
 func NewJWTService(config JWTConfig) (JWTManager, error) {
-	log := getJWTLogger()
-
 	if config.SigningKey == "" {
 		return nil, fmt.Errorf("signing key is required")
 	}
@@ -65,10 +63,6 @@ func NewJWTService(config JWTConfig) (JWTManager, error) {
 	if config.RefreshTokenExpiry == 0 {
 		config.RefreshTokenExpiry = 7 * 24 * time.Hour
 	}
-
-	log.Info("initialized JWT service",
-		"accessExpiry", config.AccessTokenExpiry,
-		"refreshExpiry", config.RefreshTokenExpiry)
 
 	return &jwtService{config: config}, nil
 }

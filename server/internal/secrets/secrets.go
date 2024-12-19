@@ -64,7 +64,6 @@ func decodeAndValidateKey(key string) ([]byte, error) {
 
 // NewService creates a new Encryptor instance with the provided base64-encoded key
 func NewService(key string) (Service, error) {
-	log := getLogger()
 	keyBytes, err := decodeAndValidateKey(key)
 	if err != nil {
 		return nil, err
@@ -80,7 +79,6 @@ func NewService(key string) (Service, error) {
 		return nil, fmt.Errorf("failed to create GCM: %w", err)
 	}
 
-	log.Info("encryption service created")
 	return &encryptor{gcm: gcm}, nil
 }
 
