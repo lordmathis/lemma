@@ -4,7 +4,7 @@ package db
 
 import (
 	"database/sql"
-	"novamd/internal/secrets"
+	"lemma/internal/secrets"
 )
 
 type TestDatabase interface {
