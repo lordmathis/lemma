@@ -5,6 +5,8 @@ import (
 
 	"novamd/internal/db"
 
+	_ "novamd/internal/testenv"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 

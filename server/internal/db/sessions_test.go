@@ -7,6 +7,7 @@ import (
 
 	"novamd/internal/db"
 	"novamd/internal/models"
+	_ "novamd/internal/testenv"
 
 	"github.com/google/uuid"
 )

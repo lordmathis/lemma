@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	_ "novamd/internal/testenv"
 )
 
 func TestDefaultConfig(t *testing.T) {

@@ -9,6 +9,7 @@ import (
 
 	"novamd/internal/context"
 	"novamd/internal/models"
+	_ "novamd/internal/testenv"
 )
 
 // MockDB implements the minimal database interface needed for testing

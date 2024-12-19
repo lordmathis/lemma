@@ -141,7 +141,6 @@ func (m *Middleware) RequireWorkspaceAccess(next http.Handler) http.Handler {
 			"handler", "RequireWorkspaceAccess",
 			"clientIP", r.RemoteAddr,
 			"userId", ctx.UserID,
-			"workspaceId", ctx.Workspace.ID,
 		)
 
 		// If no workspace in context, allow the request

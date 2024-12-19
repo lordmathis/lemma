@@ -199,13 +199,8 @@ func (h *Handler) Logout(authManager auth.SessionManager, cookieService auth.Coo
 // @Router /auth/refresh [post]
 func (h *Handler) RefreshToken(authManager auth.SessionManager, cookieService auth.CookieManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := context.GetRequestContext(w, r)
-		if !ok {
-			return
-		}
 		log := getAuthLogger().With(
 			"handler", "RefreshToken",
-			"userID", ctx.UserID,
 			"clientIP", r.RemoteAddr,
 		)
 

@@ -6,6 +6,7 @@ import (
 
 	"novamd/internal/git"
 	"novamd/internal/storage"
+	_ "novamd/internal/testenv"
 )
 
 // MockGitClient implements git.Client interface for testing
