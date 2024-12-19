@@ -61,11 +61,9 @@ func NewJWTService(config JWTConfig) (JWTManager, error) {
 	// Set default expiry times if not provided
 	if config.AccessTokenExpiry == 0 {
 		config.AccessTokenExpiry = 15 * time.Minute
-		log.Debug("using default access token expiry", "expiry", config.AccessTokenExpiry)
 	}
 	if config.RefreshTokenExpiry == 0 {
 		config.RefreshTokenExpiry = 7 * 24 * time.Hour
-		log.Debug("using default refresh token expiry", "expiry", config.RefreshTokenExpiry)
 	}
 
 	log.Info("initialized JWT service",
@@ -87,7 +85,6 @@ func (s *jwtService) GenerateRefreshToken(userID int, role, sessionID string) (s
 
 // generateToken is an internal helper function that creates a new JWT token
 func (s *jwtService) generateToken(userID int, role string, sessionID string, tokenType TokenType, expiry time.Duration) (string, error) {
-	log := getJWTLogger()
 	now := time.Now()
 
 	// Add a random nonce to ensure uniqueness
@@ -113,12 +110,6 @@ func (s *jwtService) generateToken(userID int, role string, sessionID string, to
 	if err != nil {
 		return "", err
 	}
-
-	log.Debug("generated JWT token",
-		"userId", userID,
-		"role", role,
-		"tokenType", tokenType,
-		"expiresAt", claims.ExpiresAt)
 
 	return signedToken, nil
 }

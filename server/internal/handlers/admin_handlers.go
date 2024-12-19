@@ -344,7 +344,7 @@ func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 			return
 		}
 
-		log.Info("user updated",
+		log.Debug("user updated",
 			"targetUserID", userID,
 			"updates", updates,
 		)

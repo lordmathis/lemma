@@ -26,11 +26,6 @@ func WithUserContextMiddleware(next http.Handler) http.Handler {
 			UserRole: claims.Role,
 		}
 
-		log.Debug("user context extracted from claims",
-			"userID", claims.UserID,
-			"role", claims.Role,
-			"path", r.URL.Path)
-
 		r = WithHandlerContext(r, hctx)
 		next.ServeHTTP(w, r)
 	})
@@ -57,12 +52,6 @@ func WithWorkspaceContextMiddleware(db db.WorkspaceReader) func(http.Handler) ht
 				http.Error(w, "Failed to get workspace", http.StatusNotFound)
 				return
 			}
-
-			log.Debug("workspace context added",
-				"userID", ctx.UserID,
-				"workspaceID", workspace.ID,
-				"workspaceName", workspace.Name,
-				"path", r.URL.Path)
 
 			ctx.Workspace = workspace
 			r = WithHandlerContext(r, ctx)

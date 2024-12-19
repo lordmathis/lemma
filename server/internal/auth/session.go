@@ -32,9 +32,6 @@ type sessionManager struct {
 // NewSessionService creates a new session service with the given database and JWT manager
 // revive:disable:unexported-return
 func NewSessionService(db db.SessionStore, jwtManager JWTManager) *sessionManager {
-	log := getSessionLogger()
-	log.Info("initialized session manager")
-
 	return &sessionManager{
 		db:         db,
 		jwtManager: jwtManager,
@@ -90,9 +87,7 @@ func (s *sessionManager) CreateSession(userID int, role string) (*models.Session
 
 // RefreshSession creates a new access token using a refreshToken
 func (s *sessionManager) RefreshSession(refreshToken string) (string, error) {
-	log := getSessionLogger()
-
-	// Get session from database first
+	// Get session from database
 	session, err := s.db.GetSessionByRefreshToken(refreshToken)
 	if err != nil {
 		return "", fmt.Errorf("invalid session: %w", err)
@@ -104,7 +99,6 @@ func (s *sessionManager) RefreshSession(refreshToken string) (string, error) {
 		return "", fmt.Errorf("invalid refresh token: %w", err)
 	}
 
-	// Double check that the claims match the session
 	if claims.UserID != session.UserID {
 		return "", fmt.Errorf("token does not match session")
 	}
@@ -114,11 +108,6 @@ func (s *sessionManager) RefreshSession(refreshToken string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	log.Debug("refreshed session",
-		"userId", claims.UserID,
-		"role", claims.Role,
-		"sessionId", session.ID)
 
 	return newToken, nil
 }

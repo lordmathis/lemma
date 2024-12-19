@@ -82,7 +82,6 @@ func (db *database) Migrate() error {
 	log.Info("starting database migration")
 
 	// Create migrations table if it doesn't exist
-	log.Debug("ensuring migrations table exists")
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS migrations (
         version INTEGER PRIMARY KEY
     )`)
@@ -91,58 +90,49 @@ func (db *database) Migrate() error {
 	}
 
 	// Get current version
-	log.Debug("checking current migration version")
 	var currentVersion int
 	err = db.QueryRow("SELECT COALESCE(MAX(version), 0) FROM migrations").Scan(&currentVersion)
 	if err != nil {
 		return fmt.Errorf("failed to get current migration version: %w", err)
 	}
-	log.Info("current database version", "version", currentVersion)
 
 	// Apply new migrations
 	for _, migration := range migrations {
 		if migration.Version > currentVersion {
 			log := log.With("migration_version", migration.Version)
-			log.Info("applying migration")
-
 			tx, err := db.Begin()
 			if err != nil {
 				return fmt.Errorf("failed to begin transaction for migration %d: %w", migration.Version, err)
 			}
 
 			// Execute migration SQL
-			log.Debug("executing migration SQL")
 			_, err = tx.Exec(migration.SQL)
 			if err != nil {
 				if rbErr := tx.Rollback(); rbErr != nil {
 					return fmt.Errorf("migration %d failed: %v, rollback failed: %v",
 						migration.Version, err, rbErr)
 				}
-				log.Debug("successfully rolled back failed migration")
 				return fmt.Errorf("migration %d failed: %w", migration.Version, err)
 			}
 
 			// Update migrations table
-			log.Debug("updating migrations version")
 			_, err = tx.Exec("INSERT INTO migrations (version) VALUES (?)", migration.Version)
 			if err != nil {
 				if rbErr := tx.Rollback(); rbErr != nil {
 					return fmt.Errorf("failed to update migration version: %v, rollback failed: %v",
 						err, rbErr)
 				}
-				log.Debug("successfully rolled back failed version update")
 				return fmt.Errorf("failed to update migration version: %w", err)
 			}
 
 			// Commit transaction
-			log.Debug("committing migration")
 			err = tx.Commit()
 			if err != nil {
 				return fmt.Errorf("failed to commit migration %d: %w", migration.Version, err)
 			}
 
 			currentVersion = migration.Version
-			log.Info("migration applied successfully", "new_version", currentVersion)
+			log.Debug("migration applied", "new_version", currentVersion)
 		}
 	}
 

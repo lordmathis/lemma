@@ -55,9 +55,6 @@ func (h *Handler) ListWorkspaces() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("workspaces retrieved successfully",
-			"count", len(workspaces),
-		)
 		respondJSON(w, workspaces)
 	}
 }
@@ -127,11 +124,6 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 		}
 
 		if workspace.GitEnabled {
-			log.Debug("setting up git repository",
-				"workspaceID", workspace.ID,
-				"gitURL", workspace.GitURL,
-			)
-
 			if err := h.Storage.SetupGitRepo(
 				ctx.UserID,
 				workspace.ID,
@@ -260,10 +252,6 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 		// Handle Git repository setup/teardown if Git settings changed
 		if changes["gitSettings"] {
 			if workspace.GitEnabled {
-				log.Debug("updating git repository configuration",
-					"gitURL", workspace.GitURL,
-				)
-
 				if err := h.Storage.SetupGitRepo(
 					ctx.UserID,
 					ctx.Workspace.ID,
@@ -280,7 +268,6 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 					return
 				}
 			} else {
-				log.Debug("disabling git repository")
 				h.Storage.DisableGitRepo(ctx.UserID, ctx.Workspace.ID)
 			}
 		}
@@ -293,9 +280,6 @@ func (h *Handler) UpdateWorkspace() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("workspace updated",
-			"changes", changes,
-		)
 		respondJSON(w, workspace)
 	}
 }
@@ -445,9 +429,6 @@ func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("last workspace name retrieved",
-			"workspaceName", workspaceName,
-		)
 		respondJSON(w, &LastWorkspaceNameResponse{LastWorkspaceName: workspaceName})
 	}
 }
@@ -497,9 +478,6 @@ func (h *Handler) UpdateLastWorkspaceName() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("last workspace name updated",
-			"workspaceName", requestBody.WorkspaceName,
-		)
 		w.WriteHeader(http.StatusNoContent)
 	}
 }

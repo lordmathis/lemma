@@ -78,11 +78,6 @@ func (h *Handler) StageCommitAndPush() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("git operations completed successfully",
-			"commitHash", hash.String(),
-			"commitMessage", requestBody.Message,
-		)
-
 		respondJSON(w, CommitResponse{CommitHash: hash.String()})
 	}
 }
@@ -120,7 +115,6 @@ func (h *Handler) PullChanges() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("successfully pulled changes from remote")
 		respondJSON(w, PullResponse{Message: "Successfully pulled changes from remote"})
 	}
 }

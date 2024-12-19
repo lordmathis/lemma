@@ -124,7 +124,7 @@ func (h *Handler) Login(authManager auth.SessionManager, cookieService auth.Cook
 			ExpiresAt: session.ExpiresAt,
 		}
 
-		log.Info("user logged in successfully",
+		log.Debug("user logged in",
 			"userID", user.ID,
 			"email", user.Email,
 			"role", user.Role,

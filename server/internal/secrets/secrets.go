@@ -65,8 +65,6 @@ func decodeAndValidateKey(key string) ([]byte, error) {
 // NewService creates a new Encryptor instance with the provided base64-encoded key
 func NewService(key string) (Service, error) {
 	log := getLogger()
-	log.Debug("creating new encryption service")
-
 	keyBytes, err := decodeAndValidateKey(key)
 	if err != nil {
 		return nil, err

@@ -73,9 +73,6 @@ func (h *Handler) ListFiles() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("files listed successfully",
-			"fileCount", len(files),
-		)
 		respondJSON(w, files)
 	}
 }
@@ -129,10 +126,6 @@ func (h *Handler) LookupFileByName() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("file lookup successful",
-			"filename", filename,
-			"matchCount", len(filePaths),
-		)
 		respondJSON(w, &LookupResponse{Paths: filePaths})
 	}
 }
@@ -203,11 +196,6 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 			respondError(w, "Failed to write response", http.StatusInternalServerError)
 			return
 		}
-
-		log.Debug("file content retrieved",
-			"filePath", filePath,
-			"contentSize", len(content),
-		)
 	}
 }
 
@@ -276,11 +264,6 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 			UpdatedAt: time.Now().UTC(),
 		}
 
-		log.Debug("file saved",
-			"filePath", filePath,
-			"size", response.Size,
-			"updatedAt", response.UpdatedAt,
-		)
 		respondJSON(w, response)
 	}
 }
@@ -339,9 +322,6 @@ func (h *Handler) DeleteFile() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("file deleted",
-			"filePath", filePath,
-		)
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
@@ -389,9 +369,6 @@ func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("last opened file retrieved successfully",
-			"filePath", filePath,
-		)
 		respondJSON(w, &LastOpenedFileResponse{LastOpenedFilePath: filePath})
 	}
 }
@@ -473,9 +450,6 @@ func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("last opened file updated successfully",
-			"filePath", requestBody.FilePath,
-		)
 		w.WriteHeader(http.StatusNoContent)
 	}
 }

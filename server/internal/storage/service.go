@@ -43,17 +43,12 @@ func NewServiceWithOptions(rootDir string, options Options) *Service {
 		"rootDir", rootDir)
 
 	if options.Fs == nil {
-		log.Debug("filesystem not provided, using default osFS")
 		options.Fs = &osFS{}
 	}
 
 	if options.NewGitClient == nil {
-		log.Debug("git client factory not provided, using default git.New")
 		options.NewGitClient = git.New
 	}
-
-	log.Info("storage service created",
-		"rootDir", rootDir)
 
 	return &Service{
 		fs:           options.Fs,

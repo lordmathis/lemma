@@ -16,7 +16,6 @@ func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 
 	// Set default settings if not provided
 	if workspace.Theme == "" {
-		log.Debug("setting default workspace settings")
 		workspace.SetDefaultSettings()
 	}
 
@@ -47,17 +46,11 @@ func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 	}
 	workspace.ID = int(id)
 
-	log.Info("workspace created",
-		"workspace_id", workspace.ID,
-		"user_id", workspace.UserID)
 	return nil
 }
 
 // GetWorkspaceByID retrieves a workspace by its ID
 func (db *database) GetWorkspaceByID(id int) (*models.Workspace, error) {
-	log := getLogger().WithGroup("workspaces")
-	log.Debug("fetching workspace by ID", "workspace_id", id)
-
 	workspace := &models.Workspace{}
 	var encryptedToken string
 
@@ -80,7 +73,6 @@ func (db *database) GetWorkspaceByID(id int) (*models.Workspace, error) {
 	)
 
 	if err == sql.ErrNoRows {
-		log.Debug("workspace not found", "workspace_id", id)
 		return nil, fmt.Errorf("workspace not found")
 	}
 	if err != nil {
@@ -93,19 +85,11 @@ func (db *database) GetWorkspaceByID(id int) (*models.Workspace, error) {
 		return nil, fmt.Errorf("failed to decrypt token: %w", err)
 	}
 
-	log.Debug("workspace retrieved",
-		"workspace_id", id,
-		"user_id", workspace.UserID)
 	return workspace, nil
 }
 
 // GetWorkspaceByName retrieves a workspace by its name and user ID
 func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*models.Workspace, error) {
-	log := getLogger().WithGroup("workspaces")
-	log.Debug("fetching workspace by name",
-		"user_id", userID,
-		"workspace_name", workspaceName)
-
 	workspace := &models.Workspace{}
 	var encryptedToken string
 
@@ -128,9 +112,6 @@ func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*model
 	)
 
 	if err == sql.ErrNoRows {
-		log.Debug("workspace not found",
-			"user_id", userID,
-			"workspace_name", workspaceName)
 		return nil, fmt.Errorf("workspace not found")
 	}
 	if err != nil {
@@ -143,27 +124,18 @@ func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*model
 		return nil, fmt.Errorf("failed to decrypt token: %w", err)
 	}
 
-	log.Debug("workspace retrieved successfully",
-		"workspace_id", workspace.ID,
-		"user_id", userID)
 	return workspace, nil
 }
 
 // UpdateWorkspace updates a workspace record in the database
 func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
-	log := getLogger().WithGroup("workspaces")
-	log.Debug("updating workspace",
-		"workspace_id", workspace.ID,
-		"user_id", workspace.UserID,
-		"git_enabled", workspace.GitEnabled)
-
 	// Encrypt token before storing
 	encryptedToken, err := db.encryptToken(workspace.GitToken)
 	if err != nil {
 		return fmt.Errorf("failed to encrypt token: %w", err)
 	}
 
-	result, err := db.Exec(`
+	_, err = db.Exec(`
         UPDATE workspaces 
         SET 
             name = ?,
@@ -198,29 +170,11 @@ func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
 		return fmt.Errorf("failed to update workspace: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		log.Warn("no workspace found to update",
-			"workspace_id", workspace.ID,
-			"user_id", workspace.UserID)
-		return fmt.Errorf("workspace not found")
-	}
-
-	log.Debug("workspace updated",
-		"workspace_id", workspace.ID,
-		"user_id", workspace.UserID)
 	return nil
 }
 
 // GetWorkspacesByUserID retrieves all workspaces for a user
 func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
-	log := getLogger().WithGroup("workspaces")
-	log.Debug("fetching workspaces for user", "user_id", userID)
-
 	rows, err := db.Query(`
         SELECT 
             id, user_id, name, created_at,
@@ -265,20 +219,12 @@ func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, erro
 		return nil, fmt.Errorf("error iterating workspace rows: %w", err)
 	}
 
-	log.Debug("workspaces retrieved successfully",
-		"user_id", userID,
-		"count", len(workspaces))
 	return workspaces, nil
 }
 
 // UpdateWorkspaceSettings updates only the settings portion of a workspace
 func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
-	log := getLogger().WithGroup("workspaces")
-	log.Debug("updating workspace settings",
-		"workspace_id", workspace.ID,
-		"git_enabled", workspace.GitEnabled)
-
-	result, err := db.Exec(`
+	_, err := db.Exec(`
         UPDATE workspaces 
         SET 
             theme = ?,
@@ -310,142 +256,74 @@ func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 		return fmt.Errorf("failed to update workspace settings: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		log.Warn("no workspace found to update settings",
-			"workspace_id", workspace.ID)
-		return fmt.Errorf("workspace not found")
-	}
-
-	log.Info("workspace settings updated",
-		"workspace_id", workspace.ID)
 	return nil
 }
 
 // DeleteWorkspace removes a workspace record from the database
 func (db *database) DeleteWorkspace(id int) error {
 	log := getLogger().WithGroup("workspaces")
-	log.Debug("deleting workspace", "workspace_id", id)
 
-	result, err := db.Exec("DELETE FROM workspaces WHERE id = ?", id)
+	_, err := db.Exec("DELETE FROM workspaces WHERE id = ?", id)
 	if err != nil {
 		return fmt.Errorf("failed to delete workspace: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		log.Warn("no workspace found to delete", "workspace_id", id)
-		return fmt.Errorf("workspace not found")
-	}
-
-	log.Info("workspace deleted", "workspace_id", id)
+	log.Debug("workspace deleted", "workspace_id", id)
 	return nil
 }
 
 // DeleteWorkspaceTx removes a workspace record from the database within a transaction
 func (db *database) DeleteWorkspaceTx(tx *sql.Tx, id int) error {
 	log := getLogger().WithGroup("workspaces")
-	log.Debug("deleting workspace in transaction", "workspace_id", id)
-
 	result, err := tx.Exec("DELETE FROM workspaces WHERE id = ?", id)
 	if err != nil {
 		return fmt.Errorf("failed to delete workspace in transaction: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to get rows affected in transaction: %w", err)
 	}
 
-	if rowsAffected == 0 {
-		log.Warn("no workspace found to delete in transaction",
-			"workspace_id", id)
-		return fmt.Errorf("workspace not found")
-	}
-
-	log.Debug("workspace deleted successfully in transaction",
+	log.Debug("workspace deleted",
 		"workspace_id", id)
 	return nil
 }
 
 // UpdateLastWorkspaceTx sets the last workspace for a user in a transaction
 func (db *database) UpdateLastWorkspaceTx(tx *sql.Tx, userID, workspaceID int) error {
-	log := getLogger().WithGroup("workspaces")
-	log.Debug("updating last workspace in transaction",
-		"user_id", userID,
-		"workspace_id", workspaceID)
-
 	result, err := tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?",
 		workspaceID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to update last workspace in transaction: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to get rows affected in transaction: %w", err)
 	}
 
-	if rowsAffected == 0 {
-		log.Warn("no user found to update last workspace",
-			"user_id", userID)
-		return fmt.Errorf("user not found")
-	}
-
-	log.Debug("last workspace updated successfully in transaction",
-		"user_id", userID,
-		"workspace_id", workspaceID)
 	return nil
 }
 
 // UpdateLastOpenedFile updates the last opened file path for a workspace
 func (db *database) UpdateLastOpenedFile(workspaceID int, filePath string) error {
-	log := getLogger().WithGroup("workspaces")
-	log.Debug("updating last opened file",
-		"workspace_id", workspaceID,
-		"file_path", filePath)
-
-	result, err := db.Exec("UPDATE workspaces SET last_opened_file_path = ? WHERE id = ?",
+	_, err := db.Exec("UPDATE workspaces SET last_opened_file_path = ? WHERE id = ?",
 		filePath, workspaceID)
 	if err != nil {
 		return fmt.Errorf("failed to update last opened file: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		log.Warn("no workspace found to update last opened file",
-			"workspace_id", workspaceID)
-		return fmt.Errorf("workspace not found")
-	}
-
-	log.Debug("last opened file updated successfully",
-		"workspace_id", workspaceID)
 	return nil
 }
 
 // GetLastOpenedFile retrieves the last opened file path for a workspace
 func (db *database) GetLastOpenedFile(workspaceID int) (string, error) {
-	log := getLogger().WithGroup("workspaces")
-	log.Debug("fetching last opened file", "workspace_id", workspaceID)
-
 	var filePath sql.NullString
 	err := db.QueryRow("SELECT last_opened_file_path FROM workspaces WHERE id = ?",
 		workspaceID).Scan(&filePath)
 
 	if err == sql.ErrNoRows {
-		log.Debug("workspace not found", "workspace_id", workspaceID)
 		return "", fmt.Errorf("workspace not found")
 	}
 	if err != nil {
@@ -453,21 +331,14 @@ func (db *database) GetLastOpenedFile(workspaceID int) (string, error) {
 	}
 
 	if !filePath.Valid {
-		log.Debug("no last opened file found", "workspace_id", workspaceID)
 		return "", nil
 	}
 
-	log.Debug("last opened file retrieved successfully",
-		"workspace_id", workspaceID,
-		"file_path", filePath.String)
 	return filePath.String, nil
 }
 
 // GetAllWorkspaces retrieves all workspaces in the database
 func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
-	log := getLogger().WithGroup("workspaces")
-	log.Debug("fetching all workspaces")
-
 	rows, err := db.Query(`
         SELECT 
             id, user_id, name, created_at,
@@ -510,6 +381,5 @@ func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
 		return nil, fmt.Errorf("error iterating workspace rows: %w", err)
 	}
 
-	log.Debug("all workspaces retrieved successfully", "count", len(workspaces))
 	return workspaces, nil
 }

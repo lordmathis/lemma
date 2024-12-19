@@ -20,9 +20,6 @@ type Middleware struct {
 
 // NewMiddleware creates a new authentication middleware
 func NewMiddleware(jwtManager JWTManager, sessionManager SessionManager, cookieManager CookieManager) *Middleware {
-	log := getMiddlewareLogger()
-	log.Info("initialized auth middleware")
-
 	return &Middleware{
 		jwtManager:     jwtManager,
 		sessionManager: sessionManager,
@@ -33,11 +30,15 @@ func NewMiddleware(jwtManager JWTManager, sessionManager SessionManager, cookieM
 // Authenticate middleware validates JWT tokens and sets user information in context
 func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log := getMiddlewareLogger()
+		log := getMiddlewareLogger().With(
+			"handler", "Authenticate",
+			"clientIP", r.RemoteAddr,
+		)
 
 		// Extract token from cookie
 		cookie, err := r.Cookie("access_token")
 		if err != nil {
+			log.Warn("attempt to access protected route without token")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -45,12 +46,14 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 		// Validate token
 		claims, err := m.jwtManager.ValidateToken(cookie.Value)
 		if err != nil {
+			log.Warn("attempt to access protected route with invalid token", "error", err.Error())
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
 
 		// Check token type
 		if claims.Type != AccessToken {
+			log.Warn("attempt to access protected route with invalid token type", "type", claims.Type)
 			http.Error(w, "Invalid token type", http.StatusUnauthorized)
 			return
 		}
@@ -58,6 +61,7 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 		// Check if session is still valid in database
 		session, err := m.sessionManager.ValidateSession(claims.ID)
 		if err != nil || session == nil {
+			log.Warn("attempt to access protected route with invalid session", "error", err.Error())
 			m.cookieManager.InvalidateCookie("access_token")
 			m.cookieManager.InvalidateCookie("refresh_token")
 			m.cookieManager.InvalidateCookie("csrf_token")
@@ -69,17 +73,20 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Method != http.MethodOptions {
 			csrfCookie, err := r.Cookie("csrf_token")
 			if err != nil {
+				log.Warn("attempt to access protected route without CSRF token", "error", err.Error())
 				http.Error(w, "CSRF cookie not found", http.StatusForbidden)
 				return
 			}
 
 			csrfHeader := r.Header.Get("X-CSRF-Token")
 			if csrfHeader == "" {
+				log.Warn("attempt to access protected route without CSRF header")
 				http.Error(w, "CSRF token header not found", http.StatusForbidden)
 				return
 			}
 
 			if subtle.ConstantTimeCompare([]byte(csrfCookie.Value), []byte(csrfHeader)) != 1 {
+				log.Warn("attempt to access protected route with invalid CSRF token")
 				http.Error(w, "CSRF token mismatch", http.StatusForbidden)
 				return
 			}
@@ -91,12 +98,6 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 			UserRole: claims.Role,
 		}
 
-		log.Debug("authentication completed",
-			"userId", claims.UserID,
-			"role", claims.Role,
-			"method", r.Method,
-			"path", r.URL.Path)
-
 		// Add context to request and continue
 		next.ServeHTTP(w, context.WithHandlerContext(r, hctx))
 	})
@@ -106,7 +107,11 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 func (m *Middleware) RequireRole(role string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log := getMiddlewareLogger()
+			log := getMiddlewareLogger().With(
+				"handler", "RequireRole",
+				"requiredRole", role,
+				"clientIP", r.RemoteAddr,
+			)
 
 			ctx, ok := context.GetRequestContext(w, r)
 			if !ok {
@@ -114,14 +119,10 @@ func (m *Middleware) RequireRole(role string) func(http.Handler) http.Handler {
 			}
 
 			if ctx.UserRole != role && ctx.UserRole != "admin" {
+				log.Warn("attempt to access protected route without required role")
 				http.Error(w, "Insufficient permissions", http.StatusForbidden)
 				return
 			}
-
-			log.Debug("role requirement satisfied",
-				"requiredRole", role,
-				"userRole", ctx.UserRole,
-				"path", r.URL.Path)
 
 			next.ServeHTTP(w, r)
 		})
@@ -131,14 +132,19 @@ func (m *Middleware) RequireRole(role string) func(http.Handler) http.Handler {
 // RequireWorkspaceAccess returns a middleware that ensures the user has access to the workspace
 func (m *Middleware) RequireWorkspaceAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log := getMiddlewareLogger()
-
 		ctx, ok := context.GetRequestContext(w, r)
 		if !ok {
 			return
 		}
 
-		// If no workspace in context, allow the request (might be a non-workspace endpoint)
+		log := getMiddlewareLogger().With(
+			"handler", "RequireWorkspaceAccess",
+			"clientIP", r.RemoteAddr,
+			"userId", ctx.UserID,
+			"workspaceId", ctx.Workspace.ID,
+		)
+
+		// If no workspace in context, allow the request
 		if ctx.Workspace == nil {
 			next.ServeHTTP(w, r)
 			return
@@ -146,14 +152,10 @@ func (m *Middleware) RequireWorkspaceAccess(next http.Handler) http.Handler {
 
 		// Check if user has access (either owner or admin)
 		if ctx.Workspace.UserID != ctx.UserID && ctx.UserRole != "admin" {
+			log.Warn("attempt to access workspace without permission")
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
 		}
-
-		log.Debug("workspace access granted",
-			"userId", ctx.UserID,
-			"workspaceId", ctx.Workspace.ID,
-			"path", r.URL.Path)
 
 		next.ServeHTTP(w, r)
 	})

@@ -17,12 +17,6 @@ type WorkspaceManager interface {
 // ValidatePath validates the if the given path is valid within the workspace directory.
 // Workspace directory is defined as the directory for the given userID and workspaceID.
 func (s *Service) ValidatePath(userID, workspaceID int, path string) (string, error) {
-	log := getLogger()
-	log.Debug("validating path",
-		"userID", userID,
-		"workspaceID", workspaceID,
-		"path", path)
-
 	workspacePath := s.GetWorkspacePath(userID, workspaceID)
 
 	// First check if the path is absolute

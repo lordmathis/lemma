@@ -118,7 +118,7 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 		// Handle email update if requested
 		if req.Email != "" && req.Email != user.Email {
 			if req.CurrentPassword == "" {
-				log.Debug("email change attempted without current password")
+				log.Warn("attempted email change without current password")
 				respondError(w, "Current password is required to change email", http.StatusBadRequest)
 				return
 			}
@@ -159,9 +159,6 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 			return
 		}
 
-		log.Debug("profile updated successfully",
-			"updates", updates,
-		)
 		respondJSON(w, user)
 	}
 }

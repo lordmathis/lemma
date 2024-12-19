@@ -113,7 +113,6 @@ type database struct {
 // Init initializes the database connection
 func Init(dbPath string, secretsService secrets.Service) (Database, error) {
 	log := getLogger()
-	log.Info("initializing database", "path", dbPath)
 
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -136,7 +135,6 @@ func Init(dbPath string, secretsService secrets.Service) (Database, error) {
 		secretsService: secretsService,
 	}
 
-	log.Info("database initialized successfully")
 	return database, nil
 }
 
@@ -148,17 +146,12 @@ func (db *database) Close() error {
 	if err := db.DB.Close(); err != nil {
 		return fmt.Errorf("failed to close database: %w", err)
 	}
-
-	log.Info("database connection closed successfully")
 	return nil
 }
 
 // Helper methods for token encryption/decryption
 func (db *database) encryptToken(token string) (string, error) {
-	log := getLogger()
-
 	if token == "" {
-		log.Debug("skipping encryption for empty token")
 		return "", nil
 	}
 
@@ -167,15 +160,11 @@ func (db *database) encryptToken(token string) (string, error) {
 		return "", fmt.Errorf("failed to encrypt token: %w", err)
 	}
 
-	log.Debug("token encrypted successfully")
 	return encrypted, nil
 }
 
 func (db *database) decryptToken(token string) (string, error) {
-	log := getLogger()
-
 	if token == "" {
-		log.Debug("skipping decryption for empty token")
 		return "", nil
 	}
 
@@ -184,6 +173,5 @@ func (db *database) decryptToken(token string) (string, error) {
 		return "", fmt.Errorf("failed to decrypt token: %w", err)
 	}
 
-	log.Debug("token decrypted successfully")
 	return decrypted, nil
 }

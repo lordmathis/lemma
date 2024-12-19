@@ -51,9 +51,6 @@ func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Set cache headers for assets
 	if strings.HasPrefix(requestedPath, "/assets/") {
 		w.Header().Set("Cache-Control", "public, max-age=31536000") // 1 year
-		log.Debug("cache headers set for asset",
-			"path", requestedPath,
-		)
 	}
 
 	// Check if file exists (not counting .gz files)
@@ -97,22 +94,11 @@ func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				contentType = "text/html"
 			}
 			w.Header().Set("Content-Type", contentType)
-
-			log.Debug("serving gzipped file",
-				"path", requestedPath,
-				"gzPath", gzPath,
-				"contentType", contentType,
-			)
 			http.ServeFile(w, r, gzPath)
 			return
 		}
 	}
 
 	// Serve original file
-	log.Debug("serving original file",
-		"path", requestedPath,
-		"size", stat.Size(),
-		"modTime", stat.ModTime(),
-	)
 	http.ServeFile(w, r, cleanPath)
 }
