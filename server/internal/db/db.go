@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"novamd/internal/logging"
-	"novamd/internal/models"
-	"novamd/internal/secrets"
+	"lemma/internal/logging"
+	"lemma/internal/models"
+	"lemma/internal/secrets"
 
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )

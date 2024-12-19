@@ -29,7 +29,7 @@ const LoginPage = () => {
 
   return (
     <Container size={420} my={40}>
-      <Title ta="center">Welcome to NovaMD</Title>
+      <Title ta="center">Welcome to Lemma</Title>
       <Text c="dimmed" size="sm" ta="center" mt={5}>
         Please sign in to continue
       </Text>

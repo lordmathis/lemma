@@ -2,9 +2,9 @@ package auth
 
 import (
 	"fmt"
-	"novamd/internal/db"
-	"novamd/internal/logging"
-	"novamd/internal/models"
+	"lemma/internal/db"
+	"lemma/internal/logging"
+	"lemma/internal/models"
 	"time"
 
 	"github.com/google/uuid"

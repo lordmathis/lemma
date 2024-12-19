@@ -3,9 +3,9 @@ package db_test
 import (
 	"testing"
 
-	"novamd/internal/db"
+	"lemma/internal/db"
 
-	_ "novamd/internal/testenv"
+	_ "lemma/internal/testenv"
 
 	_ "github.com/mattn/go-sqlite3"
 )

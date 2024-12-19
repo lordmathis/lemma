@@ -2,9 +2,9 @@ package auth
 
 import (
 	"crypto/subtle"
+	"lemma/internal/context"
+	"lemma/internal/logging"
 	"net/http"
-	"novamd/internal/context"
-	"novamd/internal/logging"
 )
 
 func getMiddlewareLogger() logging.Logger {

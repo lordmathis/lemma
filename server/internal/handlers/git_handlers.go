@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
+	"lemma/internal/context"
+	"lemma/internal/logging"
 	"net/http"
-	"novamd/internal/context"
-	"novamd/internal/logging"
 )
 
 // CommitRequest represents a request to commit changes

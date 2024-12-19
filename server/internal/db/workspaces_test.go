@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"novamd/internal/db"
-	"novamd/internal/models"
-	_ "novamd/internal/testenv"
+	"lemma/internal/db"
+	"lemma/internal/models"
+	_ "lemma/internal/testenv"
 )
 
 func TestWorkspaceOperations(t *testing.T) {

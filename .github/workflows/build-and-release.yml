@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   OWNER: lordmathis
-  REPO: novamd
+  REPO: lemma
 
 jobs:
   build-and-push-image:

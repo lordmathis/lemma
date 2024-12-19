@@ -2,7 +2,7 @@ package storage
 
 import (
 	"fmt"
-	"novamd/internal/git"
+	"lemma/internal/git"
 )
 
 // RepositoryManager defines the interface for managing Git repositories.

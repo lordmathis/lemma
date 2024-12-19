@@ -2,7 +2,7 @@ package storage
 
 import (
 	"io/fs"
-	"novamd/internal/logging"
+	"lemma/internal/logging"
 	"os"
 )
 

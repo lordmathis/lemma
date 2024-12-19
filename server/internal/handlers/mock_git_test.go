@@ -4,7 +4,7 @@ package handlers_test
 
 import (
 	"fmt"
-	"novamd/internal/git"
+	"lemma/internal/git"
 )
 
 // MockGitClient implements the git.Client interface for testing

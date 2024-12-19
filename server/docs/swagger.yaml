@@ -239,11 +239,11 @@ definitions:
     type: object
 info:
   contact: {}
-  description: This is the API for NovaMD markdown note taking app.
+  description: This is the API for Lemma markdown note taking app.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: NovaMD API
+  title: Lemma API
   version: "1.0"
 paths:
   /admin/stats:
@@ -844,7 +844,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "500":
-          description: Failed to write response
+          description: Failed to delete file
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:

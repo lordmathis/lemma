@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"novamd/internal/handlers"
+	"lemma/internal/handlers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,7 +17,7 @@ import (
 
 func TestStaticHandler_Integration(t *testing.T) {
 	// Create temporary directory for test static files
-	tempDir, err := os.MkdirTemp("", "novamd-static-test-*")
+	tempDir, err := os.MkdirTemp("", "lemmastatic-test-*")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 

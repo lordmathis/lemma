@@ -3,12 +3,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"lemma/internal/context"
+	"lemma/internal/db"
+	"lemma/internal/logging"
+	"lemma/internal/models"
+	"lemma/internal/storage"
 	"net/http"
-	"novamd/internal/context"
-	"novamd/internal/db"
-	"novamd/internal/logging"
-	"novamd/internal/models"
-	"novamd/internal/storage"
 	"strconv"
 	"time"
 

@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"novamd/internal/models"
+	"lemma/internal/models"
 )
 
 // CreateWorkspace inserts a new workspace record into the database

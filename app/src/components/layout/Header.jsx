@@ -8,7 +8,7 @@ const Header = () => {
   return (
     <Group justify="space-between" h={60} px="md">
       <Text fw={700} size="lg">
-        NovaMD
+        Lemma
       </Text>
       <Group>
         <WorkspaceSwitcher />

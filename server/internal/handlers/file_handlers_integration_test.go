@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"novamd/internal/models"
-	"novamd/internal/storage"
+	"lemma/internal/models"
+	"lemma/internal/storage"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

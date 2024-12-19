@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"novamd/internal/secrets"
-	_ "novamd/internal/testenv"
+	"lemma/internal/secrets"
+	_ "lemma/internal/testenv"
 )
 
 func TestValidateKey(t *testing.T) {

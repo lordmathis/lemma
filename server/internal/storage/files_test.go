@@ -2,11 +2,11 @@ package storage_test
 
 import (
 	"io/fs"
-	"novamd/internal/storage"
+	"lemma/internal/storage"
 	"path/filepath"
 	"testing"
 
-	_ "novamd/internal/testenv"
+	_ "lemma/internal/testenv"
 )
 
 // TestFileNode ensures FileNode structs are created correctly

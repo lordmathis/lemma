@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"novamd/internal/git"
+	"lemma/internal/git"
 )
 
 // Manager interface combines all storage interfaces.

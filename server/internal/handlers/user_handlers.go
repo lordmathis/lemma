@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"novamd/internal/context"
-	"novamd/internal/logging"
+	"lemma/internal/context"
+	"lemma/internal/logging"
 
 	"golang.org/x/crypto/bcrypt"
 )

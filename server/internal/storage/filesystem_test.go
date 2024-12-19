@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	_ "novamd/internal/testenv"
+	_ "lemma/internal/testenv"
 )
 
 type mockDirEntry struct {

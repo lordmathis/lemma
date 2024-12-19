@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"novamd/internal/db"
-	"novamd/internal/models"
-	_ "novamd/internal/testenv"
+	"lemma/internal/db"
+	"lemma/internal/models"
+	_ "lemma/internal/testenv"
 
 	"github.com/google/uuid"
 )

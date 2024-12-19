@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"lemma/internal/logging"
 	"net/http"
-	"novamd/internal/logging"
 	"os"
 	"path/filepath"
 	"strings"

@@ -1295,7 +1295,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Failed to write response",
+                        "description": "Failed to delete file",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -1777,8 +1777,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "NovaMD API",
-	Description:      "This is the API for NovaMD markdown note taking app.",
+	Title:            "Lemma API",
+	Description:      "This is the API for Lemma markdown note taking app.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

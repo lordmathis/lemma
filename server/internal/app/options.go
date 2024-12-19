@@ -1,10 +1,10 @@
 package app
 
 import (
-	"novamd/internal/auth"
-	"novamd/internal/db"
-	"novamd/internal/logging"
-	"novamd/internal/storage"
+	"lemma/internal/auth"
+	"lemma/internal/db"
+	"lemma/internal/logging"
+	"lemma/internal/storage"
 )
 
 // Options holds all dependencies and configuration for the server

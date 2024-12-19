@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"novamd/internal/context"
-	"novamd/internal/logging"
-	"novamd/internal/models"
+	"lemma/internal/context"
+	"lemma/internal/logging"
+	"lemma/internal/models"
 )
 
 // DeleteWorkspaceResponse contains the name of the next workspace after deleting the current one

@@ -1,12 +1,12 @@
 package app_test
 
 import (
-	"novamd/internal/app"
+	"lemma/internal/app"
 	"os"
 	"testing"
 	"time"
 
-	_ "novamd/internal/testenv"
+	_ "lemma/internal/testenv"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -17,7 +17,7 @@ func TestDefaultConfig(t *testing.T) {
 		got      interface{}
 		expected interface{}
 	}{
-		{"DBPath", cfg.DBPath, "./novamd.db"},
+		{"DBPath", cfg.DBPath, "./lemma.db"},
 		{"WorkDir", cfg.WorkDir, "./data"},
 		{"StaticPath", cfg.StaticPath, "../app/dist"},
 		{"Port", cfg.Port, "8080"},
@@ -46,20 +46,20 @@ func TestLoad(t *testing.T) {
 	// Helper function to reset environment variables
 	cleanup := func() {
 		envVars := []string{
-			"NOVAMD_ENV",
-			"NOVAMD_DB_PATH",
-			"NOVAMD_WORKDIR",
-			"NOVAMD_STATIC_PATH",
-			"NOVAMD_PORT",
-			"NOVAMD_ROOT_URL",
-			"NOVAMD_DOMAIN",
-			"NOVAMD_CORS_ORIGINS",
-			"NOVAMD_ADMIN_EMAIL",
-			"NOVAMD_ADMIN_PASSWORD",
-			"NOVAMD_ENCRYPTION_KEY",
-			"NOVAMD_JWT_SIGNING_KEY",
-			"NOVAMD_RATE_LIMIT_REQUESTS",
-			"NOVAMD_RATE_LIMIT_WINDOW",
+			"LEMMA_ENV",
+			"LEMMA_DB_PATH",
+			"LEMMA_WORKDIR",
+			"LEMMA_STATIC_PATH",
+			"LEMMA_PORT",
+			"LEMMA_ROOT_URL",
+			"LEMMA_DOMAIN",
+			"LEMMA_CORS_ORIGINS",
+			"LEMMA_ADMIN_EMAIL",
+			"LEMMA_ADMIN_PASSWORD",
+			"LEMMA_ENCRYPTION_KEY",
+			"LEMMA_JWT_SIGNING_KEY",
+			"LEMMA_RATE_LIMIT_REQUESTS",
+			"LEMMA_RATE_LIMIT_WINDOW",
 		}
 		for _, env := range envVars {
 			if err := os.Unsetenv(env); err != nil {
@@ -73,17 +73,17 @@ func TestLoad(t *testing.T) {
 		defer cleanup()
 
 		// Set required env vars
-		setEnv(t, "NOVAMD_ADMIN_EMAIL", "admin@example.com")
-		setEnv(t, "NOVAMD_ADMIN_PASSWORD", "password123")
-		setEnv(t, "NOVAMD_ENCRYPTION_KEY", "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=") // 32 bytes base64 encoded
+		setEnv(t, "LEMMA_ADMIN_EMAIL", "admin@example.com")
+		setEnv(t, "LEMMA_ADMIN_PASSWORD", "password123")
+		setEnv(t, "LEMMA_ENCRYPTION_KEY", "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=") // 32 bytes base64 encoded
 
 		cfg, err := app.LoadConfig()
 		if err != nil {
 			t.Fatalf("Load() error = %v", err)
 		}
 
-		if cfg.DBPath != "./novamd.db" {
-			t.Errorf("default DBPath = %v, want %v", cfg.DBPath, "./novamd.db")
+		if cfg.DBPath != "./lemma.db" {
+			t.Errorf("default DBPath = %v, want %v", cfg.DBPath, "./lemma.db")
 		}
 	})
 
@@ -93,19 +93,19 @@ func TestLoad(t *testing.T) {
 
 		// Set all environment variables
 		envs := map[string]string{
-			"NOVAMD_ENV":                 "development",
-			"NOVAMD_DB_PATH":             "/custom/db/path.db",
-			"NOVAMD_WORKDIR":             "/custom/work/dir",
-			"NOVAMD_STATIC_PATH":         "/custom/static/path",
-			"NOVAMD_PORT":                "3000",
-			"NOVAMD_ROOT_URL":            "http://localhost:3000",
-			"NOVAMD_CORS_ORIGINS":        "http://localhost:3000,http://localhost:3001",
-			"NOVAMD_ADMIN_EMAIL":         "admin@example.com",
-			"NOVAMD_ADMIN_PASSWORD":      "password123",
-			"NOVAMD_ENCRYPTION_KEY":      "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=",
-			"NOVAMD_JWT_SIGNING_KEY":     "secret-key",
-			"NOVAMD_RATE_LIMIT_REQUESTS": "200",
-			"NOVAMD_RATE_LIMIT_WINDOW":   "30m",
+			"LEMMA_ENV":                 "development",
+			"LEMMA_DB_PATH":             "/custom/db/path.db",
+			"LEMMA_WORKDIR":             "/custom/work/dir",
+			"LEMMA_STATIC_PATH":         "/custom/static/path",
+			"LEMMA_PORT":                "3000",
+			"LEMMA_ROOT_URL":            "http://localhost:3000",
+			"LEMMA_CORS_ORIGINS":        "http://localhost:3000,http://localhost:3001",
+			"LEMMA_ADMIN_EMAIL":         "admin@example.com",
+			"LEMMA_ADMIN_PASSWORD":      "password123",
+			"LEMMA_ENCRYPTION_KEY":      "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=",
+			"LEMMA_JWT_SIGNING_KEY":     "secret-key",
+			"LEMMA_RATE_LIMIT_REQUESTS": "200",
+			"LEMMA_RATE_LIMIT_WINDOW":   "30m",
 		}
 
 		for k, v := range envs {
@@ -165,38 +165,38 @@ func TestLoad(t *testing.T) {
 				name: "missing admin email",
 				setupEnv: func(t *testing.T) {
 					cleanup()
-					setEnv(t, "NOVAMD_ADMIN_PASSWORD", "password123")
-					setEnv(t, "NOVAMD_ENCRYPTION_KEY", "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=")
+					setEnv(t, "LEMMA_ADMIN_PASSWORD", "password123")
+					setEnv(t, "LEMMA_ENCRYPTION_KEY", "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=")
 				},
-				expectedError: "NOVAMD_ADMIN_EMAIL and NOVAMD_ADMIN_PASSWORD must be set",
+				expectedError: "LEMMA_ADMIN_EMAIL and LEMMA_ADMIN_PASSWORD must be set",
 			},
 			{
 				name: "missing admin password",
 				setupEnv: func(t *testing.T) {
 					cleanup()
-					setEnv(t, "NOVAMD_ADMIN_EMAIL", "admin@example.com")
-					setEnv(t, "NOVAMD_ENCRYPTION_KEY", "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=")
+					setEnv(t, "LEMMA_ADMIN_EMAIL", "admin@example.com")
+					setEnv(t, "LEMMA_ENCRYPTION_KEY", "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=")
 				},
-				expectedError: "NOVAMD_ADMIN_EMAIL and NOVAMD_ADMIN_PASSWORD must be set",
+				expectedError: "LEMMA_ADMIN_EMAIL and LEMMA_ADMIN_PASSWORD must be set",
 			},
 			{
 				name: "missing encryption key",
 				setupEnv: func(t *testing.T) {
 					cleanup()
-					setEnv(t, "NOVAMD_ADMIN_EMAIL", "admin@example.com")
-					setEnv(t, "NOVAMD_ADMIN_PASSWORD", "password123")
+					setEnv(t, "LEMMA_ADMIN_EMAIL", "admin@example.com")
+					setEnv(t, "LEMMA_ADMIN_PASSWORD", "password123")
 				},
-				expectedError: "invalid NOVAMD_ENCRYPTION_KEY: encryption key is required",
+				expectedError: "invalid LEMMA_ENCRYPTION_KEY: encryption key is required",
 			},
 			{
 				name: "invalid encryption key",
 				setupEnv: func(t *testing.T) {
 					cleanup()
-					setEnv(t, "NOVAMD_ADMIN_EMAIL", "admin@example.com")
-					setEnv(t, "NOVAMD_ADMIN_PASSWORD", "password123")
-					setEnv(t, "NOVAMD_ENCRYPTION_KEY", "invalid-key")
+					setEnv(t, "LEMMA_ADMIN_EMAIL", "admin@example.com")
+					setEnv(t, "LEMMA_ADMIN_PASSWORD", "password123")
+					setEnv(t, "LEMMA_ENCRYPTION_KEY", "invalid-key")
 				},
-				expectedError: "invalid NOVAMD_ENCRYPTION_KEY: invalid base64 encoding: illegal base64 data at input byte 7",
+				expectedError: "invalid LEMMA_ENCRYPTION_KEY: invalid base64 encoding: illegal base64 data at input byte 7",
 			},
 		}
 
