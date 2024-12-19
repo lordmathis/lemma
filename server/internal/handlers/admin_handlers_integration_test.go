@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"testing"
 
-	"novamd/internal/handlers"
-	"novamd/internal/models"
+	"lemma/internal/handlers"
+	"lemma/internal/models"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

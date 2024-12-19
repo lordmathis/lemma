@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"novamd/internal/models"
+	"lemma/internal/models"
 )
 
 // CreateSession inserts a new session record into the database

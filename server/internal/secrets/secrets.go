@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 
-	"novamd/internal/logging"
+	"lemma/internal/logging"
 )
 
 // Service is an interface for encrypting and decrypting strings

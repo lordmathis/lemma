@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"novamd/internal/auth"
-	"novamd/internal/models"
-	_ "novamd/internal/testenv"
+	"lemma/internal/auth"
+	"lemma/internal/models"
+	_ "lemma/internal/testenv"
 )
 
 // Mock SessionStore

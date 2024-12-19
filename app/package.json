@@ -1,5 +1,5 @@
 {
-  "name": "novamd-frontend",
+  "name": "lemma-frontend",
   "version": "0.1.0",
   "description": "Yet another markdown editor",
   "type": "module",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LordMathis/NovaMD.git"
+    "url": "git+https://github.com/LordMathis/Lemma.git"
   },
   "keywords": [
     "markdown",
@@ -19,9 +19,9 @@
   "author": "Matúš Námešný",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/LordMathis/NovaMD/issues"
+    "url": "https://github.com/LordMathis/Lemma/issues"
   },
-  "homepage": "https://github.com/LordMathis/NovaMD#readme",
+  "homepage": "https://github.com/LordMathis/Lemma#readme",
   "dependencies": {
     "@codemirror/commands": "^6.6.2",
     "@codemirror/lang-markdown": "^6.2.5",

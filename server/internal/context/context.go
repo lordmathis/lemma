@@ -4,9 +4,9 @@ package context
 import (
 	"context"
 	"fmt"
+	"lemma/internal/logging"
+	"lemma/internal/models"
 	"net/http"
-	"novamd/internal/logging"
-	"novamd/internal/models"
 )
 
 type contextKey string

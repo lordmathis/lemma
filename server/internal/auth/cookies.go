@@ -2,8 +2,8 @@
 package auth
 
 import (
+	"lemma/internal/logging"
 	"net/http"
-	"novamd/internal/logging"
 )
 
 var logger logging.Logger

@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"novamd/internal/models"
+	"lemma/internal/models"
 )
 
 // CreateUser inserts a new user record into the database

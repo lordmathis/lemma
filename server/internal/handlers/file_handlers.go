@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"novamd/internal/context"
-	"novamd/internal/logging"
-	"novamd/internal/storage"
+	"lemma/internal/context"
+	"lemma/internal/logging"
+	"lemma/internal/storage"
 
 	"github.com/go-chi/chi/v5"
 )

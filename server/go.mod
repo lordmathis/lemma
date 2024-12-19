@@ -1,4 +1,4 @@
-module novamd
+module lemma
 
 go 1.23.1
 

@@ -1,10 +1,10 @@
 package app
 
 import (
-	"novamd/internal/auth"
-	"novamd/internal/context"
-	"novamd/internal/handlers"
-	"novamd/internal/logging"
+	"lemma/internal/auth"
+	"lemma/internal/context"
+	"lemma/internal/handlers"
+	"lemma/internal/logging"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -15,7 +15,7 @@ import (
 
 	httpSwagger "github.com/swaggo/http-swagger"
 
-	_ "novamd/docs" // Swagger docs
+	_ "lemma/docs" // Swagger docs
 )
 
 // setupRouter creates and configures the chi router with middleware and routes

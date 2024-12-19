@@ -1,8 +1,8 @@
 package app
 
 import (
+	"lemma/internal/logging"
 	"net/http"
-	"novamd/internal/logging"
 
 	"github.com/go-chi/chi/v5"
 )

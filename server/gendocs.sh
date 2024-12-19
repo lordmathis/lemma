@@ -8,9 +8,9 @@ generate_anchor() {
 }
 
 # Create documentation file
-echo "# NovaMD Package Documentation
+echo "# Lemma Package Documentation
 
-Generated documentation for all packages in the NovaMD project.
+Generated documentation for all packages in the Lemma project.
 
 ## Table of Contents
 " > documentation.md

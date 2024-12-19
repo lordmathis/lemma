@@ -14,15 +14,15 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"novamd/internal/app"
-	"novamd/internal/auth"
-	"novamd/internal/db"
-	"novamd/internal/git"
-	"novamd/internal/models"
-	"novamd/internal/secrets"
-	"novamd/internal/storage"
+	"lemma/internal/app"
+	"lemma/internal/auth"
+	"lemma/internal/db"
+	"lemma/internal/git"
+	"lemma/internal/models"
+	"lemma/internal/secrets"
+	"lemma/internal/storage"
 
-	_ "novamd/internal/testenv"
+	_ "lemma/internal/testenv"
 )
 
 // testHarness encapsulates all the dependencies needed for testing
@@ -50,7 +50,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 	t.Helper()
 
 	// Create temporary directory for test files
-	tempDir, err := os.MkdirTemp("", "novamd-test-*")
+	tempDir, err := os.MkdirTemp("", "lemma-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}

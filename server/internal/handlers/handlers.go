@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"lemma/internal/db"
+	"lemma/internal/logging"
+	"lemma/internal/storage"
 	"net/http"
-	"novamd/internal/db"
-	"novamd/internal/logging"
-	"novamd/internal/storage"
 )
 
 // ErrorResponse is a generic error response

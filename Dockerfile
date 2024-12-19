@@ -13,21 +13,21 @@ RUN apt-get update && apt-get install -y gcc musl-dev
 COPY server/go.mod server/go.sum ./
 RUN go mod download
 COPY server .
-RUN CGO_ENABLED=1 GOOS=linux go build -o novamd ./cmd/server
+RUN CGO_ENABLED=1 GOOS=linux go build -o lemma ./cmd/server
 
 # Stage 3: Final stage
 FROM debian:bookworm-slim
 WORKDIR /app
-COPY --from=backend-builder /app/novamd .
+COPY --from=backend-builder /app/lemma .
 COPY --from=frontend-builder /app/dist ./dist
 
 RUN mkdir -p /app/data
 
 # Set default environment variables
-ENV NOVAMD_STATIC_PATH=/app/dist
-ENV NOVAMD_PORT=8080
-ENV NOVAMD_WORKDIR=/app/data
+ENV LEMMA_STATIC_PATH=/app/dist
+ENV LEMMA_PORT=8080
+ENV LEMMA_WORKDIR=/app/data
 
 EXPOSE 8080
 
-CMD ["./novamd"]
+CMD ["./lemma"]

@@ -4,7 +4,7 @@ package auth
 import (
 	"crypto/rand"
 	"fmt"
-	"novamd/internal/logging"
+	"lemma/internal/logging"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"

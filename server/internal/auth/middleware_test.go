@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"novamd/internal/auth"
-	"novamd/internal/context"
-	"novamd/internal/models"
-	_ "novamd/internal/testenv"
+	"lemma/internal/auth"
+	"lemma/internal/context"
+	"lemma/internal/models"
+	_ "lemma/internal/testenv"
 )
 
 // Mock SessionManager

@@ -47,7 +47,7 @@ export const DEFAULT_WORKSPACE = {
 export const DEFAULT_FILE = {
   name: 'New File.md',
   path: 'New File.md',
-  content: '# Welcome to NovaMD\n\nStart editing here!',
+  content: '# Welcome to Lemma\n\nStart editing here!',
 };
 
 export const MARKDOWN_REGEX = {

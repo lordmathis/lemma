@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"novamd/internal/storage"
-	_ "novamd/internal/testenv"
+	"lemma/internal/storage"
+	_ "lemma/internal/testenv"
 )
 
 func TestValidatePath(t *testing.T) {

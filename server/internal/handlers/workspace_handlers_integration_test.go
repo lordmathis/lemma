@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"testing"
 
-	"novamd/internal/models"
+	"lemma/internal/models"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"novamd/internal/auth"
-	_ "novamd/internal/testenv"
+	"lemma/internal/auth"
+	_ "lemma/internal/testenv"
 )
 
 func TestNewJWTService(t *testing.T) {

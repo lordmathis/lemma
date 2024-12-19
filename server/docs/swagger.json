@@ -1,8 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is the API for NovaMD markdown note taking app.",
-        "title": "NovaMD API",
+        "description": "This is the API for Lemma markdown note taking app.",
+        "title": "Lemma API",
         "contact": {},
         "license": {
             "name": "Apache 2.0",
@@ -1288,7 +1288,7 @@
                         }
                     },
                     "500": {
-                        "description": "Failed to write response",
+                        "description": "Failed to delete file",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }

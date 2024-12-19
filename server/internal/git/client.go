@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"novamd/internal/logging"
+	"lemma/internal/logging"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"

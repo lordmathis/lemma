@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"novamd/internal/context"
-	_ "novamd/internal/testenv"
+	"lemma/internal/context"
+	_ "lemma/internal/testenv"
 )
 
 func TestGetRequestContext(t *testing.T) {

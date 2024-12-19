@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"novamd/internal/context"
-	"novamd/internal/models"
-	_ "novamd/internal/testenv"
+	"lemma/internal/context"
+	"lemma/internal/models"
+	_ "lemma/internal/testenv"
 )
 
 // MockDB implements the minimal database interface needed for testing

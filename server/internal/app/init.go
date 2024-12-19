@@ -2,18 +2,18 @@
 package app
 
 import (
-	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
-	"novamd/internal/auth"
-	"novamd/internal/db"
-	"novamd/internal/logging"
-	"novamd/internal/models"
-	"novamd/internal/secrets"
-	"novamd/internal/storage"
+	"lemma/internal/auth"
+	"lemma/internal/db"
+	"lemma/internal/logging"
+	"lemma/internal/models"
+	"lemma/internal/secrets"
+	"lemma/internal/storage"
 )
 
 // initSecretsService initializes the secrets service
@@ -79,7 +79,7 @@ func initAuth(cfg *Config, database db.Database) (auth.JWTManager, auth.SessionM
 func setupAdminUser(database db.Database, storageManager storage.Manager, cfg *Config) error {
 	// Check if admin user exists
 	adminUser, err := database.GetUserByEmail(cfg.AdminEmail)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !strings.Contains(err.Error(), "user not found") {
 		return fmt.Errorf("failed to check for existing admin user: %w", err)
 	}
 
