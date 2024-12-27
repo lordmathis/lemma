@@ -16,7 +16,6 @@ type Config struct {
 	WorkDir           string
 	StaticPath        string
 	Port              string
-	RootURL           string
 	Domain            string
 	CORSOrigins       []string
 	AdminEmail        string
@@ -88,10 +87,6 @@ func LoadConfig() (*Config, error) {
 
 	if port := os.Getenv("LEMMA_PORT"); port != "" {
 		config.Port = port
-	}
-
-	if rootURL := os.Getenv("LEMMA_ROOT_URL"); rootURL != "" {
-		config.RootURL = rootURL
 	}
 
 	if domain := os.Getenv("LEMMA_DOMAIN"); domain != "" {
