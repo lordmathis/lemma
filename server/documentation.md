@@ -3,7 +3,6 @@
 Generated documentation for all packages in the Lemma project.
 
 ## Table of Contents
-
 - [cmd/server](#cmd-server)
 - [docs](#docs)
 - [internal/app](#internal-app)
@@ -12,9 +11,11 @@ Generated documentation for all packages in the Lemma project.
 - [internal/db](#internal-db)
 - [internal/git](#internal-git)
 - [internal/handlers](#internal-handlers)
+- [internal/logging](#internal-logging)
 - [internal/models](#internal-models)
 - [internal/secrets](#internal-secrets)
 - [internal/storage](#internal-storage)
+- [internal/testenv](#internal-testenv)
 
 ## cmd/server
 
@@ -73,6 +74,7 @@ type Config struct {
 	RateLimitRequests int
 	RateLimitWindow   time.Duration
 	IsDevelopment     bool
+	LogLevel          logging.LogLevel
 }
     Config holds the configuration for the application
 
@@ -82,6 +84,9 @@ func DefaultConfig() *Config
 func LoadConfig() (*Config, error)
     LoadConfig creates a new Config instance with values from environment
     variables
+
+func (c *Config) Redact() *Config
+    Redact redacts sensitive fields from a Config instance
 
 type Options struct {
 	Config         *Config
@@ -547,11 +552,10 @@ func (h *Handler) DeleteFile() http.HandlerFunc
     DeleteFile godoc @Summary Delete file @Description Deletes a file in
     the user's workspace @Tags files @ID deleteFile @Security CookieAuth
     @Param workspace_name path string true "Workspace name" @Param
-    file_path path string true "File path" @Success 204 "No Content
-    - File deleted successfully" @Failure 400 {object} ErrorResponse
-    "Invalid file path" @Failure 404 {object} ErrorResponse "File not
-    found" @Failure 500 {object} ErrorResponse "Failed to delete file"
-    @Failure 500 {object} ErrorResponse "Failed to write response" @Router
+    file_path path string true "File path" @Success 204 "No Content - File
+    deleted successfully" @Failure 400 {object} ErrorResponse "Invalid
+    file path" @Failure 404 {object} ErrorResponse "File not found"
+    @Failure 500 {object} ErrorResponse "Failed to delete file" @Router
     /workspaces/{workspace_name}/files/{file_path} [delete]
 
 func (h *Handler) DeleteWorkspace() http.HandlerFunc
@@ -822,6 +826,65 @@ type WorkspaceStats struct {
 
 ```
 
+## internal/logging
+
+```go
+package logging // import "lemma/internal/logging"
+
+Package logging provides a simple logging interface for the server.
+
+FUNCTIONS
+
+func Debug(msg string, args ...any)
+    Debug logs a debug message
+
+func Error(msg string, args ...any)
+    Error logs an error message
+
+func Info(msg string, args ...any)
+    Info logs an info message
+
+func Setup(minLevel LogLevel)
+    Setup initializes the logger with the given minimum log level
+
+func Warn(msg string, args ...any)
+    Warn logs a warning message
+
+
+TYPES
+
+type LogLevel slog.Level
+    LogLevel represents the log level
+
+const (
+	DEBUG LogLevel = LogLevel(slog.LevelDebug)
+	INFO  LogLevel = LogLevel(slog.LevelInfo)
+	WARN  LogLevel = LogLevel(slog.LevelWarn)
+	ERROR LogLevel = LogLevel(slog.LevelError)
+)
+    Log levels
+
+func ParseLogLevel(level string) LogLevel
+    ParseLogLevel converts a string to a LogLevel
+
+type Logger interface {
+	Debug(msg string, args ...any)
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Error(msg string, args ...any)
+	WithGroup(name string) Logger
+	With(args ...any) Logger
+}
+    Logger represents the interface for logging operations
+
+func With(args ...any) Logger
+    With adds key-value pairs to the logger context
+
+func WithGroup(name string) Logger
+    WithGroup adds a group to the logger context
+
+```
+
 ## internal/models
 
 ```go
@@ -933,9 +996,8 @@ func NewService(key string) (Service, error)
 ```go
 package storage // import "lemma/internal/storage"
 
-Package storage provides functionalities to interact with the file system,
-including listing files, finding files by name, getting file content, saving
-files, and deleting files.
+Package storage provides functionalities to interact with the storage system
+(filesystem).
 
 FUNCTIONS
 
@@ -1091,3 +1153,12 @@ type WorkspaceManager interface {
     storage.
 
 ```
+
+## internal/testenv
+
+```go
+package testenv // import "lemma/internal/testenv"
+
+Package testenv provides a setup for testing the application.
+```
+
