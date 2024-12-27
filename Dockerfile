@@ -17,6 +17,8 @@ RUN CGO_ENABLED=1 GOOS=linux go build -o lemma ./cmd/server
 
 # Stage 3: Final stage
 FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y ca-certificates
+RUN update-ca-certificates
 WORKDIR /app
 COPY --from=backend-builder /app/lemma .
 COPY --from=frontend-builder /app/dist ./dist
