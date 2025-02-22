@@ -17,7 +17,7 @@ func TestDefaultConfig(t *testing.T) {
 		got      interface{}
 		expected interface{}
 	}{
-		{"DBPath", cfg.DBPath, "./lemma.db"},
+		{"DBPath", cfg.DBURL, "./lemma.db"},
 		{"WorkDir", cfg.WorkDir, "./data"},
 		{"StaticPath", cfg.StaticPath, "../app/dist"},
 		{"Port", cfg.Port, "8080"},
@@ -81,8 +81,8 @@ func TestLoad(t *testing.T) {
 			t.Fatalf("Load() error = %v", err)
 		}
 
-		if cfg.DBPath != "./lemma.db" {
-			t.Errorf("default DBPath = %v, want %v", cfg.DBPath, "./lemma.db")
+		if cfg.DBURL != "./lemma.db" {
+			t.Errorf("default DBPath = %v, want %v", cfg.DBURL, "./lemma.db")
 		}
 	})
 
@@ -122,7 +122,7 @@ func TestLoad(t *testing.T) {
 			expected interface{}
 		}{
 			{"IsDevelopment", cfg.IsDevelopment, true},
-			{"DBPath", cfg.DBPath, "/custom/db/path.db"},
+			{"DBPath", cfg.DBURL, "/custom/db/path.db"},
 			{"WorkDir", cfg.WorkDir, "/custom/work/dir"},
 			{"StaticPath", cfg.StaticPath, "/custom/static/path"},
 			{"Port", cfg.Port, "3000"},

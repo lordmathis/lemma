@@ -12,6 +12,13 @@ import (
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
+type DBType string
+
+const (
+	DBTypeSQLite   DBType = "sqlite3"
+	DBTypePostgres DBType = "postgres"
+)
+
 // UserStore defines the methods for interacting with user data in the database
 type UserStore interface {
 	CreateUser(user *models.User) (*models.User, error)
@@ -108,6 +115,7 @@ func getLogger() logging.Logger {
 type database struct {
 	*sql.DB
 	secretsService secrets.Service
+	dbType         DBType
 }
 
 // Init initializes the database connection

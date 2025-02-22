@@ -99,7 +99,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 
 	// Create test config
 	testConfig := &app.Config{
-		DBPath:        ":memory:",
+		DBURL:         ":memory:",
 		WorkDir:       tempDir,
 		StaticPath:    "../testdata",
 		Port:          "8081",
