@@ -119,10 +119,31 @@ type database struct {
 }
 
 // Init initializes the database connection
-func Init(dbPath string, secretsService secrets.Service) (Database, error) {
-	log := getLogger()
+func Init(dbType DBType, dbURL string, secretsService secrets.Service) (Database, error) {
 
-	db, err := sql.Open("sqlite3", dbPath)
+	switch dbType {
+	case DBTypeSQLite:
+		db, err := initSQLite(dbURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize SQLite database: %w", err)
+		}
+
+		database := &database{
+			DB:             db,
+			secretsService: secretsService,
+			dbType:         dbType,
+		}
+		return database, nil
+	case DBTypePostgres:
+		return nil, fmt.Errorf("postgres database not supported yet")
+	}
+
+	return nil, fmt.Errorf("unsupported database type: %s", dbType)
+}
+
+func initSQLite(dbURL string) (*sql.DB, error) {
+	log := getLogger()
+	db, err := sql.Open("sqlite3", dbURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -136,13 +157,7 @@ func Init(dbPath string, secretsService secrets.Service) (Database, error) {
 		return nil, fmt.Errorf("failed to enable foreign keys: %w", err)
 	}
 	log.Debug("foreign keys enabled")
-
-	database := &database{
-		DB:             db,
-		secretsService: secretsService,
-	}
-
-	return database, nil
+	return db, nil
 }
 
 // Close closes the database connection

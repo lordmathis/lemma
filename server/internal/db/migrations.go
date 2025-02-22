@@ -25,9 +25,8 @@ func (db *database) Migrate() error {
 
 	var m *migrate.Migrate
 
-	driverName := db.dbType
-	switch driverName {
-	case "postgres":
+	switch db.dbType {
+	case DBTypePostgres:
 		driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 		if err != nil {
 			return fmt.Errorf("failed to create postgres driver: %w", err)
@@ -37,7 +36,7 @@ func (db *database) Migrate() error {
 			return fmt.Errorf("failed to create migrate instance: %w", err)
 		}
 
-	case "sqlite3":
+	case DBTypeSQLite:
 		driver, err := sqlite3.WithInstance(db.DB, &sqlite3.Config{})
 		if err != nil {
 			return fmt.Errorf("failed to create sqlite driver: %w", err)
@@ -48,7 +47,7 @@ func (db *database) Migrate() error {
 		}
 
 	default:
-		return fmt.Errorf("unsupported database driver: %s", driverName)
+		return fmt.Errorf("unsupported database driver: %s", db.dbType)
 	}
 
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {

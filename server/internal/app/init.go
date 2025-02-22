@@ -30,7 +30,7 @@ func initSecretsService(cfg *Config) (secrets.Service, error) {
 func initDatabase(cfg *Config, secretsService secrets.Service) (db.Database, error) {
 	logging.Debug("initializing database", "path", cfg.DBURL)
 
-	database, err := db.Init(cfg.DBURL, secretsService)
+	database, err := db.Init(cfg.DBType, cfg.DBURL, secretsService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}

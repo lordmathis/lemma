@@ -12,8 +12,8 @@ type TestDatabase interface {
 	TestDB() *sql.DB
 }
 
-func NewTestDB(dbPath string, secretsService secrets.Service) (TestDatabase, error) {
-	db, err := Init(dbPath, secretsService)
+func NewTestDB(secretsService secrets.Service) (TestDatabase, error) {
+	db, err := Init(DBTypeSQLite, ":memory:", secretsService)
 	if err != nil {
 		return nil, err
 	}

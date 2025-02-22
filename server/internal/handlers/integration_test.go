@@ -61,7 +61,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 		t.Fatalf("Failed to initialize secrets service: %v", err)
 	}
 
-	database, err := db.NewTestDB(":memory:", secretsSvc)
+	database, err := db.NewTestDB(secretsSvc)
 	if err != nil {
 		t.Fatalf("Failed to initialize test database: %v", err)
 	}
@@ -99,7 +99,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 
 	// Create test config
 	testConfig := &app.Config{
-		DBURL:         ":memory:",
+		DBURL:         "sqlite://:memory:",
 		WorkDir:       tempDir,
 		StaticPath:    "../testdata",
 		Port:          "8081",

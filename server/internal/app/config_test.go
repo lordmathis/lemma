@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"lemma/internal/app"
+	"lemma/internal/db"
 	"os"
 	"testing"
 	"time"
@@ -17,7 +18,7 @@ func TestDefaultConfig(t *testing.T) {
 		got      interface{}
 		expected interface{}
 	}{
-		{"DBPath", cfg.DBURL, "./lemma.db"},
+		{"DBPath", cfg.DBURL, "sqlite://lemma.db"},
 		{"WorkDir", cfg.WorkDir, "./data"},
 		{"StaticPath", cfg.StaticPath, "../app/dist"},
 		{"Port", cfg.Port, "8080"},
@@ -47,7 +48,7 @@ func TestLoad(t *testing.T) {
 	cleanup := func() {
 		envVars := []string{
 			"LEMMA_ENV",
-			"LEMMA_DB_PATH",
+			"LEMMA_DB_URL",
 			"LEMMA_WORKDIR",
 			"LEMMA_STATIC_PATH",
 			"LEMMA_PORT",
@@ -81,8 +82,8 @@ func TestLoad(t *testing.T) {
 			t.Fatalf("Load() error = %v", err)
 		}
 
-		if cfg.DBURL != "./lemma.db" {
-			t.Errorf("default DBPath = %v, want %v", cfg.DBURL, "./lemma.db")
+		if cfg.DBURL != "sqlite://lemma.db" {
+			t.Errorf("default DBPath = %v, want %v", cfg.DBURL, "sqlite://lemma.db")
 		}
 	})
 
@@ -93,7 +94,7 @@ func TestLoad(t *testing.T) {
 		// Set all environment variables
 		envs := map[string]string{
 			"LEMMA_ENV":                 "development",
-			"LEMMA_DB_PATH":             "/custom/db/path.db",
+			"LEMMA_DB_URL":              "sqlite:///custom/db/path.db",
 			"LEMMA_WORKDIR":             "/custom/work/dir",
 			"LEMMA_STATIC_PATH":         "/custom/static/path",
 			"LEMMA_PORT":                "3000",
@@ -122,7 +123,8 @@ func TestLoad(t *testing.T) {
 			expected interface{}
 		}{
 			{"IsDevelopment", cfg.IsDevelopment, true},
-			{"DBPath", cfg.DBURL, "/custom/db/path.db"},
+			{"DBURL", cfg.DBURL, "/custom/db/path.db"},
+			{"DBType", cfg.DBType, db.DBTypeSQLite},
 			{"WorkDir", cfg.WorkDir, "/custom/work/dir"},
 			{"StaticPath", cfg.StaticPath, "/custom/static/path"},
 			{"Port", cfg.Port, "3000"},
