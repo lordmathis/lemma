@@ -9,6 +9,7 @@ import (
 	"lemma/internal/models"
 	"lemma/internal/secrets"
 
+	_ "github.com/lib/pq"           // Postgres driver
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
@@ -135,7 +136,17 @@ func Init(dbType DBType, dbURL string, secretsService secrets.Service) (Database
 		}
 		return database, nil
 	case DBTypePostgres:
-		return nil, fmt.Errorf("postgres database not supported yet")
+		db, err := initPostgres(dbURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize Postgres database: %w", err)
+		}
+
+		database := &database{
+			DB:             db,
+			secretsService: secretsService,
+			dbType:         dbType,
+		}
+		return database, nil
 	}
 
 	return nil, fmt.Errorf("unsupported database type: %s", dbType)
@@ -157,6 +168,19 @@ func initSQLite(dbURL string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to enable foreign keys: %w", err)
 	}
 	log.Debug("foreign keys enabled")
+	return db, nil
+}
+
+func initPostgres(dbURL string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
 	return db, nil
 }
 
