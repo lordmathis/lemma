@@ -24,6 +24,7 @@ type Query struct {
 	hasWhere    bool
 	hasOrderBy  bool
 	hasGroupBy  bool
+	hasHaving   bool
 	hasLimit    bool
 	hasOffset   bool
 	isInParens  bool
@@ -130,6 +131,18 @@ func (q *Query) GroupBy(columns ...string) *Query {
 	return q
 }
 
+// Having adds a HAVING clause for filtering groups
+func (q *Query) Having(condition string) *Query {
+	if !q.hasHaving {
+		q.Write(" HAVING ")
+		q.hasHaving = true
+	} else {
+		q.Write(" AND ")
+	}
+	q.Write(condition)
+	return q
+}
+
 // Limit adds a LIMIT clause
 func (q *Query) Limit(limit int) *Query {
 	if !q.hasLimit {
@@ -195,7 +208,12 @@ func (q *Query) Delete() *Query {
 
 // StartGroup starts a parenthetical group
 func (q *Query) StartGroup() *Query {
-	q.Write(" (")
+	if q.hasWhere {
+		q.Write(" AND (")
+	} else {
+		q.Write(" WHERE (")
+		q.hasWhere = true
+	}
 	q.parensDepth++
 	return q
 }
