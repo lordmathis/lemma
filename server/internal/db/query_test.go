@@ -56,7 +56,7 @@ func TestBasicQueryBuilding(t *testing.T) {
 		dbType   db.DBType
 		buildFn  func(*db.Query) *db.Query
 		wantSQL  string
-		wantArgs []interface{}
+		wantArgs []any
 	}{
 		{
 			name:   "Simple select SQLite",
@@ -65,7 +65,7 @@ func TestBasicQueryBuilding(t *testing.T) {
 				return q.Select("id", "name").From("users")
 			},
 			wantSQL:  "SELECT id, name FROM users",
-			wantArgs: []interface{}{},
+			wantArgs: []any{},
 		},
 		{
 			name:   "Simple select Postgres",
@@ -74,7 +74,7 @@ func TestBasicQueryBuilding(t *testing.T) {
 				return q.Select("id", "name").From("users")
 			},
 			wantSQL:  "SELECT id, name FROM users",
-			wantArgs: []interface{}{},
+			wantArgs: []any{},
 		},
 		{
 			name:   "Select with where SQLite",
@@ -83,7 +83,7 @@ func TestBasicQueryBuilding(t *testing.T) {
 				return q.Select("id", "name").From("users").Where("id = ").Placeholder(1)
 			},
 			wantSQL:  "SELECT id, name FROM users WHERE id = ?",
-			wantArgs: []interface{}{1},
+			wantArgs: []any{1},
 		},
 		{
 			name:   "Select with where Postgres",
@@ -92,7 +92,7 @@ func TestBasicQueryBuilding(t *testing.T) {
 				return q.Select("id", "name").From("users").Where("id = ").Placeholder(1)
 			},
 			wantSQL:  "SELECT id, name FROM users WHERE id = $1",
-			wantArgs: []interface{}{1},
+			wantArgs: []any{1},
 		},
 		{
 			name:   "Multiple where conditions SQLite",
@@ -103,7 +103,7 @@ func TestBasicQueryBuilding(t *testing.T) {
 					And("role = ").Placeholder("admin")
 			},
 			wantSQL:  "SELECT * FROM users WHERE active = ? AND role = ?",
-			wantArgs: []interface{}{true, "admin"},
+			wantArgs: []any{true, "admin"},
 		},
 		{
 			name:   "Multiple where conditions Postgres",
@@ -114,7 +114,7 @@ func TestBasicQueryBuilding(t *testing.T) {
 					And("role = ").Placeholder("admin")
 			},
 			wantSQL:  "SELECT * FROM users WHERE active = $1 AND role = $2",
-			wantArgs: []interface{}{true, "admin"},
+			wantArgs: []any{true, "admin"},
 		},
 	}
 
@@ -143,7 +143,7 @@ func TestPlaceholders(t *testing.T) {
 		dbType   db.DBType
 		buildFn  func(*db.Query) *db.Query
 		wantSQL  string
-		wantArgs []interface{}
+		wantArgs []any
 	}{
 		{
 			name:   "Single placeholder SQLite",
@@ -152,7 +152,7 @@ func TestPlaceholders(t *testing.T) {
 				return q.Write("SELECT * FROM users WHERE id = ").Placeholder(42)
 			},
 			wantSQL:  "SELECT * FROM users WHERE id = ?",
-			wantArgs: []interface{}{42},
+			wantArgs: []any{42},
 		},
 		{
 			name:   "Single placeholder Postgres",
@@ -161,7 +161,7 @@ func TestPlaceholders(t *testing.T) {
 				return q.Write("SELECT * FROM users WHERE id = ").Placeholder(42)
 			},
 			wantSQL:  "SELECT * FROM users WHERE id = $1",
-			wantArgs: []interface{}{42},
+			wantArgs: []any{42},
 		},
 		{
 			name:   "Multiple placeholders SQLite",
@@ -173,7 +173,7 @@ func TestPlaceholders(t *testing.T) {
 					Placeholder("John")
 			},
 			wantSQL:  "SELECT * FROM users WHERE id = ? AND name = ?",
-			wantArgs: []interface{}{42, "John"},
+			wantArgs: []any{42, "John"},
 		},
 		{
 			name:   "Multiple placeholders Postgres",
@@ -185,7 +185,7 @@ func TestPlaceholders(t *testing.T) {
 					Placeholder("John")
 			},
 			wantSQL:  "SELECT * FROM users WHERE id = $1 AND name = $2",
-			wantArgs: []interface{}{42, "John"},
+			wantArgs: []any{42, "John"},
 		},
 		{
 			name:   "Placeholders for IN SQLite",
@@ -197,7 +197,7 @@ func TestPlaceholders(t *testing.T) {
 					AddArgs(1, 2, 3)
 			},
 			wantSQL:  "SELECT * FROM users WHERE id IN (?, ?, ?)",
-			wantArgs: []interface{}{1, 2, 3},
+			wantArgs: []any{1, 2, 3},
 		},
 		{
 			name:   "Placeholders for IN Postgres",
@@ -209,7 +209,7 @@ func TestPlaceholders(t *testing.T) {
 					AddArgs(1, 2, 3)
 			},
 			wantSQL:  "SELECT * FROM users WHERE id IN ($1, $2, $3)",
-			wantArgs: []interface{}{1, 2, 3},
+			wantArgs: []any{1, 2, 3},
 		},
 	}
 
@@ -238,7 +238,7 @@ func TestWhereClauseBuilding(t *testing.T) {
 		dbType   db.DBType
 		buildFn  func(*db.Query) *db.Query
 		wantSQL  string
-		wantArgs []interface{}
+		wantArgs []any
 	}{
 		{
 			name:   "Simple where",
@@ -247,7 +247,7 @@ func TestWhereClauseBuilding(t *testing.T) {
 				return q.Select("*").From("users").Where("id = ").Placeholder(1)
 			},
 			wantSQL:  "SELECT * FROM users WHERE id = ?",
-			wantArgs: []interface{}{1},
+			wantArgs: []any{1},
 		},
 		{
 			name:   "Where with And",
@@ -258,7 +258,7 @@ func TestWhereClauseBuilding(t *testing.T) {
 					And("active = ").Placeholder(true)
 			},
 			wantSQL:  "SELECT * FROM users WHERE id = ? AND active = ?",
-			wantArgs: []interface{}{1, true},
+			wantArgs: []any{1, true},
 		},
 		{
 			name:   "Where with Or",
@@ -269,7 +269,7 @@ func TestWhereClauseBuilding(t *testing.T) {
 					Or("id = ").Placeholder(2)
 			},
 			wantSQL:  "SELECT * FROM users WHERE id = ? OR id = ?",
-			wantArgs: []interface{}{1, 2},
+			wantArgs: []any{1, 2},
 		},
 		{
 			name:   "Where with parentheses",
@@ -283,7 +283,7 @@ func TestWhereClauseBuilding(t *testing.T) {
 					Write(")")
 			},
 			wantSQL:  "SELECT * FROM users WHERE active = ? AND (id = ? OR id = ?)",
-			wantArgs: []interface{}{true, 1, 2},
+			wantArgs: []any{true, 1, 2},
 		},
 		{
 			name:   "Where with StartGroup and EndGroup",
@@ -297,7 +297,7 @@ func TestWhereClauseBuilding(t *testing.T) {
 					Write(")")
 			},
 			wantSQL:  "SELECT * FROM users WHERE active = ? AND (id = ? OR id = ?)",
-			wantArgs: []interface{}{true, 1, 2},
+			wantArgs: []any{true, 1, 2},
 		},
 		{
 			name:   "Where with nested groups",
@@ -311,7 +311,7 @@ func TestWhereClauseBuilding(t *testing.T) {
 					And("created_at > ").Placeholder("2020-01-01")
 			},
 			wantSQL:  "SELECT * FROM users WHERE (active = ? OR role = ?) AND created_at > ?",
-			wantArgs: []interface{}{true, "admin", "2020-01-01"},
+			wantArgs: []any{true, "admin", "2020-01-01"},
 		},
 		{
 			name:   "WhereIn",
@@ -322,7 +322,7 @@ func TestWhereClauseBuilding(t *testing.T) {
 					AddArgs(1, 2, 3)
 			},
 			wantSQL:  "SELECT * FROM users WHERE id IN (?, ?, ?)",
-			wantArgs: []interface{}{1, 2, 3},
+			wantArgs: []any{1, 2, 3},
 		},
 	}
 
@@ -351,7 +351,7 @@ func TestJoinClauseBuilding(t *testing.T) {
 		dbType   db.DBType
 		buildFn  func(*db.Query) *db.Query
 		wantSQL  string
-		wantArgs []interface{}
+		wantArgs []any
 	}{
 		{
 			name:   "Inner join",
@@ -362,7 +362,7 @@ func TestJoinClauseBuilding(t *testing.T) {
 					Join(db.InnerJoin, "workspaces w", "w.user_id = u.id")
 			},
 			wantSQL:  "SELECT u.*, w.name FROM users u INNER JOIN workspaces w ON w.user_id = u.id",
-			wantArgs: []interface{}{},
+			wantArgs: []any{},
 		},
 		{
 			name:   "Left join",
@@ -373,7 +373,7 @@ func TestJoinClauseBuilding(t *testing.T) {
 					Join(db.LeftJoin, "workspaces w", "w.user_id = u.id")
 			},
 			wantSQL:  "SELECT u.*, w.name FROM users u LEFT JOIN workspaces w ON w.user_id = u.id",
-			wantArgs: []interface{}{},
+			wantArgs: []any{},
 		},
 		{
 			name:   "Multiple joins",
@@ -385,7 +385,7 @@ func TestJoinClauseBuilding(t *testing.T) {
 					Join(db.LeftJoin, "settings s", "s.user_id = u.id")
 			},
 			wantSQL:  "SELECT u.*, w.name, s.role FROM users u INNER JOIN workspaces w ON w.user_id = u.id LEFT JOIN settings s ON s.user_id = u.id",
-			wantArgs: []interface{}{},
+			wantArgs: []any{},
 		},
 		{
 			name:   "Join with where",
@@ -397,7 +397,7 @@ func TestJoinClauseBuilding(t *testing.T) {
 					Where("u.active = ").Placeholder(true)
 			},
 			wantSQL:  "SELECT u.*, w.name FROM users u INNER JOIN workspaces w ON w.user_id = u.id WHERE u.active = ?",
-			wantArgs: []interface{}{true},
+			wantArgs: []any{true},
 		},
 	}
 
@@ -426,7 +426,7 @@ func TestOrderLimitOffset(t *testing.T) {
 		dbType   db.DBType
 		buildFn  func(*db.Query) *db.Query
 		wantSQL  string
-		wantArgs []interface{}
+		wantArgs []any
 	}{
 		{
 			name:   "Order by",
@@ -435,7 +435,7 @@ func TestOrderLimitOffset(t *testing.T) {
 				return q.Select("*").From("users").OrderBy("name ASC")
 			},
 			wantSQL:  "SELECT * FROM users ORDER BY name ASC",
-			wantArgs: []interface{}{},
+			wantArgs: []any{},
 		},
 		{
 			name:   "Order by multiple columns",
@@ -444,7 +444,7 @@ func TestOrderLimitOffset(t *testing.T) {
 				return q.Select("*").From("users").OrderBy("name ASC", "created_at DESC")
 			},
 			wantSQL:  "SELECT * FROM users ORDER BY name ASC, created_at DESC",
-			wantArgs: []interface{}{},
+			wantArgs: []any{},
 		},
 		{
 			name:   "Limit",
@@ -453,7 +453,7 @@ func TestOrderLimitOffset(t *testing.T) {
 				return q.Select("*").From("users").Limit(10)
 			},
 			wantSQL:  "SELECT * FROM users LIMIT 10",
-			wantArgs: []interface{}{},
+			wantArgs: []any{},
 		},
 		{
 			name:   "Limit and offset",
@@ -462,7 +462,7 @@ func TestOrderLimitOffset(t *testing.T) {
 				return q.Select("*").From("users").Limit(10).Offset(20)
 			},
 			wantSQL:  "SELECT * FROM users LIMIT 10 OFFSET 20",
-			wantArgs: []interface{}{},
+			wantArgs: []any{},
 		},
 		{
 			name:   "Complete query with all clauses",
@@ -476,7 +476,7 @@ func TestOrderLimitOffset(t *testing.T) {
 					Offset(20)
 			},
 			wantSQL:  "SELECT * FROM users WHERE active = ? ORDER BY name ASC LIMIT 10 OFFSET 20",
-			wantArgs: []interface{}{true},
+			wantArgs: []any{true},
 		},
 	}
 
@@ -505,7 +505,7 @@ func TestInsertUpdateDelete(t *testing.T) {
 		dbType   db.DBType
 		buildFn  func(*db.Query) *db.Query
 		wantSQL  string
-		wantArgs []interface{}
+		wantArgs []any
 	}{
 		{
 			name:   "Insert SQLite",
@@ -516,7 +516,7 @@ func TestInsertUpdateDelete(t *testing.T) {
 					AddArgs("John", "john@example.com")
 			},
 			wantSQL:  "INSERT INTO users (name, email) VALUES (?, ?)",
-			wantArgs: []interface{}{"John", "john@example.com"},
+			wantArgs: []any{"John", "john@example.com"},
 		},
 		{
 			name:   "Insert Postgres",
@@ -527,7 +527,7 @@ func TestInsertUpdateDelete(t *testing.T) {
 					AddArgs("John", "john@example.com")
 			},
 			wantSQL:  "INSERT INTO users (name, email) VALUES ($1, $2)",
-			wantArgs: []interface{}{"John", "john@example.com"},
+			wantArgs: []any{"John", "john@example.com"},
 		},
 		{
 			name:   "Update SQLite",
@@ -539,7 +539,7 @@ func TestInsertUpdateDelete(t *testing.T) {
 					Where("id = ").Placeholder(1)
 			},
 			wantSQL:  "UPDATE users SET name = ?, email = ? WHERE id = ?",
-			wantArgs: []interface{}{"John", "john@example.com", 1},
+			wantArgs: []any{"John", "john@example.com", 1},
 		},
 		{
 			name:   "Update Postgres",
@@ -551,7 +551,7 @@ func TestInsertUpdateDelete(t *testing.T) {
 					Where("id = ").Placeholder(1)
 			},
 			wantSQL:  "UPDATE users SET name = $1, email = $2 WHERE id = $3",
-			wantArgs: []interface{}{"John", "john@example.com", 1},
+			wantArgs: []any{"John", "john@example.com", 1},
 		},
 		{
 			name:   "Delete SQLite",
@@ -560,7 +560,7 @@ func TestInsertUpdateDelete(t *testing.T) {
 				return q.Delete().From("users").Where("id = ").Placeholder(1)
 			},
 			wantSQL:  "DELETE FROM users WHERE id = ?",
-			wantArgs: []interface{}{1},
+			wantArgs: []any{1},
 		},
 		{
 			name:   "Delete Postgres",
@@ -569,7 +569,7 @@ func TestInsertUpdateDelete(t *testing.T) {
 				return q.Delete().From("users").Where("id = ").Placeholder(1)
 			},
 			wantSQL:  "DELETE FROM users WHERE id = $1",
-			wantArgs: []interface{}{1},
+			wantArgs: []any{1},
 		},
 	}
 
@@ -598,7 +598,7 @@ func TestHavingClause(t *testing.T) {
 		dbType   db.DBType
 		buildFn  func(*db.Query) *db.Query
 		wantSQL  string
-		wantArgs []interface{}
+		wantArgs []any
 	}{
 		{
 			name:   "Simple having",
@@ -610,7 +610,7 @@ func TestHavingClause(t *testing.T) {
 					Having("count > ").Placeholder(5)
 			},
 			wantSQL:  "SELECT department, COUNT(*) as count FROM employees GROUP BY department HAVING count > ?",
-			wantArgs: []interface{}{5},
+			wantArgs: []any{5},
 		},
 		{
 			name:   "Having with multiple conditions",
@@ -623,7 +623,7 @@ func TestHavingClause(t *testing.T) {
 					And("COUNT(*) > ").Placeholder(3)
 			},
 			wantSQL:  "SELECT department, AVG(salary) as avg_salary FROM employees GROUP BY department HAVING avg_salary > ? AND COUNT(*) > ?",
-			wantArgs: []interface{}{50000, 3},
+			wantArgs: []any{50000, 3},
 		},
 		{
 			name:   "Having with postgres placeholders",
@@ -635,7 +635,7 @@ func TestHavingClause(t *testing.T) {
 					Having("count > ").Placeholder(5)
 			},
 			wantSQL:  "SELECT department, COUNT(*) as count FROM employees GROUP BY department HAVING count > $1",
-			wantArgs: []interface{}{5},
+			wantArgs: []any{5},
 		},
 	}
 
@@ -664,7 +664,7 @@ func TestComplexQueries(t *testing.T) {
 		dbType   db.DBType
 		buildFn  func(*db.Query) *db.Query
 		wantSQL  string
-		wantArgs []interface{}
+		wantArgs []any
 	}{
 		{
 			name:   "Complex select with join and where",
@@ -680,7 +680,7 @@ func TestComplexQueries(t *testing.T) {
 					Limit(10)
 			},
 			wantSQL:  "SELECT u.id, u.name, COUNT(w.id) as workspace_count FROM users u LEFT JOIN workspaces w ON w.user_id = u.id WHERE u.active = ? GROUP BY u.id, u.name HAVING COUNT(w.id) > ? ORDER BY workspace_count DESC LIMIT 10",
-			wantArgs: []interface{}{true, 0},
+			wantArgs: []any{true, 0},
 		},
 	}
 

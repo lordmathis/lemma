@@ -308,7 +308,7 @@ func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 		}
 
 		// Track what's being updated for logging
-		updates := make(map[string]interface{})
+		updates := make(map[string]any)
 
 		if req.Email != "" {
 			user.Email = req.Email

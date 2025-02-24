@@ -16,7 +16,7 @@ const (
 // Query represents a SQL query with its parameters
 type Query struct {
 	builder     strings.Builder
-	args        []interface{}
+	args        []any
 	dbType      DBType
 	pos         int // tracks the current placeholder position
 	hasSelect   bool
@@ -35,7 +35,7 @@ type Query struct {
 func NewQuery(dbType DBType) *Query {
 	return &Query{
 		dbType: dbType,
-		args:   make([]interface{}, 0),
+		args:   make([]any, 0),
 	}
 }
 
@@ -234,7 +234,7 @@ func (q *Query) Write(s string) *Query {
 }
 
 // Placeholder adds a placeholder for a single argument
-func (q *Query) Placeholder(arg interface{}) *Query {
+func (q *Query) Placeholder(arg any) *Query {
 	q.pos++
 	q.args = append(q.args, arg)
 
@@ -265,7 +265,7 @@ func (q *Query) Placeholders(n int) *Query {
 }
 
 // AddArgs adds arguments to the query
-func (q *Query) AddArgs(args ...interface{}) *Query {
+func (q *Query) AddArgs(args ...any) *Query {
 	q.args = append(q.args, args...)
 	return q
 }
@@ -276,6 +276,6 @@ func (q *Query) String() string {
 }
 
 // Args returns the query arguments
-func (q *Query) Args() []interface{} {
+func (q *Query) Args() []any {
 	return q.args
 }

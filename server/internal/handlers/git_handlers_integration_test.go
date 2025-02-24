@@ -123,7 +123,7 @@ func TestGitHandlers_Integration(t *testing.T) {
 				name   string
 				method string
 				path   string
-				body   interface{}
+				body   any
 			}{
 				{
 					name:   "commit without token",

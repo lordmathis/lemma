@@ -195,7 +195,7 @@ func (h *testHarness) createTestUser(t *testing.T, email, password string, role 
 	}
 }
 
-func (h *testHarness) newRequest(t *testing.T, method, path string, body interface{}) *http.Request {
+func (h *testHarness) newRequest(t *testing.T, method, path string, body any) *http.Request {
 	t.Helper()
 
 	var reqBody []byte
@@ -246,7 +246,7 @@ func (h *testHarness) addCSRFCookie(t *testing.T, req *http.Request) string {
 }
 
 // makeRequest is the main helper for making JSON requests
-func (h *testHarness) makeRequest(t *testing.T, method, path string, body interface{}, testUser *testUser) *httptest.ResponseRecorder {
+func (h *testHarness) makeRequest(t *testing.T, method, path string, body any, testUser *testUser) *httptest.ResponseRecorder {
 	t.Helper()
 
 	req := h.newRequest(t, method, path, body)

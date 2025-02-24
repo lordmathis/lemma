@@ -112,7 +112,7 @@ func (s *jwtService) generateToken(userID int, role string, sessionID string, to
 func (s *jwtService) ValidateToken(tokenString string) (*Claims, error) {
 	log := getJWTLogger()
 
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
 		// Validate the signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])

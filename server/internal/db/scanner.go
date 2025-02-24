@@ -23,7 +23,7 @@ func NewScanner(db *sql.DB, dbType DBType) *Scanner {
 }
 
 // QueryRow executes a query and scans the result into a struct
-func (s *Scanner) QueryRow(dest interface{}, q *Query) error {
+func (s *Scanner) QueryRow(dest any, q *Query) error {
 	row := s.db.QueryRow(q.String(), q.Args()...)
 
 	// Handle primitive types
@@ -46,7 +46,7 @@ func (s *Scanner) QueryRow(dest interface{}, q *Query) error {
 }
 
 // Query executes a query and scans multiple results into a slice of structs
-func (s *Scanner) Query(dest interface{}, q *Query) error {
+func (s *Scanner) Query(dest any, q *Query) error {
 	rows, err := s.db.Query(q.String(), q.Args()...)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func (s *Scanner) Query(dest interface{}, q *Query) error {
 }
 
 // scanStruct scans a single row into a struct
-func scanStruct(row *sql.Row, dest interface{}) error {
+func scanStruct(row *sql.Row, dest any) error {
 	v := reflect.ValueOf(dest)
 	if v.Kind() != reflect.Ptr {
 		return fmt.Errorf("dest must be a pointer")
@@ -67,7 +67,7 @@ func scanStruct(row *sql.Row, dest interface{}) error {
 		return fmt.Errorf("dest must be a pointer to a struct")
 	}
 
-	fields := make([]interface{}, 0, v.NumField())
+	fields := make([]any, 0, v.NumField())
 
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
@@ -80,7 +80,7 @@ func scanStruct(row *sql.Row, dest interface{}) error {
 }
 
 // scanStructs scans multiple rows into a slice of structs
-func scanStructs(rows *sql.Rows, dest interface{}) error {
+func scanStructs(rows *sql.Rows, dest any) error {
 	v := reflect.ValueOf(dest)
 	if v.Kind() != reflect.Ptr {
 		return fmt.Errorf("dest must be a pointer")
@@ -95,7 +95,7 @@ func scanStructs(rows *sql.Rows, dest interface{}) error {
 
 	for rows.Next() {
 		newElem := reflect.New(elemType).Elem()
-		fields := make([]interface{}, 0, newElem.NumField())
+		fields := make([]any, 0, newElem.NumField())
 
 		for i := 0; i < newElem.NumField(); i++ {
 			field := newElem.Field(i)
@@ -129,7 +129,7 @@ func NewScannerEx(db *sql.DB, dbType DBType) *ScannerEx {
 }
 
 // QueryRow executes a query and scans the result into a struct
-func (s *ScannerEx) QueryRow(dest interface{}, q *Query) error {
+func (s *ScannerEx) QueryRow(dest any, q *Query) error {
 	row := s.db.QueryRow(q.String(), q.Args()...)
 
 	// Get column names
@@ -141,7 +141,7 @@ func (s *ScannerEx) QueryRow(dest interface{}, q *Query) error {
 }
 
 // Query executes a query and scans multiple results into a slice of structs
-func (s *ScannerEx) Query(dest interface{}, q *Query) error {
+func (s *ScannerEx) Query(dest any, q *Query) error {
 	rows, err := s.db.Query(q.String(), q.Args()...)
 	if err != nil {
 		return err
@@ -189,7 +189,7 @@ func toSnakeCase(s string) string {
 }
 
 // scanStructTags scans a single row into a struct using field tags
-func scanStructTags(row *sql.Row, dest interface{}) error {
+func scanStructTags(row *sql.Row, dest any) error {
 	v := reflect.ValueOf(dest)
 	if v.Kind() != reflect.Ptr {
 		return fmt.Errorf("dest must be a pointer")
@@ -199,7 +199,7 @@ func scanStructTags(row *sql.Row, dest interface{}) error {
 		return fmt.Errorf("dest must be a pointer to a struct")
 	}
 
-	fields := make([]interface{}, 0, v.NumField())
+	fields := make([]any, 0, v.NumField())
 
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
@@ -212,7 +212,7 @@ func scanStructTags(row *sql.Row, dest interface{}) error {
 }
 
 // scanStructsTags scans multiple rows into a slice of structs using field tags
-func scanStructsTags(rows *sql.Rows, dest interface{}) error {
+func scanStructsTags(rows *sql.Rows, dest any) error {
 	v := reflect.ValueOf(dest)
 	if v.Kind() != reflect.Ptr {
 		return fmt.Errorf("dest must be a pointer")
@@ -243,8 +243,8 @@ func scanStructsTags(rows *sql.Rows, dest interface{}) error {
 	fieldMap := getFieldMap(elemType)
 
 	// Prepare values slice for each scan
-	values := make([]interface{}, len(columns))
-	scanFields := make([]interface{}, len(columns))
+	values := make([]any, len(columns))
+	scanFields := make([]any, len(columns))
 	for i := range values {
 		scanFields[i] = &values[i]
 	}

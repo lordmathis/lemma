@@ -192,7 +192,7 @@ func TestFileHandlers_Integration(t *testing.T) {
 				name   string
 				method string
 				path   string
-				body   interface{}
+				body   any
 			}{
 				{"list files", http.MethodGet, baseURL, nil},
 				{"get file", http.MethodGet, baseURL + "/test.md", nil},

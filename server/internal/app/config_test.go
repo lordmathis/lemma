@@ -15,8 +15,8 @@ func TestDefaultConfig(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		got      interface{}
-		expected interface{}
+		got      any
+		expected any
 	}{
 		{"DBPath", cfg.DBURL, "sqlite://lemma.db"},
 		{"WorkDir", cfg.WorkDir, "./data"},
@@ -119,8 +119,8 @@ func TestLoad(t *testing.T) {
 
 		tests := []struct {
 			name     string
-			got      interface{}
-			expected interface{}
+			got      any
+			expected any
 		}{
 			{"IsDevelopment", cfg.IsDevelopment, true},
 			{"DBURL", cfg.DBURL, "/custom/db/path.db"},
