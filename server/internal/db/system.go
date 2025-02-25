@@ -49,7 +49,12 @@ func (db *database) EnsureJWTSecret() (string, error) {
 // GetSystemSetting retrieves a system setting by key
 func (db *database) GetSystemSetting(key string) (string, error) {
 	var value string
-	err := db.QueryRow("SELECT value FROM system_settings WHERE key = ?", key).Scan(&value)
+	query := NewQuery(db.dbType).
+		Select("value").
+		From("system_settings").
+		Where("key = ").
+		Placeholder(key)
+	err := db.QueryRow(query.String(), query.args...).Scan(&value)
 	if err != nil {
 		return "", err
 	}
@@ -59,11 +64,14 @@ func (db *database) GetSystemSetting(key string) (string, error) {
 
 // SetSystemSetting stores or updates a system setting
 func (db *database) SetSystemSetting(key, value string) error {
-	_, err := db.Exec(`
-        INSERT INTO system_settings (key, value)
-        VALUES (?, ?)
-        ON CONFLICT(key) DO UPDATE SET value = ?`,
-		key, value, value)
+	query := NewQuery(db.dbType).
+		Insert("system_settings", "key", "value").
+		Values(2).
+		AddArgs(key, value).
+		Write("ON CONFLICT(key) DO UPDATE SET value = ").
+		Placeholder(value)
+
+	_, err := db.Exec(query.String(), query.args...)
 
 	if err != nil {
 		return fmt.Errorf("failed to store system setting: %w", err)
@@ -92,22 +100,29 @@ func (db *database) GetSystemStats() (*UserStats, error) {
 	stats := &UserStats{}
 
 	// Get total users
-	err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&stats.TotalUsers)
+	query := NewQuery(db.dbType).
+		Select("COUNT(*)").
+		From("users")
+	err := db.QueryRow(query.String()).Scan(&stats.TotalUsers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get total users count: %w", err)
 	}
 
 	// Get total workspaces
-	err = db.QueryRow("SELECT COUNT(*) FROM workspaces").Scan(&stats.TotalWorkspaces)
+	query = NewQuery(db.dbType).
+		Select("COUNT(*)").
+		From("workspaces")
+	err = db.QueryRow(query.String()).Scan(&stats.TotalWorkspaces)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get total workspaces count: %w", err)
 	}
 
 	// Get active users (users with activity in last 30 days)
-	err = db.QueryRow(`
-        SELECT COUNT(DISTINCT user_id)
-        FROM sessions
-        WHERE created_at > datetime('now', '-30 days')`).
+	query = NewQuery(db.dbType).
+		Select("COUNT(DISTINCT user_id)").
+		From("sessions").
+		Where("created_at > datetime('now', '-30 days')")
+	err = db.QueryRow(query.String()).
 		Scan(&stats.ActiveUsers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active users count: %w", err)
