@@ -658,6 +658,158 @@ func TestHavingClause(t *testing.T) {
 	}
 }
 
+func TestQueryReturning(t *testing.T) {
+	testCases := []struct {
+		name         string
+		dbType       db.DBType
+		buildQuery   func(q *db.Query) *db.Query
+		expectedSQL  string
+		expectedArgs []any
+	}{
+		{
+			name:   "SQLite INSERT with RETURNING single column",
+			dbType: db.DBTypeSQLite,
+			buildQuery: func(q *db.Query) *db.Query {
+				return q.Insert("users", "name", "email").
+					Values(2).
+					AddArgs("John Doe", "john@example.com").
+					Returning("id")
+			},
+			expectedSQL:  "INSERT INTO users (name, email) VALUES (?, ?) RETURNING id",
+			expectedArgs: []any{"John Doe", "john@example.com"},
+		},
+		{
+			name:   "PostgreSQL INSERT with RETURNING single column",
+			dbType: db.DBTypePostgres,
+			buildQuery: func(q *db.Query) *db.Query {
+				return q.Insert("users", "name", "email").
+					Values(2).
+					AddArgs("John Doe", "john@example.com").
+					Returning("id")
+			},
+			expectedSQL:  "INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id",
+			expectedArgs: []any{"John Doe", "john@example.com"},
+		},
+		{
+			name:   "SQLite INSERT with RETURNING multiple columns",
+			dbType: db.DBTypeSQLite,
+			buildQuery: func(q *db.Query) *db.Query {
+				return q.Insert("users", "name", "email").
+					Values(2).
+					AddArgs("John Doe", "john@example.com").
+					Returning("id", "created_at")
+			},
+			expectedSQL:  "INSERT INTO users (name, email) VALUES (?, ?) RETURNING id, created_at",
+			expectedArgs: []any{"John Doe", "john@example.com"},
+		},
+		{
+			name:   "PostgreSQL INSERT with RETURNING multiple columns",
+			dbType: db.DBTypePostgres,
+			buildQuery: func(q *db.Query) *db.Query {
+				return q.Insert("users", "name", "email").
+					Values(2).
+					AddArgs("John Doe", "john@example.com").
+					Returning("id", "created_at")
+			},
+			expectedSQL:  "INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id, created_at",
+			expectedArgs: []any{"John Doe", "john@example.com"},
+		},
+		{
+			name:   "SQLite UPDATE with RETURNING",
+			dbType: db.DBTypeSQLite,
+			buildQuery: func(q *db.Query) *db.Query {
+				return q.Update("users").
+					Set("name").Placeholder("Jane Doe").
+					Where("id = ").Placeholder(1).
+					Returning("name", "updated_at")
+			},
+			expectedSQL:  "UPDATE users SET name = ? WHERE id = ? RETURNING name, updated_at",
+			expectedArgs: []any{"Jane Doe", 1},
+		},
+		{
+			name:   "PostgreSQL UPDATE with RETURNING",
+			dbType: db.DBTypePostgres,
+			buildQuery: func(q *db.Query) *db.Query {
+				return q.Update("users").
+					Set("name").Placeholder("Jane Doe").
+					Where("id = ").Placeholder(1).
+					Returning("name", "updated_at")
+			},
+			expectedSQL:  "UPDATE users SET name = $1 WHERE id = $2 RETURNING name, updated_at",
+			expectedArgs: []any{"Jane Doe", 1},
+		},
+		{
+			name:   "SQLite DELETE with RETURNING",
+			dbType: db.DBTypeSQLite,
+			buildQuery: func(q *db.Query) *db.Query {
+				return q.Delete().
+					From("users").
+					Where("id = ").Placeholder(1).
+					Returning("id", "name", "email")
+			},
+			expectedSQL:  "DELETE FROM users WHERE id = ? RETURNING id, name, email",
+			expectedArgs: []any{1},
+		},
+		{
+			name:   "PostgreSQL DELETE with RETURNING",
+			dbType: db.DBTypePostgres,
+			buildQuery: func(q *db.Query) *db.Query {
+				return q.Delete().
+					From("users").
+					Where("id = ").Placeholder(1).
+					Returning("id", "name", "email")
+			},
+			expectedSQL:  "DELETE FROM users WHERE id = $1 RETURNING id, name, email",
+			expectedArgs: []any{1},
+		},
+		{
+			name:   "SQLite INSERT with RETURNING *",
+			dbType: db.DBTypeSQLite,
+			buildQuery: func(q *db.Query) *db.Query {
+				return q.Insert("users", "name", "email").
+					Values(2).
+					AddArgs("John Doe", "john@example.com").
+					Returning("*")
+			},
+			expectedSQL:  "INSERT INTO users (name, email) VALUES (?, ?) RETURNING *",
+			expectedArgs: []any{"John Doe", "john@example.com"},
+		},
+		{
+			name:   "PostgreSQL INSERT with RETURNING *",
+			dbType: db.DBTypePostgres,
+			buildQuery: func(q *db.Query) *db.Query {
+				return q.Insert("users", "name", "email").
+					Values(2).
+					AddArgs("John Doe", "john@example.com").
+					Returning("*")
+			},
+			expectedSQL:  "INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *",
+			expectedArgs: []any{"John Doe", "john@example.com"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			query := db.NewQuery(tc.dbType)
+			result := tc.buildQuery(query)
+
+			if result.String() != tc.expectedSQL {
+				t.Errorf("Expected SQL: %s, got: %s", tc.expectedSQL, result.String())
+			}
+
+			if len(result.Args()) != len(tc.expectedArgs) {
+				t.Errorf("Expected %d args, got %d", len(tc.expectedArgs), len(result.Args()))
+			}
+
+			for i, arg := range result.Args() {
+				if arg != tc.expectedArgs[i] {
+					t.Errorf("Expected arg %d to be %v, got %v", i, tc.expectedArgs[i], arg)
+				}
+			}
+		})
+	}
+}
+
 func TestComplexQueries(t *testing.T) {
 	tests := []struct {
 		name     string
