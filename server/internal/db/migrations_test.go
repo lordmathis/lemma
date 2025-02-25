@@ -27,7 +27,6 @@ func TestMigrate(t *testing.T) {
 			"workspaces",
 			"sessions",
 			"system_settings",
-			// Note: golang-migrate uses its own migrations table
 			"schema_migrations",
 		}
 
@@ -45,6 +44,7 @@ func TestMigrate(t *testing.T) {
 			{"sessions", "idx_sessions_user_id"},
 			{"sessions", "idx_sessions_expires_at"},
 			{"sessions", "idx_sessions_refresh_token"},
+			{"workspaces", "idx_workspaces_user_id"},
 		}
 		for _, idx := range indexes {
 			if !indexExists(t, database, idx.table, idx.name) {

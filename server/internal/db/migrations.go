@@ -10,7 +10,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
-//go:embed migrations/*.sql
+//go:embed migrations/sqlite/*.sql migrations/postgres/*.sql
 var migrationsFS embed.FS
 
 // Migrate applies all database migrations
@@ -18,7 +18,19 @@ func (db *database) Migrate() error {
 	log := getLogger().WithGroup("migrations")
 	log.Info("starting database migration")
 
-	sourceInstance, err := iofs.New(migrationsFS, "migrations")
+	var migrationPath string
+	switch db.dbType {
+	case DBTypePostgres:
+		migrationPath = "migrations/postgres"
+	case DBTypeSQLite:
+		migrationPath = "migrations/sqlite"
+	default:
+		return fmt.Errorf("unsupported database driver: %s", db.dbType)
+	}
+
+	log.Debug("using migration path", "path", migrationPath)
+
+	sourceInstance, err := iofs.New(migrationsFS, migrationPath)
 	if err != nil {
 		return fmt.Errorf("failed to create source instance: %w", err)
 	}
