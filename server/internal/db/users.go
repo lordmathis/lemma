@@ -17,24 +17,16 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 	}
 	defer tx.Rollback()
 
-	result, err := tx.Exec(`
-        INSERT INTO users (email, display_name, password_hash, role)
-        VALUES (?, ?, ?, ?)`,
-		user.Email, user.DisplayName, user.PasswordHash, user.Role)
+	query := NewQuery(db.dbType).
+		Insert("users", "email", "display_name", "password_hash", "role").
+		Values(4).
+		AddArgs(user.Email, user.DisplayName, user.PasswordHash, user.Role).
+		Returning("id", "created_at")
+
+	err = tx.QueryRow(query.String(), query.Args()...).
+		Scan(&user.ID, &user.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert user: %w", err)
-	}
-
-	userID, err := result.LastInsertId()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get last insert ID: %w", err)
-	}
-	user.ID = int(userID)
-
-	// Retrieve the created_at timestamp
-	err = tx.QueryRow("SELECT created_at FROM users WHERE id = ?", user.ID).Scan(&user.CreatedAt)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get created timestamp: %w", err)
 	}
 
 	// Create default workspace with default settings
@@ -51,7 +43,13 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 	}
 
 	// Update user's last workspace ID
-	_, err = tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?", defaultWorkspace.ID, user.ID)
+	query = NewQuery(db.dbType).
+		Update("users").
+		Set("last_workspace_id").
+		Placeholder(defaultWorkspace.ID).
+		Where("id = ").
+		Placeholder(user.ID)
+	_, err = tx.Exec(query.String(), query.Args()...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update last workspace ID: %w", err)
 	}
@@ -70,29 +68,27 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 // Helper function to create a workspace in a transaction
 func (db *database) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
 	log := getLogger().WithGroup("users")
-	result, err := tx.Exec(`
-        INSERT INTO workspaces (
-            user_id, name,
-            theme, auto_save, show_hidden_files,
-            git_enabled, git_url, git_user, git_token,
-            git_auto_commit, git_commit_msg_template,
-            git_commit_name, git_commit_email
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		workspace.UserID, workspace.Name,
-		workspace.Theme, workspace.AutoSave, workspace.ShowHiddenFiles,
-		workspace.GitEnabled, workspace.GitURL, workspace.GitUser, workspace.GitToken,
-		workspace.GitAutoCommit, workspace.GitCommitMsgTemplate,
-		workspace.GitCommitName, workspace.GitCommitEmail,
-	)
+
+	insertQuery := NewQuery(db.dbType).
+		Insert("workspaces",
+			"user_id", "name",
+			"theme", "auto_save", "show_hidden_files",
+			"git_enabled", "git_url", "git_user", "git_token",
+			"git_auto_commit", "git_commit_msg_template",
+			"git_commit_name", "git_commit_email").
+		Values(13).
+		AddArgs(
+			workspace.UserID, workspace.Name,
+			workspace.Theme, workspace.AutoSave, workspace.ShowHiddenFiles,
+			workspace.GitEnabled, workspace.GitURL, workspace.GitUser, workspace.GitToken,
+			workspace.GitAutoCommit, workspace.GitCommitMsgTemplate,
+			workspace.GitCommitName, workspace.GitCommitEmail).
+		Returning("id")
+
+	err := tx.QueryRow(insertQuery.String(), insertQuery.Args()...).Scan(&workspace.ID)
 	if err != nil {
 		return fmt.Errorf("failed to insert workspace: %w", err)
 	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return fmt.Errorf("failed to get workspace ID: %w", err)
-	}
-	workspace.ID = int(id)
 
 	log.Debug("created user workspace",
 		"workspace_id", workspace.ID,
@@ -100,14 +96,15 @@ func (db *database) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) e
 	return nil
 }
 
+// GetUserByID retrieves a user by its ID
 func (db *database) GetUserByID(id int) (*models.User, error) {
+	query := NewQuery(db.dbType).
+		Select("id", "email", "display_name", "password_hash", "role", "created_at", "last_workspace_id").
+		From("users").
+		Where("id = ").Placeholder(id)
+
 	user := &models.User{}
-	err := db.QueryRow(`
-        SELECT 
-            id, email, display_name, password_hash, role, created_at, 
-            last_workspace_id
-        FROM users
-        WHERE id = ?`, id).
+	err := db.QueryRow(query.String(), query.Args()...).
 		Scan(&user.ID, &user.Email, &user.DisplayName, &user.PasswordHash,
 			&user.Role, &user.CreatedAt, &user.LastWorkspaceID)
 
@@ -120,14 +117,15 @@ func (db *database) GetUserByID(id int) (*models.User, error) {
 	return user, nil
 }
 
+// GetUserByEmail retrieves a user by its email
 func (db *database) GetUserByEmail(email string) (*models.User, error) {
+	query := NewQuery(db.dbType).
+		Select("id", "email", "display_name", "password_hash", "role", "created_at", "last_workspace_id").
+		From("users").
+		Where("email = ").Placeholder(email)
+
 	user := &models.User{}
-	err := db.QueryRow(`
-        SELECT 
-            id, email, display_name, password_hash, role, created_at, 
-            last_workspace_id
-        FROM users
-        WHERE email = ?`, email).
+	err := db.QueryRow(query.String(), query.Args()...).
 		Scan(&user.ID, &user.Email, &user.DisplayName, &user.PasswordHash,
 			&user.Role, &user.CreatedAt, &user.LastWorkspaceID)
 
@@ -141,14 +139,18 @@ func (db *database) GetUserByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
+// UpdateUser updates an existing user record in the database
 func (db *database) UpdateUser(user *models.User) error {
-	result, err := db.Exec(`
-        UPDATE users
-        SET email = ?, display_name = ?, password_hash = ?, role = ?, last_workspace_id = ?
-        WHERE id = ?`,
-		user.Email, user.DisplayName, user.PasswordHash, user.Role,
-		user.LastWorkspaceID, user.ID)
+	query := NewQuery(db.dbType).
+		Update("users").
+		Set("email").Placeholder(user.Email).
+		Set("display_name").Placeholder(user.DisplayName).
+		Set("password_hash").Placeholder(user.PasswordHash).
+		Set("role").Placeholder(user.Role).
+		Set("last_workspace_id").Placeholder(user.LastWorkspaceID).
+		Where("id = ").Placeholder(user.ID)
 
+	result, err := db.Exec(query.String(), query.Args()...)
 	if err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
 	}
@@ -165,13 +167,14 @@ func (db *database) UpdateUser(user *models.User) error {
 	return nil
 }
 
+// GetAllUsers retrieves all users from the database
 func (db *database) GetAllUsers() ([]*models.User, error) {
-	rows, err := db.Query(`
-        SELECT 
-            id, email, display_name, role, created_at,
-            last_workspace_id
-        FROM users
-        ORDER BY id ASC`)
+	query := NewQuery(db.dbType).
+		Select("id", "email", "display_name", "role", "created_at", "last_workspace_id").
+		From("users").
+		OrderBy("id ASC")
+
+	rows, err := db.Query(query.String(), query.Args()...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query users: %w", err)
 	}
@@ -200,15 +203,26 @@ func (db *database) UpdateLastWorkspace(userID int, workspaceName string) error 
 	}
 	defer tx.Rollback()
 
+	// Find workspace ID from name
+	workspaceQuery := NewQuery(db.dbType).
+		Select("id").
+		From("workspaces").
+		Where("user_id = ").Placeholder(userID).
+		And("name = ").Placeholder(workspaceName)
+
 	var workspaceID int
-	err = tx.QueryRow("SELECT id FROM workspaces WHERE user_id = ? AND name = ?",
-		userID, workspaceName).Scan(&workspaceID)
+	err = tx.QueryRow(workspaceQuery.String(), workspaceQuery.Args()...).Scan(&workspaceID)
 	if err != nil {
 		return fmt.Errorf("failed to find workspace: %w", err)
 	}
 
-	_, err = tx.Exec("UPDATE users SET last_workspace_id = ? WHERE id = ?",
-		workspaceID, userID)
+	// Update user's last workspace
+	updateQuery := NewQuery(db.dbType).
+		Update("users").
+		Set("last_workspace_id").Placeholder(workspaceID).
+		Where("id = ").Placeholder(userID)
+
+	_, err = tx.Exec(updateQuery.String(), updateQuery.Args()...)
 	if err != nil {
 		return fmt.Errorf("failed to update last workspace: %w", err)
 	}
@@ -221,6 +235,7 @@ func (db *database) UpdateLastWorkspace(userID int, workspaceName string) error 
 	return nil
 }
 
+// DeleteUser deletes a user and all their workspaces
 func (db *database) DeleteUser(id int) error {
 	log := getLogger().WithGroup("users")
 	log.Debug("deleting user", "user_id", id)
@@ -233,13 +248,24 @@ func (db *database) DeleteUser(id int) error {
 
 	// Delete all user's workspaces first
 	log.Debug("deleting user workspaces", "user_id", id)
-	_, err = tx.Exec("DELETE FROM workspaces WHERE user_id = ?", id)
+
+	deleteWorkspacesQuery := NewQuery(db.dbType).
+		Delete().
+		From("workspaces").
+		Where("user_id = ").Placeholder(id)
+
+	_, err = tx.Exec(deleteWorkspacesQuery.String(), deleteWorkspacesQuery.Args()...)
 	if err != nil {
 		return fmt.Errorf("failed to delete workspaces: %w", err)
 	}
 
 	// Delete the user
-	_, err = tx.Exec("DELETE FROM users WHERE id = ?", id)
+	deleteUserQuery := NewQuery(db.dbType).
+		Delete().
+		From("users").
+		Where("id = ").Placeholder(id)
+
+	_, err = tx.Exec(deleteUserQuery.String(), deleteUserQuery.Args()...)
 	if err != nil {
 		return fmt.Errorf("failed to delete user: %w", err)
 	}
@@ -253,15 +279,16 @@ func (db *database) DeleteUser(id int) error {
 	return nil
 }
 
+// GetLastWorkspaceName retrieves the name of the last workspace accessed by a user
 func (db *database) GetLastWorkspaceName(userID int) (string, error) {
+	query := NewQuery(db.dbType).
+		Select("w.name").
+		From("workspaces w").
+		Join(InnerJoin, "users u", "u.last_workspace_id = w.id").
+		Where("u.id = ").Placeholder(userID)
+
 	var workspaceName string
-	err := db.QueryRow(`
-        SELECT 
-            w.name
-        FROM workspaces w
-        JOIN users u ON u.last_workspace_id = w.id
-        WHERE u.id = ?`, userID).
-		Scan(&workspaceName)
+	err := db.QueryRow(query.String(), query.Args()...).Scan(&workspaceName)
 
 	if err == sql.ErrNoRows {
 		return "", fmt.Errorf("no last workspace found")
@@ -275,8 +302,13 @@ func (db *database) GetLastWorkspaceName(userID int) (string, error) {
 
 // CountAdminUsers returns the number of admin users in the system
 func (db *database) CountAdminUsers() (int, error) {
+	query := NewQuery(db.dbType).
+		Select("COUNT(*)").
+		From("users").
+		Where("role = ").Placeholder(models.RoleAdmin)
+
 	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'admin'").Scan(&count)
+	err := db.QueryRow(query.String(), query.Args()...).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count admin users: %w", err)
 	}
