@@ -227,6 +227,18 @@ func (q *Query) EndGroup() *Query {
 	return q
 }
 
+// Returning adds a RETURNING clause for both PostgreSQL and SQLite (3.35.0+)
+func (q *Query) Returning(columns ...string) *Query {
+	q.Write(" RETURNING ")
+	if len(columns) == 1 && columns[0] == "*" {
+		q.Write("*")
+	} else {
+		q.Write(strings.Join(columns, ", "))
+	}
+
+	return q
+}
+
 // Write adds a string to the query
 func (q *Query) Write(s string) *Query {
 	q.builder.WriteString(s)
