@@ -8,9 +8,10 @@ import (
 )
 
 type DBField struct {
-	Name  string
-	Value any
-	Type  reflect.Type
+	Name       string
+	Value      any
+	Type       reflect.Type
+	useDefault bool
 }
 
 func StructTagsToFields(s any) ([]DBField, error) {
@@ -47,14 +48,28 @@ func StructTagsToFields(s any) ([]DBField, error) {
 			tag = toSnakeCase(f.Name)
 		}
 
-		if strings.Contains(tag, "omitempty") && reflect.DeepEqual(v.Field(i).Interface(), reflect.Zero(f.Type).Interface()) {
-			continue
+		useDefault := false
+		if strings.Contains(tag, ",") {
+			parts := strings.Split(tag, ",")
+			tag = parts[0]
+
+			for _, opt := range parts[1:] {
+				switch opt {
+				case "omitempty":
+					if reflect.DeepEqual(v.Field(i).Interface(), reflect.Zero(f.Type).Interface()) {
+						continue
+					}
+				case "default":
+					useDefault = true
+				}
+			}
 		}
 
 		fields = append(fields, DBField{
-			Name:  tag,
-			Value: v.Field(i).Interface(),
-			Type:  f.Type,
+			Name:       tag,
+			Value:      v.Field(i).Interface(),
+			Type:       f.Type,
+			useDefault: useDefault,
 		})
 	}
 	return fields, nil
@@ -86,6 +101,10 @@ func (q *Query) InsertStruct(s any, table string) (*Query, error) {
 	values := make([]any, 0, len(fields))
 
 	for _, f := range fields {
+		if f.useDefault {
+			continue
+		}
+
 		columns = append(columns, f.Name)
 		values = append(values, f.Value)
 	}

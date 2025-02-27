@@ -24,19 +24,16 @@ func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 	if err != nil {
 		return fmt.Errorf("failed to encrypt token: %w", err)
 	}
+	workspace.GitToken = encryptedToken
 
-	query := NewQuery(db.dbType).
-		Insert("workspaces",
-			"user_id", "name", "theme", "auto_save", "show_hidden_files",
-			"git_enabled", "git_url", "git_user", "git_token",
-			"git_auto_commit", "git_commit_msg_template",
-			"git_commit_name", "git_commit_email").
-		Values(13).
-		AddArgs(
-			workspace.UserID, workspace.Name, workspace.Theme, workspace.AutoSave, workspace.ShowHiddenFiles,
-			workspace.GitEnabled, workspace.GitURL, workspace.GitUser, encryptedToken,
-			workspace.GitAutoCommit, workspace.GitCommitMsgTemplate, workspace.GitCommitName, workspace.GitCommitEmail).
-		Returning("id", "created_at")
+	query, err := NewQuery(db.dbType).
+		InsertStruct(workspace, "workspaces")
+
+	if err != nil {
+		return fmt.Errorf("failed to create query: %w", err)
+	}
+
+	query.Returning("id", "created_at")
 
 	err = db.QueryRow(query.String(), query.Args()...).
 		Scan(&workspace.ID, &workspace.CreatedAt)

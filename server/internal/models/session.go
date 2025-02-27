@@ -5,9 +5,9 @@ import "time"
 
 // Session represents a user session in the database
 type Session struct {
-	ID           string    // Unique session identifier
-	UserID       int       // ID of the user this session belongs to
-	RefreshToken string    // The refresh token associated with this session
-	ExpiresAt    time.Time // When this session expires
-	CreatedAt    time.Time // When this session was created
+	ID           string    `db:"id,default"`         // Unique session identifier
+	UserID       int       `db:"user_id"`            // ID of the user this session belongs to
+	RefreshToken string    `db:"refresh_token"`      // The refresh token associated with this session
+	ExpiresAt    time.Time `db:"expires_at"`         // When this session expires
+	CreatedAt    time.Time `db:"created_at,default"` // When this session was created
 }

@@ -6,24 +6,24 @@ import (
 
 // Workspace represents a user's workspace in the system
 type Workspace struct {
-	ID                 int       `json:"id" validate:"required,min=1"`
-	UserID             int       `json:"userId" validate:"required,min=1"`
-	Name               string    `json:"name" validate:"required"`
-	CreatedAt          time.Time `json:"createdAt"`
-	LastOpenedFilePath string    `json:"lastOpenedFilePath"`
+	ID                 int       `json:"id" db:"id,default" validate:"required,min=1"`
+	UserID             int       `json:"userId" db:"user_id" validate:"required,min=1"`
+	Name               string    `json:"name" db:"name" validate:"required"`
+	CreatedAt          time.Time `json:"createdAt" db:"created_at,default"`
+	LastOpenedFilePath string    `json:"lastOpenedFilePath" db:"last_opened_file_path"`
 
 	// Integrated settings
-	Theme                string `json:"theme" validate:"oneof=light dark"`
-	AutoSave             bool   `json:"autoSave"`
-	ShowHiddenFiles      bool   `json:"showHiddenFiles"`
-	GitEnabled           bool   `json:"gitEnabled"`
-	GitURL               string `json:"gitUrl" validate:"required_if=GitEnabled true"`
-	GitUser              string `json:"gitUser" validate:"required_if=GitEnabled true"`
-	GitToken             string `json:"gitToken" validate:"required_if=GitEnabled true"`
-	GitAutoCommit        bool   `json:"gitAutoCommit"`
-	GitCommitMsgTemplate string `json:"gitCommitMsgTemplate"`
-	GitCommitName        string `json:"gitCommitName"`
-	GitCommitEmail       string `json:"gitCommitEmail" validate:"omitempty,required_if=GitEnabled true,email"`
+	Theme                string `json:"theme" db:"theme" validate:"oneof=light dark"`
+	AutoSave             bool   `json:"autoSave" db:"auto_save"`
+	ShowHiddenFiles      bool   `json:"showHiddenFiles" db:"show_hidden_files"`
+	GitEnabled           bool   `json:"gitEnabled" db:"git_enabled"`
+	GitURL               string `json:"gitUrl" db:"git_url" validate:"required_if=GitEnabled true"`
+	GitUser              string `json:"gitUser" db:"git_user" validate:"required_if=GitEnabled true"`
+	GitToken             string `json:"gitToken" db:"git_token" validate:"required_if=GitEnabled true"`
+	GitAutoCommit        bool   `json:"gitAutoCommit" db:"git_auto_commit"`
+	GitCommitMsgTemplate string `json:"gitCommitMsgTemplate" db:"git_commit_msg_template"`
+	GitCommitName        string `json:"gitCommitName" db:"git_commit_name"`
+	GitCommitEmail       string `json:"gitCommitEmail" db:"git_commit_email" validate:"omitempty,required_if=GitEnabled true,email"`
 }
 
 // Validate validates the workspace struct

@@ -17,11 +17,14 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 	}
 	defer tx.Rollback()
 
-	query := NewQuery(db.dbType).
-		Insert("users", "email", "display_name", "password_hash", "role").
-		Values(4).
-		AddArgs(user.Email, user.DisplayName, user.PasswordHash, user.Role).
-		Returning("id", "created_at")
+	query, err := NewQuery(db.dbType).
+		InsertStruct(user, "users")
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create query: %w", err)
+	}
+
+	query.Returning("id", "created_at")
 
 	err = tx.QueryRow(query.String(), query.Args()...).
 		Scan(&user.ID, &user.CreatedAt)
@@ -69,23 +72,16 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 func (db *database) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
 	log := getLogger().WithGroup("users")
 
-	insertQuery := NewQuery(db.dbType).
-		Insert("workspaces",
-			"user_id", "name",
-			"theme", "auto_save", "show_hidden_files",
-			"git_enabled", "git_url", "git_user", "git_token",
-			"git_auto_commit", "git_commit_msg_template",
-			"git_commit_name", "git_commit_email").
-		Values(13).
-		AddArgs(
-			workspace.UserID, workspace.Name,
-			workspace.Theme, workspace.AutoSave, workspace.ShowHiddenFiles,
-			workspace.GitEnabled, workspace.GitURL, workspace.GitUser, workspace.GitToken,
-			workspace.GitAutoCommit, workspace.GitCommitMsgTemplate,
-			workspace.GitCommitName, workspace.GitCommitEmail).
-		Returning("id")
+	insertQuery, err := NewQuery(db.dbType).
+		InsertStruct(workspace, "workspaces")
 
-	err := tx.QueryRow(insertQuery.String(), insertQuery.Args()...).Scan(&workspace.ID)
+	if err != nil {
+		return fmt.Errorf("failed to create query: %w", err)
+	}
+
+	insertQuery.Returning("id")
+
+	err = tx.QueryRow(insertQuery.String(), insertQuery.Args()...).Scan(&workspace.ID)
 	if err != nil {
 		return fmt.Errorf("failed to insert workspace: %w", err)
 	}

@@ -10,11 +10,12 @@ import (
 
 // CreateSession inserts a new session record into the database
 func (db *database) CreateSession(session *models.Session) error {
-	query := NewQuery(db.dbType).
-		Insert("sessions", "id", "user_id", "refresh_token", "expires_at", "created_at").
-		Values(5).
-		AddArgs(session.ID, session.UserID, session.RefreshToken, session.ExpiresAt, session.CreatedAt)
-	_, err := db.Exec(query.String(), query.Args()...)
+	query, err := NewQuery(db.dbType).
+		InsertStruct(session, "sessions")
+	if err != nil {
+		return fmt.Errorf("failed to create query: %w", err)
+	}
+	_, err = db.Exec(query.String(), query.Args()...)
 	if err != nil {
 		return fmt.Errorf("failed to store session: %w", err)
 	}
