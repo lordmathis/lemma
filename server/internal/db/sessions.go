@@ -11,7 +11,7 @@ import (
 // CreateSession inserts a new session record into the database
 func (db *database) CreateSession(session *models.Session) error {
 	query, err := NewQuery(db.dbType).
-		InsertStruct(session, "sessions")
+		InsertStruct(session, "sessions", db.secretsService)
 	if err != nil {
 		return fmt.Errorf("failed to create query: %w", err)
 	}

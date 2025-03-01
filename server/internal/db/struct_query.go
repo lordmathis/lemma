@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"lemma/internal/secrets"
 	"reflect"
 	"strings"
 	"unicode"
@@ -14,7 +15,7 @@ type DBField struct {
 	useDefault bool
 }
 
-func StructTagsToFields(s any) ([]DBField, error) {
+func StructTagsToFields(s any, secretsService secrets.Service) ([]DBField, error) {
 	v := reflect.ValueOf(s)
 
 	if v.Kind() == reflect.Ptr {
@@ -49,6 +50,8 @@ func StructTagsToFields(s any) ([]DBField, error) {
 		}
 
 		useDefault := false
+		value := v.Field(i).Interface()
+
 		if strings.Contains(tag, ",") {
 			parts := strings.Split(tag, ",")
 			tag = parts[0]
@@ -61,13 +64,19 @@ func StructTagsToFields(s any) ([]DBField, error) {
 					}
 				case "default":
 					useDefault = true
+				case "encrypted":
+					val, err := secretsService.Encrypt(value.(string))
+					if err != nil {
+						return nil, fmt.Errorf("failed to encrypt field %s: %w", f.Name, err)
+					}
+					value = val
 				}
 			}
 		}
 
 		fields = append(fields, DBField{
 			Name:       tag,
-			Value:      v.Field(i).Interface(),
+			Value:      value,
 			Type:       f.Type,
 			useDefault: useDefault,
 		})
@@ -91,8 +100,8 @@ func toSnakeCase(s string) string {
 	return res
 }
 
-func (q *Query) InsertStruct(s any, table string) (*Query, error) {
-	fields, err := StructTagsToFields(s)
+func (q *Query) InsertStruct(s any, table string, secretsService secrets.Service) (*Query, error) {
+	fields, err := StructTagsToFields(s, secretsService)
 	if err != nil {
 		return nil, err
 	}

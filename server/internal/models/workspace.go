@@ -17,9 +17,9 @@ type Workspace struct {
 	AutoSave             bool   `json:"autoSave" db:"auto_save"`
 	ShowHiddenFiles      bool   `json:"showHiddenFiles" db:"show_hidden_files"`
 	GitEnabled           bool   `json:"gitEnabled" db:"git_enabled"`
-	GitURL               string `json:"gitUrl" db:"git_url" validate:"required_if=GitEnabled true"`
-	GitUser              string `json:"gitUser" db:"git_user" validate:"required_if=GitEnabled true"`
-	GitToken             string `json:"gitToken" db:"git_token" validate:"required_if=GitEnabled true"`
+	GitURL               string `json:"gitUrl" db:"git_url,ommitempty" validate:"required_if=GitEnabled true"`
+	GitUser              string `json:"gitUser" db:"git_user,ommitempty" validate:"required_if=GitEnabled true"`
+	GitToken             string `json:"gitToken" db:"git_token,ommitempty,encrypted" validate:"required_if=GitEnabled true"`
 	GitAutoCommit        bool   `json:"gitAutoCommit" db:"git_auto_commit"`
 	GitCommitMsgTemplate string `json:"gitCommitMsgTemplate" db:"git_commit_msg_template"`
 	GitCommitName        string `json:"gitCommitName" db:"git_commit_name"`

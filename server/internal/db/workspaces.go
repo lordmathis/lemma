@@ -19,15 +19,8 @@ func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 		workspace.SetDefaultSettings()
 	}
 
-	// Encrypt token if present
-	encryptedToken, err := db.encryptToken(workspace.GitToken)
-	if err != nil {
-		return fmt.Errorf("failed to encrypt token: %w", err)
-	}
-	workspace.GitToken = encryptedToken
-
 	query, err := NewQuery(db.dbType).
-		InsertStruct(workspace, "workspaces")
+		InsertStruct(workspace, "workspaces", db.secretsService)
 
 	if err != nil {
 		return fmt.Errorf("failed to create query: %w", err)

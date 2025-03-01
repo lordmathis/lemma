@@ -18,7 +18,7 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 	defer tx.Rollback()
 
 	query, err := NewQuery(db.dbType).
-		InsertStruct(user, "users")
+		InsertStruct(user, "users", db.secretsService)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create query: %w", err)
@@ -73,7 +73,7 @@ func (db *database) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) e
 	log := getLogger().WithGroup("users")
 
 	insertQuery, err := NewQuery(db.dbType).
-		InsertStruct(workspace, "workspaces")
+		InsertStruct(workspace, "workspaces", db.secretsService)
 
 	if err != nil {
 		return fmt.Errorf("failed to create query: %w", err)
