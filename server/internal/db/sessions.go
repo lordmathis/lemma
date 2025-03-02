@@ -10,8 +10,8 @@ import (
 
 // CreateSession inserts a new session record into the database
 func (db *database) CreateSession(session *models.Session) error {
-	query, err := NewQuery(db.dbType).
-		InsertStruct(session, "sessions", db.secretsService)
+	query, err := db.NewQuery().
+		InsertStruct(session, "sessions")
 	if err != nil {
 		return fmt.Errorf("failed to create query: %w", err)
 	}
@@ -26,7 +26,7 @@ func (db *database) CreateSession(session *models.Session) error {
 // GetSessionByRefreshToken retrieves a session by its refresh token
 func (db *database) GetSessionByRefreshToken(refreshToken string) (*models.Session, error) {
 	session := &models.Session{}
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select("id", "user_id", "refresh_token", "expires_at", "created_at").
 		From("sessions").
 		Where("refresh_token = ").
@@ -48,7 +48,7 @@ func (db *database) GetSessionByRefreshToken(refreshToken string) (*models.Sessi
 // GetSessionByID retrieves a session by its ID
 func (db *database) GetSessionByID(sessionID string) (*models.Session, error) {
 	session := &models.Session{}
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select("id", "user_id", "refresh_token", "expires_at", "created_at").
 		From("sessions").
 		Where("id = ").
@@ -69,7 +69,7 @@ func (db *database) GetSessionByID(sessionID string) (*models.Session, error) {
 
 // DeleteSession removes a session from the database
 func (db *database) DeleteSession(sessionID string) error {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Delete().
 		From("sessions").
 		Where("id = ").
@@ -95,7 +95,7 @@ func (db *database) DeleteSession(sessionID string) error {
 // CleanExpiredSessions removes all expired sessions from the database
 func (db *database) CleanExpiredSessions() error {
 	log := getLogger().WithGroup("sessions")
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Delete().
 		From("sessions").
 		Where("expires_at <=").

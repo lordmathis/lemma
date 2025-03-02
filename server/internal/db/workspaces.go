@@ -19,7 +19,7 @@ func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 		workspace.SetDefaultSettings()
 	}
 
-	query, err := NewQuery(db.dbType).
+	query, err := db.NewQuery().
 		InsertStruct(workspace, "workspaces", db.secretsService)
 
 	if err != nil {
@@ -39,7 +39,7 @@ func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 
 // GetWorkspaceByID retrieves a workspace by its ID
 func (db *database) GetWorkspaceByID(id int) (*models.Workspace, error) {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select(
 			"id", "user_id", "name", "created_at",
 			"theme", "auto_save", "show_hidden_files",
@@ -86,7 +86,7 @@ func (db *database) GetWorkspaceByID(id int) (*models.Workspace, error) {
 
 // GetWorkspaceByName retrieves a workspace by its name and user ID
 func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*models.Workspace, error) {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select(
 			"id", "user_id", "name", "created_at",
 			"theme", "auto_save", "show_hidden_files",
@@ -133,28 +133,14 @@ func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*model
 
 // UpdateWorkspace updates a workspace record in the database
 func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
-	// Encrypt token before storing
-	encryptedToken, err := db.encryptToken(workspace.GitToken)
-	if err != nil {
-		return fmt.Errorf("failed to encrypt token: %w", err)
-	}
 
-	query := NewQuery(db.dbType).
-		Update("workspaces").
-		Set("name").Placeholder(workspace.Name).
-		Set("theme").Placeholder(workspace.Theme).
-		Set("auto_save").Placeholder(workspace.AutoSave).
-		Set("show_hidden_files").Placeholder(workspace.ShowHiddenFiles).
-		Set("git_enabled").Placeholder(workspace.GitEnabled).
-		Set("git_url").Placeholder(workspace.GitURL).
-		Set("git_user").Placeholder(workspace.GitUser).
-		Set("git_token").Placeholder(encryptedToken).
-		Set("git_auto_commit").Placeholder(workspace.GitAutoCommit).
-		Set("git_commit_msg_template").Placeholder(workspace.GitCommitMsgTemplate).
-		Set("git_commit_name").Placeholder(workspace.GitCommitName).
-		Set("git_commit_email").Placeholder(workspace.GitCommitEmail).
-		Where("id = ").Placeholder(workspace.ID).
-		And("user_id = ").Placeholder(workspace.UserID)
+	query := db.NewQuery()
+	query, err := query.
+		UpdateStruct(workspace, "workspaces", []string{"id =", "user_id ="}, []interface{}{workspace.ID, workspace.UserID})
+
+	if err != nil {
+		return fmt.Errorf("failed to create query: %w", err)
+	}
 
 	_, err = db.Exec(query.String(), query.Args()...)
 	if err != nil {
@@ -166,7 +152,7 @@ func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
 
 // GetWorkspacesByUserID retrieves all workspaces for a user
 func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select(
 			"id", "user_id", "name", "created_at",
 			"theme", "auto_save", "show_hidden_files",
@@ -222,26 +208,17 @@ func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, erro
 
 // UpdateWorkspaceSettings updates only the settings portion of a workspace
 func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
-	// Encrypt token before storing
-	encryptedToken, err := db.encryptToken(workspace.GitToken)
-	if err != nil {
-		return fmt.Errorf("failed to encrypt token: %w", err)
-	}
 
-	query := NewQuery(db.dbType).
-		Update("workspaces").
-		Set("theme").Placeholder(workspace.Theme).
-		Set("auto_save").Placeholder(workspace.AutoSave).
-		Set("show_hidden_files").Placeholder(workspace.ShowHiddenFiles).
-		Set("git_enabled").Placeholder(workspace.GitEnabled).
-		Set("git_url").Placeholder(workspace.GitURL).
-		Set("git_user").Placeholder(workspace.GitUser).
-		Set("git_token").Placeholder(encryptedToken).
-		Set("git_auto_commit").Placeholder(workspace.GitAutoCommit).
-		Set("git_commit_msg_template").Placeholder(workspace.GitCommitMsgTemplate).
-		Set("git_commit_name").Placeholder(workspace.GitCommitName).
-		Set("git_commit_email").Placeholder(workspace.GitCommitEmail).
-		Where("id = ").Placeholder(workspace.ID)
+	where := []string{"id ="}
+	args := []interface{}{workspace.ID}
+
+	query := db.NewQuery()
+	query, err := query.
+		UpdateStruct(workspace, "workspaces", where, args)
+
+	if err != nil {
+		return fmt.Errorf("failed to create query: %w", err)
+	}
 
 	_, err = db.Exec(query.String(), query.Args()...)
 	if err != nil {
@@ -255,7 +232,7 @@ func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 func (db *database) DeleteWorkspace(id int) error {
 	log := getLogger().WithGroup("workspaces")
 
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Delete().
 		From("workspaces").
 		Where("id = ").Placeholder(id)
@@ -273,7 +250,7 @@ func (db *database) DeleteWorkspace(id int) error {
 func (db *database) DeleteWorkspaceTx(tx *sql.Tx, id int) error {
 	log := getLogger().WithGroup("workspaces")
 
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Delete().
 		From("workspaces").
 		Where("id = ").Placeholder(id)
@@ -294,7 +271,7 @@ func (db *database) DeleteWorkspaceTx(tx *sql.Tx, id int) error {
 
 // UpdateLastWorkspaceTx sets the last workspace for a user in a transaction
 func (db *database) UpdateLastWorkspaceTx(tx *sql.Tx, userID, workspaceID int) error {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Update("users").
 		Set("last_workspace_id").Placeholder(workspaceID).
 		Where("id = ").Placeholder(userID)
@@ -314,7 +291,7 @@ func (db *database) UpdateLastWorkspaceTx(tx *sql.Tx, userID, workspaceID int) e
 
 // UpdateLastOpenedFile updates the last opened file path for a workspace
 func (db *database) UpdateLastOpenedFile(workspaceID int, filePath string) error {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Update("workspaces").
 		Set("last_opened_file_path").Placeholder(filePath).
 		Where("id = ").Placeholder(workspaceID)
@@ -329,7 +306,7 @@ func (db *database) UpdateLastOpenedFile(workspaceID int, filePath string) error
 
 // GetLastOpenedFile retrieves the last opened file path for a workspace
 func (db *database) GetLastOpenedFile(workspaceID int) (string, error) {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select("last_opened_file_path").
 		From("workspaces").
 		Where("id = ").Placeholder(workspaceID)
@@ -353,7 +330,7 @@ func (db *database) GetLastOpenedFile(workspaceID int) (string, error) {
 
 // GetAllWorkspaces retrieves all workspaces in the database
 func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select(
 			"id", "user_id", "name", "created_at",
 			"theme", "auto_save", "show_hidden_files",

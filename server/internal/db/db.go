@@ -195,29 +195,6 @@ func (db *database) Close() error {
 	return nil
 }
 
-// Helper methods for token encryption/decryption
-func (db *database) encryptToken(token string) (string, error) {
-	if token == "" {
-		return "", nil
-	}
-
-	encrypted, err := db.secretsService.Encrypt(token)
-	if err != nil {
-		return "", fmt.Errorf("failed to encrypt token: %w", err)
-	}
-
-	return encrypted, nil
-}
-
-func (db *database) decryptToken(token string) (string, error) {
-	if token == "" {
-		return "", nil
-	}
-
-	decrypted, err := db.secretsService.Decrypt(token)
-	if err != nil {
-		return "", fmt.Errorf("failed to decrypt token: %w", err)
-	}
-
-	return decrypted, nil
+func (db *database) NewQuery() *Query {
+	return NewQuery(db.dbType, db.secretsService)
 }

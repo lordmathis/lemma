@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"lemma/internal/secrets"
 	"strings"
 )
 
@@ -15,27 +16,29 @@ const (
 
 // Query represents a SQL query with its parameters
 type Query struct {
-	builder     strings.Builder
-	args        []any
-	dbType      DBType
-	pos         int // tracks the current placeholder position
-	hasSelect   bool
-	hasFrom     bool
-	hasWhere    bool
-	hasOrderBy  bool
-	hasGroupBy  bool
-	hasHaving   bool
-	hasLimit    bool
-	hasOffset   bool
-	isInParens  bool
-	parensDepth int
+	builder        strings.Builder
+	args           []any
+	dbType         DBType
+	secretsService secrets.Service
+	pos            int // tracks the current placeholder position
+	hasSelect      bool
+	hasFrom        bool
+	hasWhere       bool
+	hasOrderBy     bool
+	hasGroupBy     bool
+	hasHaving      bool
+	hasLimit       bool
+	hasOffset      bool
+	isInParens     bool
+	parensDepth    int
 }
 
 // NewQuery creates a new Query instance
-func NewQuery(dbType DBType) *Query {
+func NewQuery(dbType DBType, secretsService secrets.Service) *Query {
 	return &Query{
-		dbType: dbType,
-		args:   make([]any, 0),
+		dbType:         dbType,
+		secretsService: secretsService,
+		args:           make([]any, 0),
 	}
 }
 

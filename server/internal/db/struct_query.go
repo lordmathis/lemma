@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"lemma/internal/secrets"
 	"reflect"
 	"strings"
 	"unicode"
@@ -98,7 +97,7 @@ func toSnakeCase(s string) string {
 	return res
 }
 
-func (q *Query) InsertStruct(s any, table string, secretsService secrets.Service) (*Query, error) {
+func (q *Query) InsertStruct(s any, table string) (*Query, error) {
 	fields, err := StructTagsToFields(s)
 	if err != nil {
 		return nil, err
@@ -115,7 +114,7 @@ func (q *Query) InsertStruct(s any, table string, secretsService secrets.Service
 		}
 
 		if f.encrypted {
-			encValue, err := secretsService.Encrypt(value.(string))
+			encValue, err := q.secretsService.Encrypt(value.(string))
 			if err != nil {
 				return nil, err
 			}
@@ -131,5 +130,45 @@ func (q *Query) InsertStruct(s any, table string, secretsService secrets.Service
 	}
 
 	q.Insert(table, columns...).Values(len(columns)).AddArgs(values...)
+	return q, nil
+}
+
+func (q *Query) UpdateStruct(s any, table string, where []string, args []any) (*Query, error) {
+	fields, err := StructTagsToFields(s)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(where) != len(args) {
+		return nil, fmt.Errorf("number of where clauses does not match number of arguments")
+	}
+
+	q = q.Update("users")
+
+	for _, f := range fields {
+		value := f.Value
+
+		if f.useDefault {
+			continue
+		}
+
+		if f.encrypted {
+			encValue, err := q.secretsService.Encrypt(value.(string))
+			if err != nil {
+				return nil, err
+			}
+			value = encValue
+		}
+
+		q = q.Set(f.Name).Placeholder(value)
+	}
+
+	for i, w := range where {
+		if i != 0 && i < len(args) {
+			q = q.And(w)
+		}
+		q = q.Where(w).Placeholder(args[i])
+	}
+
 	return q, nil
 }

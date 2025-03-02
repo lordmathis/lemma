@@ -24,7 +24,7 @@ func TestNewQuery(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			q := db.NewQuery(tt.dbType)
+			q := db.NewQuery(tt.dbType, &mockSecrets{})
 
 			// Test that a new query is empty
 			if q.String() != "" {
@@ -120,7 +120,7 @@ func TestBasicQueryBuilding(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			q := db.NewQuery(tt.dbType)
+			q := db.NewQuery(tt.dbType, &mockSecrets{})
 			q = tt.buildFn(q)
 
 			gotSQL := q.String()
@@ -215,7 +215,7 @@ func TestPlaceholders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			q := db.NewQuery(tt.dbType)
+			q := db.NewQuery(tt.dbType, &mockSecrets{})
 			q = tt.buildFn(q)
 
 			gotSQL := q.String()
@@ -328,7 +328,7 @@ func TestWhereClauseBuilding(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			q := db.NewQuery(tt.dbType)
+			q := db.NewQuery(tt.dbType, &mockSecrets{})
 			q = tt.buildFn(q)
 
 			gotSQL := q.String()
@@ -403,7 +403,7 @@ func TestJoinClauseBuilding(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			q := db.NewQuery(tt.dbType)
+			q := db.NewQuery(tt.dbType, &mockSecrets{})
 			q = tt.buildFn(q)
 
 			gotSQL := q.String()
@@ -482,7 +482,7 @@ func TestOrderLimitOffset(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			q := db.NewQuery(tt.dbType)
+			q := db.NewQuery(tt.dbType, &mockSecrets{})
 			q = tt.buildFn(q)
 
 			gotSQL := q.String()
@@ -575,7 +575,7 @@ func TestInsertUpdateDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			q := db.NewQuery(tt.dbType)
+			q := db.NewQuery(tt.dbType, &mockSecrets{})
 			q = tt.buildFn(q)
 
 			gotSQL := q.String()
@@ -641,7 +641,7 @@ func TestHavingClause(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			q := db.NewQuery(tt.dbType)
+			q := db.NewQuery(tt.dbType, &mockSecrets{})
 			q = tt.buildFn(q)
 
 			gotSQL := q.String()
@@ -790,7 +790,7 @@ func TestQueryReturning(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			query := db.NewQuery(tc.dbType)
+			query := db.NewQuery(tc.dbType, &mockSecrets{})
 			result := tc.buildQuery(query)
 
 			if result.String() != tc.expectedSQL {
@@ -838,7 +838,7 @@ func TestComplexQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			q := db.NewQuery(tt.dbType)
+			q := db.NewQuery(tt.dbType, &mockSecrets{})
 			q = tt.buildFn(q)
 
 			gotSQL := q.String()

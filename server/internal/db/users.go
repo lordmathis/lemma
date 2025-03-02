@@ -17,8 +17,8 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 	}
 	defer tx.Rollback()
 
-	query, err := NewQuery(db.dbType).
-		InsertStruct(user, "users", db.secretsService)
+	query, err := db.NewQuery().
+		InsertStruct(user, "users")
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create query: %w", err)
@@ -46,7 +46,7 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 	}
 
 	// Update user's last workspace ID
-	query = NewQuery(db.dbType).
+	query = db.NewQuery().
 		Update("users").
 		Set("last_workspace_id").
 		Placeholder(defaultWorkspace.ID).
@@ -72,8 +72,8 @@ func (db *database) CreateUser(user *models.User) (*models.User, error) {
 func (db *database) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) error {
 	log := getLogger().WithGroup("users")
 
-	insertQuery, err := NewQuery(db.dbType).
-		InsertStruct(workspace, "workspaces", db.secretsService)
+	insertQuery, err := db.NewQuery().
+		InsertStruct(workspace, "workspaces")
 
 	if err != nil {
 		return fmt.Errorf("failed to create query: %w", err)
@@ -94,7 +94,7 @@ func (db *database) createWorkspaceTx(tx *sql.Tx, workspace *models.Workspace) e
 
 // GetUserByID retrieves a user by its ID
 func (db *database) GetUserByID(id int) (*models.User, error) {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select("id", "email", "display_name", "password_hash", "role", "created_at", "last_workspace_id").
 		From("users").
 		Where("id = ").Placeholder(id)
@@ -115,7 +115,7 @@ func (db *database) GetUserByID(id int) (*models.User, error) {
 
 // GetUserByEmail retrieves a user by its email
 func (db *database) GetUserByEmail(email string) (*models.User, error) {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select("id", "email", "display_name", "password_hash", "role", "created_at", "last_workspace_id").
 		From("users").
 		Where("email = ").Placeholder(email)
@@ -137,7 +137,7 @@ func (db *database) GetUserByEmail(email string) (*models.User, error) {
 
 // UpdateUser updates an existing user record in the database
 func (db *database) UpdateUser(user *models.User) error {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Update("users").
 		Set("email").Placeholder(user.Email).
 		Set("display_name").Placeholder(user.DisplayName).
@@ -165,7 +165,7 @@ func (db *database) UpdateUser(user *models.User) error {
 
 // GetAllUsers retrieves all users from the database
 func (db *database) GetAllUsers() ([]*models.User, error) {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select("id", "email", "display_name", "role", "created_at", "last_workspace_id").
 		From("users").
 		OrderBy("id ASC")
@@ -200,7 +200,7 @@ func (db *database) UpdateLastWorkspace(userID int, workspaceName string) error 
 	defer tx.Rollback()
 
 	// Find workspace ID from name
-	workspaceQuery := NewQuery(db.dbType).
+	workspaceQuery := db.NewQuery().
 		Select("id").
 		From("workspaces").
 		Where("user_id = ").Placeholder(userID).
@@ -213,7 +213,7 @@ func (db *database) UpdateLastWorkspace(userID int, workspaceName string) error 
 	}
 
 	// Update user's last workspace
-	updateQuery := NewQuery(db.dbType).
+	updateQuery := db.NewQuery().
 		Update("users").
 		Set("last_workspace_id").Placeholder(workspaceID).
 		Where("id = ").Placeholder(userID)
@@ -245,7 +245,7 @@ func (db *database) DeleteUser(id int) error {
 	// Delete all user's workspaces first
 	log.Debug("deleting user workspaces", "user_id", id)
 
-	deleteWorkspacesQuery := NewQuery(db.dbType).
+	deleteWorkspacesQuery := db.NewQuery().
 		Delete().
 		From("workspaces").
 		Where("user_id = ").Placeholder(id)
@@ -256,7 +256,7 @@ func (db *database) DeleteUser(id int) error {
 	}
 
 	// Delete the user
-	deleteUserQuery := NewQuery(db.dbType).
+	deleteUserQuery := db.NewQuery().
 		Delete().
 		From("users").
 		Where("id = ").Placeholder(id)
@@ -277,7 +277,7 @@ func (db *database) DeleteUser(id int) error {
 
 // GetLastWorkspaceName retrieves the name of the last workspace accessed by a user
 func (db *database) GetLastWorkspaceName(userID int) (string, error) {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select("w.name").
 		From("workspaces w").
 		Join(InnerJoin, "users u", "u.last_workspace_id = w.id").
@@ -298,7 +298,7 @@ func (db *database) GetLastWorkspaceName(userID int) (string, error) {
 
 // CountAdminUsers returns the number of admin users in the system
 func (db *database) CountAdminUsers() (int, error) {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select("COUNT(*)").
 		From("users").
 		Where("role = ").Placeholder(models.RoleAdmin)

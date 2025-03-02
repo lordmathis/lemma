@@ -49,7 +49,7 @@ func (db *database) EnsureJWTSecret() (string, error) {
 // GetSystemSetting retrieves a system setting by key
 func (db *database) GetSystemSetting(key string) (string, error) {
 	var value string
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select("value").
 		From("system_settings").
 		Where("key = ").
@@ -64,7 +64,7 @@ func (db *database) GetSystemSetting(key string) (string, error) {
 
 // SetSystemSetting stores or updates a system setting
 func (db *database) SetSystemSetting(key, value string) error {
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Insert("system_settings", "key", "value").
 		Values(2).
 		AddArgs(key, value).
@@ -100,7 +100,7 @@ func (db *database) GetSystemStats() (*UserStats, error) {
 	stats := &UserStats{}
 
 	// Get total users
-	query := NewQuery(db.dbType).
+	query := db.NewQuery().
 		Select("COUNT(*)").
 		From("users")
 	err := db.QueryRow(query.String()).Scan(&stats.TotalUsers)
@@ -109,7 +109,7 @@ func (db *database) GetSystemStats() (*UserStats, error) {
 	}
 
 	// Get total workspaces
-	query = NewQuery(db.dbType).
+	query = db.NewQuery().
 		Select("COUNT(*)").
 		From("workspaces")
 	err = db.QueryRow(query.String()).Scan(&stats.TotalWorkspaces)
@@ -118,7 +118,7 @@ func (db *database) GetSystemStats() (*UserStats, error) {
 	}
 
 	// Get active users (users with activity in last 30 days)
-	query = NewQuery(db.dbType).
+	query = db.NewQuery().
 		Select("COUNT(DISTINCT user_id)").
 		From("sessions").
 		Where("created_at > datetime('now', '-30 days')")
