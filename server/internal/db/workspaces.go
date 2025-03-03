@@ -89,7 +89,8 @@ func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
 
 	query := db.NewQuery()
 	query, err := query.
-		UpdateStruct(workspace, "workspaces", []string{"id =", "user_id ="}, []any{workspace.ID, workspace.UserID})
+		UpdateStruct(workspace, "workspaces")
+	query = query.Where("id =").Placeholder(workspace.ID).And("user_id =").Placeholder(workspace.UserID)
 
 	if err != nil {
 		return fmt.Errorf("failed to create query: %w", err)
@@ -120,7 +121,7 @@ func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, erro
 	defer rows.Close()
 
 	var workspaces []*models.Workspace
-	err = db.ScanStructs(rows, workspaces)
+	err = db.ScanStructs(rows, &workspaces)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan workspaces: %w", err)
 	}
@@ -131,12 +132,10 @@ func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, erro
 // UpdateWorkspaceSettings updates only the settings portion of a workspace
 func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 
-	where := []string{"id ="}
-	args := []any{workspace.ID}
-
 	query := db.NewQuery()
 	query, err := query.
-		UpdateStruct(workspace, "workspaces", where, args)
+		UpdateStruct(workspace, "workspaces")
+	query = query.Where("id =").Placeholder(workspace.ID)
 
 	if err != nil {
 		return fmt.Errorf("failed to create query: %w", err)
@@ -265,7 +264,7 @@ func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
 	defer rows.Close()
 
 	var workspaces []*models.Workspace
-	err = db.ScanStructs(rows, workspaces)
+	err = db.ScanStructs(rows, &workspaces)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan workspaces: %w", err)
 	}

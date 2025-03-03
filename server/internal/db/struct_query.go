@@ -142,17 +142,13 @@ func (q *Query) InsertStruct(s any, table string) (*Query, error) {
 	return q, nil
 }
 
-func (q *Query) UpdateStruct(s any, table string, where []string, args []any) (*Query, error) {
+func (q *Query) UpdateStruct(s any, table string) (*Query, error) {
 	fields, err := StructTagsToFields(s)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(where) != len(args) {
-		return nil, fmt.Errorf("number of where clauses does not match number of arguments")
-	}
-
-	q = q.Update("users")
+	q = q.Update(table)
 
 	for _, f := range fields {
 		value := f.Value
@@ -170,13 +166,6 @@ func (q *Query) UpdateStruct(s any, table string, where []string, args []any) (*
 		}
 
 		q = q.Set(f.Name).Placeholder(value)
-	}
-
-	for i, w := range where {
-		if i != 0 && i < len(args) {
-			q = q.And(w)
-		}
-		q = q.Where(w).Placeholder(args[i])
 	}
 
 	return q, nil
@@ -291,7 +280,6 @@ func (db *database) ScanStructs(rows *sql.Rows, destSlice any) error {
 	if rows == nil {
 		return fmt.Errorf("rows cannot be nil")
 	}
-	defer rows.Close()
 
 	// Get the slice value and element type
 	sliceVal := reflect.ValueOf(destSlice)
