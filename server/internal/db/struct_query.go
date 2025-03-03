@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"unicode"
 )
@@ -81,6 +82,11 @@ func StructTagsToFields(s any) ([]DBField, error) {
 			encrypted:    encrypted,
 		})
 	}
+
+	sort.Slice(fields, func(i, j int) bool {
+		return fields[i].Name < fields[j].Name
+	})
+
 	return fields, nil
 }
 
@@ -176,17 +182,34 @@ func (q *Query) UpdateStruct(s any, table string, where []string, args []any) (*
 	return q, nil
 }
 
-func (db *database) ScanStruct(row *sql.Row, dest any) error {
-	// Get the fields of the destination struct
-	fields, err := StructTagsToFields(dest)
+func (q *Query) SelectStruct(s any, table string) (*Query, error) {
+	fields, err := StructTagsToFields(s)
+	if err != nil {
+		return nil, err
+	}
+
+	columns := make([]string, 0, len(fields))
+	for _, f := range fields {
+		columns = append(columns, f.Name)
+	}
+
+	q = q.Select(columns...).From(table)
+	return q, nil
+}
+
+// Scanner is an interface that both sql.Row and sql.Rows satisfy
+type Scanner interface {
+	Scan(dest ...interface{}) error
+}
+
+// scanStructInstance is an internal function that handles the scanning logic for a single instance
+func (db *database) scanStructInstance(destVal reflect.Value, scanner Scanner) error {
+	fields, err := StructTagsToFields(destVal.Interface())
 	if err != nil {
 		return fmt.Errorf("failed to extract struct fields: %w", err)
 	}
 
-	// Create a slice of pointers to hold the scan destinations
 	scanDest := make([]interface{}, len(fields))
-	destVal := reflect.ValueOf(dest).Elem()
-
 	var fieldsToDecrypt []string
 	nullStringIndexes := make(map[int]reflect.Value)
 
@@ -202,8 +225,8 @@ func (db *database) ScanStruct(row *sql.Row, dest any) error {
 		}
 
 		if structField.Kind() == reflect.String {
+			// Handle null strings separately
 			nullStringIndexes[i] = structField
-
 			var ns sql.NullString
 			scanDest[i] = &ns
 		} else {
@@ -211,12 +234,12 @@ func (db *database) ScanStruct(row *sql.Row, dest any) error {
 		}
 	}
 
-	// Scan the row into the destination pointers
-	if err := row.Scan(scanDest...); err != nil {
+	// Scan using the scanner interface
+	if err := scanner.Scan(scanDest...); err != nil {
 		return err
 	}
 
-	// Set null strings to nil if they are null
+	// Set null strings to their values if they are valid
 	for i, field := range nullStringIndexes {
 		ns := scanDest[i].(*sql.NullString)
 		if ns.Valid {
@@ -227,11 +250,94 @@ func (db *database) ScanStruct(row *sql.Row, dest any) error {
 	// Decrypt encrypted fields
 	for _, fieldName := range fieldsToDecrypt {
 		field := destVal.FieldByName(fieldName)
-		decValue, err := db.secretsService.Decrypt(field.Interface().(string))
-		if err != nil {
+		if !field.IsZero() {
+			decValue, err := db.secretsService.Decrypt(field.Interface().(string))
+			if err != nil {
+				return err
+			}
+			field.SetString(decValue)
+		}
+	}
+
+	return nil
+}
+
+// ScanStruct scans a single row into a struct
+func (db *database) ScanStruct(row *sql.Row, dest any) error {
+	if row == nil {
+		return fmt.Errorf("row cannot be nil")
+	}
+
+	if row.Err() != nil {
+		return row.Err()
+	}
+
+	// Get the destination value
+	destVal := reflect.ValueOf(dest)
+	if destVal.Kind() != reflect.Ptr || destVal.IsNil() {
+		return fmt.Errorf("destination must be a non-nil pointer to a struct, got %T", dest)
+	}
+
+	destVal = destVal.Elem()
+	if destVal.Kind() != reflect.Struct {
+		return fmt.Errorf("destination must be a pointer to a struct, got pointer to %s", destVal.Kind())
+	}
+
+	return db.scanStructInstance(destVal, row)
+}
+
+// ScanStructs scans multiple rows into a slice of structs
+func (db *database) ScanStructs(rows *sql.Rows, destSlice any) error {
+	if rows == nil {
+		return fmt.Errorf("rows cannot be nil")
+	}
+	defer rows.Close()
+
+	// Get the slice value and element type
+	sliceVal := reflect.ValueOf(destSlice)
+	if sliceVal.Kind() != reflect.Ptr || sliceVal.IsNil() {
+		return fmt.Errorf("destination must be a non-nil pointer to a slice, got %T", destSlice)
+	}
+
+	sliceVal = sliceVal.Elem()
+	if sliceVal.Kind() != reflect.Slice {
+		return fmt.Errorf("destination must be a pointer to a slice, got pointer to %s", sliceVal.Kind())
+	}
+
+	// Get the element type of the slice
+	elemType := sliceVal.Type().Elem()
+
+	// Check if we have a direct struct type or a pointer to struct
+	isPtr := elemType.Kind() == reflect.Ptr
+	structType := elemType
+	if isPtr {
+		structType = elemType.Elem()
+	}
+	if structType.Kind() != reflect.Struct {
+		return fmt.Errorf("slice element type must be a struct or pointer to struct, got %s", elemType.String())
+	}
+
+	// Process each row
+	for rows.Next() {
+		// Create a new instance of the struct for each row
+		newElem := reflect.New(structType).Elem()
+
+		// Scan this row into the new element
+		if err := db.scanStructInstance(newElem, rows); err != nil {
 			return err
 		}
-		field.SetString(decValue)
+
+		// Add the new element to the result slice
+		if isPtr {
+			sliceVal.Set(reflect.Append(sliceVal, newElem.Addr()))
+		} else {
+			sliceVal.Set(reflect.Append(sliceVal, newElem))
+		}
+	}
+
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		return err
 	}
 
 	return nil

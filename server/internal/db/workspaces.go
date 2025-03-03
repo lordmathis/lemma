@@ -20,7 +20,7 @@ func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 	}
 
 	query, err := db.NewQuery().
-		InsertStruct(workspace, "workspaces", db.secretsService)
+		InsertStruct(workspace, "workspaces")
 
 	if err != nil {
 		return fmt.Errorf("failed to create query: %w", err)
@@ -39,46 +39,22 @@ func (db *database) CreateWorkspace(workspace *models.Workspace) error {
 
 // GetWorkspaceByID retrieves a workspace by its ID
 func (db *database) GetWorkspaceByID(id int) (*models.Workspace, error) {
-	query := db.NewQuery().
-		Select(
-			"id", "user_id", "name", "created_at",
-			"theme", "auto_save", "show_hidden_files",
-			"git_enabled", "git_url", "git_user", "git_token",
-			"git_auto_commit", "git_commit_msg_template",
-			"git_commit_name", "git_commit_email",
-			"last_opened_file_path").
-		From("workspaces").
-		Where("id = ").Placeholder(id)
-
 	workspace := &models.Workspace{}
-	var encryptedToken string
+	query := db.NewQuery()
+	query, err := query.SelectStruct(workspace, "workspaces")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create query: %w", err)
+	}
+	query = query.Where("id = ").Placeholder(id)
 
-	var lastOpenedFile sql.NullString
-
-	err := db.QueryRow(query.String(), query.Args()...).Scan(
-		&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
-		&workspace.Theme, &workspace.AutoSave, &workspace.ShowHiddenFiles,
-		&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
-		&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
-		&workspace.GitCommitName, &workspace.GitCommitEmail,
-		&lastOpenedFile,
-	)
+	row := db.QueryRow(query.String(), query.Args()...)
+	err = db.ScanStruct(row, workspace)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("workspace not found")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch workspace: %w", err)
-	}
-
-	if lastOpenedFile.Valid {
-		workspace.LastOpenedFilePath = lastOpenedFile.String
-	}
-
-	// Decrypt token
-	workspace.GitToken, err = db.decryptToken(encryptedToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt token: %w", err)
 	}
 
 	return workspace, nil
@@ -86,46 +62,23 @@ func (db *database) GetWorkspaceByID(id int) (*models.Workspace, error) {
 
 // GetWorkspaceByName retrieves a workspace by its name and user ID
 func (db *database) GetWorkspaceByName(userID int, workspaceName string) (*models.Workspace, error) {
-	query := db.NewQuery().
-		Select(
-			"id", "user_id", "name", "created_at",
-			"theme", "auto_save", "show_hidden_files",
-			"git_enabled", "git_url", "git_user", "git_token",
-			"git_auto_commit", "git_commit_msg_template",
-			"git_commit_name", "git_commit_email",
-			"last_opened_file_path").
-		From("workspaces").
-		Where("user_id = ").Placeholder(userID).
+	workspace := &models.Workspace{}
+	query := db.NewQuery()
+	query, err := query.SelectStruct(workspace, "workspaces")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create query: %w", err)
+	}
+	query = query.Where("user_id = ").Placeholder(userID).
 		And("name = ").Placeholder(workspaceName)
 
-	workspace := &models.Workspace{}
-	var encryptedToken string
-	var lastOpenedFile sql.NullString
-
-	err := db.QueryRow(query.String(), query.Args()...).Scan(
-		&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
-		&workspace.Theme, &workspace.AutoSave, &workspace.ShowHiddenFiles,
-		&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
-		&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
-		&workspace.GitCommitName, &workspace.GitCommitEmail,
-		&lastOpenedFile,
-	)
+	row := db.QueryRow(query.String(), query.Args()...)
+	err = db.ScanStruct(row, workspace)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("workspace not found")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch workspace: %w", err)
-	}
-
-	if lastOpenedFile.Valid {
-		workspace.LastOpenedFilePath = lastOpenedFile.String
-	}
-
-	// Decrypt token
-	workspace.GitToken, err = db.decryptToken(encryptedToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt token: %w", err)
 	}
 
 	return workspace, nil
@@ -136,7 +89,7 @@ func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
 
 	query := db.NewQuery()
 	query, err := query.
-		UpdateStruct(workspace, "workspaces", []string{"id =", "user_id ="}, []interface{}{workspace.ID, workspace.UserID})
+		UpdateStruct(workspace, "workspaces", []string{"id =", "user_id ="}, []any{workspace.ID, workspace.UserID})
 
 	if err != nil {
 		return fmt.Errorf("failed to create query: %w", err)
@@ -152,16 +105,13 @@ func (db *database) UpdateWorkspace(workspace *models.Workspace) error {
 
 // GetWorkspacesByUserID retrieves all workspaces for a user
 func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, error) {
-	query := db.NewQuery().
-		Select(
-			"id", "user_id", "name", "created_at",
-			"theme", "auto_save", "show_hidden_files",
-			"git_enabled", "git_url", "git_user", "git_token",
-			"git_auto_commit", "git_commit_msg_template",
-			"git_commit_name", "git_commit_email",
-			"last_opened_file_path").
-		From("workspaces").
-		Where("user_id = ").Placeholder(userID)
+	workspace := &models.Workspace{}
+	query := db.NewQuery()
+	query, err := query.SelectStruct(workspace, "workspaces")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create query: %w", err)
+	}
+	query = query.Where("user_id = ").Placeholder(userID)
 
 	rows, err := db.Query(query.String(), query.Args()...)
 	if err != nil {
@@ -170,37 +120,9 @@ func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, erro
 	defer rows.Close()
 
 	var workspaces []*models.Workspace
-	for rows.Next() {
-		workspace := &models.Workspace{}
-		var encryptedToken string
-		var lastOpenedFile sql.NullString
-		err := rows.Scan(
-			&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
-			&workspace.Theme, &workspace.AutoSave, &workspace.ShowHiddenFiles,
-			&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
-			&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
-			&workspace.GitCommitName, &workspace.GitCommitEmail,
-			&lastOpenedFile,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan workspace row: %w", err)
-		}
-
-		if lastOpenedFile.Valid {
-			workspace.LastOpenedFilePath = lastOpenedFile.String
-		}
-
-		// Decrypt token
-		workspace.GitToken, err = db.decryptToken(encryptedToken)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt token: %w", err)
-		}
-
-		workspaces = append(workspaces, workspace)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating workspace rows: %w", err)
+	err = db.ScanStructs(rows, workspaces)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan workspaces: %w", err)
 	}
 
 	return workspaces, nil
@@ -210,7 +132,7 @@ func (db *database) GetWorkspacesByUserID(userID int) ([]*models.Workspace, erro
 func (db *database) UpdateWorkspaceSettings(workspace *models.Workspace) error {
 
 	where := []string{"id ="}
-	args := []interface{}{workspace.ID}
+	args := []any{workspace.ID}
 
 	query := db.NewQuery()
 	query, err := query.
@@ -330,15 +252,11 @@ func (db *database) GetLastOpenedFile(workspaceID int) (string, error) {
 
 // GetAllWorkspaces retrieves all workspaces in the database
 func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
-	query := db.NewQuery().
-		Select(
-			"id", "user_id", "name", "created_at",
-			"theme", "auto_save", "show_hidden_files",
-			"git_enabled", "git_url", "git_user", "git_token",
-			"git_auto_commit", "git_commit_msg_template",
-			"git_commit_name", "git_commit_email",
-			"last_opened_file_path").
-		From("workspaces")
+	query := db.NewQuery()
+	query, err := query.SelectStruct(&models.Workspace{}, "workspaces")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create query: %w", err)
+	}
 
 	rows, err := db.Query(query.String(), query.Args()...)
 	if err != nil {
@@ -347,38 +265,9 @@ func (db *database) GetAllWorkspaces() ([]*models.Workspace, error) {
 	defer rows.Close()
 
 	var workspaces []*models.Workspace
-	for rows.Next() {
-		workspace := &models.Workspace{}
-		var encryptedToken string
-		var lastOpenedFile sql.NullString
-
-		err := rows.Scan(
-			&workspace.ID, &workspace.UserID, &workspace.Name, &workspace.CreatedAt,
-			&workspace.Theme, &workspace.AutoSave, &workspace.ShowHiddenFiles,
-			&workspace.GitEnabled, &workspace.GitURL, &workspace.GitUser, &encryptedToken,
-			&workspace.GitAutoCommit, &workspace.GitCommitMsgTemplate,
-			&workspace.GitCommitName, &workspace.GitCommitEmail,
-			&lastOpenedFile,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan workspace row: %w", err)
-		}
-
-		if lastOpenedFile.Valid {
-			workspace.LastOpenedFilePath = lastOpenedFile.String
-		}
-
-		// Decrypt token
-		workspace.GitToken, err = db.decryptToken(encryptedToken)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt token: %w", err)
-		}
-
-		workspaces = append(workspaces, workspace)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating workspace rows: %w", err)
+	err = db.ScanStructs(rows, workspaces)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan workspaces: %w", err)
 	}
 
 	return workspaces, nil
