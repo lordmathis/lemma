@@ -26,15 +26,18 @@ func (db *database) CreateSession(session *models.Session) error {
 // GetSessionByRefreshToken retrieves a session by its refresh token
 func (db *database) GetSessionByRefreshToken(refreshToken string) (*models.Session, error) {
 	session := &models.Session{}
-	query := db.NewQuery().
-		Select("id", "user_id", "refresh_token", "expires_at", "created_at").
-		From("sessions").
-		Where("refresh_token = ").
+	query := db.NewQuery()
+	query, err := query.SelectStruct(session, "sessions")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create query: %w", err)
+	}
+	query = query.Where("refresh_token = ").
 		Placeholder(refreshToken).
 		And("expires_at >").
 		Placeholder(time.Now())
-	err := db.QueryRow(query.String(), query.Args()...).Scan(&session.ID, &session.UserID, &session.RefreshToken, &session.ExpiresAt, &session.CreatedAt)
 
+	row := db.QueryRow(query.String(), query.Args()...)
+	err = db.ScanStruct(row, session)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("session not found or expired")
 	}
@@ -48,15 +51,18 @@ func (db *database) GetSessionByRefreshToken(refreshToken string) (*models.Sessi
 // GetSessionByID retrieves a session by its ID
 func (db *database) GetSessionByID(sessionID string) (*models.Session, error) {
 	session := &models.Session{}
-	query := db.NewQuery().
-		Select("id", "user_id", "refresh_token", "expires_at", "created_at").
-		From("sessions").
-		Where("id = ").
+	query := db.NewQuery()
+	query, err := query.SelectStruct(session, "sessions")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create query: %w", err)
+	}
+	query = query.Where("id = ").
 		Placeholder(sessionID).
 		And("expires_at >").
 		Placeholder(time.Now())
-	err := db.QueryRow(query.String(), query.Args()...).Scan(&session.ID, &session.UserID, &session.RefreshToken, &session.ExpiresAt, &session.CreatedAt)
 
+	row := db.QueryRow(query.String(), query.Args()...)
+	err = db.ScanStruct(row, session)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("session not found")
 	}
