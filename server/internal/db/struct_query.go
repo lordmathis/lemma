@@ -55,6 +55,7 @@ func StructTagsToFields(s any) ([]DBField, error) {
 
 		useDefault := false
 		encrypted := false
+		ommit := false
 
 		if strings.Contains(tag, ",") {
 			parts := strings.Split(tag, ",")
@@ -64,7 +65,7 @@ func StructTagsToFields(s any) ([]DBField, error) {
 				switch opt {
 				case "omitempty":
 					if reflect.DeepEqual(v.Field(i).Interface(), reflect.Zero(f.Type).Interface()) {
-						continue
+						ommit = true
 					}
 				case "default":
 					useDefault = true
@@ -72,6 +73,10 @@ func StructTagsToFields(s any) ([]DBField, error) {
 					encrypted = true
 				}
 			}
+		}
+
+		if ommit {
+			continue
 		}
 
 		fields = append(fields, DBField{
