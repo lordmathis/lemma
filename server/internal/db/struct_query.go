@@ -18,6 +18,7 @@ type DBField struct {
 	encrypted    bool
 }
 
+// StructTagsToFields converts a struct to a slice of DBField instances
 func StructTagsToFields(s any) ([]DBField, error) {
 	v := reflect.ValueOf(s)
 
@@ -106,6 +107,7 @@ func toSnakeCase(s string) string {
 	return res
 }
 
+// InsertStruct creates an INSERT query from a struct
 func (q *Query) InsertStruct(s any, table string) (*Query, error) {
 	fields, err := StructTagsToFields(s)
 	if err != nil {
@@ -142,6 +144,7 @@ func (q *Query) InsertStruct(s any, table string) (*Query, error) {
 	return q, nil
 }
 
+// UpdateStruct creates an UPDATE query from a struct
 func (q *Query) UpdateStruct(s any, table string) (*Query, error) {
 	fields, err := StructTagsToFields(s)
 	if err != nil {
@@ -171,6 +174,7 @@ func (q *Query) UpdateStruct(s any, table string) (*Query, error) {
 	return q, nil
 }
 
+// SelectStruct creates a SELECT query from a struct
 func (q *Query) SelectStruct(s any, table string) (*Query, error) {
 	fields, err := StructTagsToFields(s)
 	if err != nil {
@@ -188,7 +192,7 @@ func (q *Query) SelectStruct(s any, table string) (*Query, error) {
 
 // Scanner is an interface that both sql.Row and sql.Rows satisfy
 type Scanner interface {
-	Scan(dest ...interface{}) error
+	Scan(dest ...any) error
 }
 
 // scanStructInstance is an internal function that handles the scanning logic for a single instance
@@ -198,7 +202,7 @@ func (db *database) scanStructInstance(destVal reflect.Value, scanner Scanner) e
 		return fmt.Errorf("failed to extract struct fields: %w", err)
 	}
 
-	scanDest := make([]interface{}, len(fields))
+	scanDest := make([]any, len(fields))
 	var fieldsToDecrypt []string
 	nullStringIndexes := make(map[int]reflect.Value)
 
