@@ -76,12 +76,18 @@ type SystemStore interface {
 	SetSystemSetting(key, value string) error
 }
 
+type StructScanner interface {
+	ScanStruct(row *sql.Row, dest interface{}) error
+	ScanStructs(rows *sql.Rows, dest interface{}) error
+}
+
 // Database defines the methods for interacting with the database
 type Database interface {
 	UserStore
 	WorkspaceStore
 	SessionStore
 	SystemStore
+	StructScanner
 	Begin() (*sql.Tx, error)
 	Close() error
 	Migrate() error
@@ -101,6 +107,7 @@ var (
 	// Sub-interfaces
 	_ WorkspaceReader = (*database)(nil)
 	_ WorkspaceWriter = (*database)(nil)
+	_ StructScanner   = (*database)(nil)
 )
 
 var logger logging.Logger
