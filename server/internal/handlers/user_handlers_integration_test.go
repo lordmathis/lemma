@@ -15,7 +15,11 @@ import (
 )
 
 func TestUserHandlers_Integration(t *testing.T) {
-	h := setupTestHarness(t)
+	runWithDatabases(t, testUserHandlers)
+}
+
+func testUserHandlers(t *testing.T, dbConfig DatabaseConfig) {
+	h := setupTestHarness(t, dbConfig)
 	defer h.teardown(t)
 
 	currentEmail := h.RegularTestUser.userModel.Email

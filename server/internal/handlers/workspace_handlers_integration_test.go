@@ -15,7 +15,11 @@ import (
 )
 
 func TestWorkspaceHandlers_Integration(t *testing.T) {
-	h := setupTestHarness(t)
+	runWithDatabases(t, testWorkspaceHandlers)
+}
+
+func testWorkspaceHandlers(t *testing.T, dbConfig DatabaseConfig) {
+	h := setupTestHarness(t, dbConfig)
 	defer h.teardown(t)
 
 	t.Run("list workspaces", func(t *testing.T) {

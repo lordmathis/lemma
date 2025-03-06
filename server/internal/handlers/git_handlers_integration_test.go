@@ -16,7 +16,11 @@ import (
 )
 
 func TestGitHandlers_Integration(t *testing.T) {
-	h := setupTestHarness(t)
+	runWithDatabases(t, testGitHandlers)
+}
+
+func testGitHandlers(t *testing.T, dbConfig DatabaseConfig) {
+	h := setupTestHarness(t, dbConfig)
 	defer h.teardown(t)
 
 	t.Run("git operations", func(t *testing.T) {
