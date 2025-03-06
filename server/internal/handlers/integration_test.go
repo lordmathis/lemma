@@ -61,7 +61,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 		t.Fatalf("Failed to initialize secrets service: %v", err)
 	}
 
-	database, err := db.NewTestDB(secretsSvc)
+	database, err := db.NewTestSQLiteDB(secretsSvc)
 	if err != nil {
 		t.Fatalf("Failed to initialize test database: %v", err)
 	}

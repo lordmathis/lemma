@@ -140,7 +140,7 @@ func TestStructTagsToFields(t *testing.T) {
 // TestStructQueries tests the struct-based query methods using the test database
 func TestStructQueries(t *testing.T) {
 	// Setup test database
-	database, err := db.NewTestDB(&mockSecrets{})
+	database, err := db.NewTestSQLiteDB(&mockSecrets{})
 	if err != nil {
 		t.Fatalf("Failed to create test database: %v", err)
 	}
@@ -356,7 +356,7 @@ func TestStructQueries(t *testing.T) {
 
 // TestScanStructsErrors tests error handling for ScanStructs
 func TestScanStructsErrors(t *testing.T) {
-	database, err := db.NewTestDB(&mockSecrets{})
+	database, err := db.NewTestSQLiteDB(&mockSecrets{})
 	if err != nil {
 		t.Fatalf("Failed to create test database: %v", err)
 	}
@@ -421,7 +421,7 @@ func TestScanStructsErrors(t *testing.T) {
 
 // TestEncryptedFields tests handling of encrypted fields
 func TestEncryptedFields(t *testing.T) {
-	database, err := db.NewTestDB(&mockSecrets{})
+	database, err := db.NewTestSQLiteDB(&mockSecrets{})
 	if err != nil {
 		t.Fatalf("Failed to create test database: %v", err)
 	}

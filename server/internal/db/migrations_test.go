@@ -9,7 +9,7 @@ import (
 )
 
 func TestMigrate(t *testing.T) {
-	database, err := db.NewTestDB(&mockSecrets{})
+	database, err := db.NewTestSQLiteDB(&mockSecrets{})
 	if err != nil {
 		t.Fatalf("failed to initialize database: %v", err)
 	}

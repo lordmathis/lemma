@@ -10,7 +10,7 @@ import (
 )
 
 func TestUserOperations(t *testing.T) {
-	database, err := db.NewTestDB(&mockSecrets{})
+	database, err := db.NewTestSQLiteDB(&mockSecrets{})
 	if err != nil {
 		t.Fatalf("failed to create test database: %v", err)
 	}
