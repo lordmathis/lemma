@@ -279,12 +279,14 @@ func (q *Query) Placeholders(n int) *Query {
 	return q
 }
 
-func (q *Query) TimeSince(days int) string {
+func (q *Query) TimeSince(days int) *Query {
 	if q.dbType == DBTypePostgres {
-		return fmt.Sprintf("NOW() - INTERVAL '%d days'", days)
+		q.builder.WriteString(fmt.Sprintf("NOW() - INTERVAL '%d days'", days))
+	} else {
+		q.builder.WriteString(fmt.Sprintf("datetime('now', '-%d days')", days))
 	}
 
-	return fmt.Sprintf("datetime('now', '-%d days')", days)
+	return q
 }
 
 // AddArgs adds arguments to the query
