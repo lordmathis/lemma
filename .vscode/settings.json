@@ -15,6 +15,9 @@
   "go.lintOnSave": "package",
   "go.formatTool": "goimports",
   "go.testFlags": ["-tags=test,integration"],
+  "go.testEnvVars": {
+    "LEMMA_TEST_POSTGRES_URL": "postgres://postgres:postgres@localhost:5432/lemma_test?sslmode=disable"
+  },
   "[go]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {

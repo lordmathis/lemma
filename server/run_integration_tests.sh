@@ -15,6 +15,6 @@ fi
 export LEMMA_TEST_POSTGRES_URL="postgres://postgres:postgres@localhost:5432/lemma_test?sslmode=disable"
 
 echo "Running integration tests..."
-go test -v -tags=integration ./...
+go test -v -tags=test,integration ./...
 
 docker compose -f $COMPOSE_FILE down
