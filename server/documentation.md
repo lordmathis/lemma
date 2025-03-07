@@ -57,14 +57,20 @@ package app // import "lemma/internal/app"
 Package app provides application-level functionality for initializing and
 running the server
 
+FUNCTIONS
+
+func ParseDBURL(dbURL string) (db.DBType, string, error)
+    ParseDBURL parses a database URL and returns the driver name and data source
+
+
 TYPES
 
 type Config struct {
-	DBPath            string
+	DBURL             string
+	DBType            db.DBType
 	WorkDir           string
 	StaticPath        string
 	Port              string
-	RootURL           string
 	Domain            string
 	CORSOrigins       []string
 	AdminEmail        string
@@ -281,6 +287,24 @@ const (
 
 TYPES
 
+type DBField struct {
+	Name         string
+	Value        any
+	Type         reflect.Type
+	OriginalName string
+
+	// Has unexported fields.
+}
+
+func StructTagsToFields(s any) ([]DBField, error)
+    StructTagsToFields converts a struct to a slice of DBField instances
+
+type DBType string
+
+const (
+	DBTypeSQLite   DBType = "sqlite3"
+	DBTypePostgres DBType = "postgres"
+)
 type Database interface {
 	UserStore
 	WorkspaceStore
@@ -292,14 +316,115 @@ type Database interface {
 }
     Database defines the methods for interacting with the database
 
-func Init(dbPath string, secretsService secrets.Service) (Database, error)
+func Init(dbType DBType, dbURL string, secretsService secrets.Service) (Database, error)
     Init initializes the database connection
 
-type Migration struct {
-	Version int
-	SQL     string
+type JoinType string
+
+const (
+	InnerJoin JoinType = "INNER JOIN"
+	LeftJoin  JoinType = "LEFT JOIN"
+	RightJoin JoinType = "RIGHT JOIN"
+)
+type Query struct {
+	// Has unexported fields.
 }
-    Migration represents a database migration
+    Query represents a SQL query with its parameters
+
+func NewQuery(dbType DBType, secretsService secrets.Service) *Query
+    NewQuery creates a new Query instance
+
+func (q *Query) AddArgs(args ...any) *Query
+    AddArgs adds arguments to the query
+
+func (q *Query) And(condition string) *Query
+    And adds an AND condition
+
+func (q *Query) Args() []any
+    Args returns the query arguments
+
+func (q *Query) Delete() *Query
+    Delete starts a DELETE statement
+
+func (q *Query) EndGroup() *Query
+    EndGroup ends a parenthetical group
+
+func (q *Query) From(table string) *Query
+    From adds a FROM clause
+
+func (q *Query) GroupBy(columns ...string) *Query
+    GroupBy adds a GROUP BY clause
+
+func (q *Query) Having(condition string) *Query
+    Having adds a HAVING clause for filtering groups
+
+func (q *Query) Insert(table string, columns ...string) *Query
+    Insert starts an INSERT statement
+
+func (q *Query) InsertStruct(s any, table string) (*Query, error)
+    InsertStruct creates an INSERT query from a struct
+
+func (q *Query) Join(joinType JoinType, table, condition string) *Query
+    Join adds a JOIN clause
+
+func (q *Query) Limit(limit int) *Query
+    Limit adds a LIMIT clause
+
+func (q *Query) Offset(offset int) *Query
+    Offset adds an OFFSET clause
+
+func (q *Query) Or(condition string) *Query
+    Or adds an OR condition
+
+func (q *Query) OrderBy(columns ...string) *Query
+    OrderBy adds an ORDER BY clause
+
+func (q *Query) Placeholder(arg any) *Query
+    Placeholder adds a placeholder for a single argument
+
+func (q *Query) Placeholders(n int) *Query
+    Placeholders adds n placeholders separated by commas
+
+func (q *Query) Returning(columns ...string) *Query
+    Returning adds a RETURNING clause for both PostgreSQL and SQLite (3.35.0+)
+
+func (q *Query) Select(columns ...string) *Query
+    Select adds a SELECT clause
+
+func (q *Query) SelectStruct(s any, table string) (*Query, error)
+    SelectStruct creates a SELECT query from a struct
+
+func (q *Query) Set(column string) *Query
+    Set adds a SET clause for updates
+
+func (q *Query) StartGroup() *Query
+    StartGroup starts a parenthetical group
+
+func (q *Query) String() string
+    String returns the formatted query string
+
+func (q *Query) Update(table string) *Query
+    Update starts an UPDATE statement
+
+func (q *Query) UpdateStruct(s any, table string) (*Query, error)
+    UpdateStruct creates an UPDATE query from a struct
+
+func (q *Query) Values(count int) *Query
+    Values adds a VALUES clause
+
+func (q *Query) Where(condition string) *Query
+    Where adds a WHERE clause
+
+func (q *Query) WhereIn(column string, count int) *Query
+    WhereIn adds a WHERE IN clause
+
+func (q *Query) Write(s string) *Query
+    Write adds a string to the query
+
+type Scanner interface {
+	Scan(dest ...any) error
+}
+    Scanner is an interface that both sql.Row and sql.Rows satisfy
 
 type SessionStore interface {
 	CreateSession(session *models.Session) error
@@ -897,22 +1022,22 @@ and serialize data in the application.
 TYPES
 
 type Session struct {
-	ID           string    // Unique session identifier
-	UserID       int       // ID of the user this session belongs to
-	RefreshToken string    // The refresh token associated with this session
-	ExpiresAt    time.Time // When this session expires
-	CreatedAt    time.Time // When this session was created
+	ID           string    `db:"id"`                 // Unique session identifier
+	UserID       int       `db:"user_id"`            // ID of the user this session belongs to
+	RefreshToken string    `db:"refresh_token"`      // The refresh token associated with this session
+	ExpiresAt    time.Time `db:"expires_at"`         // When this session expires
+	CreatedAt    time.Time `db:"created_at,default"` // When this session was created
 }
     Session represents a user session in the database
 
 type User struct {
-	ID              int       `json:"id" validate:"required,min=1"`
-	Email           string    `json:"email" validate:"required,email"`
-	DisplayName     string    `json:"displayName"`
-	PasswordHash    string    `json:"-"`
-	Role            UserRole  `json:"role" validate:"required,oneof=admin editor viewer"`
-	CreatedAt       time.Time `json:"createdAt"`
-	LastWorkspaceID int       `json:"lastWorkspaceId"`
+	ID              int       `json:"id" db:"id,default" validate:"required,min=1"`
+	Email           string    `json:"email" db:"email" validate:"required,email"`
+	DisplayName     string    `json:"displayName" db:"display_name"`
+	PasswordHash    string    `json:"-" db:"password_hash"`
+	Role            UserRole  `json:"role" db:"role" validate:"required,oneof=admin editor viewer"`
+	CreatedAt       time.Time `json:"createdAt" db:"created_at,default"`
+	LastWorkspaceID int       `json:"lastWorkspaceId" db:"last_workspace_id"`
 }
     User represents a user in the system
 
@@ -930,24 +1055,24 @@ const (
     User roles
 
 type Workspace struct {
-	ID                 int       `json:"id" validate:"required,min=1"`
-	UserID             int       `json:"userId" validate:"required,min=1"`
-	Name               string    `json:"name" validate:"required"`
-	CreatedAt          time.Time `json:"createdAt"`
-	LastOpenedFilePath string    `json:"lastOpenedFilePath"`
+	ID                 int       `json:"id" db:"id,default" validate:"required,min=1"`
+	UserID             int       `json:"userId" db:"user_id" validate:"required,min=1"`
+	Name               string    `json:"name" db:"name" validate:"required"`
+	CreatedAt          time.Time `json:"createdAt" db:"created_at,default"`
+	LastOpenedFilePath string    `json:"lastOpenedFilePath" db:"last_opened_file_path"`
 
 	// Integrated settings
-	Theme                string `json:"theme" validate:"oneof=light dark"`
-	AutoSave             bool   `json:"autoSave"`
-	ShowHiddenFiles      bool   `json:"showHiddenFiles"`
-	GitEnabled           bool   `json:"gitEnabled"`
-	GitURL               string `json:"gitUrl" validate:"required_if=GitEnabled true"`
-	GitUser              string `json:"gitUser" validate:"required_if=GitEnabled true"`
-	GitToken             string `json:"gitToken" validate:"required_if=GitEnabled true"`
-	GitAutoCommit        bool   `json:"gitAutoCommit"`
-	GitCommitMsgTemplate string `json:"gitCommitMsgTemplate"`
-	GitCommitName        string `json:"gitCommitName"`
-	GitCommitEmail       string `json:"gitCommitEmail" validate:"omitempty,required_if=GitEnabled true,email"`
+	Theme                string `json:"theme" db:"theme" validate:"oneof=light dark"`
+	AutoSave             bool   `json:"autoSave" db:"auto_save"`
+	ShowHiddenFiles      bool   `json:"showHiddenFiles" db:"show_hidden_files"`
+	GitEnabled           bool   `json:"gitEnabled" db:"git_enabled"`
+	GitURL               string `json:"gitUrl" db:"git_url,ommitempty" validate:"required_if=GitEnabled true"`
+	GitUser              string `json:"gitUser" db:"git_user,ommitempty" validate:"required_if=GitEnabled true"`
+	GitToken             string `json:"gitToken" db:"git_token,ommitempty,encrypted" validate:"required_if=GitEnabled true"`
+	GitAutoCommit        bool   `json:"gitAutoCommit" db:"git_auto_commit"`
+	GitCommitMsgTemplate string `json:"gitCommitMsgTemplate" db:"git_commit_msg_template"`
+	GitCommitName        string `json:"gitCommitName" db:"git_commit_name"`
+	GitCommitEmail       string `json:"gitCommitEmail" db:"git_commit_email" validate:"omitempty,required_if=GitEnabled true,email"`
 }
     Workspace represents a user's workspace in the system
 

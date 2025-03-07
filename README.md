@@ -33,8 +33,8 @@ Lemma can be configured using environment variables. Here are the available conf
 ### Optional Environment Variables
 
 - `LEMMA_ENV`: Set to "development" to enable development mode
-- `LEMMA_DB_PATH`: Path to the SQLite database file (default: "./lemma.db")
-- `LEMMA_WORKDIR`: Working directory for application data (default: "./data")
+- `LEMMA_DB_URL`: URL (Connection string) to the database. Supported databases are sqlite and postgres a (default: "./lemma.db")
+- `LEMMA_WORKDIR`: Working directory for application data (default: "sqlite://lemma.db")
 - `LEMMA_STATIC_PATH`: Path to static files (default: "../app/dist")
 - `LEMMA_PORT`: Port to run the server on (default: "8080")
 - `LEMMA_DOMAIN`: Domain name where the application is hosted for cookie authentication

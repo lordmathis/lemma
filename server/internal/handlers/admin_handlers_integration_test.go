@@ -15,21 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Helper function to check if a user exists in a slice of users
-func containsUser(users []*models.User, searchUser *models.User) bool {
-	for _, u := range users {
-		if u.ID == searchUser.ID &&
-			u.Email == searchUser.Email &&
-			u.DisplayName == searchUser.DisplayName &&
-			u.Role == searchUser.Role {
-			return true
-		}
-	}
-	return false
+func TestAdminHandlers_Integration(t *testing.T) {
+	runWithDatabases(t, testAdminHandlers)
 }
 
-func TestAdminHandlers_Integration(t *testing.T) {
-	h := setupTestHarness(t)
+func testAdminHandlers(t *testing.T, dbConfig DatabaseConfig) {
+	h := setupTestHarness(t, dbConfig)
 	defer h.teardown(t)
 
 	t.Run("user management", func(t *testing.T) {
@@ -240,4 +231,17 @@ func TestAdminHandlers_Integration(t *testing.T) {
 		rr = h.makeRequest(t, http.MethodGet, "/api/v1/admin/stats", nil, h.RegularTestUser)
 		assert.Equal(t, http.StatusForbidden, rr.Code)
 	})
+}
+
+// Helper function to check if a user exists in a slice of users
+func containsUser(users []*models.User, searchUser *models.User) bool {
+	for _, u := range users {
+		if u.ID == searchUser.ID &&
+			u.Email == searchUser.Email &&
+			u.DisplayName == searchUser.DisplayName &&
+			u.Role == searchUser.Role {
+			return true
+		}
+	}
+	return false
 }

@@ -37,7 +37,7 @@ func NewHandler(db db.Database, s storage.Manager) *Handler {
 }
 
 // respondJSON is a helper to send JSON responses
-func respondJSON(w http.ResponseWriter, data interface{}) {
+func respondJSON(w http.ResponseWriter, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		respondError(w, "Failed to encode response", http.StatusInternalServerError)

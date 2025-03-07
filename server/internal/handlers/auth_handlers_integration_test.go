@@ -19,7 +19,11 @@ import (
 )
 
 func TestAuthHandlers_Integration(t *testing.T) {
-	h := setupTestHarness(t)
+	runWithDatabases(t, testAuthHandlers)
+}
+
+func testAuthHandlers(t *testing.T, dbConfig DatabaseConfig) {
+	h := setupTestHarness(t, dbConfig)
 	defer h.teardown(t)
 
 	t.Run("login", func(t *testing.T) {

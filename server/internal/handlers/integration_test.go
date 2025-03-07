@@ -45,8 +45,13 @@ type testUser struct {
 	session     *models.Session
 }
 
+type DatabaseConfig struct {
+	Type db.DBType
+	URL  string
+}
+
 // setupTestHarness creates a new test environment
-func setupTestHarness(t *testing.T) *testHarness {
+func setupTestHarness(t *testing.T, dbConfig DatabaseConfig) *testHarness {
 	t.Helper()
 
 	// Create temporary directory for test files
@@ -61,9 +66,20 @@ func setupTestHarness(t *testing.T) *testHarness {
 		t.Fatalf("Failed to initialize secrets service: %v", err)
 	}
 
-	database, err := db.NewTestDB(":memory:", secretsSvc)
-	if err != nil {
-		t.Fatalf("Failed to initialize test database: %v", err)
+	var database db.TestDatabase
+	switch dbConfig.Type {
+	case db.DBTypeSQLite:
+		database, err = db.NewTestSQLiteDB(secretsSvc)
+		if err != nil {
+			t.Fatalf("Failed to initialize test database: %v", err)
+		}
+	case db.DBTypePostgres:
+		database, err = db.NewPostgresTestDB(dbConfig.URL, secretsSvc)
+		if err != nil {
+			t.Fatalf("Failed to initialize test database: %v", err)
+		}
+	default:
+		t.Fatalf("Unsupported database type: %s", dbConfig.Type)
 	}
 
 	if err := database.Migrate(); err != nil {
@@ -99,7 +115,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 
 	// Create test config
 	testConfig := &app.Config{
-		DBPath:        ":memory:",
+		DBURL:         "sqlite://:memory:",
 		WorkDir:       tempDir,
 		StaticPath:    "../testdata",
 		Port:          "8081",
@@ -156,6 +172,32 @@ func (h *testHarness) teardown(t *testing.T) {
 	}
 }
 
+// runWithDatabases runs a test function with both SQLite and PostgreSQL databases
+func runWithDatabases(t *testing.T, testFn func(*testing.T, DatabaseConfig)) {
+	// Get PostgreSQL connection URL from environment variable
+	postgresURL := os.Getenv("LEMMA_TEST_POSTGRES_URL")
+
+	// Always run with SQLite in-memory
+	t.Run("SQLite", func(t *testing.T) {
+		testFn(t, DatabaseConfig{
+			Type: db.DBTypeSQLite,
+			URL:  "sqlite://:memory:",
+		})
+	})
+
+	// Run with PostgreSQL if connection URL is provided
+	if postgresURL != "" {
+		t.Run("PostgreSQL", func(t *testing.T) {
+			testFn(t, DatabaseConfig{
+				Type: db.DBTypePostgres,
+				URL:  postgresURL,
+			})
+		})
+	} else {
+		t.Log("Skipping PostgreSQL tests, LEMMA_TEST_POSTGRES_URL environment variable not set")
+	}
+}
+
 // createTestUser creates a test user and returns the user and access token
 func (h *testHarness) createTestUser(t *testing.T, email, password string, role models.UserRole) *testUser {
 	t.Helper()
@@ -195,7 +237,7 @@ func (h *testHarness) createTestUser(t *testing.T, email, password string, role 
 	}
 }
 
-func (h *testHarness) newRequest(t *testing.T, method, path string, body interface{}) *http.Request {
+func (h *testHarness) newRequest(t *testing.T, method, path string, body any) *http.Request {
 	t.Helper()
 
 	var reqBody []byte
@@ -246,7 +288,7 @@ func (h *testHarness) addCSRFCookie(t *testing.T, req *http.Request) string {
 }
 
 // makeRequest is the main helper for making JSON requests
-func (h *testHarness) makeRequest(t *testing.T, method, path string, body interface{}, testUser *testUser) *httptest.ResponseRecorder {
+func (h *testHarness) makeRequest(t *testing.T, method, path string, body any, testUser *testUser) *httptest.ResponseRecorder {
 	t.Helper()
 
 	req := h.newRequest(t, method, path, body)

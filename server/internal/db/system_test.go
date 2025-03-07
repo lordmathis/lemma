@@ -15,7 +15,7 @@ import (
 )
 
 func TestSystemOperations(t *testing.T) {
-	database, err := db.NewTestDB(":memory:", &mockSecrets{})
+	database, err := db.NewTestSQLiteDB(&mockSecrets{})
 	if err != nil {
 		t.Fatalf("failed to create test database: %v", err)
 	}

@@ -2,9 +2,11 @@ package app
 
 import (
 	"fmt"
+	"lemma/internal/db"
 	"lemma/internal/logging"
 	"lemma/internal/secrets"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -12,7 +14,8 @@ import (
 
 // Config holds the configuration for the application
 type Config struct {
-	DBPath            string
+	DBURL             string
+	DBType            db.DBType
 	WorkDir           string
 	StaticPath        string
 	Port              string
@@ -31,7 +34,7 @@ type Config struct {
 // DefaultConfig returns a new Config instance with default values
 func DefaultConfig() *Config {
 	return &Config{
-		DBPath:            "./lemma.db",
+		DBURL:             "sqlite://lemma.db",
 		WorkDir:           "./data",
 		StaticPath:        "../app/dist",
 		Port:              "8080",
@@ -65,6 +68,31 @@ func (c *Config) Redact() *Config {
 	return &redacted
 }
 
+// ParseDBURL parses a database URL and returns the driver name and data source
+func ParseDBURL(dbURL string) (db.DBType, string, error) {
+	if strings.HasPrefix(dbURL, "sqlite://") || strings.HasPrefix(dbURL, "sqlite3://") {
+
+		path := strings.TrimPrefix(dbURL, "sqlite://")
+		path = strings.TrimPrefix(path, "sqlite3://")
+
+		if path == ":memory:" {
+			return db.DBTypeSQLite, path, nil
+		}
+
+		if !filepath.IsAbs(path) {
+			path = filepath.Clean(path)
+		}
+		return db.DBTypeSQLite, path, nil
+	}
+
+	// Try to parse as postgres URL
+	if strings.HasPrefix(dbURL, "postgres://") || strings.HasPrefix(dbURL, "postgresql://") {
+		return db.DBTypePostgres, dbURL, nil
+	}
+
+	return "", "", fmt.Errorf("unsupported database URL format: %s", dbURL)
+}
+
 // LoadConfig creates a new Config instance with values from environment variables
 func LoadConfig() (*Config, error) {
 	config := DefaultConfig()
@@ -73,8 +101,13 @@ func LoadConfig() (*Config, error) {
 		config.IsDevelopment = env == "development"
 	}
 
-	if dbPath := os.Getenv("LEMMA_DB_PATH"); dbPath != "" {
-		config.DBPath = dbPath
+	if dbURL := os.Getenv("LEMMA_DB_URL"); dbURL != "" {
+		dbType, dataSource, err := ParseDBURL(dbURL)
+		if err != nil {
+			return nil, err
+		}
+		config.DBURL = dataSource
+		config.DBType = dbType
 	}
 
 	if workDir := os.Getenv("LEMMA_WORKDIR"); workDir != "" {

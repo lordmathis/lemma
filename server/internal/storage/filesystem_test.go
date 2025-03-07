@@ -37,7 +37,7 @@ func (m MockDirInfo) Size() int64        { return m.size }
 func (m MockDirInfo) Mode() fs.FileMode  { return m.mode }
 func (m MockDirInfo) ModTime() time.Time { return m.modTime }
 func (m MockDirInfo) IsDir() bool        { return m.isDir }
-func (m MockDirInfo) Sys() interface{}   { return nil }
+func (m MockDirInfo) Sys() any           { return nil }
 
 type mockFS struct {
 	// Record operations for verification

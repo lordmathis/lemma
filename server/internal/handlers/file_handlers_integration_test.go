@@ -18,7 +18,11 @@ import (
 )
 
 func TestFileHandlers_Integration(t *testing.T) {
-	h := setupTestHarness(t)
+	runWithDatabases(t, testFileHandlers)
+}
+
+func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
+	h := setupTestHarness(t, dbConfig)
 	defer h.teardown(t)
 
 	t.Run("file operations", func(t *testing.T) {
@@ -192,7 +196,7 @@ func TestFileHandlers_Integration(t *testing.T) {
 				name   string
 				method string
 				path   string
-				body   interface{}
+				body   any
 			}{
 				{"list files", http.MethodGet, baseURL, nil},
 				{"get file", http.MethodGet, baseURL + "/test.md", nil},

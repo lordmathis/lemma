@@ -28,9 +28,9 @@ func initSecretsService(cfg *Config) (secrets.Service, error) {
 
 // initDatabase initializes and migrates the database
 func initDatabase(cfg *Config, secretsService secrets.Service) (db.Database, error) {
-	logging.Debug("initializing database", "path", cfg.DBPath)
+	logging.Debug("initializing database", "path", cfg.DBURL)
 
-	database, err := db.Init(cfg.DBPath, secretsService)
+	database, err := db.Init(cfg.DBType, cfg.DBURL, secretsService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}

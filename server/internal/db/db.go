@@ -9,7 +9,15 @@ import (
 	"lemma/internal/models"
 	"lemma/internal/secrets"
 
+	_ "github.com/lib/pq"           // Postgres driver
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
+)
+
+type DBType string
+
+const (
+	DBTypeSQLite   DBType = "sqlite3"
+	DBTypePostgres DBType = "postgres"
 )
 
 // UserStore defines the methods for interacting with user data in the database
@@ -68,12 +76,18 @@ type SystemStore interface {
 	SetSystemSetting(key, value string) error
 }
 
+type StructScanner interface {
+	ScanStruct(row *sql.Row, dest interface{}) error
+	ScanStructs(rows *sql.Rows, dest interface{}) error
+}
+
 // Database defines the methods for interacting with the database
 type Database interface {
 	UserStore
 	WorkspaceStore
 	SessionStore
 	SystemStore
+	StructScanner
 	Begin() (*sql.Tx, error)
 	Close() error
 	Migrate() error
@@ -93,6 +107,7 @@ var (
 	// Sub-interfaces
 	_ WorkspaceReader = (*database)(nil)
 	_ WorkspaceWriter = (*database)(nil)
+	_ StructScanner   = (*database)(nil)
 )
 
 var logger logging.Logger
@@ -108,13 +123,45 @@ func getLogger() logging.Logger {
 type database struct {
 	*sql.DB
 	secretsService secrets.Service
+	dbType         DBType
 }
 
 // Init initializes the database connection
-func Init(dbPath string, secretsService secrets.Service) (Database, error) {
-	log := getLogger()
+func Init(dbType DBType, dbURL string, secretsService secrets.Service) (Database, error) {
 
-	db, err := sql.Open("sqlite3", dbPath)
+	switch dbType {
+	case DBTypeSQLite:
+		db, err := initSQLite(dbURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize SQLite database: %w", err)
+		}
+
+		database := &database{
+			DB:             db,
+			secretsService: secretsService,
+			dbType:         dbType,
+		}
+		return database, nil
+	case DBTypePostgres:
+		db, err := initPostgres(dbURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize Postgres database: %w", err)
+		}
+
+		database := &database{
+			DB:             db,
+			secretsService: secretsService,
+			dbType:         dbType,
+		}
+		return database, nil
+	}
+
+	return nil, fmt.Errorf("unsupported database type: %s", dbType)
+}
+
+func initSQLite(dbURL string) (*sql.DB, error) {
+	log := getLogger()
+	db, err := sql.Open("sqlite3", dbURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -128,13 +175,20 @@ func Init(dbPath string, secretsService secrets.Service) (Database, error) {
 		return nil, fmt.Errorf("failed to enable foreign keys: %w", err)
 	}
 	log.Debug("foreign keys enabled")
+	return db, nil
+}
 
-	database := &database{
-		DB:             db,
-		secretsService: secretsService,
+func initPostgres(dbURL string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	return database, nil
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	return db, nil
 }
 
 // Close closes the database connection
@@ -148,29 +202,6 @@ func (db *database) Close() error {
 	return nil
 }
 
-// Helper methods for token encryption/decryption
-func (db *database) encryptToken(token string) (string, error) {
-	if token == "" {
-		return "", nil
-	}
-
-	encrypted, err := db.secretsService.Encrypt(token)
-	if err != nil {
-		return "", fmt.Errorf("failed to encrypt token: %w", err)
-	}
-
-	return encrypted, nil
-}
-
-func (db *database) decryptToken(token string) (string, error) {
-	if token == "" {
-		return "", nil
-	}
-
-	decrypted, err := db.secretsService.Decrypt(token)
-	if err != nil {
-		return "", fmt.Errorf("failed to decrypt token: %w", err)
-	}
-
-	return decrypted, nil
+func (db *database) NewQuery() *Query {
+	return NewQuery(db.dbType, db.secretsService)
 }
