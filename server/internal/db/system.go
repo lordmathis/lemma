@@ -121,7 +121,8 @@ func (db *database) GetSystemStats() (*UserStats, error) {
 	query = db.NewQuery().
 		Select("COUNT(DISTINCT user_id)").
 		From("sessions").
-		Where("created_at > datetime('now', '-30 days')")
+		Where("created_at >").
+		TimeSince(30)
 	err = db.QueryRow(query.String()).
 		Scan(&stats.ActiveUsers)
 	if err != nil {
