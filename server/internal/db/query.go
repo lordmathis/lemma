@@ -266,7 +266,7 @@ func (q *Query) Placeholder(arg any) *Query {
 func (q *Query) Placeholders(n int) *Query {
 	placeholders := make([]string, n)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		q.pos++
 		if q.dbType == DBTypePostgres {
 			placeholders[i] = fmt.Sprintf("$%d", q.pos)
@@ -277,6 +277,14 @@ func (q *Query) Placeholders(n int) *Query {
 
 	q.builder.WriteString(strings.Join(placeholders, ", "))
 	return q
+}
+
+func (q *Query) TimeSince(days int) string {
+	if q.dbType == DBTypePostgres {
+		return fmt.Sprintf("NOW() - INTERVAL '%d days'", days)
+	}
+
+	return fmt.Sprintf("datetime('now', '-%d days')", days)
 }
 
 // AddArgs adds arguments to the query
