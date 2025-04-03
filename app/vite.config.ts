@@ -9,7 +9,7 @@ import { compression } from 'vite-plugin-compression2';
 export default defineConfig(({ mode }) => ({
   plugins: [
     react({
-      include: ['**/*.jsx', '**/*.js'],
+      include: ['**/*.tsx', '**/*.ts', '**/*.jsx', '**/*.js'],
     }),
     compression(),
   ],
@@ -124,7 +124,7 @@ export default defineConfig(({ mode }) => ({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
-    extensions: ['.js', '.jsx', '.json'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
 
   // Add performance optimization options
