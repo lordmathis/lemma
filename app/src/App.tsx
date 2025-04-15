@@ -11,7 +11,9 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import './App.scss';
 
-function AuthenticatedContent() {
+interface AuthenticatedContentProps {}
+
+const AuthenticatedContent: React.FC<AuthenticatedContentProps> = () => {
   const { user, loading, initialized } = useAuth();
 
   if (!initialized) {
@@ -33,9 +35,11 @@ function AuthenticatedContent() {
       </ModalProvider>
     </WorkspaceProvider>
   );
-}
+};
 
-function App() {
+interface AppProps {}
+
+const App: React.FC<AppProps> = () => {
   return (
     <>
       <ColorSchemeScript defaultColorScheme="light" />
@@ -49,6 +53,6 @@ function App() {
       </MantineProvider>
     </>
   );
-}
+};
 
 export default App;
