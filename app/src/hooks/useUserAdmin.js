@@ -1,5 +1,5 @@
 import { useAdminData } from './useAdminData';
-import { createUser, updateUser, deleteUser } from '../services/adminApi';
+import { createUser, updateUser, deleteUser } from '../api/admin';
 import { notifications } from '@mantine/notifications';
 
 export const useUserAdmin = () => {

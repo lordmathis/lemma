@@ -9,10 +9,6 @@ export enum InlineContainerType {
   Delete = 'delete',
 }
 
-export const INLINE_CONTAINER_TYPES = new Set<InlineContainerType>(
-  Object.values(InlineContainerType)
-);
-
 export const MARKDOWN_REGEX = {
   WIKILINK: /(!?)\[\[(.*?)\]\]/g,
 } as const;

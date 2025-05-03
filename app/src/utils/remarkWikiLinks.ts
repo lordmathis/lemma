@@ -1,6 +1,6 @@
 import { visit } from 'unist-util-visit';
-import { lookupFileByName, getFileUrl } from '../services/api';
-import { MARKDOWN_REGEX } from '../types/markdown';
+import { lookupFileByName, getFileUrl } from '../api/notes';
+import { InlineContainerType, MARKDOWN_REGEX } from '../types/markdown';
 import { Node } from 'unist';
 import { Parent } from 'unist';
 import { Text } from 'mdast';
@@ -146,16 +146,9 @@ function addMarkdownExtension(fileName: string): string {
  * Determines if a node type can contain inline content
  */
 function canContainInline(type: string): boolean {
-  return [
-    'paragraph',
-    'listItem',
-    'tableCell',
-    'blockquote',
-    'heading',
-    'emphasis',
-    'strong',
-    'delete',
-  ].includes(type);
+  return Object.values(InlineContainerType).includes(
+    type as InlineContainerType
+  );
 }
 
 /**

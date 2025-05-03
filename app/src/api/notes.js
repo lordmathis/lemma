@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../utils/constants';
-import { apiCall } from './authApi';
+import { apiCall } from './auth';
 
 export const updateProfile = async (updates) => {
   const response = await apiCall(`${API_BASE_URL}/profile`, {

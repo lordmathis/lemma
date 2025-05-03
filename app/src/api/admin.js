@@ -1,4 +1,4 @@
-import { apiCall } from './authApi';
+import { apiCall } from './auth';
 import { API_BASE_URL } from '../utils/constants';
 
 const ADMIN_BASE_URL = `${API_BASE_URL}/admin`;

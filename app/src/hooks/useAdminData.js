@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { notifications } from '@mantine/notifications';
-import { getUsers, getWorkspaces, getSystemStats } from '../services/adminApi';
+import { getUsers, getWorkspaces, getSystemStats } from '../api/admin';
 
 // Hook for admin data fetching (stats and workspaces)
 export const useAdminData = (type) => {

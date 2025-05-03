@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { fetchFileContent } from '../services/api';
+import { fetchFileContent } from '../api/notes';
 import { isImageFile } from '../utils/fileHelpers';
 import { DEFAULT_FILE } from '../utils/constants';
 import { useWorkspace } from '../contexts/WorkspaceContext';

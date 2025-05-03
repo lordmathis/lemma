@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, TextInput, Button, Group, Box } from '@mantine/core';
 import { useModalContext } from '../../../contexts/ModalContext';
-import { createWorkspace } from '../../../services/api';
+import { createWorkspace } from '../../../api/notes';
 import { notifications } from '@mantine/notifications';
 
 const CreateWorkspaceModal = ({ onWorkspaceCreated }) => {

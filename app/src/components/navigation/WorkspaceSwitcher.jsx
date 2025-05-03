@@ -17,7 +17,7 @@ import {
 import { IconFolders, IconSettings, IconFolderPlus } from '@tabler/icons-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useModalContext } from '../../contexts/ModalContext';
-import { listWorkspaces } from '../../services/api';
+import { listWorkspaces } from '../../api/notes';
 import CreateWorkspaceModal from '../modals/workspace/CreateWorkspaceModal';
 
 const WorkspaceSwitcher = () => {

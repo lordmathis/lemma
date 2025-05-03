@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from 'react';
 import { notifications } from '@mantine/notifications';
-import * as authApi from '../services/authApi';
+import * as authApi from '../api/auth';
 
 const AuthContext = createContext(null);
 
