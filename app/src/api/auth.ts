@@ -4,13 +4,17 @@ import {
   LoginRequest,
   LoginResponse,
   isLoginResponse,
-  ErrorResponse,
   isUser,
 } from '../types/authApi';
 import { apiCall } from './api';
 
 /**
  * Logs in a user with email and password
+ * @param {string} email - The user's email
+ * @param {string} password - The user's password
+ * @returns {Promise<LoginResponse>} A promise that resolves to the login response
+ * @throws {Error} If the API call fails or returns an invalid response
+ * @throws {Error} If the login fails
  */
 export const login = async (
   email: string,
@@ -22,12 +26,6 @@ export const login = async (
     body: JSON.stringify(loginData),
   });
 
-  if (!response.ok) {
-    const data = await response.json();
-    const errorData = data as ErrorResponse;
-    throw new Error(errorData.message || 'Login failed');
-  }
-
   const data = await response.json();
   if (!isLoginResponse(data)) {
     throw new Error('Invalid login response received from API');
@@ -38,16 +36,17 @@ export const login = async (
 
 /**
  * Logs out the current user
+ * @returns {Promise<void>} A promise that resolves when the logout is successful
+ * @throws {Error} If the API call fails or returns an invalid response
+ * @throws {Error} If the logout fails
  */
 export const logout = async (): Promise<void> => {
   const response = await apiCall(`${API_BASE_URL}/auth/logout`, {
     method: 'POST',
   });
 
-  if (!response.ok) {
-    const data = await response.json();
-    const errorData = data as ErrorResponse;
-    throw new Error(errorData.message || 'Logout failed');
+  if (response.status !== 204) {
+    throw new Error('Failed to log out');
   }
 };
 
@@ -57,15 +56,9 @@ export const logout = async (): Promise<void> => {
  */
 export const refreshToken = async (): Promise<boolean> => {
   try {
-    const response = await apiCall(`${API_BASE_URL}/auth/refresh`, {
+    await apiCall(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
     });
-
-    if (!response.ok) {
-      const data = await response.json();
-      const errorData = data as ErrorResponse;
-      throw new Error(errorData.message || 'Token refresh failed');
-    }
 
     return true;
   } catch (error) {
@@ -75,15 +68,13 @@ export const refreshToken = async (): Promise<boolean> => {
 
 /**
  * Gets the currently authenticated user
+ * @returns {Promise<User>} A promise that resolves to the current user
+ * @throws {Error} If the API call fails or returns an invalid response
+ * @throws {Error} If the user data is invalid
  */
 export const getCurrentUser = async (): Promise<User> => {
   const response = await apiCall(`${API_BASE_URL}/auth/me`);
   const data = await response.json();
-
-  if (!response.ok) {
-    const errorData = data as ErrorResponse;
-    throw new Error(errorData.message || 'Failed to get current user');
-  }
 
   if (!isUser(data)) {
     throw new Error('Invalid user data received from API');

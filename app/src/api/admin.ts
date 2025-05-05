@@ -19,14 +19,8 @@ const ADMIN_BASE_URL = `${API_BASE_URL}/admin`;
  * */
 export const getUsers = async (): Promise<User[]> => {
   const response = await apiCall(`${ADMIN_BASE_URL}/users`);
-
-  if (!response.ok) {
-    const data = await response.json();
-    const errorData = data as { message: string };
-    throw new Error(errorData.message || 'Failed to fetch users');
-  }
-
   const data = await response.json();
+
   if (!Array.isArray(data)) {
     throw new Error('Invalid users response received from API');
   }
@@ -51,12 +45,6 @@ export const createUser = async (
     method: 'POST',
     body: JSON.stringify(userData),
   });
-
-  if (!response.ok) {
-    const data = await response.json();
-    const errorData = data as { message: string };
-    throw new Error(errorData.message || 'Failed to create user');
-  }
 
   const data = await response.json();
   if (!isUser(data)) {
@@ -97,11 +85,6 @@ export const updateUser = async (
     body: JSON.stringify(userData),
   });
 
-  if (!response.ok) {
-    const data = await response.json();
-    const errorData = data as { message: string };
-    throw new Error(errorData.message || 'Failed to update user');
-  }
   const data = await response.json();
   if (!isUser(data)) {
     throw new Error('Invalid user object received from API');
@@ -118,11 +101,6 @@ export const updateUser = async (
  * */
 export const getWorkspaces = async (): Promise<Workspace[]> => {
   const response = await apiCall(`${ADMIN_BASE_URL}/workspaces`);
-  if (!response.ok) {
-    const data = await response.json();
-    const errorData = data as { message: string };
-    throw new Error(errorData.message || 'Failed to fetch workspaces');
-  }
   const data = await response.json();
   if (!Array.isArray(data)) {
     throw new Error('Invalid workspaces response received from API');
@@ -144,11 +122,6 @@ export const getWorkspaces = async (): Promise<Workspace[]> => {
  * */
 export const getSystemStats = async (): Promise<SystemStats> => {
   const response = await apiCall(`${ADMIN_BASE_URL}/stats`);
-  if (!response.ok) {
-    const data = await response.json();
-    const errorData = data as { message: string };
-    throw new Error(errorData.message || 'Failed to fetch system stats');
-  }
   const data = await response.json();
   if (!isSystemStats(data)) {
     throw new Error('Invalid system stats response received from API');

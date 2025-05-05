@@ -22,43 +22,6 @@ export const fetchLastWorkspaceName = async () => {
   return response.json();
 };
 
-export const fetchFileList = async (workspaceName) => {
-  const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceName}/files`
-  );
-  return response.json();
-};
-
-export const fetchFileContent = async (workspaceName, filePath) => {
-  const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`
-  );
-  return response.text();
-};
-
-export const saveFileContent = async (workspaceName, filePath, content) => {
-  const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-      body: content,
-    }
-  );
-  return response.json();
-};
-
-export const deleteFile = async (workspaceName, filePath) => {
-  await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`,
-    {
-      method: 'DELETE',
-    }
-  );
-};
-
 export const getWorkspace = async (workspaceName) => {
   const response = await apiCall(`${API_BASE_URL}/workspaces/${workspaceName}`);
   return response.json();
@@ -105,33 +68,6 @@ export const commitAndPush = async (workspaceName, message) => {
 
 export const getFileUrl = (workspaceName, filePath) => {
   return `${API_BASE_URL}/workspaces/${workspaceName}/files/${filePath}`;
-};
-
-export const lookupFileByName = async (workspaceName, filename) => {
-  const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceName}/files/lookup?filename=${encodeURIComponent(
-      filename
-    )}`
-  );
-  const data = await response.json();
-  return data.paths;
-};
-
-export const updateLastOpenedFile = async (workspaceName, filePath) => {
-  await apiCall(`${API_BASE_URL}/workspaces/${workspaceName}/files/last`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ filePath }),
-  });
-};
-
-export const getLastOpenedFile = async (workspaceName) => {
-  const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${workspaceName}/files/last`
-  );
-  return response.json();
 };
 
 export const listWorkspaces = async () => {
