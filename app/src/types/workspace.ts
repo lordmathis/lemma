@@ -1,5 +1,13 @@
 import { Theme } from './theme';
 
+export interface DeleteWorkspaceResponse {
+  nextWorkspaceName: string;
+}
+
+export interface LastWorkspaceNameResponse {
+  lastWorkspaceName: string;
+}
+
 export interface WorkspaceSettings {
   theme: Theme;
   autoSave: boolean;
