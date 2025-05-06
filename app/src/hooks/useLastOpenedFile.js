@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { getLastOpenedFile, updateLastOpenedFile } from '../api/notes';
+import { getLastOpenedFile, updateLastOpenedFile } from '../api/git';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 
 export const useLastOpenedFile = () => {

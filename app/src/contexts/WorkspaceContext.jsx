@@ -14,7 +14,7 @@ import {
   updateLastWorkspaceName,
   deleteWorkspace,
   listWorkspaces,
-} from '../api/notes';
+} from '../api/git';
 import { DEFAULT_WORKSPACE_SETTINGS } from '../utils/constants';
 
 const WorkspaceContext = createContext();

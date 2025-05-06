@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
-import { saveFileContent, deleteFile } from '../api/notes';
+import { saveFileContent, deleteFile } from '../api/git';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useGitOperations } from './useGitOperations';
 

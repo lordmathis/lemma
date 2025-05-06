@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { fetchFileList } from '../api/notes';
+import { fetchFileList } from '../api/git';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 
 export const useFileList = () => {

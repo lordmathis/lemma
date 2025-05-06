@@ -1,5 +1,5 @@
 import { visit } from 'unist-util-visit';
-import { lookupFileByName, getFileUrl } from '../api/notes';
+import { lookupFileByName, getFileUrl } from '../api/git';
 import { InlineContainerType, MARKDOWN_REGEX } from '../types/markdown';
 import { Node } from 'unist';
 import { Parent } from 'unist';

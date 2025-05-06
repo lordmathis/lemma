@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
-import { updateProfile, deleteProfile } from '../api/notes';
+import { updateProfile, deleteProfile } from '../api/git';
 
 export function useProfileSettings() {
   const [loading, setLoading] = useState(false);
