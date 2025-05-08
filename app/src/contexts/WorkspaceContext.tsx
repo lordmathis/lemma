@@ -4,28 +4,53 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  ReactNode,
 } from 'react';
-import { useMantineColorScheme } from '@mantine/core';
+import { MantineColorScheme, useMantineColorScheme } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  fetchLastWorkspaceName,
+  getLastWorkspaceName,
   getWorkspace,
   updateWorkspace,
   updateLastWorkspaceName,
   deleteWorkspace,
   listWorkspaces,
-} from '../api/git';
-import { DEFAULT_WORKSPACE_SETTINGS } from '../utils/constants';
+} from '@/api/workspace';
+import {
+  Workspace,
+  DEFAULT_WORKSPACE_SETTINGS,
+  WorkspaceSettings,
+} from '@/types/workspace';
 
-const WorkspaceContext = createContext();
+interface WorkspaceContextType {
+  currentWorkspace: Workspace | null;
+  workspaces: Workspace[];
+  settings: Workspace | typeof DEFAULT_WORKSPACE_SETTINGS;
+  updateSettings: (newSettings: Partial<Workspace>) => Promise<void>;
+  loading: boolean;
+  colorScheme: MantineColorScheme;
+  updateColorScheme: (newTheme: MantineColorScheme) => void;
+  switchWorkspace: (workspaceName: string) => Promise<void>;
+  deleteCurrentWorkspace: () => Promise<void>;
+}
 
-export const WorkspaceProvider = ({ children }) => {
-  const [currentWorkspace, setCurrentWorkspace] = useState(null);
-  const [workspaces, setWorkspaces] = useState([]);
-  const [loading, setLoading] = useState(true);
+const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
+
+interface WorkspaceProviderProps {
+  children: ReactNode;
+}
+
+export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
+  children,
+}) => {
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(
+    null
+  );
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const { colorScheme, setColorScheme } = useMantineColorScheme();
 
-  const loadWorkspaces = useCallback(async () => {
+  const loadWorkspaces = useCallback(async (): Promise<Workspace[]> => {
     try {
       const workspaceList = await listWorkspaces();
       setWorkspaces(workspaceList);
@@ -41,22 +66,25 @@ export const WorkspaceProvider = ({ children }) => {
     }
   }, []);
 
-  const loadWorkspaceData = useCallback(async (workspaceName) => {
-    try {
-      const workspace = await getWorkspace(workspaceName);
-      setCurrentWorkspace(workspace);
-      setColorScheme(workspace.theme);
-    } catch (error) {
-      console.error('Failed to load workspace data:', error);
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to load workspace data',
-        color: 'red',
-      });
-    }
-  }, []);
+  const loadWorkspaceData = useCallback(
+    async (workspaceName: string): Promise<void> => {
+      try {
+        const workspace = await getWorkspace(workspaceName);
+        setCurrentWorkspace(workspace);
+        setColorScheme(workspace.theme as MantineColorScheme);
+      } catch (error) {
+        console.error('Failed to load workspace data:', error);
+        notifications.show({
+          title: 'Error',
+          message: 'Failed to load workspace data',
+          color: 'red',
+        });
+      }
+    },
+    []
+  );
 
-  const loadFirstAvailableWorkspace = useCallback(async () => {
+  const loadFirstAvailableWorkspace = useCallback(async (): Promise<void> => {
     try {
       const allWorkspaces = await listWorkspaces();
       if (allWorkspaces.length > 0) {
@@ -75,9 +103,9 @@ export const WorkspaceProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const initializeWorkspace = async () => {
+    const initializeWorkspace = async (): Promise<void> => {
       try {
-        const { lastWorkspaceName } = await fetchLastWorkspaceName();
+        const lastWorkspaceName = await getLastWorkspaceName();
         if (lastWorkspaceName) {
           await loadWorkspaceData(lastWorkspaceName);
         } else {
@@ -95,25 +123,28 @@ export const WorkspaceProvider = ({ children }) => {
     initializeWorkspace();
   }, []);
 
-  const switchWorkspace = useCallback(async (workspaceName) => {
-    try {
-      setLoading(true);
-      await updateLastWorkspaceName(workspaceName);
-      await loadWorkspaceData(workspaceName);
-      await loadWorkspaces();
-    } catch (error) {
-      console.error('Failed to switch workspace:', error);
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to switch workspace',
-        color: 'red',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const switchWorkspace = useCallback(
+    async (workspaceName: string): Promise<void> => {
+      try {
+        setLoading(true);
+        await updateLastWorkspaceName(workspaceName);
+        await loadWorkspaceData(workspaceName);
+        await loadWorkspaces();
+      } catch (error) {
+        console.error('Failed to switch workspace:', error);
+        notifications.show({
+          title: 'Error',
+          message: 'Failed to switch workspace',
+          color: 'red',
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
-  const deleteCurrentWorkspace = useCallback(async () => {
+  const deleteCurrentWorkspace = useCallback(async (): Promise<void> => {
     if (!currentWorkspace) return;
 
     try {
@@ -129,10 +160,12 @@ export const WorkspaceProvider = ({ children }) => {
       }
 
       // Delete workspace and get the next workspace ID
-      const response = await deleteWorkspace(currentWorkspace.name);
+      const nextWorkspaceName: string = await deleteWorkspace(
+        currentWorkspace.name
+      );
 
       // Load the new workspace data
-      await loadWorkspaceData(response.nextWorkspaceName);
+      await loadWorkspaceData(nextWorkspaceName);
 
       notifications.show({
         title: 'Success',
@@ -152,7 +185,7 @@ export const WorkspaceProvider = ({ children }) => {
   }, [currentWorkspace]);
 
   const updateSettings = useCallback(
-    async (newSettings) => {
+    async (newSettings: Partial<Workspace>): Promise<void> => {
       if (!currentWorkspace) return;
 
       try {
@@ -177,13 +210,13 @@ export const WorkspaceProvider = ({ children }) => {
   );
 
   const updateColorScheme = useCallback(
-    (newTheme) => {
+    (newTheme: MantineColorScheme): void => {
       setColorScheme(newTheme);
     },
     [setColorScheme]
   );
 
-  const value = {
+  const value: WorkspaceContextType = {
     currentWorkspace,
     workspaces,
     settings: currentWorkspace || DEFAULT_WORKSPACE_SETTINGS,
@@ -202,9 +235,9 @@ export const WorkspaceProvider = ({ children }) => {
   );
 };
 
-export const useWorkspace = () => {
+export const useWorkspace = (): WorkspaceContextType => {
   const context = useContext(WorkspaceContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useWorkspace must be used within a WorkspaceProvider');
   }
   return context;

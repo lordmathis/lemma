@@ -1,11 +1,6 @@
 import { API_BASE_URL } from '@/types/authApi';
 import { apiCall } from './api';
-import {
-  DeleteWorkspaceResponse,
-  isWorkspace,
-  LastWorkspaceNameResponse,
-  Workspace,
-} from '@/types/workspace';
+import { isWorkspace, Workspace } from '@/types/workspace';
 
 /**
  * listWorkspaces fetches the list of workspaces
@@ -97,12 +92,12 @@ export const updateWorkspace = async (
 /**
  * deleteWorkspace deletes the workspace with the given name
  * @param workspaceName - The name of the workspace to delete
- * @returns {Promise<DeleteWorkspaceResponse>} A promise that resolves to the response object
+ * @returns {Promise<string>} A promise that resolves to the next workspace name to switch to
  * @throws {Error} If the API call fails or returns an invalid response
  */
 export const deleteWorkspace = async (
   workspaceName: string
-): Promise<DeleteWorkspaceResponse> => {
+): Promise<string> => {
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(workspaceName)}`,
     {
@@ -113,23 +108,22 @@ export const deleteWorkspace = async (
   if (!('nextWorkspaceName' in data)) {
     throw new Error('Invalid delete workspace response received from API');
   }
-  return data as DeleteWorkspaceResponse;
+  return data.nextWorkspaceName as string;
 };
 
 /**
  * getLastWorkspaceName fetches the last workspace name
- * @returns {Promise<LastWorkspaceNameResponse>} A promise that resolves to the last workspace name
+ * @returns {Promise<string>} A promise that resolves to the last workspace name
  * @throws {Error} If the API call fails or returns an invalid response
  */
-export const getLastWorkspaceName =
-  async (): Promise<LastWorkspaceNameResponse> => {
-    const response = await apiCall(`${API_BASE_URL}/workspaces/last`);
-    const data = await response.json();
-    if (!('lastWorkspaceName' in data)) {
-      throw new Error('Invalid last workspace name response received from API');
-    }
-    return data as LastWorkspaceNameResponse;
-  };
+export const getLastWorkspaceName = async (): Promise<string> => {
+  const response = await apiCall(`${API_BASE_URL}/workspaces/last`);
+  const data = await response.json();
+  if (!('lastWorkspaceName' in data)) {
+    throw new Error('Invalid last workspace name response received from API');
+  }
+  return data.lastWorkspaceName as string;
+};
 
 /**
  * updateLastWorkspaceName updates the last workspace name
