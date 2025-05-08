@@ -1,25 +1,15 @@
-import {
-  API_BASE_URL,
-  User,
-  LoginRequest,
-  LoginResponse,
-  isLoginResponse,
-  isUser,
-} from '../types/authApi';
+import { API_BASE_URL, User, LoginRequest, isUser } from '../types/authApi';
 import { apiCall } from './api';
 
 /**
  * Logs in a user with email and password
  * @param {string} email - The user's email
  * @param {string} password - The user's password
- * @returns {Promise<LoginResponse>} A promise that resolves to the login response
+ * @returns {Promise<User>} A promise that resolves to the user
  * @throws {Error} If the API call fails or returns an invalid response
  * @throws {Error} If the login fails
  */
-export const login = async (
-  email: string,
-  password: string
-): Promise<LoginResponse> => {
+export const login = async (email: string, password: string): Promise<User> => {
   const loginData: LoginRequest = { email, password };
   const response = await apiCall(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
@@ -27,11 +17,11 @@ export const login = async (
   });
 
   const data = await response.json();
-  if (!isLoginResponse(data)) {
-    throw new Error('Invalid login response received from API');
+  if (!('user' in data) || !isUser(data.user)) {
+    throw new Error('Invalid login response from API');
   }
 
-  return data;
+  return data.user;
 };
 
 /**

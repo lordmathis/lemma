@@ -73,31 +73,6 @@ export interface LoginRequest {
 }
 
 /**
- * Login response from the API
- */
-export interface LoginResponse {
-  user: User;
-  sessionId: string;
-  expiresAt: string;
-}
-
-/**
- * Type guard to check if a value is a valid LoginResponse
- */
-export function isLoginResponse(value: unknown): value is LoginResponse {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'user' in value &&
-    isUser((value as LoginResponse).user) &&
-    'sessionId' in value &&
-    typeof (value as LoginResponse).sessionId === 'string' &&
-    'expiresAt' in value &&
-    typeof (value as LoginResponse).expiresAt === 'string'
-  );
-}
-
-/**
  * API call options extending the standard RequestInit
  */
 export interface ApiCallOptions extends RequestInit {
