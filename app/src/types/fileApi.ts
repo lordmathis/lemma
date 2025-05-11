@@ -31,21 +31,6 @@ export function isSaveFileResponse(obj: unknown): obj is SaveFileResponse {
   );
 }
 
-export interface LastOpenedFileResponse {
-  lastOpenedFilePath: string;
-}
-
-export function isLastOpenedFileResponse(
-  obj: unknown
-): obj is LastOpenedFileResponse {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'lastOpenedFilePath' in obj &&
-    typeof (obj as LastOpenedFileResponse).lastOpenedFilePath === 'string'
-  );
-}
-
 export interface UpdateLastOpenedFileRequest {
   filePath: string;
 }

@@ -3,10 +3,8 @@ import { apiCall } from './api';
 import {
   FileNode,
   isFileNode,
-  isLastOpenedFileResponse,
   isLookupResponse,
   isSaveFileResponse,
-  LastOpenedFileResponse,
   LookupResponse,
   SaveFileResponse,
 } from '@/types/fileApi';
@@ -138,11 +136,10 @@ export const getLastOpenedFile = async (
     `${API_BASE_URL}/workspaces/${encodeURIComponent(workspaceName)}/files/last`
   );
   const data = await response.json();
-  if (!isLastOpenedFileResponse(data)) {
+  if (!('lastOpenedFilePath' in data)) {
     throw new Error('Invalid last opened file response received from API');
   }
-  const lastOpenedFileResponse = data as LastOpenedFileResponse;
-  return lastOpenedFileResponse.lastOpenedFilePath;
+  return data.lastOpenedFilePath;
 };
 
 /**
