@@ -1,25 +1,38 @@
 import { useState, useCallback, useEffect } from 'react';
-import { fetchFileContent } from '../api/git';
 import { isImageFile } from '../utils/fileHelpers';
-import { DEFAULT_FILE } from '../utils/constants';
 import { useWorkspace } from '../contexts/WorkspaceContext';
+import { DEFAULT_FILE } from '@/types/file';
+import { getFileContent } from '@/api/file';
 
-export const useFileContent = (selectedFile) => {
+interface UseFileContentResult {
+  content: string;
+  setContent: React.Dispatch<React.SetStateAction<string>>;
+  hasUnsavedChanges: boolean;
+  setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
+  loadFileContent: (filePath: string) => Promise<void>;
+  handleContentChange: (newContent: string) => void;
+}
+
+export const useFileContent = (
+  selectedFile: string | null
+): UseFileContentResult => {
   const { currentWorkspace } = useWorkspace();
-  const [content, setContent] = useState(DEFAULT_FILE.content);
-  const [originalContent, setOriginalContent] = useState(DEFAULT_FILE.content);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [content, setContent] = useState<string>(DEFAULT_FILE.content);
+  const [originalContent, setOriginalContent] = useState<string>(
+    DEFAULT_FILE.content
+  );
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
 
   const loadFileContent = useCallback(
-    async (filePath) => {
+    async (filePath: string) => {
       if (!currentWorkspace) return;
 
       try {
-        let newContent;
+        let newContent: string;
         if (filePath === DEFAULT_FILE.path) {
           newContent = DEFAULT_FILE.content;
         } else if (!isImageFile(filePath)) {
-          newContent = await fetchFileContent(currentWorkspace.name, filePath);
+          newContent = await getFileContent(currentWorkspace.name, filePath);
         } else {
           newContent = ''; // Set empty content for image files
         }
@@ -43,7 +56,7 @@ export const useFileContent = (selectedFile) => {
   }, [selectedFile, currentWorkspace, loadFileContent]);
 
   const handleContentChange = useCallback(
-    (newContent) => {
+    (newContent: string) => {
       setContent(newContent);
       setHasUnsavedChanges(newContent !== originalContent);
     },
