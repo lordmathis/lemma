@@ -1,5 +1,6 @@
 export enum FileAction {
   Create = 'create',
+  Update = 'update',
   Delete = 'delete',
   Rename = 'rename',
 }

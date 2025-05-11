@@ -1,15 +1,22 @@
 import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
-import { saveFileContent, deleteFile } from '../api/git';
+import { saveFile, deleteFile } from '../api/file';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useGitOperations } from './useGitOperations';
+import { FileAction } from '../types/file';
 
-export const useFileOperations = () => {
+interface UseFileOperationsResult {
+  handleSave: (filePath: string, content: string) => Promise<boolean>;
+  handleDelete: (filePath: string) => Promise<boolean>;
+  handleCreate: (fileName: string, initialContent?: string) => Promise<boolean>;
+}
+
+export const useFileOperations = (): UseFileOperationsResult => {
   const { currentWorkspace, settings } = useWorkspace();
   const { handleCommitAndPush } = useGitOperations();
 
   const autoCommit = useCallback(
-    async (filePath, action) => {
+    async (filePath: string, action: FileAction): Promise<void> => {
       if (settings.gitAutoCommit && settings.gitEnabled) {
         let commitMessage = settings.gitCommitMsgTemplate
           .replace('${filename}', filePath)
@@ -25,17 +32,17 @@ export const useFileOperations = () => {
   );
 
   const handleSave = useCallback(
-    async (filePath, content) => {
+    async (filePath: string, content: string): Promise<boolean> => {
       if (!currentWorkspace) return false;
 
       try {
-        await saveFileContent(currentWorkspace.name, filePath, content);
+        await saveFile(currentWorkspace.name, filePath, content);
         notifications.show({
           title: 'Success',
           message: 'File saved successfully',
           color: 'green',
         });
-        autoCommit(filePath, 'update');
+        await autoCommit(filePath, FileAction.Update);
         return true;
       } catch (error) {
         console.error('Error saving file:', error);
@@ -51,7 +58,7 @@ export const useFileOperations = () => {
   );
 
   const handleDelete = useCallback(
-    async (filePath) => {
+    async (filePath: string): Promise<boolean> => {
       if (!currentWorkspace) return false;
 
       try {
@@ -61,7 +68,7 @@ export const useFileOperations = () => {
           message: 'File deleted successfully',
           color: 'green',
         });
-        autoCommit(filePath, 'delete');
+        await autoCommit(filePath, FileAction.Delete);
         return true;
       } catch (error) {
         console.error('Error deleting file:', error);
@@ -77,17 +84,17 @@ export const useFileOperations = () => {
   );
 
   const handleCreate = useCallback(
-    async (fileName, initialContent = '') => {
+    async (fileName: string, initialContent: string = ''): Promise<boolean> => {
       if (!currentWorkspace) return false;
 
       try {
-        await saveFileContent(currentWorkspace.name, fileName, initialContent);
+        await saveFile(currentWorkspace.name, fileName, initialContent);
         notifications.show({
           title: 'Success',
           message: 'File created successfully',
           color: 'green',
         });
-        autoCommit(fileName, 'create');
+        await autoCommit(fileName, FileAction.Create);
         return true;
       } catch (error) {
         console.error('Error creating new file:', error);
