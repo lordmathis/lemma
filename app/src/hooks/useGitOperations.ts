@@ -3,10 +3,15 @@ import { notifications } from '@mantine/notifications';
 import { pullChanges, commitAndPush } from '../api/git';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 
-export const useGitOperations = () => {
+interface UseGitOperationsResult {
+  handlePull: () => Promise<boolean>;
+  handleCommitAndPush: (message: string) => Promise<boolean>;
+}
+
+export const useGitOperations = (): UseGitOperationsResult => {
   const { currentWorkspace, settings } = useWorkspace();
 
-  const handlePull = useCallback(async () => {
+  const handlePull = useCallback(async (): Promise<boolean> => {
     if (!currentWorkspace || !settings.gitEnabled) return false;
 
     try {
@@ -29,11 +34,14 @@ export const useGitOperations = () => {
   }, [currentWorkspace, settings.gitEnabled]);
 
   const handleCommitAndPush = useCallback(
-    async (message) => {
+    async (message: string): Promise<boolean> => {
       if (!currentWorkspace || !settings.gitEnabled) return false;
 
       try {
-        await commitAndPush(currentWorkspace.name, message);
+        const commitHash: CommitHash = await commitAndPush(
+          currentWorkspace.name,
+          message
+        );
         notifications.show({
           title: 'Success',
           message: 'Successfully committed and pushed changes',
