@@ -1,16 +1,22 @@
 import { useState, useCallback } from 'react';
-import { fetchFileList } from '../api/git';
+import { listFiles } from '../api/file';
 import { useWorkspace } from '../contexts/WorkspaceContext';
+import { FileNode } from '../types/fileApi';
 
-export const useFileList = () => {
-  const [files, setFiles] = useState([]);
+interface UseFileListResult {
+  files: FileNode[];
+  loadFileList: () => Promise<void>;
+}
+
+export const useFileList = (): UseFileListResult => {
+  const [files, setFiles] = useState<FileNode[]>([]);
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
 
-  const loadFileList = useCallback(async () => {
+  const loadFileList = useCallback(async (): Promise<void> => {
     if (!currentWorkspace || workspaceLoading) return;
 
     try {
-      const fileList = await fetchFileList(currentWorkspace.name);
+      const fileList = await listFiles(currentWorkspace.name);
       if (Array.isArray(fileList)) {
         setFiles(fileList);
       } else {
