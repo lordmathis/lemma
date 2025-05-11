@@ -1,16 +1,22 @@
 import { useState, useCallback, useEffect } from 'react';
-import { DEFAULT_FILE } from '../utils/constants';
+import { DEFAULT_FILE } from '../types/file';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useLastOpenedFile } from './useLastOpenedFile';
 
-export const useFileNavigation = () => {
-  const [selectedFile, setSelectedFile] = useState(DEFAULT_FILE.path);
-  const [isNewFile, setIsNewFile] = useState(true);
+interface UseFileNavigationResult {
+  selectedFile: string;
+  isNewFile: boolean;
+  handleFileSelect: (filePath: string | null) => Promise<void>;
+}
+
+export const useFileNavigation = (): UseFileNavigationResult => {
+  const [selectedFile, setSelectedFile] = useState<string>(DEFAULT_FILE.path);
+  const [isNewFile, setIsNewFile] = useState<boolean>(true);
   const { currentWorkspace } = useWorkspace();
   const { loadLastOpenedFile, saveLastOpenedFile } = useLastOpenedFile();
 
   const handleFileSelect = useCallback(
-    async (filePath) => {
+    async (filePath: string | null): Promise<void> => {
       const newPath = filePath || DEFAULT_FILE.path;
       setSelectedFile(newPath);
       setIsNewFile(!filePath);
@@ -24,7 +30,7 @@ export const useFileNavigation = () => {
 
   // Load last opened file when workspace changes
   useEffect(() => {
-    const initializeFile = async () => {
+    const initializeFile = async (): Promise<void> => {
       setSelectedFile(DEFAULT_FILE.path);
       setIsNewFile(true);
 
