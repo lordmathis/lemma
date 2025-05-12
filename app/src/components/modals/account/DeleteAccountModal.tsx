@@ -1,27 +1,40 @@
 import React, { useState } from 'react';
 import {
   Modal,
-  Text,
-  Button,
-  Group,
   Stack,
+  Text,
   PasswordInput,
+  Group,
+  Button,
 } from '@mantine/core';
 
-const EmailPasswordModal = ({ opened, onClose, onConfirm, email }) => {
-  const [password, setPassword] = useState('');
+interface DeleteAccountModalProps {
+  opened: boolean;
+  onClose: () => void;
+  onConfirm: (password: string) => Promise<void>;
+}
+
+const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
+  opened,
+  onClose,
+  onConfirm,
+}) => {
+  const [password, setPassword] = useState<string>('');
 
   return (
     <Modal
       opened={opened}
       onClose={onClose}
-      title="Confirm Password"
+      title="Delete Account"
       centered
       size="sm"
     >
       <Stack>
+        <Text c="red" fw={500}>
+          Warning: This action cannot be undone
+        </Text>
         <Text size="sm">
-          Please enter your password to confirm changing your email to: {email}
+          Please enter your password to confirm account deletion.
         </Text>
         <PasswordInput
           label="Current Password"
@@ -35,12 +48,13 @@ const EmailPasswordModal = ({ opened, onClose, onConfirm, email }) => {
             Cancel
           </Button>
           <Button
+            color="red"
             onClick={() => {
               onConfirm(password);
               setPassword('');
             }}
           >
-            Confirm
+            Delete Account
           </Button>
         </Group>
       </Stack>
@@ -48,4 +62,4 @@ const EmailPasswordModal = ({ opened, onClose, onConfirm, email }) => {
   );
 };
 
-export default EmailPasswordModal;
+export default DeleteAccountModal;

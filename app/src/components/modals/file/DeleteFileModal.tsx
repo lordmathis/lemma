@@ -2,11 +2,21 @@ import React from 'react';
 import { Modal, Text, Button, Group } from '@mantine/core';
 import { useModalContext } from '../../../contexts/ModalContext';
 
-const DeleteFileModal = ({ onDeleteFile, selectedFile }) => {
+interface DeleteFileModalProps {
+  onDeleteFile: (fileName: string) => Promise<void>;
+  selectedFile: string | null;
+}
+
+const DeleteFileModal: React.FC<DeleteFileModalProps> = ({
+  onDeleteFile,
+  selectedFile,
+}) => {
   const { deleteFileModalVisible, setDeleteFileModalVisible } =
     useModalContext();
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (): Promise<void> => {
+    if (!selectedFile) return;
+
     await onDeleteFile(selectedFile);
     setDeleteFileModalVisible(false);
   };

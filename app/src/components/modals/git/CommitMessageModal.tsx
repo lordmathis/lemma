@@ -2,12 +2,18 @@ import React, { useState } from 'react';
 import { Modal, TextInput, Button, Group, Box } from '@mantine/core';
 import { useModalContext } from '../../../contexts/ModalContext';
 
-const CommitMessageModal = ({ onCommitAndPush }) => {
+interface CommitMessageModalProps {
+  onCommitAndPush: (message: string) => Promise<void>;
+}
+
+const CommitMessageModal: React.FC<CommitMessageModalProps> = ({
+  onCommitAndPush,
+}) => {
   const [message, setMessage] = useState('');
   const { commitMessageModalVisible, setCommitMessageModalVisible } =
     useModalContext();
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (message) {
       await onCommitAndPush(message);
       setMessage('');

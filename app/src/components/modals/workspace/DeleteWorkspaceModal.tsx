@@ -1,7 +1,14 @@
 import React from 'react';
 import { Modal, Text, Button, Group, Stack } from '@mantine/core';
 
-const DeleteWorkspaceModal = ({
+interface DeleteUserModalProps {
+  opened: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+  workspaceName: string | undefined;
+}
+
+const DeleteWorkspaceModal: React.FC<DeleteUserModalProps> = ({
   opened,
   onClose,
   onConfirm,

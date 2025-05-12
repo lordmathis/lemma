@@ -1,7 +1,22 @@
 import React from 'react';
 import { Modal, Text, Button, Group, Stack } from '@mantine/core';
+import { User } from '@/types/authApi';
 
-const DeleteUserModal = ({ opened, onClose, onConfirm, user, loading }) => (
+interface DeleteUserModalProps {
+  opened: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+  user: User | null;
+  loading: boolean;
+}
+
+const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
+  opened,
+  onClose,
+  onConfirm,
+  user,
+  loading,
+}) => (
   <Modal
     opened={opened}
     onClose={onClose}

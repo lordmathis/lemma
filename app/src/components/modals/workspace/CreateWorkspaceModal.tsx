@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { Modal, TextInput, Button, Group, Box } from '@mantine/core';
 import { useModalContext } from '../../../contexts/ModalContext';
-import { createWorkspace } from '../../../api/git';
 import { notifications } from '@mantine/notifications';
+import { Workspace } from '@/types/workspace';
+import { createWorkspace } from '@/api/workspace';
 
-const CreateWorkspaceModal = ({ onWorkspaceCreated }) => {
-  const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
+interface CreateWorkspaceModalProps {
+  onWorkspaceCreated?: (workspace: Workspace) => Promise<void>;
+}
+
+const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
+  onWorkspaceCreated,
+}) => {
+  const [name, setName] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const { createWorkspaceModalVisible, setCreateWorkspaceModalVisible } =
     useModalContext();
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!name.trim()) {
       notifications.show({
         title: 'Error',

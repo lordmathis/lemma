@@ -8,20 +8,41 @@ import {
   Button,
   Group,
 } from '@mantine/core';
+import { CreateUserRequest } from '@/types/adminApi';
+import { UserRole } from '@/types/authApi';
 
-const CreateUserModal = ({ opened, onClose, onCreateUser, loading }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [role, setRole] = useState('viewer');
+interface CreateUserModalProps {
+  opened: boolean;
+  onClose: () => void;
+  onCreateUser: (userData: CreateUserRequest) => Promise<boolean>;
+  loading: boolean;
+}
 
-  const handleSubmit = async () => {
-    const result = await onCreateUser({ email, password, displayName, role });
-    if (result.success) {
+const CreateUserModal: React.FC<CreateUserModalProps> = ({
+  opened,
+  onClose,
+  onCreateUser,
+  loading,
+}) => {
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [displayName, setDisplayName] = useState<string>('');
+  const [role, setRole] = useState<UserRole>(UserRole.Viewer);
+
+  const handleSubmit = async (): Promise<void> => {
+    const userData: CreateUserRequest = {
+      email,
+      password,
+      displayName,
+      role,
+    };
+
+    const success = await onCreateUser(userData);
+    if (success) {
       setEmail('');
       setPassword('');
       setDisplayName('');
-      setRole('viewer');
+      setRole(UserRole.Viewer);
       onClose();
     }
   };
@@ -53,11 +74,11 @@ const CreateUserModal = ({ opened, onClose, onCreateUser, loading }) => {
           label="Role"
           required
           value={role}
-          onChange={setRole}
+          onChange={(value) => value && setRole(value as UserRole)}
           data={[
-            { value: 'admin', label: 'Admin' },
-            { value: 'editor', label: 'Editor' },
-            { value: 'viewer', label: 'Viewer' },
+            { value: UserRole.Admin, label: 'Admin' },
+            { value: UserRole.Editor, label: 'Editor' },
+            { value: UserRole.Viewer, label: 'Viewer' },
           ]}
         />
         <Group justify="flex-end" mt="md">

@@ -9,12 +9,28 @@ import {
   PasswordInput,
   Text,
 } from '@mantine/core';
+import { UpdateUserRequest } from '@/types/adminApi';
+import { User, UserRole } from '@/types/authApi';
 
-const EditUserModal = ({ opened, onClose, onEditUser, loading, user }) => {
-  const [formData, setFormData] = useState({
+interface EditUserModalProps {
+  opened: boolean;
+  onClose: () => void;
+  onEditUser: (userId: number, userData: UpdateUserRequest) => Promise<boolean>;
+  loading: boolean;
+  user: User | null;
+}
+
+const EditUserModal: React.FC<EditUserModalProps> = ({
+  opened,
+  onClose,
+  onEditUser,
+  loading,
+  user,
+}) => {
+  const [formData, setFormData] = useState<UpdateUserRequest>({
     email: '',
     displayName: '',
-    role: '',
+    role: undefined,
     password: '',
   });
 
@@ -29,18 +45,20 @@ const EditUserModal = ({ opened, onClose, onEditUser, loading, user }) => {
     }
   }, [user]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
+    if (!user) return;
+
     const updateData = {
       ...formData,
       ...(formData.password ? { password: formData.password } : {}),
     };
 
-    const result = await onEditUser(user.id, updateData);
-    if (result.success) {
+    const success = await onEditUser(user.id, updateData);
+    if (success) {
       setFormData({
         email: '',
         displayName: '',
-        role: '',
+        role: undefined,
         password: '',
       });
       onClose();
@@ -71,11 +89,13 @@ const EditUserModal = ({ opened, onClose, onEditUser, loading, user }) => {
           label="Role"
           required
           value={formData.role}
-          onChange={(value) => setFormData({ ...formData, role: value })}
+          onChange={(value) =>
+            setFormData({ ...formData, role: value as UserRole | undefined })
+          }
           data={[
-            { value: 'admin', label: 'Admin' },
-            { value: 'editor', label: 'Editor' },
-            { value: 'viewer', label: 'Viewer' },
+            { value: UserRole.Admin, label: 'Admin' },
+            { value: UserRole.Editor, label: 'Editor' },
+            { value: UserRole.Viewer, label: 'Viewer' },
           ]}
         />
         <PasswordInput

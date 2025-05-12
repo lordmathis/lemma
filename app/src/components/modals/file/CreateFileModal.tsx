@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { Modal, TextInput, Button, Group, Box } from '@mantine/core';
 import { useModalContext } from '../../../contexts/ModalContext';
 
-const CreateFileModal = ({ onCreateFile }) => {
-  const [fileName, setFileName] = useState('');
+interface CreateFileModalProps {
+  onCreateFile: (fileName: string) => Promise<void>;
+}
+
+const CreateFileModal: React.FC<CreateFileModalProps> = ({ onCreateFile }) => {
+  const [fileName, setFileName] = useState<string>('');
   const { newFileModalVisible, setNewFileModalVisible } = useModalContext();
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (fileName) {
       await onCreateFile(fileName);
       setFileName('');
