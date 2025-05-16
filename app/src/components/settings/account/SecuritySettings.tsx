@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
 import { Box, PasswordInput, Stack, Text } from '@mantine/core';
+import { UserProfileSettings } from '@/types/settings';
 
-const SecuritySettings = ({ settings, onInputChange }) => {
+interface SecuritySettingsProps {
+  settings: UserProfileSettings;
+  onInputChange: (key: keyof UserProfileSettings, value: string) => void;
+}
+
+type PasswordField = 'currentPassword' | 'newPassword' | 'confirmNewPassword';
+
+const SecuritySettings: React.FC<SecuritySettingsProps> = ({
+  settings,
+  onInputChange,
+}) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handlePasswordChange = (field, value) => {
+  const handlePasswordChange = (field: PasswordField, value: string) => {
     if (field === 'confirmNewPassword') {
       setConfirmPassword(value);
       // Check if passwords match when either password field changes
@@ -27,7 +38,7 @@ const SecuritySettings = ({ settings, onInputChange }) => {
 
   return (
     <Box>
-      <Stack spacing="md">
+      <Stack gap="md">
         <PasswordInput
           label="Current Password"
           value={settings.currentPassword || ''}

@@ -16,24 +16,38 @@ import SecuritySettings from './SecuritySettings';
 import ProfileSettings from './ProfileSettings';
 import DangerZoneSettings from './DangerZoneSettings';
 import AccordionControl from '../AccordionControl';
+import {
+  SettingsActionType,
+  UserProfileSettings,
+  ProfileSettingsState,
+  SettingsAction,
+} from '../../../types/settings';
+
+interface AccountSettingsProps {
+  opened: boolean;
+  onClose: () => void;
+}
 
 // Reducer for managing settings state
-const initialState = {
+const initialState: ProfileSettingsState = {
   localSettings: {},
   initialSettings: {},
   hasUnsavedChanges: false,
 };
 
-function settingsReducer(state, action) {
+function settingsReducer(
+  state: ProfileSettingsState,
+  action: SettingsAction<UserProfileSettings>
+): ProfileSettingsState {
   switch (action.type) {
-    case 'INIT_SETTINGS':
+    case SettingsActionType.INIT_SETTINGS:
       return {
         ...state,
-        localSettings: action.payload,
-        initialSettings: action.payload,
+        localSettings: action.payload || {},
+        initialSettings: action.payload || {},
         hasUnsavedChanges: false,
       };
-    case 'UPDATE_LOCAL_SETTINGS':
+    case SettingsActionType.UPDATE_LOCAL_SETTINGS:
       const newLocalSettings = { ...state.localSettings, ...action.payload };
       const hasChanges =
         JSON.stringify(newLocalSettings) !==
@@ -43,7 +57,7 @@ function settingsReducer(state, action) {
         localSettings: newLocalSettings,
         hasUnsavedChanges: hasChanges,
       };
-    case 'MARK_SAVED':
+    case SettingsActionType.MARK_SAVED:
       return {
         ...state,
         initialSettings: state.localSettings,
@@ -54,33 +68,45 @@ function settingsReducer(state, action) {
   }
 }
 
-const AccountSettings = ({ opened, onClose }) => {
+const AccountSettings: React.FC<AccountSettingsProps> = ({
+  opened,
+  onClose,
+}) => {
   const { user, refreshUser } = useAuth();
   const { loading, updateProfile } = useProfileSettings();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
-  const isInitialMount = useRef(true);
-  const [emailModalOpened, setEmailModalOpened] = useState(false);
+  const isInitialMount = useRef<boolean>(true);
+  const [emailModalOpened, setEmailModalOpened] = useState<boolean>(false);
 
   // Initialize settings on mount
   useEffect(() => {
     if (isInitialMount.current && user) {
       isInitialMount.current = false;
-      const settings = {
+      const settings: UserProfileSettings = {
         displayName: user.displayName,
         email: user.email,
         currentPassword: '',
         newPassword: '',
       };
-      dispatch({ type: 'INIT_SETTINGS', payload: settings });
+      dispatch({
+        type: SettingsActionType.INIT_SETTINGS,
+        payload: settings,
+      });
     }
   }, [user]);
 
-  const handleInputChange = (key, value) => {
-    dispatch({ type: 'UPDATE_LOCAL_SETTINGS', payload: { [key]: value } });
+  const handleInputChange = (
+    key: keyof UserProfileSettings,
+    value: string
+  ): void => {
+    dispatch({
+      type: SettingsActionType.UPDATE_LOCAL_SETTINGS,
+      payload: { [key]: value } as UserProfileSettings,
+    });
   };
 
-  const handleSubmit = async () => {
-    const updates = {};
+  const handleSubmit = async (): Promise<void> => {
+    const updates: UserProfileSettings = {};
     const needsPasswordConfirmation =
       state.localSettings.email !== state.initialSettings.email;
 
@@ -113,10 +139,10 @@ const AccountSettings = ({ opened, onClose }) => {
         }
       }
 
-      const result = await updateProfile(updates);
-      if (result.success) {
+      const updatedUser = await updateProfile(updates);
+      if (updatedUser) {
         await refreshUser();
-        dispatch({ type: 'MARK_SAVED' });
+        dispatch({ type: SettingsActionType.MARK_SAVED });
         onClose();
       }
     } else {
@@ -125,17 +151,20 @@ const AccountSettings = ({ opened, onClose }) => {
     }
   };
 
-  const handleEmailConfirm = async (password) => {
-    const updates = {
+  const handleEmailConfirm = async (password: string): Promise<void> => {
+    const updates: UserProfileSettings = {
       ...state.localSettings,
       currentPassword: password,
     };
+
     // Remove any undefined/empty values
     Object.keys(updates).forEach((key) => {
-      if (updates[key] === undefined || updates[key] === '') {
-        delete updates[key];
+      const typedKey = key as keyof UserProfileSettings;
+      if (updates[typedKey] === undefined || updates[typedKey] === '') {
+        delete updates[typedKey];
       }
     });
+
     // Remove keys that haven't changed
     if (updates.displayName === state.initialSettings.displayName) {
       delete updates.displayName;
@@ -144,10 +173,10 @@ const AccountSettings = ({ opened, onClose }) => {
       delete updates.email;
     }
 
-    const result = await updateProfile(updates);
-    if (result.success) {
+    const updatedUser = await updateProfile(updates);
+    if (updatedUser) {
       await refreshUser();
-      dispatch({ type: 'MARK_SAVED' });
+      dispatch({ type: SettingsActionType.MARK_SAVED });
       setEmailModalOpened(false);
       onClose();
     }
@@ -162,7 +191,7 @@ const AccountSettings = ({ opened, onClose }) => {
         centered
         size="lg"
       >
-        <Stack spacing="xl">
+        <Stack gap="xl">
           {state.hasUnsavedChanges && (
             <Badge color="yellow" variant="light">
               Unsaved Changes
@@ -172,7 +201,7 @@ const AccountSettings = ({ opened, onClose }) => {
           <Accordion
             defaultValue={['profile', 'security', 'danger']}
             multiple
-            styles={(theme) => ({
+            styles={(theme: any) => ({
               control: {
                 paddingTop: theme.spacing.md,
                 paddingBottom: theme.spacing.md,
@@ -239,7 +268,7 @@ const AccountSettings = ({ opened, onClose }) => {
         opened={emailModalOpened}
         onClose={() => setEmailModalOpened(false)}
         onConfirm={handleEmailConfirm}
-        email={state.localSettings.email}
+        email={state.localSettings.email || ''}
       />
     </>
   );

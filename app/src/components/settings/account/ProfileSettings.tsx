@@ -1,9 +1,18 @@
 import React from 'react';
 import { Box, Stack, TextInput } from '@mantine/core';
+import { UserProfileSettings } from '../../../types/settings';
 
-const ProfileSettings = ({ settings, onInputChange }) => (
+interface ProfileSettingsProps {
+  settings: UserProfileSettings;
+  onInputChange: (key: keyof UserProfileSettings, value: string) => void;
+}
+
+const ProfileSettingsComponent: React.FC<ProfileSettingsProps> = ({
+  settings,
+  onInputChange,
+}) => (
   <Box>
-    <Stack spacing="md">
+    <Stack gap="md">
       <TextInput
         label="Display Name"
         value={settings.displayName || ''}
@@ -20,4 +29,4 @@ const ProfileSettings = ({ settings, onInputChange }) => (
   </Box>
 );
 
-export default ProfileSettings;
+export default ProfileSettingsComponent;
