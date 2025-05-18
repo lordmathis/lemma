@@ -6,13 +6,23 @@ import AdminUsersTab from './AdminUsersTab';
 import AdminWorkspacesTab from './AdminWorkspacesTab';
 import AdminStatsTab from './AdminStatsTab';
 
-const AdminDashboard = ({ opened, onClose }) => {
+interface AdminDashboardProps {
+  opened: boolean;
+  onClose: () => void;
+}
+
+type AdminTabValue = 'users' | 'workspaces' | 'stats';
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ opened, onClose }) => {
   const { user: currentUser } = useAuth();
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState<AdminTabValue>('users');
 
   return (
     <Modal opened={opened} onClose={onClose} size="xl" title="Admin Dashboard">
-      <Tabs value={activeTab} onChange={setActiveTab}>
+      <Tabs
+        value={activeTab}
+        onChange={(value) => setActiveTab(value as AdminTabValue)}
+      >
         <Tabs.List>
           <Tabs.Tab value="users" leftSection={<IconUsers size={16} />}>
             Users
@@ -26,7 +36,7 @@ const AdminDashboard = ({ opened, onClose }) => {
         </Tabs.List>
 
         <Tabs.Panel value="users" pt="md">
-          <AdminUsersTab currentUser={currentUser} />
+          {currentUser && <AdminUsersTab currentUser={currentUser} />}
         </Tabs.Panel>
 
         <Tabs.Panel value="workspaces" pt="md">

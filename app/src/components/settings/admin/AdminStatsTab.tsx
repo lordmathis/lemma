@@ -4,8 +4,13 @@ import { IconAlertCircle } from '@tabler/icons-react';
 import { useAdminData } from '../../../hooks/useAdminData';
 import { formatBytes } from '../../../utils/formatBytes';
 
-const AdminStatsTab = () => {
-  const { data: stats, loading, error } = useAdminData('stats');
+interface StatsRow {
+  label: string;
+  value: string | number;
+}
+
+const AdminStatsTab: React.FC = () => {
+  const { data: stats, loading, error } = useAdminData<'stats'>('stats');
 
   if (loading) {
     return <LoadingOverlay visible={true} />;
@@ -19,7 +24,7 @@ const AdminStatsTab = () => {
     );
   }
 
-  const statsRows = [
+  const statsRows: StatsRow[] = [
     { label: 'Total Users', value: stats.totalUsers },
     { label: 'Active Users', value: stats.activeUsers },
     { label: 'Total Workspaces', value: stats.totalWorkspaces },
@@ -33,7 +38,7 @@ const AdminStatsTab = () => {
         System Statistics
       </Text>
 
-      <Table striped highlightOnHover withBorder>
+      <Table striped highlightOnHover>
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Metric</Table.Th>

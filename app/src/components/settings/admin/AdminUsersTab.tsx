@@ -20,8 +20,14 @@ import { useUserAdmin } from '../../../hooks/useUserAdmin';
 import CreateUserModal from '../../modals/user/CreateUserModal';
 import EditUserModal from '../../modals/user/EditUserModal';
 import DeleteUserModal from '../../modals/user/DeleteUserModal';
+import { User } from '../../../types/authApi';
+import { CreateUserRequest, UpdateUserRequest } from '../../../types/adminApi';
 
-const AdminUsersTab = ({ currentUser }) => {
+interface AdminUsersTabProps {
+  currentUser: User;
+}
+
+const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ currentUser }) => {
   const {
     users,
     loading,
@@ -31,19 +37,24 @@ const AdminUsersTab = ({ currentUser }) => {
     delete: deleteUser,
   } = useUserAdmin();
 
-  const [createModalOpened, setCreateModalOpened] = useState(false);
-  const [editModalData, setEditModalData] = useState(null);
-  const [deleteModalData, setDeleteModalData] = useState(null);
+  const [createModalOpened, setCreateModalOpened] = useState<boolean>(false);
+  const [editModalData, setEditModalData] = useState<User | null>(null);
+  const [deleteModalData, setDeleteModalData] = useState<User | null>(null);
 
-  const handleCreateUser = async (userData) => {
+  const handleCreateUser = async (
+    userData: CreateUserRequest
+  ): Promise<boolean> => {
     return await create(userData);
   };
 
-  const handleEditUser = async (id, userData) => {
+  const handleEditUser = async (
+    id: number,
+    userData: UpdateUserRequest
+  ): Promise<boolean> => {
     return await update(id, userData);
   };
 
-  const handleDeleteClick = (user) => {
+  const handleDeleteClick = (user: User): void => {
     if (user.id === currentUser.id) {
       notifications.show({
         title: 'Error',
@@ -55,20 +66,20 @@ const AdminUsersTab = ({ currentUser }) => {
     setDeleteModalData(user);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async (): Promise<void> => {
     if (!deleteModalData) return;
-    const result = await deleteUser(deleteModalData.id);
-    if (result.success) {
+    const success = await deleteUser(deleteModalData.id);
+    if (success) {
       setDeleteModalData(null);
     }
   };
 
-  const rows = users.map((user) => (
+  const renderUserRow = (user: User) => (
     <Table.Tr key={user.id}>
       <Table.Td>{user.email}</Table.Td>
       <Table.Td>{user.displayName}</Table.Td>
       <Table.Td>
-        <Text transform="capitalize">{user.role}</Text>
+        <Text style={{ textTransform: 'capitalize' }}>{user.role}</Text>
       </Table.Td>
       <Table.Td>{new Date(user.createdAt).toLocaleDateString()}</Table.Td>
       <Table.Td>
@@ -91,7 +102,7 @@ const AdminUsersTab = ({ currentUser }) => {
         </Group>
       </Table.Td>
     </Table.Tr>
-  ));
+  );
 
   return (
     <Box pos="relative">
@@ -130,7 +141,7 @@ const AdminUsersTab = ({ currentUser }) => {
             <Table.Th style={{ width: 100 }}>Actions</Table.Th>
           </Table.Tr>
         </Table.Thead>
-        <Table.Tbody>{rows}</Table.Tbody>
+        <Table.Tbody>{users.map(renderUserRow)}</Table.Tbody>
       </Table>
 
       <CreateUserModal

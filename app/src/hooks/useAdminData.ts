@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { notifications } from '@mantine/notifications';
 import { getUsers, getWorkspaces, getSystemStats } from '@/api/admin';
-import { SystemStats } from '@/types/adminApi';
-import { Workspace } from '@/types/workspace';
-import { User } from '@/types/authApi';
+import { SystemStats, UserStats, WorkspaceStats } from '@/types/adminApi';
 
 // Possible types of admin data
 type AdminDataType = 'stats' | 'workspaces' | 'users';
@@ -12,9 +10,9 @@ type AdminDataType = 'stats' | 'workspaces' | 'users';
 type AdminData<T extends AdminDataType> = T extends 'stats'
   ? SystemStats
   : T extends 'workspaces'
-  ? Workspace[]
+  ? WorkspaceStats[]
   : T extends 'users'
-  ? User[]
+  ? UserStats[]
   : never;
 
 // Define the return type of the hook
@@ -34,9 +32,9 @@ export const useAdminData = <T extends AdminDataType>(
     if (type === 'stats') {
       return {} as SystemStats as AdminData<T>;
     } else if (type === 'workspaces') {
-      return [] as Workspace[] as AdminData<T>;
+      return [] as WorkspaceStats[] as AdminData<T>;
     } else if (type === 'users') {
-      return [] as User[] as AdminData<T>;
+      return [] as UserStats[] as AdminData<T>;
     } else {
       // This case should never happen due to type constraints,
       // but TypeScript requires us to handle it
