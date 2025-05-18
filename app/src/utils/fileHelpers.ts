@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/types/authApi';
 import { IMAGE_EXTENSIONS } from '../types/file';
 
 /**
@@ -7,4 +8,10 @@ import { IMAGE_EXTENSIONS } from '../types/file';
  */
 export const isImageFile = (filePath: string): boolean => {
   return IMAGE_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext));
+};
+
+export const getFileUrl = (workspaceName: string, filePath: string) => {
+  return `${API_BASE_URL}/workspaces/${encodeURIComponent(
+    workspaceName
+  )}/files/${encodeURIComponent(filePath)}`;
 };

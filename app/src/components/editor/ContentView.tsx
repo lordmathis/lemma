@@ -2,10 +2,21 @@ import React from 'react';
 import { Text, Center } from '@mantine/core';
 import Editor from './Editor';
 import MarkdownPreview from './MarkdownPreview';
-import { getFileUrl } from '../../api/git';
-import { isImageFile } from '../../utils/fileHelpers';
+import { getFileUrl, isImageFile } from '../../utils/fileHelpers';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
-const ContentView = ({
+type ViewTab = 'source' | 'preview';
+
+interface ContentViewProps {
+  activeTab: ViewTab;
+  selectedFile: string | null;
+  content: string;
+  handleContentChange: (content: string) => void;
+  handleSave: (filePath: string, content: string) => Promise<boolean>;
+  handleFileSelect: (filePath: string | null) => Promise<void>;
+}
+
+const ContentView: React.FC<ContentViewProps> = ({
   activeTab,
   selectedFile,
   content,
@@ -13,10 +24,21 @@ const ContentView = ({
   handleSave,
   handleFileSelect,
 }) => {
+  const { currentWorkspace } = useWorkspace();
+  if (!currentWorkspace) {
+    return (
+      <Center style={{ height: '100%' }}>
+        <Text size="xl" fw={500}>
+          No workspace selected.
+        </Text>
+      </Center>
+    );
+  }
+
   if (!selectedFile) {
     return (
       <Center style={{ height: '100%' }}>
-        <Text size="xl" weight={500}>
+        <Text size="xl" fw={500}>
           No file selected.
         </Text>
       </Center>
@@ -27,7 +49,7 @@ const ContentView = ({
     return (
       <Center className="image-preview">
         <img
-          src={getFileUrl(selectedFile)}
+          src={getFileUrl(currentWorkspace.name, selectedFile)}
           alt={selectedFile}
           style={{
             maxWidth: '100%',

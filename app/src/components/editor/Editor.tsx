@@ -7,13 +7,25 @@ import { defaultKeymap } from '@codemirror/commands';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
-const Editor = ({ content, handleContentChange, handleSave, selectedFile }) => {
+interface EditorProps {
+  content: string;
+  handleContentChange: (content: string) => void;
+  handleSave: (filePath: string, content: string) => Promise<boolean>;
+  selectedFile: string;
+}
+
+const Editor: React.FC<EditorProps> = ({
+  content,
+  handleContentChange,
+  handleSave,
+  selectedFile,
+}) => {
   const { colorScheme } = useWorkspace();
-  const editorRef = useRef();
-  const viewRef = useRef();
+  const editorRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null);
 
   useEffect(() => {
-    const handleEditorSave = (view) => {
+    const handleEditorSave = (view: EditorView): boolean => {
       handleSave(selectedFile, view.state.doc.toString());
       return true;
     };
@@ -35,6 +47,8 @@ const Editor = ({ content, handleContentChange, handleSave, selectedFile }) => {
         backgroundColor: colorScheme === 'dark' ? '#2c313a' : '#e8e8e8',
       },
     });
+
+    if (!editorRef.current) return;
 
     const state = EditorState.create({
       doc: content,
@@ -69,8 +83,9 @@ const Editor = ({ content, handleContentChange, handleSave, selectedFile }) => {
 
     return () => {
       view.destroy();
+      viewRef.current = null;
     };
-  }, [colorScheme, handleContentChange]);
+  }, [colorScheme, handleContentChange, handleSave, selectedFile]);
 
   useEffect(() => {
     if (viewRef.current && content !== viewRef.current.state.doc.toString()) {
