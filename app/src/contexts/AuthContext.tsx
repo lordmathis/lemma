@@ -12,7 +12,7 @@ import {
   refreshToken as apiRefreshToken,
   getCurrentUser,
 } from '@/api/auth';
-import { User } from '@/types/authApi';
+import type { User } from '@/types/authApi';
 
 interface AuthContextType {
   user: User | null;

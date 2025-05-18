@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '@/types/authApi';
 import { apiCall } from './api';
-import { CommitHash } from '@/types/git';
+import type { CommitHash } from '@/types/git';
 
 /**
  * pullChanges fetches the latest changes from the remote repository

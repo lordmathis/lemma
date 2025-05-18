@@ -1,6 +1,7 @@
-import { API_BASE_URL, isUser, User } from '@/types/authApi';
+import type { User } from '@/types/authApi';
+import { API_BASE_URL, isUser } from '@/types/authApi';
 import { apiCall } from './api';
-import { UpdateProfileRequest } from '@/types/userApi';
+import type { UpdateProfileRequest } from '@/types/userApi';
 
 /**
  * updateProfile updates the user's profile information.

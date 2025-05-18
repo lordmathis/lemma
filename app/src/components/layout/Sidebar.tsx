@@ -4,7 +4,7 @@ import FileActions from '../files/FileActions';
 import FileTree from '../files/FileTree';
 import { useGitOperations } from '../../hooks/useGitOperations';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { FileNode } from '@/types/fileApi';
+import type { FileNode } from '@/types/fileApi';
 
 interface SidebarProps {
   selectedFile: string | null;

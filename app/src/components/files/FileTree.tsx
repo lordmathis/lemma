@@ -1,9 +1,10 @@
 import React, { useRef, useState, useLayoutEffect } from 'react';
-import { Tree, NodeApi } from 'react-arborist';
+import type { NodeApi } from 'react-arborist';
+import { Tree } from 'react-arborist';
 import { IconFile, IconFolder, IconFolderOpen } from '@tabler/icons-react';
 import { Tooltip } from '@mantine/core';
 import useResizeObserver from '@react-hook/resize-observer';
-import { FileNode } from '../../types/fileApi';
+import type { FileNode } from '../../types/fileApi';
 
 interface Size {
   width: number;
@@ -48,7 +49,7 @@ function Node(props: any) {
     if (node.isInternal) {
       node.toggle();
     } else {
-      const treeProps = node.tree.props as any;
+      const treeProps = node.tree.props;
       if (typeof treeProps.onNodeClick === 'function') {
         treeProps.onNodeClick(node);
       }
@@ -124,7 +125,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           {...({
             // Use a spread with type assertion to add onNodeClick
             onNodeClick: (node: NodeApi<FileNode>) => {
-              const fileNode = node.data as FileNode;
+              const fileNode = node.data;
               if (!node.isInternal) {
                 handleFileSelect(fileNode.path);
               }

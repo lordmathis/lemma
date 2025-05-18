@@ -9,8 +9,9 @@ import {
   PasswordInput,
   Text,
 } from '@mantine/core';
-import { UpdateUserRequest } from '@/types/adminApi';
-import { User, UserRole } from '@/types/authApi';
+import type { UpdateUserRequest } from '@/types/adminApi';
+import type { User} from '@/types/authApi';
+import { UserRole } from '@/types/authApi';
 
 interface EditUserModalProps {
   opened: boolean;

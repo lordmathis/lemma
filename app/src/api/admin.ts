@@ -1,12 +1,15 @@
 import { apiCall } from './api';
-import { API_BASE_URL, isUser, User } from '../types/authApi';
-import {
+import type { User } from '../types/authApi';
+import { API_BASE_URL, isUser } from '../types/authApi';
+import type {
   CreateUserRequest,
-  isSystemStats,
   SystemStats,
-  UpdateUserRequest,
+  UpdateUserRequest} from '@/types/adminApi';
+import {
+  isSystemStats
 } from '@/types/adminApi';
-import { isWorkspace, Workspace } from '@/types/workspace';
+import type { Workspace } from '@/types/workspace';
+import { isWorkspace } from '@/types/workspace';
 
 const ADMIN_BASE_URL = `${API_BASE_URL}/admin`;
 
@@ -28,7 +31,7 @@ export const getUsers = async (): Promise<User[]> => {
     if (!isUser(user)) {
       throw new Error('Invalid user object received from API');
     }
-    return user as User;
+    return user;
   });
 };
 
@@ -50,7 +53,7 @@ export const createUser = async (
   if (!isUser(data)) {
     throw new Error('Invalid user object received from API');
   }
-  return data as User;
+  return data;
 };
 
 /**
@@ -89,7 +92,7 @@ export const updateUser = async (
   if (!isUser(data)) {
     throw new Error('Invalid user object received from API');
   }
-  return data as User;
+  return data;
 };
 
 // Workspace Management
@@ -109,7 +112,7 @@ export const getWorkspaces = async (): Promise<Workspace[]> => {
     if (!isWorkspace(workspace)) {
       throw new Error('Invalid workspace object received from API');
     }
-    return workspace as Workspace;
+    return workspace;
   });
 };
 
@@ -126,5 +129,5 @@ export const getSystemStats = async (): Promise<SystemStats> => {
   if (!isSystemStats(data)) {
     throw new Error('Invalid system stats response received from API');
   }
-  return data as SystemStats;
+  return data;
 };

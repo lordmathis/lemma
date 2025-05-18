@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { listFiles } from '../api/file';
 import { useWorkspace } from '../contexts/WorkspaceContext';
-import { FileNode } from '../types/fileApi';
+import type { FileNode } from '../types/fileApi';
 
 interface UseFileListResult {
   files: FileNode[];

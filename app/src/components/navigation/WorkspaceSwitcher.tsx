@@ -19,7 +19,7 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useModalContext } from '../../contexts/ModalContext';
 import { listWorkspaces } from '../../api/workspace';
 import CreateWorkspaceModal from '../modals/workspace/CreateWorkspaceModal';
-import { Workspace } from '../../types/workspace';
+import type { Workspace } from '../../types/workspace';
 
 const WorkspaceSwitcher: React.FC = () => {
   const { currentWorkspace, switchWorkspace } = useWorkspace();

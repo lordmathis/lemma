@@ -42,7 +42,7 @@ const MainContent: React.FC<MainContentProps> = ({
 
   const handleSaveFile = useCallback(
     async (filePath: string, fileContent: string): Promise<boolean> => {
-      let success = await handleSave(filePath, fileContent);
+      const success = await handleSave(filePath, fileContent);
       if (success) {
         setHasUnsavedChanges(false);
       }

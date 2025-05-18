@@ -1,12 +1,14 @@
+import type {
+  ReactNode} from 'react';
 import React, {
   createContext,
   useContext,
   useState,
   useEffect,
-  useCallback,
-  ReactNode,
+  useCallback
 } from 'react';
-import { MantineColorScheme, useMantineColorScheme } from '@mantine/core';
+import type { MantineColorScheme} from '@mantine/core';
+import { useMantineColorScheme } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   getLastWorkspaceName,
@@ -16,7 +18,8 @@ import {
   deleteWorkspace,
   listWorkspaces,
 } from '@/api/workspace';
-import { Workspace, DEFAULT_WORKSPACE_SETTINGS } from '@/types/workspace';
+import type { Workspace} from '@/types/workspace';
+import { DEFAULT_WORKSPACE_SETTINGS } from '@/types/workspace';
 
 interface WorkspaceContextType {
   currentWorkspace: Workspace | null;

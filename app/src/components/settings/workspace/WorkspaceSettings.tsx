@@ -17,8 +17,9 @@ import GeneralSettings from './GeneralSettings';
 import { useModalContext } from '../../../contexts/ModalContext';
 import DangerZoneSettings from './DangerZoneSettings';
 import AccordionControl from '../AccordionControl';
-import { SettingsActionType, SettingsAction } from '../../../types/settings';
-import { Workspace } from '../../../types/workspace';
+import type { SettingsAction } from '../../../types/settings';
+import { SettingsActionType } from '../../../types/settings';
+import type { Workspace } from '../../../types/workspace';
 
 // State and reducer for workspace settings
 interface WorkspaceSettingsState {

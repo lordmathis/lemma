@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Stack, TextInput } from '@mantine/core';
-import { UserProfileSettings } from '../../../types/settings';
+import type { UserProfileSettings } from '../../../types/settings';
 
 interface ProfileSettingsProps {
   settings: UserProfileSettings;

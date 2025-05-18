@@ -1,8 +1,8 @@
 import { visit } from 'unist-util-visit';
 import { InlineContainerType, MARKDOWN_REGEX } from '../types/markdown';
-import { Node } from 'unist';
-import { Parent } from 'unist';
-import { Text } from 'mdast';
+import type { Node } from 'unist';
+import type { Parent } from 'unist';
+import type { Text } from 'mdast';
 import { lookupFileByName } from '@/api/file';
 import { getFileUrl } from './fileHelpers';
 

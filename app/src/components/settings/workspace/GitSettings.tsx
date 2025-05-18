@@ -8,7 +8,7 @@ import {
   Group,
   Grid,
 } from '@mantine/core';
-import { Workspace } from '@/types/workspace';
+import type { Workspace } from '@/types/workspace';
 
 interface GitSettingsProps {
   gitEnabled: boolean;

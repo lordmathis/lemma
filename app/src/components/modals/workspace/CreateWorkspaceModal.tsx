@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, TextInput, Button, Group, Box } from '@mantine/core';
 import { useModalContext } from '../../../contexts/ModalContext';
 import { notifications } from '@mantine/notifications';
-import { Workspace } from '@/types/workspace';
+import type { Workspace } from '@/types/workspace';
 import { createWorkspace } from '@/api/workspace';
 
 interface CreateWorkspaceModalProps {

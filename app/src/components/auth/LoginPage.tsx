@@ -1,4 +1,5 @@
-import React, { FormEvent, useState } from 'react';
+import type { FormEvent} from 'react';
+import React, { useState } from 'react';
 import {
   TextInput,
   PasswordInput,

@@ -1,12 +1,13 @@
 import { API_BASE_URL } from '@/types/authApi';
 import { apiCall } from './api';
-import {
+import type {
   FileNode,
+  LookupResponse,
+  SaveFileResponse} from '@/types/fileApi';
+import {
   isFileNode,
   isLookupResponse,
-  isSaveFileResponse,
-  LookupResponse,
-  SaveFileResponse,
+  isSaveFileResponse
 } from '@/types/fileApi';
 
 /**
@@ -27,7 +28,7 @@ export const listFiles = async (workspaceName: string): Promise<FileNode[]> => {
     if (!isFileNode(file)) {
       throw new Error('Invalid file object received from API');
     }
-    return file as FileNode;
+    return file;
   });
 };
 
@@ -51,7 +52,7 @@ export const lookupFileByName = async (
   if (!isLookupResponse(data)) {
     throw new Error('Invalid lookup response received from API');
   }
-  const lookupResponse = data as LookupResponse;
+  const lookupResponse = data;
   return lookupResponse.paths;
 };
 
@@ -103,7 +104,7 @@ export const saveFile = async (
   if (!isSaveFileResponse(data)) {
     throw new Error('Invalid save file response received from API');
   }
-  return data as SaveFileResponse;
+  return data;
 };
 
 /**

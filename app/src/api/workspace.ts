@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '@/types/authApi';
 import { apiCall } from './api';
-import { isWorkspace, Workspace } from '@/types/workspace';
+import type { Workspace } from '@/types/workspace';
+import { isWorkspace } from '@/types/workspace';
 
 /**
  * listWorkspaces fetches the list of workspaces
@@ -17,7 +18,7 @@ export const listWorkspaces = async (): Promise<Workspace[]> => {
     if (!isWorkspace(workspace)) {
       throw new Error('Invalid workspace object received from API');
     }
-    return workspace as Workspace;
+    return workspace;
   });
 };
 
@@ -39,7 +40,7 @@ export const createWorkspace = async (name: string): Promise<Workspace> => {
   if (!isWorkspace(data)) {
     throw new Error('Invalid workspace object received from API');
   }
-  return data as Workspace;
+  return data;
 };
 
 /**

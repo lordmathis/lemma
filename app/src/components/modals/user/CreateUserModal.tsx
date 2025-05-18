@@ -8,7 +8,7 @@ import {
   Button,
   Group,
 } from '@mantine/core';
-import { CreateUserRequest } from '@/types/adminApi';
+import type { CreateUserRequest } from '@/types/adminApi';
 import { UserRole } from '@/types/authApi';
 
 interface CreateUserModalProps {

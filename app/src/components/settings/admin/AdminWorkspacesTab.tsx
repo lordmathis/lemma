@@ -3,7 +3,7 @@ import { Table, Group, Text, Box, LoadingOverlay, Alert } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useAdminData } from '../../../hooks/useAdminData';
 import { formatBytes } from '../../../utils/formatBytes';
-import { FileCountStats, WorkspaceStats } from '../../../types/adminApi';
+import type { FileCountStats, WorkspaceStats } from '../../../types/adminApi';
 
 const AdminWorkspacesTab: React.FC = () => {
   const {

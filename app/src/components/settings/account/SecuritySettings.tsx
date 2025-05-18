@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, PasswordInput, Stack, Text } from '@mantine/core';
-import { UserProfileSettings } from '@/types/settings';
+import type { UserProfileSettings } from '@/types/settings';
 
 interface SecuritySettingsProps {
   settings: UserProfileSettings;

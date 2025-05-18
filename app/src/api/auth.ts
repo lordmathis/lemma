@@ -1,4 +1,5 @@
-import { API_BASE_URL, User, LoginRequest, isUser } from '../types/authApi';
+import type { User, LoginRequest} from '../types/authApi';
+import { API_BASE_URL, isUser } from '../types/authApi';
 import { apiCall } from './api';
 
 /**

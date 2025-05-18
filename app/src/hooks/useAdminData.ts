@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { notifications } from '@mantine/notifications';
 import { getUsers, getWorkspaces, getSystemStats } from '@/api/admin';
-import { SystemStats, WorkspaceStats } from '@/types/adminApi';
-import { User } from '@/types/authApi';
+import type { SystemStats, WorkspaceStats } from '@/types/adminApi';
+import type { User } from '@/types/authApi';
 
 // Possible types of admin data
 type AdminDataType = 'stats' | 'workspaces' | 'users';

@@ -1,4 +1,4 @@
-import { UserRole } from './authApi';
+import type { UserRole } from './authApi';
 
 // CreateUserRequest holds the request fields for creating a new user
 export interface CreateUserRequest {

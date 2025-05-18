@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMath from 'remark-math';

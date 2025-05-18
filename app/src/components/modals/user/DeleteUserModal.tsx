@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Text, Button, Group, Stack } from '@mantine/core';
-import { User } from '@/types/authApi';
+import type { User } from '@/types/authApi';
 
 interface DeleteUserModalProps {
   opened: boolean;

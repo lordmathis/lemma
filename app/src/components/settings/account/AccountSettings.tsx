@@ -16,11 +16,12 @@ import SecuritySettings from './SecuritySettings';
 import ProfileSettings from './ProfileSettings';
 import DangerZoneSettings from './DangerZoneSettings';
 import AccordionControl from '../AccordionControl';
-import {
-  SettingsActionType,
+import type {
   UserProfileSettings,
   ProfileSettingsState,
-  SettingsAction,
+  SettingsAction} from '../../../types/settings';
+import {
+  SettingsActionType
 } from '../../../types/settings';
 
 interface AccountSettingsProps {

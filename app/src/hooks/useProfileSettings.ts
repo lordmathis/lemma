@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
 import { updateProfile, deleteUser } from '../api/user';
-import { User } from '../types/authApi';
-import { UpdateProfileRequest } from '../types/userApi';
+import type { User } from '../types/authApi';
+import type { UpdateProfileRequest } from '../types/userApi';
 
 interface UseProfileSettingsResult {
   loading: boolean;

@@ -5,8 +5,8 @@ import {
   deleteUser as adminDeleteUser,
 } from '../api/admin';
 import { notifications } from '@mantine/notifications';
-import { User } from '../types/authApi';
-import { CreateUserRequest, UpdateUserRequest } from '../types/adminApi';
+import type { User } from '../types/authApi';
+import type { CreateUserRequest, UpdateUserRequest } from '../types/adminApi';
 
 interface UseUserAdminResult {
   users: User[];

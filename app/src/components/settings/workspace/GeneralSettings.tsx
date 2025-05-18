@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, TextInput, Text, Grid } from '@mantine/core';
-import { Workspace } from '@/types/workspace';
+import type { Workspace } from '@/types/workspace';
 
 interface GeneralSettingsProps {
   name: string;
