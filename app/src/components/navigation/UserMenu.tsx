@@ -18,13 +18,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import AccountSettings from '../settings/account/AccountSettings';
 import AdminDashboard from '../settings/admin/AdminDashboard';
 
-const UserMenu = () => {
-  const [accountSettingsOpened, setAccountSettingsOpened] = useState(false);
-  const [adminDashboardOpened, setAdminDashboardOpened] = useState(false);
-  const [opened, setOpened] = useState(false);
+const UserMenu: React.FC = () => {
+  const [accountSettingsOpened, setAccountSettingsOpened] =
+    useState<boolean>(false);
+  const [adminDashboardOpened, setAdminDashboardOpened] =
+    useState<boolean>(false);
+  const [opened, setOpened] = useState<boolean>(false);
   const { user, logout } = useAuth();
 
-  const handleLogout = () => {
+  const handleLogout = (): void => {
     logout();
   };
 
@@ -57,7 +59,7 @@ const UserMenu = () => {
               </Avatar>
               <div>
                 <Text size="sm" fw={500}>
-                  {user.displayName || user.email}
+                  {user?.displayName || user?.email}
                 </Text>
               </div>
             </Group>
@@ -72,7 +74,7 @@ const UserMenu = () => {
               }}
               px="sm"
               py="xs"
-              style={(theme) => ({
+              style={(theme: any) => ({
                 borderRadius: theme.radius.sm,
                 '&:hover': {
                   backgroundColor:
@@ -88,7 +90,7 @@ const UserMenu = () => {
               </Group>
             </UnstyledButton>
 
-            {user.role === 'admin' && (
+            {user?.role === 'admin' && (
               <UnstyledButton
                 onClick={() => {
                   setAdminDashboardOpened(true);
@@ -96,7 +98,7 @@ const UserMenu = () => {
                 }}
                 px="sm"
                 py="xs"
-                style={(theme) => ({
+                style={(theme: any) => ({
                   borderRadius: theme.radius.sm,
                   '&:hover': {
                     backgroundColor:
@@ -118,7 +120,7 @@ const UserMenu = () => {
               px="sm"
               py="xs"
               color="red"
-              style={(theme) => ({
+              style={(theme: any) => ({
                 borderRadius: theme.radius.sm,
                 '&:hover': {
                   backgroundColor:

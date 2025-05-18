@@ -17,19 +17,20 @@ import {
 import { IconFolders, IconSettings, IconFolderPlus } from '@tabler/icons-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useModalContext } from '../../contexts/ModalContext';
-import { listWorkspaces } from '../../api/git';
+import { listWorkspaces } from '../../api/workspace';
 import CreateWorkspaceModal from '../modals/workspace/CreateWorkspaceModal';
+import { Workspace } from '../../types/workspace';
 
-const WorkspaceSwitcher = () => {
+const WorkspaceSwitcher: React.FC = () => {
   const { currentWorkspace, switchWorkspace } = useWorkspace();
   const { setSettingsModalVisible, setCreateWorkspaceModalVisible } =
     useModalContext();
-  const [workspaces, setWorkspaces] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [popoverOpened, setPopoverOpened] = useState(false);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [popoverOpened, setPopoverOpened] = useState<boolean>(false);
   const theme = useMantineTheme();
 
-  const loadWorkspaces = async () => {
+  const loadWorkspaces = async (): Promise<void> => {
     setLoading(true);
     try {
       const list = await listWorkspaces();
@@ -40,12 +41,14 @@ const WorkspaceSwitcher = () => {
     setLoading(false);
   };
 
-  const handleCreateWorkspace = () => {
+  const handleCreateWorkspace = (): void => {
     setPopoverOpened(false);
     setCreateWorkspaceModalVisible(true);
   };
 
-  const handleWorkspaceCreated = async (newWorkspace) => {
+  const handleWorkspaceCreated = async (
+    newWorkspace: Workspace
+  ): Promise<void> => {
     await loadWorkspaces();
     switchWorkspace(newWorkspace.name);
   };
@@ -108,7 +111,7 @@ const WorkspaceSwitcher = () => {
                       key={workspace.name}
                       p="xs"
                       withBorder
-                      style={{
+                      style={(theme: any) => ({
                         backgroundColor: isSelected
                           ? theme.colors.blue[
                               theme.colorScheme === 'dark' ? 8 : 1
@@ -119,7 +122,7 @@ const WorkspaceSwitcher = () => {
                               theme.colorScheme === 'dark' ? 7 : 5
                             ]
                           : undefined,
-                      }}
+                      })}
                     >
                       <Group justify="space-between" wrap="nowrap">
                         <UnstyledButton
@@ -137,7 +140,9 @@ const WorkspaceSwitcher = () => {
                               c={
                                 isSelected
                                   ? theme.colors.blue[
-                                      theme.colorScheme === 'dark' ? 0 : 9
+                                      (theme as any).colorScheme === 'dark'
+                                        ? 0
+                                        : 9
                                     ]
                                   : undefined
                               }
@@ -148,7 +153,7 @@ const WorkspaceSwitcher = () => {
                               size="xs"
                               c={
                                 isSelected
-                                  ? theme.colorScheme === 'dark'
+                                  ? (theme as any).colorScheme === 'dark'
                                     ? theme.colors.blue[2]
                                     : theme.colors.blue[7]
                                   : 'dimmed'
@@ -166,7 +171,7 @@ const WorkspaceSwitcher = () => {
                               variant="subtle"
                               size="lg"
                               color={
-                                theme.colorScheme === 'dark'
+                                (theme as any).colorScheme === 'dark'
                                   ? 'blue.2'
                                   : 'blue.7'
                               }

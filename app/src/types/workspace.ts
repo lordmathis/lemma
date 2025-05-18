@@ -30,10 +30,12 @@ export const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
 
 export interface Workspace extends WorkspaceSettings {
   name: string;
+  createdAt: number;
 }
 
 export const DEFAULT_WORKSPACE: Workspace = {
   name: '',
+  createdAt: Date.now(),
   ...DEFAULT_WORKSPACE_SETTINGS,
 };
 
