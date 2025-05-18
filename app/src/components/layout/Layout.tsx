@@ -7,7 +7,7 @@ import { useFileNavigation } from '../../hooks/useFileNavigation';
 import { useFileList } from '../../hooks/useFileList';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
-const Layout = () => {
+const Layout: React.FC = () => {
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
   const { selectedFile, handleFileSelect } = useFileNavigation();
   const { files, loadFileList } = useFileList();

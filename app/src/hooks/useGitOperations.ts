@@ -5,7 +5,7 @@ import { useWorkspace } from '../contexts/WorkspaceContext';
 
 interface UseGitOperationsResult {
   handlePull: () => Promise<boolean>;
-  handleCommitAndPush: (message: string) => Promise<boolean>;
+  handleCommitAndPush: (message: string) => Promise<void>;
 }
 
 export const useGitOperations = (): UseGitOperationsResult => {
@@ -34,8 +34,8 @@ export const useGitOperations = (): UseGitOperationsResult => {
   }, [currentWorkspace, settings.gitEnabled]);
 
   const handleCommitAndPush = useCallback(
-    async (message: string): Promise<boolean> => {
-      if (!currentWorkspace || !settings.gitEnabled) return false;
+    async (message: string): Promise<void> => {
+      if (!currentWorkspace || !settings.gitEnabled) return;
 
       try {
         const commitHash: CommitHash = await commitAndPush(
@@ -47,7 +47,7 @@ export const useGitOperations = (): UseGitOperationsResult => {
           message: 'Successfully committed and pushed changes',
           color: 'green',
         });
-        return true;
+        return;
       } catch (error) {
         console.error('Failed to commit and push changes:', error);
         notifications.show({
@@ -55,7 +55,7 @@ export const useGitOperations = (): UseGitOperationsResult => {
           message: 'Failed to commit and push changes',
           color: 'red',
         });
-        return false;
+        return;
       }
     },
     [currentWorkspace, settings.gitEnabled]

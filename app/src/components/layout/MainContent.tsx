@@ -10,11 +10,21 @@ import CommitMessageModal from '../modals/git/CommitMessageModal';
 import { useFileContent } from '../../hooks/useFileContent';
 import { useFileOperations } from '../../hooks/useFileOperations';
 import { useGitOperations } from '../../hooks/useGitOperations';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
 
-const MainContent = ({ selectedFile, handleFileSelect, loadFileList }) => {
-  const [activeTab, setActiveTab] = useState('source');
-  const { settings } = useWorkspace();
+type ViewTab = 'source' | 'preview';
+
+interface MainContentProps {
+  selectedFile: string | null;
+  handleFileSelect: (filePath: string | null) => Promise<void>;
+  loadFileList: () => Promise<void>;
+}
+
+const MainContent: React.FC<MainContentProps> = ({
+  selectedFile,
+  handleFileSelect,
+  loadFileList,
+}) => {
+  const [activeTab, setActiveTab] = useState<ViewTab>('source');
   const {
     content,
     hasUnsavedChanges,
@@ -22,15 +32,17 @@ const MainContent = ({ selectedFile, handleFileSelect, loadFileList }) => {
     handleContentChange,
   } = useFileContent(selectedFile);
   const { handleSave, handleCreate, handleDelete } = useFileOperations();
-  const { handleCommitAndPush } = useGitOperations(settings.gitEnabled);
+  const { handleCommitAndPush } = useGitOperations();
 
-  const handleTabChange = useCallback((value) => {
-    setActiveTab(value);
+  const handleTabChange = useCallback((value: string | null): void => {
+    if (value) {
+      setActiveTab(value as ViewTab);
+    }
   }, []);
 
   const handleSaveFile = useCallback(
-    async (filePath, content) => {
-      let success = await handleSave(filePath, content);
+    async (filePath: string, fileContent: string): Promise<boolean> => {
+      let success = await handleSave(filePath, fileContent);
       if (success) {
         setHasUnsavedChanges(false);
       }
@@ -40,22 +52,22 @@ const MainContent = ({ selectedFile, handleFileSelect, loadFileList }) => {
   );
 
   const handleCreateFile = useCallback(
-    async (fileName) => {
+    async (fileName: string): Promise<void> => {
       const success = await handleCreate(fileName);
       if (success) {
-        loadFileList();
-        handleFileSelect(fileName);
+        await loadFileList();
+        await handleFileSelect(fileName);
       }
     },
     [handleCreate, handleFileSelect, loadFileList]
   );
 
   const handleDeleteFile = useCallback(
-    async (filePath) => {
+    async (filePath: string): Promise<void> => {
       const success = await handleDelete(filePath);
       if (success) {
-        loadFileList();
-        handleFileSelect(null);
+        await loadFileList();
+        await handleFileSelect(null);
       }
     },
     [handleDelete, handleFileSelect, loadFileList]

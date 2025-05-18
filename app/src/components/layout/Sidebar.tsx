@@ -4,10 +4,23 @@ import FileActions from '../files/FileActions';
 import FileTree from '../files/FileTree';
 import { useGitOperations } from '../../hooks/useGitOperations';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { FileNode } from '@/types/fileApi';
 
-const Sidebar = ({ selectedFile, handleFileSelect, files, loadFileList }) => {
+interface SidebarProps {
+  selectedFile: string | null;
+  handleFileSelect: (filePath: string | null) => Promise<void>;
+  files: FileNode[];
+  loadFileList: () => Promise<void>;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({
+  selectedFile,
+  handleFileSelect,
+  files,
+  loadFileList,
+}) => {
   const { settings } = useWorkspace();
-  const { handlePull } = useGitOperations(settings.gitEnabled);
+  const { handlePull } = useGitOperations();
 
   useEffect(() => {
     loadFileList();
@@ -28,7 +41,7 @@ const Sidebar = ({ selectedFile, handleFileSelect, files, loadFileList }) => {
       <FileTree
         files={files}
         handleFileSelect={handleFileSelect}
-        showHiddenFiles={settings.showHiddenFiles}
+        showHiddenFiles={settings.showHiddenFiles || false}
       />
     </Box>
   );
