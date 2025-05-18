@@ -1,1 +1,1 @@
-type CommitHash = string;
+export type CommitHash = string;
