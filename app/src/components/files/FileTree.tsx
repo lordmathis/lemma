@@ -1,21 +1,35 @@
 import React, { useRef, useState, useLayoutEffect } from 'react';
-import { Tree } from 'react-arborist';
+import { Tree, NodeApi } from 'react-arborist';
 import { IconFile, IconFolder, IconFolderOpen } from '@tabler/icons-react';
 import { Tooltip } from '@mantine/core';
 import useResizeObserver from '@react-hook/resize-observer';
+import { FileNode } from '../../types/fileApi';
 
-const useSize = (target) => {
-  const [size, setSize] = useState();
+interface Size {
+  width: number;
+  height: number;
+}
+
+interface FileTreeProps {
+  files: FileNode[];
+  handleFileSelect: (filePath: string | null) => Promise<void>;
+  showHiddenFiles: boolean;
+}
+
+const useSize = (target: React.RefObject<HTMLElement>): Size | undefined => {
+  const [size, setSize] = useState<Size>();
 
   useLayoutEffect(() => {
-    setSize(target.current.getBoundingClientRect());
+    if (target.current) {
+      setSize(target.current.getBoundingClientRect());
+    }
   }, [target]);
 
   useResizeObserver(target, (entry) => setSize(entry.contentRect));
   return size;
 };
 
-const FileIcon = ({ node }) => {
+const FileIcon = ({ node }: { node: NodeApi<FileNode> }) => {
   if (node.isLeaf) {
     return <IconFile size={16} />;
   }
@@ -26,7 +40,21 @@ const FileIcon = ({ node }) => {
   );
 };
 
-const Node = ({ node, style, dragHandle }) => {
+// Define a Node component that matches what React-Arborist expects
+function Node(props: any) {
+  const { node, style, dragHandle } = props;
+
+  const handleClick = () => {
+    if (node.isInternal) {
+      node.toggle();
+    } else {
+      const treeProps = node.tree.props as any;
+      if (typeof treeProps.onNodeClick === 'function') {
+        treeProps.onNodeClick(node);
+      }
+    }
+  };
+
   return (
     <Tooltip label={node.data.name} openDelay={500}>
       <div
@@ -40,13 +68,7 @@ const Node = ({ node, style, dragHandle }) => {
           whiteSpace: 'nowrap',
           overflow: 'hidden',
         }}
-        onClick={() => {
-          if (node.isInternal) {
-            node.toggle();
-          } else {
-            node.tree.props.onNodeClick(node);
-          }
-        }}
+        onClick={handleClick}
       >
         <FileIcon node={node} />
         <span
@@ -63,13 +85,17 @@ const Node = ({ node, style, dragHandle }) => {
       </div>
     </Tooltip>
   );
-};
+}
 
-const FileTree = ({ files, handleFileSelect, showHiddenFiles }) => {
-  const target = useRef(null);
+const FileTree: React.FC<FileTreeProps> = ({
+  files,
+  handleFileSelect,
+  showHiddenFiles,
+}) => {
+  const target = useRef<HTMLDivElement>(null);
   const size = useSize(target);
 
-  files = files.filter((file) => {
+  const filteredFiles = files.filter((file) => {
     if (file.name.startsWith('.') && !showHiddenFiles) {
       return false;
     }
@@ -83,22 +109,27 @@ const FileTree = ({ files, handleFileSelect, showHiddenFiles }) => {
     >
       {size && (
         <Tree
-          data={files}
+          data={filteredFiles}
           openByDefault={false}
           width={size.width}
           height={size.height}
           indent={24}
           rowHeight={28}
           onActivate={(node) => {
+            const fileNode = node.data as FileNode;
             if (!node.isInternal) {
-              handleFileSelect(node.data.path);
+              handleFileSelect(fileNode.path);
             }
           }}
-          onNodeClick={(node) => {
-            if (!node.isInternal) {
-              handleFileSelect(node.data.path);
-            }
-          }}
+          {...({
+            // Use a spread with type assertion to add onNodeClick
+            onNodeClick: (node: NodeApi<FileNode>) => {
+              const fileNode = node.data as FileNode;
+              if (!node.isInternal) {
+                handleFileSelect(fileNode.path);
+              }
+            },
+          } as any)}
         >
           {Node}
         </Tree>

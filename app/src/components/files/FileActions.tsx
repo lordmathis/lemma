@@ -9,7 +9,15 @@ import {
 import { useModalContext } from '../../contexts/ModalContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
-const FileActions = ({ handlePullChanges, selectedFile }) => {
+interface FileActionsProps {
+  handlePullChanges: () => Promise<boolean>;
+  selectedFile: string | null;
+}
+
+const FileActions: React.FC<FileActionsProps> = ({
+  handlePullChanges,
+  selectedFile,
+}) => {
   const { settings } = useWorkspace();
   const {
     setNewFileModalVisible,
@@ -17,9 +25,9 @@ const FileActions = ({ handlePullChanges, selectedFile }) => {
     setCommitMessageModalVisible,
   } = useModalContext();
 
-  const handleCreateFile = () => setNewFileModalVisible(true);
-  const handleDeleteFile = () => setDeleteFileModalVisible(true);
-  const handleCommitAndPush = () => setCommitMessageModalVisible(true);
+  const handleCreateFile = (): void => setNewFileModalVisible(true);
+  const handleDeleteFile = (): void => setDeleteFileModalVisible(true);
+  const handleCommitAndPush = (): void => setCommitMessageModalVisible(true);
 
   return (
     <Group gap="xs">
