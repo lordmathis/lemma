@@ -8,8 +8,21 @@ import {
   Group,
   Grid,
 } from '@mantine/core';
+import { Workspace } from '@/types/workspace';
 
-const GitSettings = ({
+interface GitSettingsProps {
+  gitEnabled: boolean;
+  gitUrl: string;
+  gitUser: string;
+  gitToken: string;
+  gitAutoCommit: boolean;
+  gitCommitMsgTemplate: string;
+  gitCommitName: string;
+  gitCommitEmail: string;
+  onInputChange: (key: keyof Workspace, value: any) => void;
+}
+
+const GitSettings: React.FC<GitSettingsProps> = ({
   gitEnabled,
   gitUrl,
   gitUser,
@@ -21,7 +34,7 @@ const GitSettings = ({
   onInputChange,
 }) => {
   return (
-    <Stack spacing="md">
+    <Stack gap="md">
       <Grid gutter="md" align="center">
         <Grid.Col span={6}>
           <Text size="sm">Enable Git Repository</Text>

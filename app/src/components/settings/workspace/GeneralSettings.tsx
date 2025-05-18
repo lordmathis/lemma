@@ -1,7 +1,16 @@
 import React from 'react';
-import { Title, Box, TextInput, Text, Grid } from '@mantine/core';
+import { Box, TextInput, Text, Grid } from '@mantine/core';
+import { Workspace } from '@/types/workspace';
 
-const GeneralSettings = ({ name, onInputChange }) => {
+interface GeneralSettingsProps {
+  name: string;
+  onInputChange: (key: keyof Workspace, value: string) => void;
+}
+
+const GeneralSettings: React.FC<GeneralSettingsProps> = ({
+  name,
+  onInputChange,
+}) => {
   return (
     <Box mb="md">
       <Grid gutter="md" align="center">
@@ -10,7 +19,7 @@ const GeneralSettings = ({ name, onInputChange }) => {
         </Grid.Col>
         <Grid.Col span={6}>
           <TextInput
-            value={name || ''}
+            value={name}
             onChange={(event) =>
               onInputChange('name', event.currentTarget.value)
             }

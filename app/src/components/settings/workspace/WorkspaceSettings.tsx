@@ -17,23 +17,35 @@ import GeneralSettings from './GeneralSettings';
 import { useModalContext } from '../../../contexts/ModalContext';
 import DangerZoneSettings from './DangerZoneSettings';
 import AccordionControl from '../AccordionControl';
+import { SettingsActionType, SettingsAction } from '../../../types/settings';
+import { Workspace } from '../../../types/workspace';
 
-const initialState = {
+// State and reducer for workspace settings
+interface WorkspaceSettingsState {
+  localSettings: Partial<Workspace>;
+  initialSettings: Partial<Workspace>;
+  hasUnsavedChanges: boolean;
+}
+
+const initialState: WorkspaceSettingsState = {
   localSettings: {},
   initialSettings: {},
   hasUnsavedChanges: false,
 };
 
-function settingsReducer(state, action) {
+function settingsReducer(
+  state: WorkspaceSettingsState,
+  action: SettingsAction<Partial<Workspace>>
+): WorkspaceSettingsState {
   switch (action.type) {
-    case 'INIT_SETTINGS':
+    case SettingsActionType.INIT_SETTINGS:
       return {
         ...state,
-        localSettings: action.payload,
-        initialSettings: action.payload,
+        localSettings: action.payload || {},
+        initialSettings: action.payload || {},
         hasUnsavedChanges: false,
       };
-    case 'UPDATE_LOCAL_SETTINGS':
+    case SettingsActionType.UPDATE_LOCAL_SETTINGS:
       const newLocalSettings = { ...state.localSettings, ...action.payload };
       const hasChanges =
         JSON.stringify(newLocalSettings) !==
@@ -43,7 +55,7 @@ function settingsReducer(state, action) {
         localSettings: newLocalSettings,
         hasUnsavedChanges: hasChanges,
       };
-    case 'MARK_SAVED':
+    case SettingsActionType.MARK_SAVED:
       return {
         ...state,
         initialSettings: state.localSettings,
@@ -54,16 +66,16 @@ function settingsReducer(state, action) {
   }
 }
 
-const WorkspaceSettings = () => {
+const WorkspaceSettings: React.FC = () => {
   const { currentWorkspace, updateSettings } = useWorkspace();
   const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
-  const isInitialMount = useRef(true);
+  const isInitialMount = useRef<boolean>(true);
 
   useEffect(() => {
-    if (isInitialMount.current) {
+    if (isInitialMount.current && currentWorkspace) {
       isInitialMount.current = false;
-      const settings = {
+      const settings: Partial<Workspace> = {
         name: currentWorkspace.name,
         theme: currentWorkspace.theme,
         autoSave: currentWorkspace.autoSave,
@@ -77,15 +89,21 @@ const WorkspaceSettings = () => {
         gitCommitName: currentWorkspace.gitCommitName,
         gitCommitEmail: currentWorkspace.gitCommitEmail,
       };
-      dispatch({ type: 'INIT_SETTINGS', payload: settings });
+      dispatch({ type: SettingsActionType.INIT_SETTINGS, payload: settings });
     }
   }, [currentWorkspace]);
 
-  const handleInputChange = useCallback((key, value) => {
-    dispatch({ type: 'UPDATE_LOCAL_SETTINGS', payload: { [key]: value } });
-  }, []);
+  const handleInputChange = useCallback(
+    (key: keyof Workspace, value: any): void => {
+      dispatch({
+        type: SettingsActionType.UPDATE_LOCAL_SETTINGS,
+        payload: { [key]: value } as Partial<Workspace>,
+      });
+    },
+    []
+  );
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     try {
       if (!state.localSettings.name?.trim()) {
         notifications.show({
@@ -96,7 +114,7 @@ const WorkspaceSettings = () => {
       }
 
       await updateSettings(state.localSettings);
-      dispatch({ type: 'MARK_SAVED' });
+      dispatch({ type: SettingsActionType.MARK_SAVED });
       notifications.show({
         message: 'Settings saved successfully',
         color: 'green',
@@ -105,7 +123,9 @@ const WorkspaceSettings = () => {
     } catch (error) {
       console.error('Failed to save settings:', error);
       notifications.show({
-        message: 'Failed to save settings: ' + error.message,
+        message:
+          'Failed to save settings: ' +
+          (error instanceof Error ? error.message : String(error)),
         color: 'red',
       });
     }
@@ -123,7 +143,7 @@ const WorkspaceSettings = () => {
       centered
       size="lg"
     >
-      <Stack spacing="xl">
+      <Stack gap="xl">
         {state.hasUnsavedChanges && (
           <Badge color="yellow" variant="light">
             Unsaved Changes
@@ -133,7 +153,7 @@ const WorkspaceSettings = () => {
         <Accordion
           defaultValue={['general', 'appearance', 'editor', 'git', 'danger']}
           multiple
-          styles={(theme) => ({
+          styles={(theme: any) => ({
             control: {
               paddingTop: theme.spacing.md,
               paddingBottom: theme.spacing.md,
@@ -162,7 +182,7 @@ const WorkspaceSettings = () => {
             <AccordionControl>General</AccordionControl>
             <Accordion.Panel>
               <GeneralSettings
-                name={state.localSettings.name}
+                name={state.localSettings.name || ''}
                 onInputChange={handleInputChange}
               />
             </Accordion.Panel>
@@ -173,7 +193,7 @@ const WorkspaceSettings = () => {
             <Accordion.Panel>
               <AppearanceSettings
                 themeSettings={state.localSettings.theme}
-                onThemeChange={(newTheme) =>
+                onThemeChange={(newTheme: string) =>
                   handleInputChange('theme', newTheme)
                 }
               />
@@ -184,12 +204,12 @@ const WorkspaceSettings = () => {
             <AccordionControl>Editor</AccordionControl>
             <Accordion.Panel>
               <EditorSettings
-                autoSave={state.localSettings.autoSave}
-                onAutoSaveChange={(value) =>
+                autoSave={state.localSettings.autoSave || false}
+                onAutoSaveChange={(value: boolean) =>
                   handleInputChange('autoSave', value)
                 }
-                showHiddenFiles={state.localSettings.showHiddenFiles}
-                onShowHiddenFilesChange={(value) =>
+                showHiddenFiles={state.localSettings.showHiddenFiles || false}
+                onShowHiddenFilesChange={(value: boolean) =>
                   handleInputChange('showHiddenFiles', value)
                 }
               />
@@ -200,14 +220,16 @@ const WorkspaceSettings = () => {
             <AccordionControl>Git Integration</AccordionControl>
             <Accordion.Panel>
               <GitSettings
-                gitEnabled={state.localSettings.gitEnabled}
-                gitUrl={state.localSettings.gitUrl}
-                gitUser={state.localSettings.gitUser}
-                gitToken={state.localSettings.gitToken}
-                gitAutoCommit={state.localSettings.gitAutoCommit}
-                gitCommitMsgTemplate={state.localSettings.gitCommitMsgTemplate}
-                gitCommitName={state.localSettings.gitCommitName}
-                gitCommitEmail={state.localSettings.gitCommitEmail}
+                gitEnabled={state.localSettings.gitEnabled || false}
+                gitUrl={state.localSettings.gitUrl || ''}
+                gitUser={state.localSettings.gitUser || ''}
+                gitToken={state.localSettings.gitToken || ''}
+                gitAutoCommit={state.localSettings.gitAutoCommit || false}
+                gitCommitMsgTemplate={
+                  state.localSettings.gitCommitMsgTemplate || ''
+                }
+                gitCommitName={state.localSettings.gitCommitName || ''}
+                gitCommitEmail={state.localSettings.gitCommitEmail || ''}
                 onInputChange={handleInputChange}
               />
             </Accordion.Panel>

@@ -1,12 +1,21 @@
 import React from 'react';
-import { Text, Switch, Group, Box, Title } from '@mantine/core';
+import { Text, Switch, Group, Box } from '@mantine/core';
 import { useWorkspace } from '../../../contexts/WorkspaceContext';
+import { Theme } from '@/types/theme';
 
-const AppearanceSettings = ({ themeSettings, onThemeChange }) => {
+interface AppearanceSettingsProps {
+  themeSettings?: Theme;
+  onThemeChange: (newTheme: Theme) => void;
+}
+
+const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
+  themeSettings,
+  onThemeChange,
+}) => {
   const { colorScheme, updateColorScheme } = useWorkspace();
 
-  const handleThemeChange = () => {
-    const newTheme = colorScheme === 'dark' ? 'light' : 'dark';
+  const handleThemeChange = (): void => {
+    const newTheme = colorScheme === 'dark' ? Theme.Light : Theme.Dark;
     updateColorScheme(newTheme);
     onThemeChange(newTheme);
   };

@@ -3,23 +3,29 @@ import { Theme } from './theme';
 export interface WorkspaceSettings {
   theme: Theme;
   autoSave: boolean;
+  showHiddenFiles: boolean;
   gitEnabled: boolean;
   gitUrl: string;
   gitUser: string;
   gitToken: string;
   gitAutoCommit: boolean;
   gitCommitMsgTemplate: string;
+  gitCommitName: string;
+  gitCommitEmail: string;
 }
 
 export const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
   theme: Theme.Light,
   autoSave: false,
+  showHiddenFiles: false,
   gitEnabled: false,
   gitUrl: '',
   gitUser: '',
   gitToken: '',
   gitAutoCommit: false,
   gitCommitMsgTemplate: '${action} ${filename}',
+  gitCommitName: '',
+  gitCommitEmail: '',
 };
 
 export interface Workspace extends WorkspaceSettings {

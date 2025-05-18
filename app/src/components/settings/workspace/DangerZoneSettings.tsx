@@ -4,13 +4,13 @@ import DeleteWorkspaceModal from '../../modals/workspace/DeleteWorkspaceModal';
 import { useWorkspace } from '../../../contexts/WorkspaceContext';
 import { useModalContext } from '../../../contexts/ModalContext';
 
-const DangerZoneSettings = () => {
+const DangerZoneSettings: React.FC = () => {
   const { currentWorkspace, workspaces, deleteCurrentWorkspace } =
     useWorkspace();
   const { setSettingsModalVisible } = useModalContext();
-  const [deleteModalOpened, setDeleteModalOpened] = useState(false);
+  const [deleteModalOpened, setDeleteModalOpened] = useState<boolean>(false);
 
-  const handleDelete = async () => {
+  const handleDelete = async (): Promise<void> => {
     await deleteCurrentWorkspace();
     setDeleteModalOpened(false);
     setSettingsModalVisible(false);

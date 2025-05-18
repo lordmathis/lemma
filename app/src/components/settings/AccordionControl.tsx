@@ -1,7 +1,11 @@
 import React from 'react';
 import { Accordion, Title } from '@mantine/core';
 
-const AccordionControl = ({ children }) => (
+interface AccordionControlProps {
+  children: React.ReactNode;
+}
+
+const AccordionControl: React.FC<AccordionControlProps> = ({ children }) => (
   <Accordion.Control>
     <Title order={4}>{children}</Title>
   </Accordion.Control>

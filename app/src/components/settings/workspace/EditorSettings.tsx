@@ -1,7 +1,14 @@
 import React from 'react';
 import { Text, Switch, Tooltip, Group, Box } from '@mantine/core';
 
-const EditorSettings = ({
+interface EditorSettingsProps {
+  autoSave: boolean;
+  showHiddenFiles: boolean;
+  onAutoSaveChange: (value: boolean) => void;
+  onShowHiddenFilesChange: (value: boolean) => void;
+}
+
+const EditorSettings: React.FC<EditorSettingsProps> = ({
   autoSave,
   showHiddenFiles,
   onAutoSaveChange,
