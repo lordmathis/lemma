@@ -1,0 +1,38 @@
+name: TypeScript Type Check
+
+on:
+  push:
+    branches:
+      - "*"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  type-check:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./app
+
+      - name: Run TypeScript type check
+        run: npm run type-check
+        working-directory: ./app
+
+      # Optional: Run ESLint if you have it configured
+      - name: Run ESLint
+        run: npm run lint
+        working-directory: ./app
+        continue-on-error: true # Make this optional for now
