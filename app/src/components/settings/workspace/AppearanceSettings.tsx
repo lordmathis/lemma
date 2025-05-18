@@ -4,12 +4,10 @@ import { useWorkspace } from '../../../contexts/WorkspaceContext';
 import { Theme } from '@/types/theme';
 
 interface AppearanceSettingsProps {
-  themeSettings?: Theme;
   onThemeChange: (newTheme: Theme) => void;
 }
 
 const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
-  themeSettings,
   onThemeChange,
 }) => {
   const { colorScheme, updateColorScheme } = useWorkspace();

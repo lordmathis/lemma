@@ -139,7 +139,7 @@ const WorkspaceSwitcher: React.FC = () => {
                               truncate
                               c={
                                 isSelected
-                                  ? theme.colors.blue[
+                                  ? (theme as any).colors.blue[
                                       (theme as any).colorScheme === 'dark'
                                         ? 0
                                         : 9

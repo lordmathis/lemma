@@ -55,7 +55,9 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
       const [filePath] = decodeURIComponent(
         href.replace(`${baseUrl}/internal/`, '')
       ).split('#');
-      handleFileSelect(filePath);
+      if (filePath) {
+        handleFileSelect(filePath);
+      }
     } else if (href.startsWith(`${baseUrl}/notfound/`)) {
       // For non-existent files, show a notification
       const fileName = decodeURIComponent(
@@ -105,9 +107,6 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
             </a>
           ),
           code: ({ children, className, ...props }: MarkdownCodeProps) => {
-            const language = className
-              ? className.replace('language-', '')
-              : null;
             return (
               <pre className={className}>
                 <code {...props}>{children}</code>

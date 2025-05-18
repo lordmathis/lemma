@@ -30,7 +30,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   const [formData, setFormData] = useState<UpdateUserRequest>({
     email: '',
     displayName: '',
-    role: undefined,
+    role: UserRole.Editor,
     password: '',
   });
 
@@ -58,7 +58,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
       setFormData({
         email: '',
         displayName: '',
-        role: undefined,
+        role: UserRole.Editor,
         password: '',
       });
       onClose();
@@ -88,9 +88,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         <Select
           label="Role"
           required
-          value={formData.role}
+          value={formData.role ? formData.role.toString() : null}
           onChange={(value) =>
-            setFormData({ ...formData, role: value as UserRole | undefined })
+            setFormData({ ...formData, role: value as UserRole })
           }
           data={[
             { value: UserRole.Admin, label: 'Admin' },

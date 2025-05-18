@@ -1,19 +1,20 @@
 import { visit } from 'unist-util-visit';
-import { lookupFileByName, getFileUrl } from '../api/git';
 import { InlineContainerType, MARKDOWN_REGEX } from '../types/markdown';
 import { Node } from 'unist';
 import { Parent } from 'unist';
 import { Text } from 'mdast';
+import { lookupFileByName } from '@/api/file';
+import { getFileUrl } from './fileHelpers';
 
 /**
  * Represents a wiki link match from the regex
  */
 interface WikiLinkMatch {
   fullMatch: string;
-  isImage: string;
+  isImage: boolean; // Changed from string to boolean
   fileName: string;
   displayText: string;
-  heading?: string;
+  heading?: string | undefined;
   index: number;
 }
 
@@ -171,10 +172,21 @@ export function remarkWikiLinks(workspaceName: string) {
       const matches: WikiLinkMatch[] = [];
 
       while ((match = regex.exec(node.value)) !== null) {
-        const [fullMatch, isImage, innerContent] = match;
+        // Provide default values during destructuring to handle potential undefined values
+        const [fullMatch = '', isImageMark = '', innerContent = ''] = match;
+
+        // Skip if we somehow got a match without the expected content
+        if (!innerContent) {
+          console.warn('Matched wiki link without inner content:', fullMatch);
+          continue;
+        }
+
         let fileName: string;
         let displayText: string;
         let heading: string | undefined;
+
+        // Convert isImageMark string to boolean
+        const isImage: boolean = isImageMark === '!';
 
         const pipeIndex: number = innerContent.indexOf('|');
         const hashIndex: number = innerContent.indexOf('#');
@@ -231,7 +243,7 @@ export function remarkWikiLinks(workspaceName: string) {
             lookupFileName
           );
 
-          if (paths && paths.length > 0) {
+          if (paths && paths.length > 0 && paths[0]) {
             const filePath: string = paths[0];
             if (match.isImage) {
               newNodes.push(

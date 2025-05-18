@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, Title } from '@mantine/core';
+import { Box, Button } from '@mantine/core';
 import DeleteWorkspaceModal from '../../modals/workspace/DeleteWorkspaceModal';
 import { useWorkspace } from '../../../contexts/WorkspaceContext';
 import { useModalContext } from '../../../contexts/ModalContext';

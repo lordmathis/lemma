@@ -192,7 +192,6 @@ const WorkspaceSettings: React.FC = () => {
             <AccordionControl>Appearance</AccordionControl>
             <Accordion.Panel>
               <AppearanceSettings
-                themeSettings={state.localSettings.theme}
                 onThemeChange={(newTheme: string) =>
                   handleInputChange('theme', newTheme)
                 }

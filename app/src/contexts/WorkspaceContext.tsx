@@ -16,11 +16,7 @@ import {
   deleteWorkspace,
   listWorkspaces,
 } from '@/api/workspace';
-import {
-  Workspace,
-  DEFAULT_WORKSPACE_SETTINGS,
-  WorkspaceSettings,
-} from '@/types/workspace';
+import { Workspace, DEFAULT_WORKSPACE_SETTINGS } from '@/types/workspace';
 
 interface WorkspaceContextType {
   currentWorkspace: Workspace | null;
@@ -89,6 +85,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
       const allWorkspaces = await listWorkspaces();
       if (allWorkspaces.length > 0) {
         const firstWorkspace = allWorkspaces[0];
+        if (!firstWorkspace) throw new Error('No workspaces available');
         await updateLastWorkspaceName(firstWorkspace.name);
         await loadWorkspaceData(firstWorkspace.name);
       }

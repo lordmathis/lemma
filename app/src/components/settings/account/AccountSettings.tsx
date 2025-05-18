@@ -83,7 +83,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
     if (isInitialMount.current && user) {
       isInitialMount.current = false;
       const settings: UserProfileSettings = {
-        displayName: user.displayName,
+        displayName: user.displayName || '',
         email: user.email,
         currentPassword: '',
         newPassword: '',
@@ -112,7 +112,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
 
     // Add display name if changed
     if (state.localSettings.displayName !== state.initialSettings.displayName) {
-      updates.displayName = state.localSettings.displayName;
+      updates.displayName = state.localSettings.displayName || '';
     }
 
     // Handle password change
@@ -132,10 +132,10 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
     // If we're only changing display name or have password already provided, proceed directly
     if (!needsPasswordConfirmation || state.localSettings.currentPassword) {
       if (needsPasswordConfirmation) {
-        updates.email = state.localSettings.email;
+        updates.email = state.localSettings.email || '';
         // If we don't have a password change, we still need to include the current password for email change
         if (!updates.currentPassword) {
-          updates.currentPassword = state.localSettings.currentPassword;
+          updates.currentPassword = state.localSettings.currentPassword || '';
         }
       }
 
