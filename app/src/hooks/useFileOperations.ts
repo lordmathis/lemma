@@ -3,7 +3,7 @@ import { notifications } from '@mantine/notifications';
 import { saveFile, deleteFile } from '../api/file';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useGitOperations } from './useGitOperations';
-import { FileAction } from '../types/file';
+import { FileAction } from '@/types/models';
 
 interface UseFileOperationsResult {
   handleSave: (filePath: string, content: string) => Promise<boolean>;
@@ -28,7 +28,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
         await handleCommitAndPush(commitMessage);
       }
     },
-    [settings]
+    [settings, handleCommitAndPush]
   );
 
   const handleSave = useCallback(

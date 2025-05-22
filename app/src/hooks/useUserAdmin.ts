@@ -5,8 +5,8 @@ import {
   deleteUser as adminDeleteUser,
 } from '../api/admin';
 import { notifications } from '@mantine/notifications';
-import type { User } from '../types/authApi';
-import type { CreateUserRequest, UpdateUserRequest } from '../types/adminApi';
+import type { User } from '@/types/models';
+import type { CreateUserRequest, UpdateUserRequest } from '@/types/api';
 
 interface UseUserAdminResult {
   users: User[];
@@ -30,7 +30,7 @@ export const useUserAdmin = (): UseUserAdminResult => {
         message: 'User created successfully',
         color: 'green',
       });
-      reload();
+      await reload();
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -54,7 +54,7 @@ export const useUserAdmin = (): UseUserAdminResult => {
         message: 'User updated successfully',
         color: 'green',
       });
-      reload();
+      await reload();
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -75,7 +75,7 @@ export const useUserAdmin = (): UseUserAdminResult => {
         message: 'User deleted successfully',
         color: 'green',
       });
-      reload();
+      await reload();
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { isImageFile } from '../utils/fileHelpers';
 import { useWorkspace } from '../contexts/WorkspaceContext';
-import { DEFAULT_FILE } from '@/types/file';
 import { getFileContent } from '@/api/file';
+import { DEFAULT_FILE } from '@/types/models';
 
 interface UseFileContentResult {
   content: string;
@@ -51,7 +51,7 @@ export const useFileContent = (
 
   useEffect(() => {
     if (selectedFile && currentWorkspace) {
-      loadFileContent(selectedFile);
+      void loadFileContent(selectedFile);
     }
   }, [selectedFile, currentWorkspace, loadFileContent]);
 

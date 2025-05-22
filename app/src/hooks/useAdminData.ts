@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
 import { getUsers, getWorkspaces, getSystemStats } from '@/api/admin';
-import type { SystemStats, WorkspaceStats } from '@/types/adminApi';
-import type { User } from '@/types/authApi';
+import type { SystemStats, User, WorkspaceStats } from '@/types/models';
 
 // Possible types of admin data
 type AdminDataType = 'stats' | 'workspaces' | 'users';
@@ -45,7 +44,7 @@ export const useAdminData = <T extends AdminDataType>(
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -67,7 +66,8 @@ export const useAdminData = <T extends AdminDataType>(
     } catch (err) {
       const message =
         err instanceof Error
-          ? (err as any)?.response?.data?.error || err.message
+          ? (err as { response?: { data?: { error?: string } } })?.response
+              ?.data?.error || err.message
           : 'An unknown error occurred';
       setError(message);
       notifications.show({
@@ -78,11 +78,11 @@ export const useAdminData = <T extends AdminDataType>(
     } finally {
       setLoading(false);
     }
-  };
+  }, [type]);
 
   useEffect(() => {
-    loadData();
-  }, [type]);
+    void loadData();
+  }, [loadData]);
 
   return { data, loading, error, reload: loadData };
 };

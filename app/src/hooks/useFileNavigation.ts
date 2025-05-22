@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { DEFAULT_FILE } from '../types/file';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useLastOpenedFile } from './useLastOpenedFile';
+import { DEFAULT_FILE } from '@/types/models';
 
 interface UseFileNavigationResult {
   selectedFile: string;
@@ -36,14 +36,14 @@ export const useFileNavigation = (): UseFileNavigationResult => {
 
       const lastFile = await loadLastOpenedFile();
       if (lastFile) {
-        handleFileSelect(lastFile);
+        await handleFileSelect(lastFile);
       } else {
-        handleFileSelect(null);
+        await handleFileSelect(null);
       }
     };
 
     if (currentWorkspace) {
-      initializeFile();
+      void initializeFile();
     }
   }, [currentWorkspace, loadLastOpenedFile, handleFileSelect]);
 

@@ -12,7 +12,7 @@ import {
   refreshToken as apiRefreshToken,
   getCurrentUser,
 } from '@/api/auth';
-import type { User } from '@/types/authApi';
+import type { User } from '@/types/models';
 
 interface AuthContextType {
   user: User | null;
@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
 
-    initializeAuth();
+    void initializeAuth();
   }, []);
 
   const login = useCallback(

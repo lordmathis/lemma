@@ -1,25 +1,22 @@
-import type {
-  ReactNode} from 'react';
 import React, {
+  type ReactNode,
   createContext,
   useContext,
   useState,
   useEffect,
-  useCallback
+  useCallback,
 } from 'react';
-import type { MantineColorScheme} from '@mantine/core';
-import { useMantineColorScheme } from '@mantine/core';
+import { useMantineColorScheme, type MantineColorScheme } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { DEFAULT_WORKSPACE_SETTINGS, type Workspace } from '@/types/models';
 import {
+  deleteWorkspace,
   getLastWorkspaceName,
   getWorkspace,
-  updateWorkspace,
-  updateLastWorkspaceName,
-  deleteWorkspace,
   listWorkspaces,
+  updateLastWorkspaceName,
+  updateWorkspace,
 } from '@/api/workspace';
-import type { Workspace} from '@/types/workspace';
-import { DEFAULT_WORKSPACE_SETTINGS } from '@/types/workspace';
 
 interface WorkspaceContextType {
   currentWorkspace: Workspace | null;
@@ -80,7 +77,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
         });
       }
     },
-    []
+    [setColorScheme]
   );
 
   const loadFirstAvailableWorkspace = useCallback(async (): Promise<void> => {
@@ -100,7 +97,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
         color: 'red',
       });
     }
-  }, []);
+  }, [loadWorkspaceData]);
 
   useEffect(() => {
     const initializeWorkspace = async (): Promise<void> => {
@@ -120,8 +117,8 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
       }
     };
 
-    initializeWorkspace();
-  }, []);
+    void initializeWorkspace();
+  }, [loadFirstAvailableWorkspace, loadWorkspaceData, loadWorkspaces]);
 
   const switchWorkspace = useCallback(
     async (workspaceName: string): Promise<void> => {
@@ -141,7 +138,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
         setLoading(false);
       }
     },
-    []
+    [loadWorkspaceData, loadWorkspaces]
   );
 
   const deleteCurrentWorkspace = useCallback(async (): Promise<void> => {
@@ -182,7 +179,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
         color: 'red',
       });
     }
-  }, [currentWorkspace]);
+  }, [currentWorkspace, loadWorkspaceData, loadWorkspaces]);
 
   const updateSettings = useCallback(
     async (newSettings: Partial<Workspace>): Promise<void> => {
@@ -206,7 +203,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
         throw error;
       }
     },
-    [currentWorkspace, setColorScheme]
+    [currentWorkspace, loadWorkspaces, setColorScheme]
   );
 
   const updateColorScheme = useCallback(

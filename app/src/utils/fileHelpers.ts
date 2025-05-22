@@ -1,5 +1,5 @@
-import { API_BASE_URL } from '@/types/authApi';
-import { IMAGE_EXTENSIONS } from '../types/file';
+import { API_BASE_URL } from '@/types/api';
+import { IMAGE_EXTENSIONS } from '@/types/models';
 
 /**
  * Checks if the given file path has an image extension.

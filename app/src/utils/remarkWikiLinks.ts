@@ -1,10 +1,9 @@
 import { visit } from 'unist-util-visit';
-import { InlineContainerType, MARKDOWN_REGEX } from '../types/markdown';
-import type { Node } from 'unist';
-import type { Parent } from 'unist';
+import type { Node, Parent } from 'unist';
 import type { Text } from 'mdast';
 import { lookupFileByName } from '@/api/file';
 import { getFileUrl } from './fileHelpers';
+import { InlineContainerType, MARKDOWN_REGEX } from '@/types/models';
 
 /**
  * Represents a wiki link match from the regex
