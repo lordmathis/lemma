@@ -1,15 +1,17 @@
-import { apiCall } from './api';
-import type { User } from '../types/authApi';
-import { API_BASE_URL, isUser } from '../types/authApi';
-import type {
-  CreateUserRequest,
-  SystemStats,
-  UpdateUserRequest} from '@/types/adminApi';
 import {
-  isSystemStats
-} from '@/types/adminApi';
-import type { Workspace } from '@/types/workspace';
-import { isWorkspace } from '@/types/workspace';
+  API_BASE_URL,
+  type CreateUserRequest,
+  type UpdateUserRequest,
+} from '@/types/api';
+import { apiCall } from './api';
+import {
+  isSystemStats,
+  isUser,
+  isWorkspace,
+  type SystemStats,
+  type User,
+  type Workspace,
+} from '@/types/models';
 
 const ADMIN_BASE_URL = `${API_BASE_URL}/admin`;
 
@@ -22,7 +24,7 @@ const ADMIN_BASE_URL = `${API_BASE_URL}/admin`;
  * */
 export const getUsers = async (): Promise<User[]> => {
   const response = await apiCall(`${ADMIN_BASE_URL}/users`);
-  const data = await response.json();
+  const data: unknown = await response.json();
 
   if (!Array.isArray(data)) {
     throw new Error('Invalid users response received from API');
@@ -49,7 +51,7 @@ export const createUser = async (
     body: JSON.stringify(userData),
   });
 
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!isUser(data)) {
     throw new Error('Invalid user object received from API');
   }
@@ -88,7 +90,7 @@ export const updateUser = async (
     body: JSON.stringify(userData),
   });
 
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!isUser(data)) {
     throw new Error('Invalid user object received from API');
   }
@@ -104,7 +106,7 @@ export const updateUser = async (
  * */
 export const getWorkspaces = async (): Promise<Workspace[]> => {
   const response = await apiCall(`${ADMIN_BASE_URL}/workspaces`);
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!Array.isArray(data)) {
     throw new Error('Invalid workspaces response received from API');
   }
@@ -125,7 +127,7 @@ export const getWorkspaces = async (): Promise<Workspace[]> => {
  * */
 export const getSystemStats = async (): Promise<SystemStats> => {
   const response = await apiCall(`${ADMIN_BASE_URL}/stats`);
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!isSystemStats(data)) {
     throw new Error('Invalid system stats response received from API');
   }

@@ -1,6 +1,6 @@
-import type { User, LoginRequest} from '../types/authApi';
-import { API_BASE_URL, isUser } from '../types/authApi';
+import { API_BASE_URL, isLoginResponse, type LoginRequest } from '@/types/api';
 import { apiCall } from './api';
+import { isUser, type User } from '@/types/models';
 
 /**
  * Logs in a user with email and password
@@ -17,8 +17,8 @@ export const login = async (email: string, password: string): Promise<User> => {
     body: JSON.stringify(loginData),
   });
 
-  const data = await response.json();
-  if (!('user' in data) || !isUser(data.user)) {
+  const data: unknown = await response.json();
+  if (!isLoginResponse(data)) {
     throw new Error('Invalid login response from API');
   }
 
@@ -52,7 +52,7 @@ export const refreshToken = async (): Promise<boolean> => {
     });
 
     return true;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 };
@@ -65,7 +65,7 @@ export const refreshToken = async (): Promise<boolean> => {
  */
 export const getCurrentUser = async (): Promise<User> => {
   const response = await apiCall(`${API_BASE_URL}/auth/me`);
-  const data = await response.json();
+  const data: unknown = await response.json();
 
   if (!isUser(data)) {
     throw new Error('Invalid user data received from API');

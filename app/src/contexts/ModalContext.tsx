@@ -1,5 +1,9 @@
-import type { ReactNode } from 'react';
-import React, { createContext, useContext, useState } from 'react';
+import React, {
+  type ReactNode,
+  createContext,
+  useContext,
+  useState,
+} from 'react';
 
 interface ModalContextType {
   newFileModalVisible: boolean;

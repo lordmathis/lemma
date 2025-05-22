@@ -1,6 +1,6 @@
-import { API_BASE_URL } from '@/types/authApi';
+import { API_BASE_URL } from '@/types/api';
 import { apiCall } from './api';
-import type { CommitHash } from '@/types/git';
+import type { CommitHash } from '@/types/models';
 
 /**
  * pullChanges fetches the latest changes from the remote repository
@@ -14,11 +14,11 @@ export const pullChanges = async (workspaceName: string): Promise<string> => {
       method: 'POST',
     }
   );
-  const data = await response.json();
-  if (!('message' in data)) {
+  const data: unknown = await response.json();
+  if (typeof data !== 'object' || data === null || !('message' in data)) {
     throw new Error('Invalid pull response received from API');
   }
-  return data.message;
+  return data.message as string;
 };
 
 /**
@@ -42,8 +42,8 @@ export const commitAndPush = async (
       body: JSON.stringify({ message }),
     }
   );
-  const data = await response.json();
-  if (!('commitHash' in data)) {
+  const data: unknown = await response.json();
+  if (typeof data !== 'object' || data === null || !('commitHash' in data)) {
     throw new Error('Invalid commit response received from API');
   }
   return data.commitHash as CommitHash;

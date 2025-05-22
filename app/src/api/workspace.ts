@@ -1,7 +1,6 @@
-import { API_BASE_URL } from '@/types/authApi';
+import { type Workspace, isWorkspace } from '@/types/models';
 import { apiCall } from './api';
-import type { Workspace } from '@/types/workspace';
-import { isWorkspace } from '@/types/workspace';
+import { API_BASE_URL } from '@/types/api';
 
 /**
  * listWorkspaces fetches the list of workspaces
@@ -10,7 +9,7 @@ import { isWorkspace } from '@/types/workspace';
  */
 export const listWorkspaces = async (): Promise<Workspace[]> => {
   const response = await apiCall(`${API_BASE_URL}/workspaces`);
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!Array.isArray(data)) {
     throw new Error('Invalid workspaces response received from API');
   }
@@ -36,7 +35,7 @@ export const createWorkspace = async (name: string): Promise<Workspace> => {
     },
     body: JSON.stringify({ name }),
   });
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!isWorkspace(data)) {
     throw new Error('Invalid workspace object received from API');
   }
@@ -105,8 +104,12 @@ export const deleteWorkspace = async (
       method: 'DELETE',
     }
   );
-  const data = await response.json();
-  if (!('nextWorkspaceName' in data)) {
+  const data: unknown = await response.json();
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    !('nextWorkspaceName' in data)
+  ) {
     throw new Error('Invalid delete workspace response received from API');
   }
   return data.nextWorkspaceName as string;
@@ -119,8 +122,12 @@ export const deleteWorkspace = async (
  */
 export const getLastWorkspaceName = async (): Promise<string> => {
   const response = await apiCall(`${API_BASE_URL}/workspaces/last`);
-  const data = await response.json();
-  if (!('lastWorkspaceName' in data)) {
+  const data: unknown = await response.json();
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    !('lastWorkspaceName' in data)
+  ) {
     throw new Error('Invalid last workspace name response received from API');
   }
   return data.lastWorkspaceName as string;

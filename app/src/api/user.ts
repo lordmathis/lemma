@@ -1,7 +1,6 @@
-import type { User } from '@/types/authApi';
-import { API_BASE_URL, isUser } from '@/types/authApi';
+import { API_BASE_URL, type UpdateProfileRequest } from '@/types/api';
+import { isUser, type User } from '@/types/models';
 import { apiCall } from './api';
-import type { UpdateProfileRequest } from '@/types/userApi';
 
 /**
  * updateProfile updates the user's profile information.
@@ -16,12 +15,12 @@ export const updateProfile = async (
     method: 'PUT',
     body: JSON.stringify(updateRequest),
   });
-  const data = response.json();
+  const data: unknown = response.json();
 
   if (!isUser(data)) {
     throw new Error('Invalid user data');
   }
-  return data as User;
+  return data;
 };
 
 /**

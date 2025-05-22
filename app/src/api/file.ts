@@ -1,14 +1,11 @@
-import { API_BASE_URL } from '@/types/authApi';
+import { isFileNode, type FileNode } from '@/types/models';
 import { apiCall } from './api';
-import type {
-  FileNode,
-  LookupResponse,
-  SaveFileResponse} from '@/types/fileApi';
 import {
-  isFileNode,
+  API_BASE_URL,
   isLookupResponse,
-  isSaveFileResponse
-} from '@/types/fileApi';
+  isSaveFileResponse,
+  type SaveFileResponse,
+} from '@/types/api';
 
 /**
  * listFiles fetches the list of files in a workspace
@@ -20,7 +17,7 @@ export const listFiles = async (workspaceName: string): Promise<FileNode[]> => {
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(workspaceName)}/files`
   );
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!Array.isArray(data)) {
     throw new Error('Invalid files response received from API');
   }
@@ -48,7 +45,7 @@ export const lookupFileByName = async (
       workspaceName
     )}/files/lookup?filename=${encodeURIComponent(filename)}`
   );
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!isLookupResponse(data)) {
     throw new Error('Invalid lookup response received from API');
   }
@@ -100,7 +97,7 @@ export const saveFile = async (
       body: content,
     }
   );
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!isSaveFileResponse(data)) {
     throw new Error('Invalid save file response received from API');
   }
@@ -136,11 +133,15 @@ export const getLastOpenedFile = async (
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(workspaceName)}/files/last`
   );
-  const data = await response.json();
-  if (!('lastOpenedFilePath' in data)) {
+  const data: unknown = await response.json();
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    !('lastOpenedFilePath' in data)
+  ) {
     throw new Error('Invalid last opened file response received from API');
   }
-  return data.lastOpenedFilePath;
+  return data.lastOpenedFilePath as string;
 };
 
 /**
