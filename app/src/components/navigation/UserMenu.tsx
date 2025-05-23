@@ -26,8 +26,8 @@ const UserMenu: React.FC = () => {
   const [opened, setOpened] = useState<boolean>(false);
   const { user, logout } = useAuth();
 
-  const handleLogout = (): void => {
-    logout();
+  const handleLogout = async (): Promise<void> => {
+    await logout();
   };
 
   return (

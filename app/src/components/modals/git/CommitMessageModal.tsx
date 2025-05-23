@@ -45,7 +45,7 @@ const CommitMessageModal: React.FC<CommitMessageModalProps> = ({
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Commit</Button>
+          <Button onClick={() => void handleSubmit()}>Commit</Button>
         </Group>
       </Box>
     </Modal>

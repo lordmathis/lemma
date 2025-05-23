@@ -8,7 +8,7 @@ import {
   Group,
   Grid,
 } from '@mantine/core';
-import type { Workspace } from '@/types/workspace';
+import type { Workspace } from '@/types/models';
 
 interface GitSettingsProps {
   gitEnabled: boolean;
@@ -19,7 +19,7 @@ interface GitSettingsProps {
   gitCommitMsgTemplate: string;
   gitCommitName: string;
   gitCommitEmail: string;
-  onInputChange: (key: keyof Workspace, value: any) => void;
+  onInputChange: (key: keyof Workspace, value: string | boolean) => void;
 }
 
 const GitSettings: React.FC<GitSettingsProps> = ({

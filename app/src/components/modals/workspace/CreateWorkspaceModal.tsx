@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, TextInput, Button, Group, Box } from '@mantine/core';
 import { useModalContext } from '../../../contexts/ModalContext';
 import { notifications } from '@mantine/notifications';
-import type { Workspace } from '@/types/workspace';
+import type { Workspace } from '@/types/models';
 import { createWorkspace } from '@/api/workspace';
 
 interface CreateWorkspaceModalProps {
@@ -38,9 +38,9 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
       setName('');
       setCreateWorkspaceModalVisible(false);
       if (onWorkspaceCreated) {
-        onWorkspaceCreated(workspace);
+        await onWorkspaceCreated(workspace);
       }
-    } catch (error) {
+    } catch (_error) {
       notifications.show({
         title: 'Error',
         message: 'Failed to create workspace',
@@ -77,7 +77,7 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} loading={loading}>
+          <Button onClick={() => void handleSubmit} loading={loading}>
             Create
           </Button>
         </Group>

@@ -23,15 +23,15 @@ const DeleteWorkspaceModal: React.FC<DeleteUserModalProps> = ({
   >
     <Stack>
       <Text>
-        Are you sure you want to delete workspace "{workspaceName}"? This action
-        cannot be undone and all files in this workspace will be permanently
-        deleted.
+        Are you sure you want to delete workspace &quot;{workspaceName}&quot;?
+        This action cannot be undone and all files in this workspace will be
+        permanently deleted.
       </Text>
       <Group justify="flex-end" mt="xl">
         <Button variant="default" onClick={onClose}>
           Cancel
         </Button>
-        <Button color="red" onClick={onConfirm}>
+        <Button color="red" onClick={() => void onConfirm}>
           Delete Workspace
         </Button>
       </Group>

@@ -42,7 +42,7 @@ const CreateFileModal: React.FC<CreateFileModalProps> = ({ onCreateFile }) => {
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Create</Button>
+          <Button onClick={() => void handleSubmit()}>Create</Button>
         </Group>
       </Box>
     </Modal>

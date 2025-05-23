@@ -17,14 +17,16 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const { login } = useAuth();
 
-  const handleSubmit = async (e: FormEvent<HTMLElement>): Promise<void> => {
+  const handleSubmit = (e: FormEvent<HTMLElement>): void => {
     e.preventDefault();
     setLoading(true);
-    try {
-      await login(email, password);
-    } finally {
-      setLoading(false);
-    }
+    login(email, password)
+      .catch((error) => {
+        console.error('Login failed:', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (

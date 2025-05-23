@@ -48,7 +48,7 @@ const EmailPasswordModal: React.FC<EmailPasswordModalProps> = ({
           </Button>
           <Button
             onClick={() => {
-              onConfirm(password);
+              void onConfirm(password);
               setPassword('');
             }}
           >

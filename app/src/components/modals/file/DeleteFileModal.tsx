@@ -28,7 +28,7 @@ const DeleteFileModal: React.FC<DeleteFileModalProps> = ({
       title="Delete File"
       centered
     >
-      <Text>Are you sure you want to delete "{selectedFile}"?</Text>
+      <Text>Are you sure you want to delete &quot;{selectedFile}&quot;?</Text>
       <Group justify="flex-end" mt="xl">
         <Button
           variant="default"
@@ -36,7 +36,7 @@ const DeleteFileModal: React.FC<DeleteFileModalProps> = ({
         >
           Cancel
         </Button>
-        <Button color="red" onClick={handleConfirm}>
+        <Button color="red" onClick={() => void handleConfirm()}>
           Delete
         </Button>
       </Group>

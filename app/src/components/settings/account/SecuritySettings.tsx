@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, PasswordInput, Stack, Text } from '@mantine/core';
-import type { UserProfileSettings } from '@/types/settings';
+import type { UserProfileSettings } from '@/types/models';
 
 interface SecuritySettingsProps {
   settings: UserProfileSettings;
@@ -66,7 +66,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({
         />
         <Text size="xs" c="dimmed">
           Password must be at least 8 characters long. Leave password fields
-          empty if you don't want to change it.
+          empty if you don&apos;t want to change it.
         </Text>
       </Stack>
     </Box>

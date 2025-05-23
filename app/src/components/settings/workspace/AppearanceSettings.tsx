@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, Switch, Group, Box } from '@mantine/core';
 import { useWorkspace } from '../../../contexts/WorkspaceContext';
-import { Theme } from '@/types/theme';
+import { Theme } from '@/types/models';
 
 interface AppearanceSettingsProps {
   onThemeChange: (newTheme: Theme) => void;

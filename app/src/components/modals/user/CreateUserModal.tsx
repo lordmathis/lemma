@@ -8,8 +8,8 @@ import {
   Button,
   Group,
 } from '@mantine/core';
-import type { CreateUserRequest } from '@/types/adminApi';
-import { UserRole } from '@/types/authApi';
+import type { CreateUserRequest } from '@/types/api';
+import { UserRole } from '@/types/models';
 
 interface CreateUserModalProps {
   opened: boolean;
@@ -85,7 +85,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
           <Button variant="default" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} loading={loading}>
+          <Button onClick={() => void handleSubmit} loading={loading}>
             Create User
           </Button>
         </Group>

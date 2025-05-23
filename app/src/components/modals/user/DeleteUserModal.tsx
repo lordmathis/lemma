@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Text, Button, Group, Stack } from '@mantine/core';
-import type { User } from '@/types/authApi';
+import type { User } from '@/types/models';
 
 interface DeleteUserModalProps {
   opened: boolean;
@@ -26,14 +26,15 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
   >
     <Stack>
       <Text>
-        Are you sure you want to delete user "{user?.email}"? This action cannot
-        be undone and all associated data will be permanently deleted.
+        Are you sure you want to delete user &quot;{user?.email}&quot;? This
+        action cannot be undone and all associated data will be permanently
+        deleted.
       </Text>
       <Group justify="flex-end" mt="xl">
         <Button variant="default" onClick={onClose}>
           Cancel
         </Button>
-        <Button color="red" onClick={onConfirm} loading={loading}>
+        <Button color="red" onClick={() => void onConfirm()} loading={loading}>
           Delete User
         </Button>
       </Group>

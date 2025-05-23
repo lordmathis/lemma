@@ -9,9 +9,8 @@ import {
   PasswordInput,
   Text,
 } from '@mantine/core';
-import type { UpdateUserRequest } from '@/types/adminApi';
-import type { User} from '@/types/authApi';
-import { UserRole } from '@/types/authApi';
+import type { UpdateUserRequest } from '@/types/api';
+import { type User, UserRole } from '@/types/models';
 
 interface EditUserModalProps {
   opened: boolean;
@@ -114,7 +113,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
           <Button variant="default" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} loading={loading}>
+          <Button onClick={() => void handleSubmit} loading={loading}>
             Save Changes
           </Button>
         </Group>

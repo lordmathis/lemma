@@ -13,7 +13,7 @@ const DangerZoneSettings: React.FC = () => {
     const success = await deleteAccount(password);
     if (success) {
       setDeleteModalOpened(false);
-      logout();
+      await logout();
     }
   };
 

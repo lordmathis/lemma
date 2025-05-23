@@ -17,10 +17,12 @@ import GeneralSettings from './GeneralSettings';
 import { useModalContext } from '../../../contexts/ModalContext';
 import DangerZoneSettings from './DangerZoneSettings';
 import AccordionControl from '../AccordionControl';
-import type { SettingsAction } from '../../../types/settings';
-import { SettingsActionType } from '../../../types/settings';
-import type { Workspace } from '../../../types/workspace';
-
+import {
+  type Theme,
+  type Workspace,
+  type SettingsAction,
+  SettingsActionType,
+} from '@/types/models';
 // State and reducer for workspace settings
 interface WorkspaceSettingsState {
   localSettings: Partial<Workspace>;
@@ -46,7 +48,7 @@ function settingsReducer(
         initialSettings: action.payload || {},
         hasUnsavedChanges: false,
       };
-    case SettingsActionType.UPDATE_LOCAL_SETTINGS:
+    case SettingsActionType.UPDATE_LOCAL_SETTINGS: {
       const newLocalSettings = { ...state.localSettings, ...action.payload };
       const hasChanges =
         JSON.stringify(newLocalSettings) !==
@@ -56,6 +58,7 @@ function settingsReducer(
         localSettings: newLocalSettings,
         hasUnsavedChanges: hasChanges,
       };
+    }
     case SettingsActionType.MARK_SAVED:
       return {
         ...state,
@@ -95,7 +98,7 @@ const WorkspaceSettings: React.FC = () => {
   }, [currentWorkspace]);
 
   const handleInputChange = useCallback(
-    (key: keyof Workspace, value: any): void => {
+    <K extends keyof Workspace>(key: K, value: Workspace[K]): void => {
       dispatch({
         type: SettingsActionType.UPDATE_LOCAL_SETTINGS,
         payload: { [key]: value } as Partial<Workspace>,
@@ -194,7 +197,7 @@ const WorkspaceSettings: React.FC = () => {
             <Accordion.Panel>
               <AppearanceSettings
                 onThemeChange={(newTheme: string) =>
-                  handleInputChange('theme', newTheme)
+                  handleInputChange('theme', newTheme as Theme)
                 }
               />
             </Accordion.Panel>
@@ -247,7 +250,7 @@ const WorkspaceSettings: React.FC = () => {
           <Button variant="default" onClick={handleClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Save Changes</Button>
+          <Button onClick={() => void handleSubmit}>Save Changes</Button>
         </Group>
       </Stack>
     </Modal>

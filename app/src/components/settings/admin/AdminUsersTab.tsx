@@ -20,8 +20,8 @@ import { useUserAdmin } from '../../../hooks/useUserAdmin';
 import CreateUserModal from '../../modals/user/CreateUserModal';
 import EditUserModal from '../../modals/user/EditUserModal';
 import DeleteUserModal from '../../modals/user/DeleteUserModal';
-import type { User } from '../../../types/authApi';
-import type { CreateUserRequest, UpdateUserRequest } from '../../../types/adminApi';
+import type { User } from '@/types/models';
+import type { CreateUserRequest, UpdateUserRequest } from '@/types/api';
 
 interface AdminUsersTabProps {
   currentUser: User;

@@ -50,7 +50,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
           <Button
             color="red"
             onClick={() => {
-              onConfirm(password);
+              void onConfirm(password);
               setPassword('');
             }}
           >
