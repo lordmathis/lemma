@@ -50,7 +50,7 @@ const WorkspaceSwitcher: React.FC = () => {
     newWorkspace: Workspace
   ): Promise<void> => {
     await loadWorkspaces();
-    switchWorkspace(newWorkspace.name);
+    await switchWorkspace(newWorkspace.name);
   };
 
   return (
@@ -67,7 +67,7 @@ const WorkspaceSwitcher: React.FC = () => {
             onClick={() => {
               setPopoverOpened((o) => !o);
               if (!popoverOpened) {
-                loadWorkspaces();
+                void loadWorkspaces();
               }
             }}
           >
@@ -128,7 +128,7 @@ const WorkspaceSwitcher: React.FC = () => {
                         <UnstyledButton
                           style={{ flex: 1 }}
                           onClick={() => {
-                            switchWorkspace(workspace.name);
+                            void switchWorkspace(workspace.name);
                             setPopoverOpened(false);
                           }}
                         >

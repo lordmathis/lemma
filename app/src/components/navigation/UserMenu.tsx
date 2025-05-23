@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import AccountSettings from '../settings/account/AccountSettings';
 import AdminDashboard from '../settings/admin/AdminDashboard';
+import { UserRole } from '@/types/models';
 
 const UserMenu: React.FC = () => {
   const [accountSettingsOpened, setAccountSettingsOpened] =
@@ -90,7 +91,7 @@ const UserMenu: React.FC = () => {
               </Group>
             </UnstyledButton>
 
-            {user?.role === 'admin' && (
+            {user?.role === UserRole.Admin && (
               <UnstyledButton
                 onClick={() => {
                   setAdminDashboardOpened(true);
@@ -116,7 +117,7 @@ const UserMenu: React.FC = () => {
             )}
 
             <UnstyledButton
-              onClick={handleLogout}
+              onClick={() => void handleLogout}
               px="sm"
               py="xs"
               color="red"
