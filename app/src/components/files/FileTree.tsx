@@ -41,21 +41,24 @@ const FileIcon = ({ node }: { node: NodeApi<FileNode> }) => {
 };
 
 // Define a Node component that matches what React-Arborist expects
-function Node(props: {
+function Node({
+  node,
+  style,
+  dragHandle,
+  onNodeClick,
+  ...rest
+}: {
   node: NodeApi<FileNode>;
   style: React.CSSProperties;
-  dragHandle: React.Ref<HTMLDivElement>;
-}) {
-  const { node, style, dragHandle } = props;
-
+  dragHandle?: React.Ref<HTMLDivElement>;
+  onNodeClick?: (node: NodeApi<FileNode>) => void;
+  // Accept any extra props from Arborist, but do not use an index signature
+} & Record<string, unknown>) {
   const handleClick = () => {
     if (node.isInternal) {
       node.toggle();
-    } else {
-      const treeProps = node.tree.props;
-      if (typeof treeProps.onNodeClick === 'function') {
-        treeProps.onNodeClick(node);
-      }
+    } else if (typeof onNodeClick === 'function') {
+      onNodeClick(node);
     }
   };
 
@@ -73,6 +76,7 @@ function Node(props: {
           overflow: 'hidden',
         }}
         onClick={handleClick}
+        {...rest}
       >
         <FileIcon node={node} />
         <span
@@ -106,6 +110,14 @@ const FileTree: React.FC<FileTreeProps> = ({
     return true;
   });
 
+  // Handler for node click
+  const onNodeClick = (node: NodeApi<FileNode>) => {
+    const fileNode = node.data;
+    if (!node.isInternal) {
+      void handleFileSelect(fileNode.path);
+    }
+  };
+
   return (
     <div
       ref={target}
@@ -120,22 +132,13 @@ const FileTree: React.FC<FileTreeProps> = ({
           indent={24}
           rowHeight={28}
           onActivate={(node) => {
-            const fileNode = node.data as FileNode;
+            const fileNode = node.data;
             if (!node.isInternal) {
               void handleFileSelect(fileNode.path);
             }
           }}
-          {...({
-            // Use a spread with type assertion to add onNodeClick
-            onNodeClick: (node: NodeApi<FileNode>) => {
-              const fileNode = node.data;
-              if (!node.isInternal) {
-                void handleFileSelect(fileNode.path);
-              }
-            },
-          } as any)}
         >
-          {Node}
+          {(props) => <Node {...props} onNodeClick={onNodeClick} />}
         </Tree>
       )}
     </div>
