@@ -18,6 +18,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import AccountSettings from '../settings/account/AccountSettings';
 import AdminDashboard from '../settings/admin/AdminDashboard';
 import { UserRole } from '@/types/models';
+import { getHoverStyle } from '@/utils/themeStyles';
 
 const UserMenu: React.FC = () => {
   const [accountSettingsOpened, setAccountSettingsOpened] =
@@ -75,15 +76,7 @@ const UserMenu: React.FC = () => {
               }}
               px="sm"
               py="xs"
-              style={(theme: any) => ({
-                borderRadius: theme.radius.sm,
-                '&:hover': {
-                  backgroundColor:
-                    theme.colorScheme === 'dark'
-                      ? theme.colors.dark[5]
-                      : theme.colors.gray[0],
-                },
-              })}
+              style={(theme) => getHoverStyle(theme)}
             >
               <Group>
                 <IconSettings size={16} />
@@ -99,15 +92,7 @@ const UserMenu: React.FC = () => {
                 }}
                 px="sm"
                 py="xs"
-                style={(theme: any) => ({
-                  borderRadius: theme.radius.sm,
-                  '&:hover': {
-                    backgroundColor:
-                      theme.colorScheme === 'dark'
-                        ? theme.colors.dark[5]
-                        : theme.colors.gray[0],
-                  },
-                })}
+                style={(theme) => getHoverStyle(theme)}
               >
                 <Group>
                   <IconUsers size={16} />
@@ -121,15 +106,7 @@ const UserMenu: React.FC = () => {
               px="sm"
               py="xs"
               color="red"
-              style={(theme: any) => ({
-                borderRadius: theme.radius.sm,
-                '&:hover': {
-                  backgroundColor:
-                    theme.colorScheme === 'dark'
-                      ? theme.colors.dark[5]
-                      : theme.colors.gray[0],
-                },
-              })}
+              style={(theme) => getHoverStyle(theme)}
             >
               <Group>
                 <IconLogout size={16} color="red" />

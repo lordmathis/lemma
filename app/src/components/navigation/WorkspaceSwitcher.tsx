@@ -20,6 +20,10 @@ import { useModalContext } from '../../contexts/ModalContext';
 import { listWorkspaces } from '../../api/workspace';
 import CreateWorkspaceModal from '../modals/workspace/CreateWorkspaceModal';
 import type { Workspace } from '@/types/models';
+import {
+  getConditionalColor,
+  getWorkspacePaperStyle,
+} from '@/utils/themeStyles';
 
 const WorkspaceSwitcher: React.FC = () => {
   const { currentWorkspace, switchWorkspace } = useWorkspace();
@@ -111,18 +115,9 @@ const WorkspaceSwitcher: React.FC = () => {
                       key={workspace.name}
                       p="xs"
                       withBorder
-                      style={(theme: any) => ({
-                        backgroundColor: isSelected
-                          ? theme.colors.blue[
-                              theme.colorScheme === 'dark' ? 8 : 1
-                            ]
-                          : undefined,
-                        borderColor: isSelected
-                          ? theme.colors.blue[
-                              theme.colorScheme === 'dark' ? 7 : 5
-                            ]
-                          : undefined,
-                      })}
+                      style={(theme) =>
+                        getWorkspacePaperStyle(theme, isSelected)
+                      }
                     >
                       <Group justify="space-between" wrap="nowrap">
                         <UnstyledButton
@@ -137,27 +132,13 @@ const WorkspaceSwitcher: React.FC = () => {
                               size="sm"
                               fw={500}
                               truncate
-                              c={
-                                isSelected
-                                  ? (theme as any).colors.blue[
-                                      (theme as any).colorScheme === 'dark'
-                                        ? 0
-                                        : 9
-                                    ]
-                                  : undefined
-                              }
+                              c={isSelected ? 'blue' : 'inherit'}
                             >
                               {workspace.name}
                             </Text>
                             <Text
                               size="xs"
-                              c={
-                                isSelected
-                                  ? (theme as any).colorScheme === 'dark'
-                                    ? theme.colors.blue[2]
-                                    : theme.colors.blue[7]
-                                  : 'dimmed'
-                              }
+                              c={getConditionalColor(theme, isSelected)}
                             >
                               {new Date(
                                 workspace.createdAt
@@ -170,11 +151,7 @@ const WorkspaceSwitcher: React.FC = () => {
                             <ActionIcon
                               variant="subtle"
                               size="lg"
-                              color={
-                                (theme as any).colorScheme === 'dark'
-                                  ? 'blue.2'
-                                  : 'blue.7'
-                              }
+                              color={getConditionalColor(theme, true)}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSettingsModalVisible(true);

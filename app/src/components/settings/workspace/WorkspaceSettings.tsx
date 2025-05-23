@@ -23,6 +23,7 @@ import {
   type SettingsAction,
   SettingsActionType,
 } from '@/types/models';
+import { getAccordionStyles } from '@/utils/themeStyles';
 // State and reducer for workspace settings
 interface WorkspaceSettingsState {
   localSettings: Partial<Workspace>;
@@ -157,24 +158,8 @@ const WorkspaceSettings: React.FC = () => {
         <Accordion
           defaultValue={['general', 'appearance', 'editor', 'git', 'danger']}
           multiple
-          styles={(theme: any) => ({
-            control: {
-              paddingTop: theme.spacing.md,
-              paddingBottom: theme.spacing.md,
-            },
-            item: {
-              borderBottom: `1px solid ${
-                theme.colorScheme === 'dark'
-                  ? theme.colors.dark[4]
-                  : theme.colors.gray[3]
-              }`,
-              '&[data-active]': {
-                backgroundColor:
-                  theme.colorScheme === 'dark'
-                    ? theme.colors.dark[7]
-                    : theme.colors.gray[0],
-              },
-            },
+          styles={(theme) => ({
+            ...getAccordionStyles(theme),
             chevron: {
               '&[data-rotate]': {
                 transform: 'rotate(180deg)',

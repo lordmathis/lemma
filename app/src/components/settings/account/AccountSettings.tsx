@@ -22,6 +22,7 @@ import {
   type SettingsAction,
   SettingsActionType,
 } from '@/types/models';
+import { getAccordionStyles } from '@/utils/themeStyles';
 
 interface AccountSettingsProps {
   opened: boolean;
@@ -202,25 +203,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
           <Accordion
             defaultValue={['profile', 'security', 'danger']}
             multiple
-            styles={(theme: any) => ({
-              control: {
-                paddingTop: theme.spacing.md,
-                paddingBottom: theme.spacing.md,
-              },
-              item: {
-                borderBottom: `1px solid ${
-                  theme.colorScheme === 'dark'
-                    ? theme.colors.dark[4]
-                    : theme.colors.gray[3]
-                }`,
-                '&[data-active]': {
-                  backgroundColor:
-                    theme.colorScheme === 'dark'
-                      ? theme.colors.dark[7]
-                      : theme.colors.gray[0],
-                },
-              },
-            })}
+            styles={(theme) => getAccordionStyles(theme)}
           >
             <Accordion.Item value="profile">
               <AccordionControl>Profile</AccordionControl>
