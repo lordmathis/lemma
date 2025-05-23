@@ -61,7 +61,11 @@ const FileActions: React.FC<FileActionsProps> = ({
         <ActionIcon
           variant="default"
           size="md"
-          onClick={handlePullChanges}
+          onClick={() => {
+            handlePullChanges().catch((error) => {
+              console.error('Error pulling changes:', error);
+            });
+          }}
           disabled={!settings.gitEnabled}
         >
           <IconGitPullRequest size={16} />

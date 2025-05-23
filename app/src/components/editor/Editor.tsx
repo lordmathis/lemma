@@ -26,7 +26,7 @@ const Editor: React.FC<EditorProps> = ({
 
   useEffect(() => {
     const handleEditorSave = (view: EditorView): boolean => {
-      handleSave(selectedFile, view.state.doc.toString());
+      void handleSave(selectedFile, view.state.doc.toString());
       return true;
     };
 
@@ -85,6 +85,8 @@ const Editor: React.FC<EditorProps> = ({
       view.destroy();
       viewRef.current = null;
     };
+    // TODO: Refactor
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colorScheme, handleContentChange, handleSave, selectedFile]);
 
   useEffect(() => {

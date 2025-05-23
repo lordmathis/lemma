@@ -1,11 +1,10 @@
-import type { ReactNode } from 'react';
-import React, { useState, useEffect, useMemo } from 'react';
-import { unified } from 'unified';
+import React, { useState, useEffect, useMemo, type ReactNode } from 'react';
+import { unified, type Preset } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMath from 'remark-math';
 import remarkRehype from 'remark-rehype';
 import rehypeMathjax from 'rehype-mathjax';
-import rehypeReact from 'rehype-react';
+import rehypeReact, { type Options } from 'rehype-react';
 import rehypePrism from 'rehype-prism';
 import * as prod from 'react/jsx-runtime';
 import { notifications } from '@mantine/notifications';
@@ -20,19 +19,19 @@ interface MarkdownPreviewProps {
 interface MarkdownImageProps {
   src: string;
   alt?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface MarkdownLinkProps {
   href: string;
   children: ReactNode;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface MarkdownCodeProps {
   children: ReactNode;
   className?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
@@ -45,34 +44,33 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
   const baseUrl = window.API_BASE_URL;
   const { currentWorkspace } = useWorkspace();
 
-  const handleLinkClick = (
-    e: React.MouseEvent<HTMLAnchorElement>,
-    href: string
-  ): void => {
-    e.preventDefault();
-
-    if (href.startsWith(`${baseUrl}/internal/`)) {
-      // For existing files, extract the path and directly select it
-      const [filePath] = decodeURIComponent(
-        href.replace(`${baseUrl}/internal/`, '')
-      ).split('#');
-      if (filePath) {
-        handleFileSelect(filePath);
-      }
-    } else if (href.startsWith(`${baseUrl}/notfound/`)) {
-      // For non-existent files, show a notification
-      const fileName = decodeURIComponent(
-        href.replace(`${baseUrl}/notfound/`, '')
-      );
-      notifications.show({
-        title: 'File Not Found',
-        message: `The file "${fileName}" does not exist.`,
-        color: 'red',
-      });
-    }
-  };
-
   const processor = useMemo(() => {
+    const handleLinkClick = (
+      e: React.MouseEvent<HTMLAnchorElement>,
+      href: string
+    ): void => {
+      e.preventDefault();
+
+      if (href.startsWith(`${baseUrl}/internal/`)) {
+        // For existing files, extract the path and directly select it
+        const [filePath] = decodeURIComponent(
+          href.replace(`${baseUrl}/internal/`, '')
+        ).split('#');
+        if (filePath) {
+          void handleFileSelect(filePath);
+        }
+      } else if (href.startsWith(`${baseUrl}/notfound/`)) {
+        // For non-existent files, show a notification
+        const fileName = decodeURIComponent(
+          href.replace(`${baseUrl}/notfound/`, '')
+        );
+        notifications.show({
+          title: 'File Not Found',
+          message: `The file "${fileName}" does not exist.`,
+          color: 'red',
+        });
+      }
+    };
     // Only create the processor if we have a workspace name
     if (!currentWorkspace?.name) {
       return unified();
@@ -80,16 +78,18 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
 
     return unified()
       .use(remarkParse)
-      .use(remarkWikiLinks, currentWorkspace.name) // Now we know this is defined
+      .use(remarkWikiLinks, currentWorkspace.name)
       .use(remarkMath)
       .use(remarkRehype)
       .use(rehypeMathjax)
-      .use(rehypePrism)
-      .use(rehypeReact as any, {
-        production: true,
+      .use(rehypePrism as Preset)
+      .use(rehypeReact, {
         jsx: prod.jsx,
         jsxs: prod.jsxs,
         Fragment: prod.Fragment,
+        development: false,
+        elementAttributeNameCase: 'react',
+        stylePropertyNameCase: 'dom',
         components: {
           img: ({ src, alt, ...props }: MarkdownImageProps) => (
             <img
@@ -115,8 +115,8 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
             );
           },
         },
-      });
-  }, [baseUrl, handleFileSelect, currentWorkspace?.name]);
+      } as Options);
+  }, [currentWorkspace?.name, baseUrl, handleFileSelect]);
 
   useEffect(() => {
     const processContent = async (): Promise<void> => {
@@ -132,7 +132,7 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
       }
     };
 
-    processContent();
+    void processContent();
   }, [content, processor, currentWorkspace]);
 
   return <div className="markdown-preview">{processedContent}</div>;

@@ -1,10 +1,9 @@
 import React, { useRef, useState, useLayoutEffect } from 'react';
-import type { NodeApi } from 'react-arborist';
-import { Tree } from 'react-arborist';
+import { Tree, type NodeApi } from 'react-arborist';
 import { IconFile, IconFolder, IconFolderOpen } from '@tabler/icons-react';
 import { Tooltip } from '@mantine/core';
 import useResizeObserver from '@react-hook/resize-observer';
-import type { FileNode } from '../../types/fileApi';
+import type { FileNode } from '@/types/models';
 
 interface Size {
   width: number;
@@ -42,7 +41,11 @@ const FileIcon = ({ node }: { node: NodeApi<FileNode> }) => {
 };
 
 // Define a Node component that matches what React-Arborist expects
-function Node(props: any) {
+function Node(props: {
+  node: NodeApi<FileNode>;
+  style: React.CSSProperties;
+  dragHandle: React.Ref<HTMLDivElement>;
+}) {
   const { node, style, dragHandle } = props;
 
   const handleClick = () => {
@@ -119,7 +122,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           onActivate={(node) => {
             const fileNode = node.data as FileNode;
             if (!node.isInternal) {
-              handleFileSelect(fileNode.path);
+              void handleFileSelect(fileNode.path);
             }
           }}
           {...({
@@ -127,7 +130,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             onNodeClick: (node: NodeApi<FileNode>) => {
               const fileNode = node.data;
               if (!node.isInternal) {
-                handleFileSelect(fileNode.path);
+                void handleFileSelect(fileNode.path);
               }
             },
           } as any)}
