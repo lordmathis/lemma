@@ -47,7 +47,7 @@ function settingsReducer(
         initialSettings: action.payload || {},
         hasUnsavedChanges: false,
       };
-    case SettingsActionType.UPDATE_LOCAL_SETTINGS:
+    case SettingsActionType.UPDATE_LOCAL_SETTINGS: {
       const newLocalSettings = { ...state.localSettings, ...action.payload };
       const hasChanges =
         JSON.stringify(newLocalSettings) !==
@@ -57,6 +57,7 @@ function settingsReducer(
         localSettings: newLocalSettings,
         hasUnsavedChanges: hasChanges,
       };
+    }
     case SettingsActionType.MARK_SAVED:
       return {
         ...state,
@@ -254,7 +255,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
               Cancel
             </Button>
             <Button
-              onClick={handleSubmit}
+              onClick={() => void handleSubmit}
               loading={loading}
               disabled={!state.hasUnsavedChanges}
             >
