@@ -46,7 +46,10 @@ export enum UserRole {
  * Type guard to check if a value is a valid UserRole
  */
 export function isUserRole(value: unknown): value is UserRole {
-  return typeof value === 'string' && value in UserRole;
+  return (
+    typeof value === 'string' &&
+    Object.values(UserRole).includes(value as UserRole)
+  );
 }
 
 export enum Theme {

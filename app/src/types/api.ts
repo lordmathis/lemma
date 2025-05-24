@@ -42,10 +42,10 @@ export function isLoginResponse(obj: unknown): obj is LoginResponse {
     obj !== null &&
     'user' in obj &&
     isUser(obj.user) &&
-    'sessionId' in obj &&
-    typeof (obj as LoginResponse).sessionId === 'string' &&
-    'expiresAt' in obj &&
-    typeof (obj as LoginResponse).expiresAt === 'string'
+    (!('sessionId' in obj) ||
+      typeof (obj as LoginResponse).sessionId === 'string') &&
+    (!('expiresAt' in obj) ||
+      typeof (obj as LoginResponse).expiresAt === 'string')
   );
 }
 
