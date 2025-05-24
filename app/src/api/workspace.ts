@@ -54,11 +54,11 @@ export const getWorkspace = async (
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(workspaceName)}`
   );
-  const data = response.json();
+  const data: unknown = await response.json();
   if (!isWorkspace(data)) {
     throw new Error('Invalid workspace object received from API');
   }
-  return data as Workspace;
+  return data;
 };
 
 /**
@@ -82,11 +82,11 @@ export const updateWorkspace = async (
       body: JSON.stringify(workspaceData),
     }
   );
-  const data = response.json();
+  const data: unknown = await response.json();
   if (!isWorkspace(data)) {
     throw new Error('Invalid workspace object received from API');
   }
-  return data as Workspace;
+  return data;
 };
 
 /**

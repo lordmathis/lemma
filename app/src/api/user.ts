@@ -15,7 +15,7 @@ export const updateProfile = async (
     method: 'PUT',
     body: JSON.stringify(updateRequest),
   });
-  const data: unknown = response.json();
+  const data: unknown = await response.json();
 
   if (!isUser(data)) {
     throw new Error('Invalid user data');
