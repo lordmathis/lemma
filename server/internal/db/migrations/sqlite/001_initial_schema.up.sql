@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS system_settings (
 );
 
 -- Create indexes for performance
-CREATE INDEX idx_sessions_user_id ON sessions(user_id);
-CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
-CREATE INDEX idx_sessions_refresh_token ON sessions(refresh_token);
-CREATE INDEX idx_workspaces_user_id ON workspaces(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_refresh_token ON sessions(refresh_token);
+CREATE INDEX IF NOT EXISTS idx_workspaces_user_id ON workspaces(user_id);
