@@ -86,13 +86,17 @@ export const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
 };
 
 export interface Workspace extends WorkspaceSettings {
+  id?: number;
+  userId?: number;
   name: string;
-  createdAt: number;
+  createdAt: number | string;
+  lastOpenedFilePath?: string;
 }
 
 export const DEFAULT_WORKSPACE: Workspace = {
   name: '',
   createdAt: Date.now(),
+  lastOpenedFilePath: '',
   ...DEFAULT_WORKSPACE_SETTINGS,
 };
 
@@ -102,10 +106,15 @@ export function isWorkspace(obj: unknown): obj is Workspace {
     obj !== null &&
     'name' in obj &&
     typeof (obj as Workspace).name === 'string' &&
+    'createdAt' in obj &&
+    (typeof (obj as Workspace).createdAt === 'number' ||
+      typeof (obj as Workspace).createdAt === 'string') &&
     'theme' in obj &&
     typeof (obj as Workspace).theme === 'string' &&
     'autoSave' in obj &&
     typeof (obj as Workspace).autoSave === 'boolean' &&
+    'showHiddenFiles' in obj &&
+    typeof (obj as Workspace).showHiddenFiles === 'boolean' &&
     'gitEnabled' in obj &&
     typeof (obj as Workspace).gitEnabled === 'boolean' &&
     'gitUrl' in obj &&
@@ -117,7 +126,11 @@ export function isWorkspace(obj: unknown): obj is Workspace {
     'gitAutoCommit' in obj &&
     typeof (obj as Workspace).gitAutoCommit === 'boolean' &&
     'gitCommitMsgTemplate' in obj &&
-    typeof (obj as Workspace).gitCommitMsgTemplate === 'string'
+    typeof (obj as Workspace).gitCommitMsgTemplate === 'string' &&
+    'gitCommitName' in obj &&
+    typeof (obj as Workspace).gitCommitName === 'string' &&
+    'gitCommitEmail' in obj &&
+    typeof (obj as Workspace).gitCommitEmail === 'string'
   );
 }
 
@@ -163,7 +176,7 @@ export interface FileNode {
   id: string;
   name: string;
   path: string;
-  children: FileNode[];
+  children?: FileNode[];
 }
 
 export function isFileNode(obj: unknown): obj is FileNode {
@@ -176,8 +189,10 @@ export function isFileNode(obj: unknown): obj is FileNode {
     typeof (obj as FileNode).name === 'string' &&
     'path' in obj &&
     typeof (obj as FileNode).path === 'string' &&
-    'children' in obj &&
-    Array.isArray((obj as FileNode).children)
+    (!('children' in obj) ||
+      (obj as FileNode).children === undefined ||
+      (obj as FileNode).children === null ||
+      Array.isArray((obj as FileNode).children))
   );
 }
 

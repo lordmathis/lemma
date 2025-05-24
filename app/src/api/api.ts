@@ -7,6 +7,7 @@ export const apiCall = async (
   url: string,
   options: RequestInit = {}
 ): Promise<Response> => {
+  console.debug(`Making API call to: ${url}`);
   try {
     const response = await fetch(url, {
       ...options,
@@ -17,6 +18,7 @@ export const apiCall = async (
         ...options.headers,
       },
     });
+    console.debug(`Response status: ${response.status} for URL: ${url}`);
 
     // Handle 401 responses
     if (response.status === 401) {
