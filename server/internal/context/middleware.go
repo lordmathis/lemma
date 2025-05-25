@@ -3,6 +3,7 @@ package context
 import (
 	"lemma/internal/db"
 	"net/http"
+	"net/url"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -42,12 +43,25 @@ func WithWorkspaceContextMiddleware(db db.WorkspaceReader) func(http.Handler) ht
 			}
 
 			workspaceName := chi.URLParam(r, "workspaceName")
-			workspace, err := db.GetWorkspaceByName(ctx.UserID, workspaceName)
+			// URL-decode the workspace name
+			decodedWorkspaceName, err := url.PathUnescape(workspaceName)
+			if err != nil {
+				log.Error("failed to decode workspace name",
+					"error", err,
+					"userID", ctx.UserID,
+					"workspace", workspaceName,
+					"path", r.URL.Path)
+				http.Error(w, "Invalid workspace name", http.StatusBadRequest)
+				return
+			}
+
+			workspace, err := db.GetWorkspaceByName(ctx.UserID, decodedWorkspaceName)
 			if err != nil {
 				log.Error("failed to get workspace",
 					"error", err,
 					"userID", ctx.UserID,
-					"workspace", workspaceName,
+					"workspace", decodedWorkspaceName,
+					"encodedWorkspace", workspaceName,
 					"path", r.URL.Path)
 				http.Error(w, "Failed to get workspace", http.StatusNotFound)
 				return

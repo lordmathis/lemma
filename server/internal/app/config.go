@@ -35,6 +35,7 @@ type Config struct {
 func DefaultConfig() *Config {
 	return &Config{
 		DBURL:             "sqlite://lemma.db",
+		DBType:            db.DBTypeSQLite,
 		WorkDir:           "./data",
 		StaticPath:        "../app/dist",
 		Port:              "8080",

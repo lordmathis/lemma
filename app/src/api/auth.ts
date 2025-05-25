@@ -1,0 +1,75 @@
+import { API_BASE_URL, isLoginResponse, type LoginRequest } from '@/types/api';
+import { apiCall } from './api';
+import { isUser, type User } from '@/types/models';
+
+/**
+ * Logs in a user with email and password
+ * @param {string} email - The user's email
+ * @param {string} password - The user's password
+ * @returns {Promise<User>} A promise that resolves to the user
+ * @throws {Error} If the API call fails or returns an invalid response
+ * @throws {Error} If the login fails
+ */
+export const login = async (email: string, password: string): Promise<User> => {
+  const loginData: LoginRequest = { email, password };
+  const response = await apiCall(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    body: JSON.stringify(loginData),
+  });
+
+  const data: unknown = await response.json();
+  if (!isLoginResponse(data)) {
+    throw new Error('Invalid login response from API');
+  }
+
+  return data.user;
+};
+
+/**
+ * Logs out the current user
+ * @returns {Promise<void>} A promise that resolves when the logout is successful
+ * @throws {Error} If the API call fails or returns an invalid response
+ * @throws {Error} If the logout fails
+ */
+export const logout = async (): Promise<void> => {
+  const response = await apiCall(`${API_BASE_URL}/auth/logout`, {
+    method: 'POST',
+  });
+
+  if (response.status !== 204) {
+    throw new Error('Failed to log out');
+  }
+};
+
+/**
+ * Refreshes the auth token
+ * @returns true if refresh was successful, false otherwise
+ */
+export const refreshToken = async (): Promise<boolean> => {
+  try {
+    await apiCall(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+    });
+
+    return true;
+  } catch (_error) {
+    return false;
+  }
+};
+
+/**
+ * Gets the currently authenticated user
+ * @returns {Promise<User>} A promise that resolves to the current user
+ * @throws {Error} If the API call fails or returns an invalid response
+ * @throws {Error} If the user data is invalid
+ */
+export const getCurrentUser = async (): Promise<User> => {
+  const response = await apiCall(`${API_BASE_URL}/auth/me`);
+  const data: unknown = await response.json();
+
+  if (!isUser(data)) {
+    throw new Error('Invalid user data received from API');
+  }
+
+  return data;
+};
