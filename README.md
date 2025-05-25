@@ -1,6 +1,6 @@
 # Lemma
 
-![Build](https://github.com/LordMathis/Lemma/actions/workflows/build-and-release.yml/badge.svg) ![Go Tests](https://github.com/LordMathis/Lemma/actions/workflows/go-test.yml/badge.svg)
+![Build](https://github.com/lordmathis/lemma/actions/workflows/build-and-release.yml/badge.svg) ![Go Tests](https://github.com/lordmathis/lemma/actions/workflows/go-test.yml/badge.svg) ![Typescript Check](https://github.com/lordmathis/lemma/actions/workflows/typescript.yml/badge.svg)
 
 Yet another markdown editor. Work in progress
 
