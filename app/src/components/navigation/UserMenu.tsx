@@ -102,7 +102,10 @@ const UserMenu: React.FC = () => {
             )}
 
             <UnstyledButton
-              onClick={() => void handleLogout}
+              onClick={() => {
+                void handleLogout();
+                setOpened(false);
+              }}
               px="sm"
               py="xs"
               color="red"
