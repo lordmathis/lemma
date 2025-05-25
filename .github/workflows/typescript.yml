@@ -12,6 +12,9 @@ jobs:
   type-check:
     name: TypeScript Type Check
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./app
 
     steps:
       - name: Checkout code
@@ -22,17 +25,14 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
+          cache-dependency-path: "package-lock.json"
 
       - name: Install dependencies
         run: npm ci
-        working-directory: ./app
 
       - name: Run TypeScript type check
         run: npm run type-check
-        working-directory: ./app
 
-      # Optional: Run ESLint if you have it configured
       - name: Run ESLint
         run: npm run lint
-        working-directory: ./app
-        continue-on-error: true # Make this optional for now
+        continue-on-error: true
