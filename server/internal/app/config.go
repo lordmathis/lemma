@@ -34,7 +34,7 @@ type Config struct {
 // DefaultConfig returns a new Config instance with default values
 func DefaultConfig() *Config {
 	return &Config{
-		DBURL:             "./lemma.db",
+		DBURL:             "sqlite://lemma.db",
 		DBType:            db.DBTypeSQLite,
 		WorkDir:           "./data",
 		StaticPath:        "../app/dist",

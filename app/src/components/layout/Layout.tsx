@@ -5,7 +5,7 @@ import Sidebar from './Sidebar';
 import MainContent from './MainContent';
 import { useFileNavigation } from '../../hooks/useFileNavigation';
 import { useFileList } from '../../hooks/useFileList';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useWorkspace } from '../../hooks/useWorkspace';
 
 const Layout: React.FC = () => {
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();

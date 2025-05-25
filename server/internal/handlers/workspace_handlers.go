@@ -173,19 +173,19 @@ func (h *Handler) GetWorkspace() http.HandlerFunc {
 	}
 }
 
-func gitSettingsChanged(new, old *models.Workspace) bool {
+func gitSettingsChanged(newWorkspace, old *models.Workspace) bool {
 	// Check if Git was enabled/disabled
-	if new.GitEnabled != old.GitEnabled {
+	if newWorkspace.GitEnabled != old.GitEnabled {
 		return true
 	}
 
 	// If Git is enabled, check if any settings changed
-	if new.GitEnabled {
-		return new.GitURL != old.GitURL ||
-			new.GitUser != old.GitUser ||
-			new.GitToken != old.GitToken ||
-			new.GitCommitName != old.GitCommitName ||
-			new.GitCommitEmail != old.GitCommitEmail
+	if newWorkspace.GitEnabled {
+		return newWorkspace.GitURL != old.GitURL ||
+			newWorkspace.GitUser != old.GitUser ||
+			newWorkspace.GitToken != old.GitToken ||
+			newWorkspace.GitCommitName != old.GitCommitName ||
+			newWorkspace.GitCommitEmail != old.GitCommitEmail
 	}
 
 	return false

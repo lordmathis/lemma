@@ -9,7 +9,7 @@ import {
   Accordion,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useWorkspace } from '../../../contexts/WorkspaceContext';
+import { useWorkspace } from '../../../hooks/useWorkspace';
 import AppearanceSettings from './AppearanceSettings';
 import EditorSettings from './EditorSettings';
 import GitSettings from './GitSettings';

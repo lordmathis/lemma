@@ -7,7 +7,7 @@ import {
   IconGitCommit,
 } from '@tabler/icons-react';
 import { useModalContext } from '../../contexts/ModalContext';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useWorkspace } from '../../hooks/useWorkspace';
 
 interface FileActionsProps {
   handlePullChanges: () => Promise<boolean>;

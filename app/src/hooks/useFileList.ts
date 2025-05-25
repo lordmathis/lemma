@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { listFiles } from '../api/file';
-import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useWorkspaceData } from '../contexts/WorkspaceDataContext';
 import type { FileNode } from '@/types/models';
 
 interface UseFileListResult {
@@ -10,7 +10,7 @@ interface UseFileListResult {
 
 export const useFileList = (): UseFileListResult => {
   const [files, setFiles] = useState<FileNode[]>([]);
-  const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
+  const { currentWorkspace, loading: workspaceLoading } = useWorkspaceData();
 
   const loadFileList = useCallback(async (): Promise<void> => {
     if (!currentWorkspace || workspaceLoading) return;

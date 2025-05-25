@@ -5,7 +5,7 @@ import { EditorView, keymap } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { defaultKeymap } from '@codemirror/commands';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useWorkspace } from '../../hooks/useWorkspace';
 
 interface EditorProps {
   content: string;

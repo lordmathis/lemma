@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { isImageFile } from '../utils/fileHelpers';
-import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useWorkspaceData } from '../contexts/WorkspaceDataContext';
 import { getFileContent } from '@/api/file';
 import { DEFAULT_FILE } from '@/types/models';
 
@@ -16,7 +16,7 @@ interface UseFileContentResult {
 export const useFileContent = (
   selectedFile: string | null
 ): UseFileContentResult => {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace } = useWorkspaceData();
   const [content, setContent] = useState<string>(DEFAULT_FILE.content);
   const [originalContent, setOriginalContent] = useState<string>(
     DEFAULT_FILE.content

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, Switch, Group, Box } from '@mantine/core';
-import { useWorkspace } from '../../../contexts/WorkspaceContext';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { Theme } from '@/types/models';
 
 interface AppearanceSettingsProps {
@@ -10,7 +10,7 @@ interface AppearanceSettingsProps {
 const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
   onThemeChange,
 }) => {
-  const { colorScheme, updateColorScheme } = useWorkspace();
+  const { colorScheme, updateColorScheme } = useTheme();
 
   const handleThemeChange = (): void => {
     const newTheme = colorScheme === 'dark' ? Theme.Light : Theme.Dark;

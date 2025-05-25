@@ -9,7 +9,7 @@ import rehypePrism from 'rehype-prism';
 import * as prod from 'react/jsx-runtime';
 import { notifications } from '@mantine/notifications';
 import { remarkWikiLinks } from '../../utils/remarkWikiLinks';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useWorkspace } from '../../hooks/useWorkspace';
 
 interface MarkdownPreviewProps {
   content: string;

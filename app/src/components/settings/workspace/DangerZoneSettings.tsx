@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Button } from '@mantine/core';
 import DeleteWorkspaceModal from '../../modals/workspace/DeleteWorkspaceModal';
-import { useWorkspace } from '../../../contexts/WorkspaceContext';
+import { useWorkspace } from '../../../hooks/useWorkspace';
 import { useModalContext } from '../../../contexts/ModalContext';
 
 const DangerZoneSettings: React.FC = () => {

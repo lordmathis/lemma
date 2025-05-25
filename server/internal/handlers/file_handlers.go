@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -110,7 +111,18 @@ func (h *Handler) LookupFileByName() http.HandlerFunc {
 			return
 		}
 
-		filePaths, err := h.Storage.FindFileByName(ctx.UserID, ctx.Workspace.ID, filename)
+		// URL-decode the filename
+		decodedFilename, err := url.PathUnescape(filename)
+		if err != nil {
+			log.Error("failed to decode filename",
+				"filename", filename,
+				"error", err.Error(),
+			)
+			respondError(w, "Invalid filename", http.StatusBadRequest)
+			return
+		}
+
+		filePaths, err := h.Storage.FindFileByName(ctx.UserID, ctx.Workspace.ID, decodedFilename)
 		if err != nil {
 			if !os.IsNotExist(err) {
 				log.Error("failed to lookup file",
@@ -159,11 +171,22 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 		)
 
 		filePath := chi.URLParam(r, "*")
-		content, err := h.Storage.GetFileContent(ctx.UserID, ctx.Workspace.ID, filePath)
+		// URL-decode the file path
+		decodedPath, err := url.PathUnescape(filePath)
+		if err != nil {
+			log.Error("failed to decode file path",
+				"filePath", filePath,
+				"error", err.Error(),
+			)
+			respondError(w, "Invalid file path", http.StatusBadRequest)
+			return
+		}
+
+		content, err := h.Storage.GetFileContent(ctx.UserID, ctx.Workspace.ID, decodedPath)
 		if err != nil {
 			if storage.IsPathValidationError(err) {
 				log.Error("invalid file path attempted",
-					"filePath", filePath,
+					"filePath", decodedPath,
 					"error", err.Error(),
 				)
 				respondError(w, "Invalid file path", http.StatusBadRequest)
@@ -172,7 +195,7 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 
 			if os.IsNotExist(err) {
 				log.Debug("file not found",
-					"filePath", filePath,
+					"filePath", decodedPath,
 				)
 				respondError(w, "File not found", http.StatusNotFound)
 				return
@@ -228,21 +251,32 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 		)
 
 		filePath := chi.URLParam(r, "*")
+		// URL-decode the file path
+		decodedPath, err := url.PathUnescape(filePath)
+		if err != nil {
+			log.Error("failed to decode file path",
+				"filePath", filePath,
+				"error", err.Error(),
+			)
+			respondError(w, "Invalid file path", http.StatusBadRequest)
+			return
+		}
+
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Error("failed to read request body",
-				"filePath", filePath,
+				"filePath", decodedPath,
 				"error", err.Error(),
 			)
 			respondError(w, "Failed to read request body", http.StatusBadRequest)
 			return
 		}
 
-		err = h.Storage.SaveFile(ctx.UserID, ctx.Workspace.ID, filePath, content)
+		err = h.Storage.SaveFile(ctx.UserID, ctx.Workspace.ID, decodedPath, content)
 		if err != nil {
 			if storage.IsPathValidationError(err) {
 				log.Error("invalid file path attempted",
-					"filePath", filePath,
+					"filePath", decodedPath,
 					"error", err.Error(),
 				)
 				respondError(w, "Invalid file path", http.StatusBadRequest)
@@ -295,11 +329,22 @@ func (h *Handler) DeleteFile() http.HandlerFunc {
 		)
 
 		filePath := chi.URLParam(r, "*")
-		err := h.Storage.DeleteFile(ctx.UserID, ctx.Workspace.ID, filePath)
+		// URL-decode the file path
+		decodedPath, err := url.PathUnescape(filePath)
+		if err != nil {
+			log.Error("failed to decode file path",
+				"filePath", filePath,
+				"error", err.Error(),
+			)
+			respondError(w, "Invalid file path", http.StatusBadRequest)
+			return
+		}
+
+		err = h.Storage.DeleteFile(ctx.UserID, ctx.Workspace.ID, decodedPath)
 		if err != nil {
 			if storage.IsPathValidationError(err) {
 				log.Error("invalid file path attempted",
-					"filePath", filePath,
+					"filePath", decodedPath,
 					"error", err.Error(),
 				)
 				respondError(w, "Invalid file path", http.StatusBadRequest)
@@ -308,7 +353,7 @@ func (h *Handler) DeleteFile() http.HandlerFunc {
 
 			if os.IsNotExist(err) {
 				log.Debug("file not found",
-					"filePath", filePath,
+					"filePath", decodedPath,
 				)
 				respondError(w, "File not found", http.StatusNotFound)
 				return
@@ -413,7 +458,19 @@ func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 
 		// Validate the file path in the workspace
 		if requestBody.FilePath != "" {
-			_, err := h.Storage.GetFileContent(ctx.UserID, ctx.Workspace.ID, requestBody.FilePath)
+			// URL-decode the file path
+			decodedPath, err := url.PathUnescape(requestBody.FilePath)
+			if err != nil {
+				log.Error("failed to decode file path",
+					"filePath", requestBody.FilePath,
+					"error", err.Error(),
+				)
+				respondError(w, "Invalid file path", http.StatusBadRequest)
+				return
+			}
+			requestBody.FilePath = decodedPath
+
+			_, err = h.Storage.GetFileContent(ctx.UserID, ctx.Workspace.ID, requestBody.FilePath)
 			if err != nil {
 				if storage.IsPathValidationError(err) {
 					log.Error("invalid file path attempted",

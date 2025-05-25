@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useWorkspaceData } from '../contexts/WorkspaceDataContext';
 import { useLastOpenedFile } from './useLastOpenedFile';
 import { DEFAULT_FILE } from '@/types/models';
 
@@ -12,7 +12,7 @@ interface UseFileNavigationResult {
 export const useFileNavigation = (): UseFileNavigationResult => {
   const [selectedFile, setSelectedFile] = useState<string>(DEFAULT_FILE.path);
   const [isNewFile, setIsNewFile] = useState<boolean>(true);
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace } = useWorkspaceData();
   const { loadLastOpenedFile, saveLastOpenedFile } = useLastOpenedFile();
 
   const handleFileSelect = useCallback(

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { getLastOpenedFile, updateLastOpenedFile } from '../api/file';
-import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useWorkspaceData } from '../contexts/WorkspaceDataContext';
 
 interface UseLastOpenedFileResult {
   loadLastOpenedFile: () => Promise<string | null>;
@@ -8,7 +8,7 @@ interface UseLastOpenedFileResult {
 }
 
 export const useLastOpenedFile = (): UseLastOpenedFileResult => {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace } = useWorkspaceData();
 
   const loadLastOpenedFile = useCallback(async (): Promise<string | null> => {
     if (!currentWorkspace) return null;
