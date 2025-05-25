@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
 import { saveFile, deleteFile } from '../api/file';
-import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useWorkspaceData } from '../contexts/WorkspaceDataContext';
 import { useGitOperations } from './useGitOperations';
 import { FileAction } from '@/types/models';
 
@@ -12,7 +12,7 @@ interface UseFileOperationsResult {
 }
 
 export const useFileOperations = (): UseFileOperationsResult => {
-  const { currentWorkspace, settings } = useWorkspace();
+  const { currentWorkspace, settings } = useWorkspaceData();
   const { handleCommitAndPush } = useGitOperations();
 
   const autoCommit = useCallback(

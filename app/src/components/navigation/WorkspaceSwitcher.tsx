@@ -15,7 +15,7 @@ import {
   useMantineTheme,
 } from '@mantine/core';
 import { IconFolders, IconSettings, IconFolderPlus } from '@tabler/icons-react';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useWorkspace } from '../../hooks/useWorkspace';
 import { useModalContext } from '../../contexts/ModalContext';
 import { listWorkspaces } from '../../api/workspace';
 import CreateWorkspaceModal from '../modals/workspace/CreateWorkspaceModal';

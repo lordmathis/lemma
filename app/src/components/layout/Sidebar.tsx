@@ -3,7 +3,7 @@ import { Box } from '@mantine/core';
 import FileActions from '../files/FileActions';
 import FileTree from '../files/FileTree';
 import { useGitOperations } from '../../hooks/useGitOperations';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useWorkspace } from '../../hooks/useWorkspace';
 import type { FileNode } from '@/types/models';
 
 interface SidebarProps {

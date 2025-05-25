@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
 import { pullChanges, commitAndPush } from '../api/git';
-import { useWorkspace } from '../contexts/WorkspaceContext';
+import { useWorkspaceData } from '../contexts/WorkspaceDataContext';
 import type { CommitHash } from '@/types/models';
 
 interface UseGitOperationsResult {
@@ -10,7 +10,7 @@ interface UseGitOperationsResult {
 }
 
 export const useGitOperations = (): UseGitOperationsResult => {
-  const { currentWorkspace, settings } = useWorkspace();
+  const { currentWorkspace, settings } = useWorkspaceData();
 
   const handlePull = useCallback(async (): Promise<boolean> => {
     if (!currentWorkspace || !settings.gitEnabled) return false;
