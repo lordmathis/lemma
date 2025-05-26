@@ -16,10 +16,10 @@ export const useGitOperations = (): UseGitOperationsResult => {
     if (!currentWorkspace || !settings.gitEnabled) return false;
 
     try {
-      await pullChanges(currentWorkspace.name);
+      const message = await pullChanges(currentWorkspace.name);
       notifications.show({
         title: 'Success',
-        message: 'Successfully pulled latest changes',
+        message: message || 'Successfully pulled latest changes',
         color: 'green',
       });
       return true;
