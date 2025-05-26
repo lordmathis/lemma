@@ -1,3 +1,5 @@
+import type { Parent } from 'unist';
+
 /**
  * User model from the API
  */
@@ -284,4 +286,67 @@ export interface ProfileSettingsState {
 export interface SettingsAction<T> {
   type: SettingsActionType;
   payload?: T;
+}
+
+// WikiLinks
+
+/**
+ * Represents a wiki link match from the regex
+ */
+export interface WikiLinkMatch {
+  fullMatch: string;
+  isImage: boolean; // Changed from string to boolean
+  fileName: string;
+  displayText: string;
+  heading?: string | undefined;
+  index: number;
+}
+
+/**
+ * Node replacement information for processing
+ */
+export interface ReplacementInfo {
+  matches: WikiLinkMatch[];
+  parent: Parent;
+  index: number;
+}
+
+/**
+ * Properties for link nodes
+ */
+export interface LinkNodeProps {
+  style?: {
+    color?: string;
+    textDecoration?: string;
+  };
+}
+
+/**
+ * Link node with data properties
+ */
+export interface LinkNode extends Node {
+  type: 'link';
+  url: string;
+  children: Node[];
+  data?: {
+    hProperties?: LinkNodeProps;
+  };
+}
+
+/**
+ * Image node
+ */
+export interface ImageNode extends Node {
+  type: 'image';
+  url: string;
+  alt?: string;
+  title?: string;
+}
+
+/**
+ * Text node
+ */
+export interface TextNode extends Node {
+  type: 'text';
+  value: string;
 }
