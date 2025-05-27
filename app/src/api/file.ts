@@ -40,6 +40,10 @@ export const lookupFileByName = async (
   workspaceName: string,
   filename: string
 ): Promise<string[]> => {
+  if (!filename || typeof filename !== 'string') {
+    throw new Error('Invalid filename provided for lookup');
+  }
+
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName

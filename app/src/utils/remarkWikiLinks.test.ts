@@ -278,6 +278,7 @@ describe('remarkWikiLinks', () => {
 
       expect(result.toString()).toContain('Spaces');
       // Should not call API for empty/whitespace-only links
+      expect(fileApi.lookupFileByName).not.toHaveBeenCalled();
     });
 
     it('handles nested brackets', async () => {
@@ -317,20 +318,6 @@ describe('remarkWikiLinks', () => {
 
       expect(result.toString()).toContain('test');
       // Should not call API when workspace is empty
-      expect(fileApi.lookupFileByName).not.toHaveBeenCalled();
-    });
-
-    it('does not process links when workspace is not provided', async () => {
-      const processor = unified()
-        .use(remarkParse)
-        .use(remarkWikiLinks, '')
-        .use(remarkStringify);
-
-      const markdown = '[[test]]';
-
-      const result = await processor.process(markdown);
-
-      expect(result.toString()).toContain('test');
       expect(fileApi.lookupFileByName).not.toHaveBeenCalled();
     });
   });

@@ -157,8 +157,6 @@ describe('fileHelpers', () => {
     });
 
     it('uses the API base URL correctly', () => {
-      // Test that the function uses the expected API base URL
-      // Note: The API_BASE_URL is imported at module load time, so we test the expected behavior
       const url = getFileUrl('test', 'file.md');
       expect(url).toBe(
         'http://localhost:8080/api/v1/workspaces/test/files/file.md'

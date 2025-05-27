@@ -13,7 +13,8 @@ export const useGitOperations = (): UseGitOperationsResult => {
   const { currentWorkspace, settings } = useWorkspaceData();
 
   const handlePull = useCallback(async (): Promise<boolean> => {
-    if (!currentWorkspace || !settings.gitEnabled) return false;
+    if (!currentWorkspace || !settings.gitEnabled || !currentWorkspace.name)
+      return false;
 
     try {
       const message = await pullChanges(currentWorkspace.name);
@@ -37,11 +38,12 @@ export const useGitOperations = (): UseGitOperationsResult => {
   const handleCommitAndPush = useCallback(
     async (message: string): Promise<void> => {
       if (!currentWorkspace || !settings.gitEnabled) return;
-      const commitHash: CommitHash = await commitAndPush(
-        currentWorkspace.name,
-        message
-      );
+
       try {
+        const commitHash: CommitHash = await commitAndPush(
+          currentWorkspace.name,
+          message
+        );
         notifications.show({
           title: 'Success',
           message: 'Successfully committed and pushed changes ' + commitHash,
