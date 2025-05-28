@@ -17,35 +17,55 @@ export const useFileNavigation = (): UseFileNavigationResult => {
 
   const handleFileSelect = useCallback(
     async (filePath: string | null): Promise<void> => {
-      const newPath = filePath || DEFAULT_FILE.path;
-      setSelectedFile(newPath);
-      setIsNewFile(!filePath);
+      // Consider empty string as null
+      const effectiveFilePath = filePath === '' ? null : filePath;
 
-      if (filePath) {
-        await saveLastOpenedFile(filePath);
+      if (effectiveFilePath) {
+        setSelectedFile(effectiveFilePath);
+        setIsNewFile(false);
+
+        try {
+          // Try to save the last opened file
+          await saveLastOpenedFile(effectiveFilePath);
+        } catch (err) {
+          // Silently handle the error so state still updates
+          console.error('Failed to save last opened file:', err);
+        }
+      } else if (selectedFile === DEFAULT_FILE.path || filePath === null) {
+        setSelectedFile(DEFAULT_FILE.path);
+        setIsNewFile(true);
       }
     },
-    [saveLastOpenedFile]
+    [saveLastOpenedFile, selectedFile]
   );
 
   // Load last opened file when workspace changes
   useEffect(() => {
     const initializeFile = async (): Promise<void> => {
-      setSelectedFile(DEFAULT_FILE.path);
-      setIsNewFile(true);
+      try {
+        setSelectedFile(DEFAULT_FILE.path);
+        setIsNewFile(true);
 
-      const lastFile = await loadLastOpenedFile();
-      if (lastFile) {
-        await handleFileSelect(lastFile);
-      } else {
-        await handleFileSelect(null);
+        const lastFile = await loadLastOpenedFile();
+
+        if (lastFile) {
+          setSelectedFile(lastFile);
+          setIsNewFile(false);
+        }
+      } catch (err) {
+        console.error('Failed to load last opened file:', err);
+        setSelectedFile(DEFAULT_FILE.path);
+        setIsNewFile(true);
       }
     };
 
     if (currentWorkspace) {
       void initializeFile();
+    } else {
+      setSelectedFile(DEFAULT_FILE.path);
+      setIsNewFile(true);
     }
-  }, [currentWorkspace, loadLastOpenedFile, handleFileSelect]);
+  }, [currentWorkspace, loadLastOpenedFile, saveLastOpenedFile]);
 
   return { selectedFile, isNewFile, handleFileSelect };
 };

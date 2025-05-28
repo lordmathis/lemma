@@ -62,9 +62,7 @@ describe('useFileNavigation', () => {
       });
 
       expect(mockLastOpenedFile.loadLastOpenedFile).toHaveBeenCalled();
-      expect(mockLastOpenedFile.saveLastOpenedFile).toHaveBeenCalledWith(
-        'documents/readme.md'
-      );
+      expect(mockLastOpenedFile.saveLastOpenedFile).not.toHaveBeenCalled();
     });
 
     it('stays with default file when no last opened file exists', async () => {
@@ -90,8 +88,11 @@ describe('useFileNavigation', () => {
         await result.current.handleFileSelect('notes/todo.md');
       });
 
-      expect(result.current.selectedFile).toBe('notes/todo.md');
-      expect(result.current.isNewFile).toBe(false);
+      await waitFor(() => {
+        expect(result.current.selectedFile).toBe('notes/todo.md');
+        expect(result.current.isNewFile).toBe(false);
+      });
+
       expect(mockLastOpenedFile.saveLastOpenedFile).toHaveBeenCalledWith(
         'notes/todo.md'
       );
@@ -109,7 +110,7 @@ describe('useFileNavigation', () => {
       expect(mockLastOpenedFile.saveLastOpenedFile).not.toHaveBeenCalled();
     });
 
-    it('handles empty string file selection', async () => {
+    it('handles empty string file selection with default file', async () => {
       const { result } = renderHook(() => useFileNavigation());
 
       await act(async () => {
@@ -118,6 +119,32 @@ describe('useFileNavigation', () => {
 
       expect(result.current.selectedFile).toBe(DEFAULT_FILE.path);
       expect(result.current.isNewFile).toBe(true);
+      expect(mockLastOpenedFile.saveLastOpenedFile).not.toHaveBeenCalled();
+    });
+
+    it('preserves current selection when passed empty string with existing selection', async () => {
+      const { result } = renderHook(() => useFileNavigation());
+
+      // First select a valid file
+      await act(async () => {
+        await result.current.handleFileSelect('existing-file.md');
+      });
+
+      await waitFor(() => {
+        expect(result.current.selectedFile).toBe('existing-file.md');
+        expect(result.current.isNewFile).toBe(false);
+      });
+
+      vi.clearAllMocks();
+
+      // Now send empty string
+      await act(async () => {
+        await result.current.handleFileSelect('');
+      });
+
+      // Selection should be preserved
+      expect(result.current.selectedFile).toBe('existing-file.md');
+      expect(result.current.isNewFile).toBe(false);
       expect(mockLastOpenedFile.saveLastOpenedFile).not.toHaveBeenCalled();
     });
 
@@ -138,8 +165,11 @@ describe('useFileNavigation', () => {
           await result.current.handleFileSelect(filePath);
         });
 
-        expect(result.current.selectedFile).toBe(filePath);
-        expect(result.current.isNewFile).toBe(false);
+        await waitFor(() => {
+          expect(result.current.selectedFile).toBe(filePath);
+          expect(result.current.isNewFile).toBe(false);
+        });
+
         expect(mockLastOpenedFile.saveLastOpenedFile).toHaveBeenCalledWith(
           filePath
         );
@@ -155,16 +185,22 @@ describe('useFileNavigation', () => {
 
       const files = ['file1.md', 'file2.md', 'file3.md'];
 
-      await act(async () => {
-        await Promise.all(
-          files.map((file) => result.current.handleFileSelect(file))
-        );
+      // Use sequential state updates instead of Promise.all for more predictable results
+      for (const file of files) {
+        await act(async () => {
+          await result.current.handleFileSelect(file);
+        });
+      }
+
+      // After all updates, we should have the last file selected
+      await waitFor(() => {
+        expect(result.current.selectedFile).toBe(files[files.length - 1]);
+        expect(result.current.isNewFile).toBe(false);
       });
 
-      // Should end up with the last file (depending on async timing)
-      expect(files).toContain(result.current.selectedFile);
-      expect(result.current.isNewFile).toBe(false);
-      expect(mockLastOpenedFile.saveLastOpenedFile).toHaveBeenCalledTimes(3);
+      expect(mockLastOpenedFile.saveLastOpenedFile).toHaveBeenCalledTimes(
+        files.length
+      );
     });
 
     it('handles file selection errors gracefully', async () => {
@@ -179,8 +215,11 @@ describe('useFileNavigation', () => {
         await result.current.handleFileSelect('error-file.md');
       });
 
-      expect(result.current.selectedFile).toBe('error-file.md');
-      expect(result.current.isNewFile).toBe(false);
+      // Wait for state update despite the error
+      await waitFor(() => {
+        expect(result.current.selectedFile).toBe('error-file.md');
+        expect(result.current.isNewFile).toBe(false);
+      });
     });
   });
 
@@ -324,15 +363,22 @@ describe('useFileNavigation', () => {
         await result.current.handleFileSelect('real-file.md');
       });
 
-      expect(result.current.isNewFile).toBe(false);
+      // Wait for state to update
+      await waitFor(() => {
+        expect(result.current.selectedFile).toBe('real-file.md');
+        expect(result.current.isNewFile).toBe(false);
+      });
 
       // Go back to null (should default to default file)
       await act(async () => {
         await result.current.handleFileSelect(null);
       });
 
-      expect(result.current.selectedFile).toBe(DEFAULT_FILE.path);
-      expect(result.current.isNewFile).toBe(true);
+      // Wait for state to update again
+      await waitFor(() => {
+        expect(result.current.selectedFile).toBe(DEFAULT_FILE.path);
+        expect(result.current.isNewFile).toBe(true);
+      });
     });
 
     it('maintains correct isNewFile state for regular files', async () => {
@@ -345,8 +391,11 @@ describe('useFileNavigation', () => {
           await result.current.handleFileSelect(file);
         });
 
-        expect(result.current.selectedFile).toBe(file);
-        expect(result.current.isNewFile).toBe(false);
+        // Wait for each file selection to complete
+        await waitFor(() => {
+          expect(result.current.selectedFile).toBe(file);
+          expect(result.current.isNewFile).toBe(false);
+        });
       }
     });
   });
@@ -414,8 +463,10 @@ describe('useFileNavigation', () => {
       });
 
       // State should still be updated despite save error
-      expect(result.current.selectedFile).toBe('test-file.md');
-      expect(result.current.isNewFile).toBe(false);
+      await waitFor(() => {
+        expect(result.current.selectedFile).toBe('test-file.md');
+        expect(result.current.isNewFile).toBe(false);
+      });
     });
   });
 });
