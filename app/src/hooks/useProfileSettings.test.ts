@@ -212,7 +212,7 @@ describe('useProfileSettings', () => {
 
     it('handles email errors specifically', async () => {
       const mockUpdateProfile = vi.mocked(userApi.updateProfile);
-      mockUpdateProfile.mockRejectedValue(new Error('Email already exists'));
+      mockUpdateProfile.mockRejectedValue(new Error('email already exists'));
 
       const { result } = renderHook(() => useProfileSettings());
 
