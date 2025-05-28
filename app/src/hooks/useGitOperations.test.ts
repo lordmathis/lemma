@@ -380,7 +380,7 @@ describe('useGitOperations', () => {
     it('handles undefined workspace name gracefully', async () => {
       mockWorkspaceData.currentWorkspace = {
         id: 1,
-        name: undefined as unknown as string,
+        name: undefined!,
       };
 
       const { result } = renderHook(() => useGitOperations());
@@ -396,7 +396,7 @@ describe('useGitOperations', () => {
 
     it('handles missing settings gracefully', async () => {
       mockWorkspaceData.settings = {
-        gitEnabled: undefined as unknown as boolean,
+        gitEnabled: undefined!,
       };
 
       const { result } = renderHook(() => useGitOperations());
@@ -413,7 +413,7 @@ describe('useGitOperations', () => {
     it('handles API returning non-string commit hash', async () => {
       const mockCommitAndPush = vi.mocked(gitApi.commitAndPush);
       // API might return something unexpected
-      mockCommitAndPush.mockResolvedValue(null as unknown as string);
+      mockCommitAndPush.mockResolvedValue(null!);
 
       const { result } = renderHook(() => useGitOperations());
 

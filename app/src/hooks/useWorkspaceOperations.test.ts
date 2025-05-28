@@ -390,7 +390,7 @@ describe('useWorkspaceOperations', () => {
     it('updates workspace settings successfully', async () => {
       const mockUpdateWorkspace = vi.mocked(workspaceApi.updateWorkspace);
       const updatedWorkspace: Workspace = {
-        ...(mockWorkspaceData.currentWorkspace as Workspace),
+        ...mockWorkspaceData.currentWorkspace!,
         autoSave: true,
         showHiddenFiles: true,
       };
@@ -421,25 +421,8 @@ describe('useWorkspaceOperations', () => {
     it('updates theme and calls updateColorScheme', async () => {
       const mockUpdateWorkspace = vi.mocked(workspaceApi.updateWorkspace);
       const updatedWorkspace: Workspace = {
-        ...(mockWorkspaceData.currentWorkspace ?? {
-          id: 1,
-          userId: 1,
-          name: 'test-workspace',
-          createdAt: '2024-01-01T00:00:00Z',
-          theme: Theme.Light,
-          autoSave: false,
-          showHiddenFiles: false,
-          gitEnabled: false,
-          gitUrl: '',
-          gitUser: '',
-          gitToken: '',
-          gitAutoCommit: false,
-          gitCommitMsgTemplate: '${action} ${filename}',
-          gitCommitName: '',
-          gitCommitEmail: '',
-        }),
+        ...mockWorkspaceData.currentWorkspace!,
         theme: Theme.Dark,
-        name: mockWorkspaceData.currentWorkspace?.name ?? 'test-workspace',
       };
       mockUpdateWorkspace.mockResolvedValue(updatedWorkspace);
       mockWorkspaceData.loadWorkspaces.mockResolvedValue(mockWorkspaces);
@@ -467,23 +450,7 @@ describe('useWorkspaceOperations', () => {
     it('updates multiple settings including theme', async () => {
       const mockUpdateWorkspace = vi.mocked(workspaceApi.updateWorkspace);
       const updatedWorkspace: Workspace = {
-        ...(mockWorkspaceData.currentWorkspace ?? {
-          id: 1,
-          userId: 1,
-          name: 'test-workspace',
-          createdAt: '2024-01-01T00:00:00Z',
-          theme: Theme.Light,
-          autoSave: false,
-          showHiddenFiles: false,
-          gitEnabled: false,
-          gitUrl: '',
-          gitUser: '',
-          gitToken: '',
-          gitAutoCommit: false,
-          gitCommitMsgTemplate: '${action} ${filename}',
-          gitCommitName: '',
-          gitCommitEmail: '',
-        }),
+        ...mockWorkspaceData.currentWorkspace!,
         theme: Theme.Dark,
         autoSave: true,
         gitEnabled: true,
@@ -564,23 +531,7 @@ describe('useWorkspaceOperations', () => {
         .mockImplementation(() => {});
 
       const updatedWorkspace: Workspace = {
-        ...(mockWorkspaceData.currentWorkspace ?? {
-          id: 1,
-          userId: 1,
-          name: 'test-workspace',
-          createdAt: '2024-01-01T00:00:00Z',
-          theme: Theme.Light,
-          autoSave: false,
-          showHiddenFiles: false,
-          gitEnabled: false,
-          gitUrl: '',
-          gitUser: '',
-          gitToken: '',
-          gitAutoCommit: false,
-          gitCommitMsgTemplate: '${action} ${filename}',
-          gitCommitName: '',
-          gitCommitEmail: '',
-        }),
+        ...mockWorkspaceData.currentWorkspace!,
         autoSave: true,
       };
       mockUpdateWorkspace.mockResolvedValue(updatedWorkspace);
@@ -609,23 +560,7 @@ describe('useWorkspaceOperations', () => {
 
     it('handles empty settings update', async () => {
       const mockUpdateWorkspace = vi.mocked(workspaceApi.updateWorkspace);
-      const updatedWorkspace = mockWorkspaceData.currentWorkspace ?? {
-        id: 1,
-        userId: 1,
-        name: 'test-workspace',
-        createdAt: '2024-01-01T00:00:00Z',
-        theme: Theme.Light,
-        autoSave: false,
-        showHiddenFiles: false,
-        gitEnabled: false,
-        gitUrl: '',
-        gitUser: '',
-        gitToken: '',
-        gitAutoCommit: false,
-        gitCommitMsgTemplate: '${action} ${filename}',
-        gitCommitName: '',
-        gitCommitEmail: '',
-      };
+      const updatedWorkspace = mockWorkspaceData.currentWorkspace!;
       mockUpdateWorkspace.mockResolvedValue(updatedWorkspace);
       mockWorkspaceData.loadWorkspaces.mockResolvedValue(mockWorkspaces);
 
@@ -684,23 +619,7 @@ describe('useWorkspaceOperations', () => {
 
       // Update workspace name
       mockWorkspaceData.currentWorkspace = {
-        ...(mockWorkspaceData.currentWorkspace ?? {
-          id: 1,
-          userId: 1,
-          name: 'different-workspace',
-          createdAt: '2024-01-01T00:00:00Z',
-          theme: Theme.Light,
-          autoSave: false,
-          showHiddenFiles: false,
-          gitEnabled: false,
-          gitUrl: '',
-          gitUser: '',
-          gitToken: '',
-          gitAutoCommit: false,
-          gitCommitMsgTemplate: '${action} ${filename}',
-          gitCommitName: '',
-          gitCommitEmail: '',
-        }),
+        ...mockWorkspaceData.currentWorkspace!,
         name: 'different-workspace',
       };
 
@@ -734,45 +653,8 @@ describe('useWorkspaceOperations', () => {
 
       // Change workspace
       mockWorkspaceData.currentWorkspace = {
-        ...(mockWorkspaceData.currentWorkspace ?? {
-          id: 1,
-          userId: 1,
-          name: 'new-workspace',
-          createdAt: '2024-01-01T00:00:00Z',
-          theme: Theme.Light,
-          autoSave: false,
-          showHiddenFiles: false,
-          gitEnabled: false,
-          gitUrl: '',
-          gitUser: '',
-          gitToken: '',
-          gitAutoCommit: false,
-          gitCommitMsgTemplate: '${action} ${filename}',
-          gitCommitName: '',
-          gitCommitEmail: '',
-        }),
+        ...mockWorkspaceData.currentWorkspace!,
         name: 'new-workspace',
-        createdAt:
-          mockWorkspaceData.currentWorkspace?.createdAt ??
-          '2024-01-01T00:00:00Z',
-        id: mockWorkspaceData.currentWorkspace?.id ?? 1,
-        userId: mockWorkspaceData.currentWorkspace?.userId ?? 1,
-        theme: mockWorkspaceData.currentWorkspace?.theme ?? Theme.Light,
-        autoSave: mockWorkspaceData.currentWorkspace?.autoSave ?? false,
-        showHiddenFiles:
-          mockWorkspaceData.currentWorkspace?.showHiddenFiles ?? false,
-        gitEnabled: mockWorkspaceData.currentWorkspace?.gitEnabled ?? false,
-        gitUrl: mockWorkspaceData.currentWorkspace?.gitUrl ?? '',
-        gitUser: mockWorkspaceData.currentWorkspace?.gitUser ?? '',
-        gitToken: mockWorkspaceData.currentWorkspace?.gitToken ?? '',
-        gitAutoCommit:
-          mockWorkspaceData.currentWorkspace?.gitAutoCommit ?? false,
-        gitCommitMsgTemplate:
-          mockWorkspaceData.currentWorkspace?.gitCommitMsgTemplate ??
-          '${action} ${filename}',
-        gitCommitName: mockWorkspaceData.currentWorkspace?.gitCommitName ?? '',
-        gitCommitEmail:
-          mockWorkspaceData.currentWorkspace?.gitCommitEmail ?? '',
       };
 
       rerender();
@@ -816,27 +698,9 @@ describe('useWorkspaceOperations', () => {
       mockUpdateLastWorkspaceName.mockResolvedValue(undefined);
       mockWorkspaceData.loadWorkspaceData.mockResolvedValue(undefined);
       mockWorkspaceData.loadWorkspaces.mockResolvedValue(mockWorkspaces);
-
-      // Ensure we have a defined workspace to use
-      const workspaceToUse: Workspace = {
-        id: 1,
-        userId: 1,
-        name: 'test-workspace',
-        createdAt: '2024-01-01T00:00:00Z',
-        theme: Theme.Light,
-        autoSave: false,
-        showHiddenFiles: false,
-        gitEnabled: false,
-        gitUrl: '',
-        gitUser: '',
-        gitToken: '',
-        gitAutoCommit: false,
-        gitCommitMsgTemplate: '${action} ${filename}',
-        gitCommitName: '',
-        gitCommitEmail: '',
-      };
-
-      mockUpdateWorkspace.mockResolvedValue(workspaceToUse);
+      mockUpdateWorkspace.mockResolvedValue(
+        mockWorkspaceData.currentWorkspace!
+      );
 
       const { result } = renderHook(() => useWorkspaceOperations());
 
