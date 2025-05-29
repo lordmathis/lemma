@@ -1,4 +1,4 @@
-name: TypeScript Type Check
+name: Frontend Tests
 
 permissions:
   contents: read
@@ -14,8 +14,8 @@ on:
       - main
 
 jobs:
-  type-check:
-    name: TypeScript Type Check
+  test:
+    name: Run Frontend Tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -35,9 +35,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run TypeScript type check
-        run: npm run type-check
-
-      - name: Run ESLint
-        run: npm run lint
-        continue-on-error: true
+      - name: Run Vitest tests
+        run: npm test
