@@ -22,13 +22,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   const updateColorScheme = useCallback(
     (newTheme: MantineColorScheme): void => {
-      setColorScheme(newTheme);
+      if (setColorScheme) {
+        setColorScheme(newTheme);
+      }
     },
     [setColorScheme]
   );
 
+  // Ensure colorScheme is never undefined by falling back to light theme
   const value: ThemeContextType = {
-    colorScheme,
+    colorScheme: colorScheme || 'light',
     updateColorScheme,
   };
 
