@@ -37,9 +37,10 @@ const LoginPage: React.FC = () => {
       </Text>
 
       <Paper withBorder shadow="md" p={30} mt={30} radius="md">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} role="form">
           <Stack>
             <TextInput
+              type="email"
               label="Email"
               placeholder="your@email.com"
               required
