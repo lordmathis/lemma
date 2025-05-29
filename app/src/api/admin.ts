@@ -7,10 +7,10 @@ import { apiCall } from './api';
 import {
   isSystemStats,
   isUser,
-  isWorkspace,
+  isWorkspaceStats,
   type SystemStats,
   type User,
-  type Workspace,
+  type WorkspaceStats,
 } from '@/types/models';
 
 const ADMIN_BASE_URL = `${API_BASE_URL}/admin`;
@@ -101,18 +101,18 @@ export const updateUser = async (
 
 /**
  * Fetches all workspaces from the API
- * @returns {Promise<Workspace[]>} A promise that resolves to an array of workspaces
+ * @returns {Promise<WorkspaceStats[]>} A promise that resolves to an array of workspaces
  * @throws {Error} If the API call fails or returns an invalid response
  * */
-export const getWorkspaces = async (): Promise<Workspace[]> => {
+export const getWorkspaces = async (): Promise<WorkspaceStats[]> => {
   const response = await apiCall(`${ADMIN_BASE_URL}/workspaces`);
   const data: unknown = await response.json();
   if (!Array.isArray(data)) {
     throw new Error('Invalid workspaces response received from API');
   }
   return data.map((workspace) => {
-    if (!isWorkspace(workspace)) {
-      throw new Error('Invalid workspace object received from API');
+    if (!isWorkspaceStats(workspace)) {
+      throw new Error('Invalid workspace stats object received from API');
     }
     return workspace;
   });
