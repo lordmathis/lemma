@@ -38,12 +38,17 @@ const EmailPasswordModal: React.FC<EmailPasswordModalProps> = ({
         <PasswordInput
           label="Current Password"
           placeholder="Enter your current password"
+          data-testid="email-password-input"
           value={password}
           onChange={(e) => setPassword(e.currentTarget.value)}
           required
         />
         <Group justify="flex-end" mt="md">
-          <Button variant="default" onClick={onClose}>
+          <Button
+            variant="default"
+            onClick={onClose}
+            data-testid="cancel-email-password-button"
+          >
             Cancel
           </Button>
           <Button
@@ -51,6 +56,7 @@ const EmailPasswordModal: React.FC<EmailPasswordModalProps> = ({
               void onConfirm(password);
               setPassword('');
             }}
+            data-testid="confirm-email-password-button"
           >
             Confirm
           </Button>

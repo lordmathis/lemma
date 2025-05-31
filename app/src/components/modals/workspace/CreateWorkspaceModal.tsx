@@ -63,6 +63,7 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
         <TextInput
           label="Workspace Name"
           placeholder="Enter workspace name"
+          data-testid="workspace-name-input"
           value={name}
           onChange={(event) => setName(event.currentTarget.value)}
           mb="md"
@@ -74,10 +75,15 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
             variant="default"
             onClick={() => setCreateWorkspaceModalVisible(false)}
             disabled={loading}
+            data-testid="cancel-create-workspace-button"
           >
             Cancel
           </Button>
-          <Button onClick={() => void handleSubmit} loading={loading}>
+          <Button
+            onClick={() => void handleSubmit}
+            loading={loading}
+            data-testid="confirm-create-workspace-button"
+          >
             Create
           </Button>
         </Group>

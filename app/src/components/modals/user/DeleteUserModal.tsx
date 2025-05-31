@@ -31,10 +31,19 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
         deleted.
       </Text>
       <Group justify="flex-end" mt="xl">
-        <Button variant="default" onClick={onClose}>
+        <Button
+          variant="default"
+          onClick={onClose}
+          data-testid="cancel-delete-user-button"
+        >
           Cancel
         </Button>
-        <Button color="red" onClick={() => void onConfirm()} loading={loading}>
+        <Button
+          color="red"
+          onClick={() => void onConfirm()}
+          loading={loading}
+          data-testid="confirm-delete-user-button"
+        >
           Delete User
         </Button>
       </Group>
