@@ -68,30 +68,28 @@ describe('LoginPage', () => {
       ).toBeInTheDocument();
 
       // Check form fields
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+      expect(screen.getByTestId('email-input')).toBeInTheDocument();
+      expect(screen.getByTestId('password-input')).toBeInTheDocument();
 
       // Check submit button
-      expect(
-        screen.getByRole('button', { name: /sign in/i })
-      ).toBeInTheDocument();
+      expect(screen.getByTestId('login-button')).toBeInTheDocument();
     });
 
     it('renders form fields with correct placeholders', () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByPlaceholderText('your@email.com');
-      const passwordInput = screen.getByPlaceholderText('Your password');
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
 
-      expect(emailInput).toBeInTheDocument();
-      expect(passwordInput).toBeInTheDocument();
+      expect(emailInput).toHaveAttribute('placeholder', 'your@email.com');
+      expect(passwordInput).toHaveAttribute('placeholder', 'Your password');
     });
 
     it('renders required fields as required', () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
 
       expect(emailInput).toBeRequired();
       expect(passwordInput).toBeRequired();
@@ -100,7 +98,8 @@ describe('LoginPage', () => {
     it('submit button is not loading initially', () => {
       render(<LoginPage />);
 
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const submitButton = screen.getByTestId('login-button');
+      expect(submitButton).toHaveRole('button');
       expect(submitButton).not.toHaveAttribute('data-loading', 'true');
     });
   });
@@ -109,7 +108,7 @@ describe('LoginPage', () => {
     it('updates email input value when typed', () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
+      const emailInput = screen.getByTestId('email-input');
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
 
       expect((emailInput as HTMLInputElement).value).toBe('test@example.com');
@@ -118,7 +117,7 @@ describe('LoginPage', () => {
     it('updates password input value when typed', () => {
       render(<LoginPage />);
 
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByTestId('password-input');
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
       expect((passwordInput as HTMLInputElement).value).toBe('password123');
@@ -127,8 +126,8 @@ describe('LoginPage', () => {
     it('clears form values when inputs are cleared', () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
 
       // Set values
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
@@ -147,9 +146,9 @@ describe('LoginPage', () => {
     it('calls login function with correct credentials on form submit', async () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
+      const submitButton = screen.getByTestId('login-button');
 
       // Fill in the form
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
@@ -170,8 +169,8 @@ describe('LoginPage', () => {
       render(<LoginPage />);
 
       const form = screen.getByRole('form');
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
 
       // Fill in the form
       fireEvent.change(emailInput, { target: { value: 'user@test.com' } });
@@ -195,9 +194,9 @@ describe('LoginPage', () => {
 
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
+      const submitButton = screen.getByTestId('login-button');
 
       // Fill in the form
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
@@ -228,9 +227,9 @@ describe('LoginPage', () => {
 
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
+      const submitButton = screen.getByTestId('login-button');
 
       // Fill in the form
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
@@ -265,7 +264,7 @@ describe('LoginPage', () => {
     it('prevents form submission with empty fields', () => {
       render(<LoginPage />);
 
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const submitButton = screen.getByTestId('login-button');
 
       // Try to submit without filling fields
       fireEvent.click(submitButton);
@@ -277,8 +276,8 @@ describe('LoginPage', () => {
     it('prevents form submission with only email filled', () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const emailInput = screen.getByTestId('email-input');
+      const submitButton = screen.getByTestId('login-button');
 
       // Fill only email
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
@@ -293,8 +292,8 @@ describe('LoginPage', () => {
     it('prevents form submission with only password filled', () => {
       render(<LoginPage />);
 
-      const passwordInput = screen.getByLabelText(/password/i);
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const passwordInput = screen.getByTestId('password-input');
+      const submitButton = screen.getByTestId('login-button');
 
       // Fill only password
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
@@ -311,9 +310,9 @@ describe('LoginPage', () => {
     it('handles special characters in email and password', async () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
+      const submitButton = screen.getByTestId('login-button');
 
       const specialEmail = 'user+test@example-domain.com';
       const specialPassword = 'P@ssw0rd!#$%';
@@ -333,9 +332,9 @@ describe('LoginPage', () => {
     it('handles very long email and password values', async () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
+      const submitButton = screen.getByTestId('login-button');
 
       const longEmail = 'a'.repeat(100) + '@example.com';
       const longPassword = 'p'.repeat(200);
@@ -352,9 +351,9 @@ describe('LoginPage', () => {
     it('resets loading state after successful login', async () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
+      const submitButton = screen.getByTestId('login-button');
 
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
@@ -374,8 +373,8 @@ describe('LoginPage', () => {
     it('has proper form structure with labels', () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
 
       expect(emailInput).toBeInTheDocument();
       expect(passwordInput).toBeInTheDocument();
@@ -386,8 +385,8 @@ describe('LoginPage', () => {
     it('has proper input types', () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const emailInput = screen.getByTestId('email-input');
+      const passwordInput = screen.getByTestId('password-input');
 
       expect(emailInput).toHaveAttribute('type', 'email');
       expect(passwordInput).toHaveAttribute('type', 'password');
@@ -396,7 +395,7 @@ describe('LoginPage', () => {
     it('submit button has proper type', () => {
       render(<LoginPage />);
 
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const submitButton = screen.getByTestId('login-button');
       expect(submitButton).toHaveAttribute('type', 'submit');
     });
   });

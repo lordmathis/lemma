@@ -38,6 +38,7 @@ const CreateFileModal: React.FC<CreateFileModalProps> = ({ onCreateFile }) => {
           label="File Name"
           type="text"
           placeholder="Enter file name"
+          data-testid="file-name-input"
           value={fileName}
           onChange={(event) => setFileName(event.currentTarget.value)}
           onKeyDown={handleKeyDown}
@@ -48,10 +49,16 @@ const CreateFileModal: React.FC<CreateFileModalProps> = ({ onCreateFile }) => {
           <Button
             variant="default"
             onClick={() => setNewFileModalVisible(false)}
+            data-testid="cancel-create-button"
           >
             Cancel
           </Button>
-          <Button onClick={() => void handleSubmit()}>Create</Button>
+          <Button
+            onClick={() => void handleSubmit()}
+            data-testid="confirm-create-button"
+          >
+            Create
+          </Button>
         </Group>
       </Box>
     </Modal>
