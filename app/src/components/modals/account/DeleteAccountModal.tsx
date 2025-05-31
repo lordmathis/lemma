@@ -21,6 +21,20 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
 }) => {
   const [password, setPassword] = useState<string>('');
 
+  const handleConfirm = async (): Promise<void> => {
+    const trimmedPassword = password.trim();
+    if (!trimmedPassword) {
+      return;
+    }
+    try {
+      await onConfirm(trimmedPassword);
+      setPassword('');
+    } catch (error) {
+      // Keep password in case of error
+      console.error('Error confirming password:', error);
+    }
+  };
+
   return (
     <Modal
       opened={opened}
@@ -54,13 +68,10 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
           </Button>
           <Button
             color="red"
-            onClick={() => {
-              void onConfirm(password);
-              setPassword('');
-            }}
+            onClick={() => void handleConfirm()}
             data-testid="confirm-delete-button"
           >
-            Delete Account
+            Delete
           </Button>
         </Group>
       </Stack>

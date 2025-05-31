@@ -56,6 +56,7 @@ const CreateFileModal: React.FC<CreateFileModalProps> = ({ onCreateFile }) => {
           <Button
             onClick={() => void handleSubmit()}
             data-testid="confirm-create-button"
+            disabled={!fileName.trim()}
           >
             Create
           </Button>

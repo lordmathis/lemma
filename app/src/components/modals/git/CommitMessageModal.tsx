@@ -60,6 +60,7 @@ const CommitMessageModal: React.FC<CommitMessageModalProps> = ({
           <Button
             onClick={() => void handleSubmit()}
             data-testid="commit-button"
+            disabled={!message.trim()}
           >
             Commit
           </Button>

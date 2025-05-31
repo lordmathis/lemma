@@ -11,7 +11,7 @@ import {
 interface EmailPasswordModalProps {
   opened: boolean;
   onClose: () => void;
-  onConfirm: (password: string) => Promise<void>;
+  onConfirm: (password: string) => Promise<boolean>;
   email: string;
 }
 
@@ -23,6 +23,27 @@ const EmailPasswordModal: React.FC<EmailPasswordModalProps> = ({
 }) => {
   const [password, setPassword] = useState<string>('');
 
+  async function handleConfirm(): Promise<void> {
+    const trimmedPassword = password.trim();
+    if (!trimmedPassword) {
+      return;
+    }
+    try {
+      await onConfirm(trimmedPassword);
+      setPassword('');
+    } catch (error) {
+      // Keep password in case of error
+      console.error('Error confirming password:', error);
+    }
+  }
+
+  const handleKeyDown = (event: React.KeyboardEvent): void => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      void handleConfirm();
+    }
+  };
+
   return (
     <Modal
       opened={opened}
@@ -32,14 +53,15 @@ const EmailPasswordModal: React.FC<EmailPasswordModalProps> = ({
       size="sm"
     >
       <Stack>
-        <Text size="sm">
-          Please enter your password to confirm changing your email to: {email}
+        <Text size="sm" data-testid="email-password-message">
+          {`Please enter your password to confirm changing your email to: ${email}`}
         </Text>
         <PasswordInput
           label="Current Password"
           placeholder="Enter your current password"
           data-testid="email-password-input"
           value={password}
+          onKeyDown={handleKeyDown}
           onChange={(e) => setPassword(e.currentTarget.value)}
           required
         />
@@ -52,11 +74,9 @@ const EmailPasswordModal: React.FC<EmailPasswordModalProps> = ({
             Cancel
           </Button>
           <Button
-            onClick={() => {
-              void onConfirm(password);
-              setPassword('');
-            }}
+            onClick={() => void handleConfirm()}
             data-testid="confirm-email-password-button"
+            disabled={!password.trim()}
           >
             Confirm
           </Button>
