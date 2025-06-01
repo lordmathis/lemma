@@ -37,10 +37,10 @@ const DeleteWorkspaceModal: React.FC<DeleteUserModalProps> = ({
         </Button>
         <Button
           color="red"
-          onClick={() => void onConfirm}
+          onClick={() => void onConfirm()}
           data-testid="confirm-delete-workspace-button"
         >
-          Delete Workspace
+          Delete
         </Button>
       </Group>
     </Stack>
