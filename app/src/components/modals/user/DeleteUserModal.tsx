@@ -44,7 +44,7 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
           loading={loading}
           data-testid="confirm-delete-user-button"
         >
-          Delete User
+          Delete
         </Button>
       </Group>
     </Stack>

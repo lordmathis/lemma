@@ -122,7 +122,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
             Cancel
           </Button>
           <Button
-            onClick={() => void handleSubmit}
+            onClick={() => void handleSubmit()}
             loading={loading}
             data-testid="confirm-edit-user-button"
           >
