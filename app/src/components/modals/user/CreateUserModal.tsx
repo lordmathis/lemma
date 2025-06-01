@@ -94,7 +94,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             Cancel
           </Button>
           <Button
-            onClick={() => void handleSubmit}
+            onClick={() => void handleSubmit()}
             loading={loading}
             data-testid="confirm-create-user-button"
           >
