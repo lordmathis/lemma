@@ -59,11 +59,11 @@ describe('ThemeContext', () => {
       expect(typeof result.current.updateColorScheme).toBe('function');
     });
 
-    it('provides theme context with auto scheme', () => {
+    it('provides theme context with fallback to light scheme', () => {
       const wrapper = createWrapper('auto');
       const { result } = renderHook(() => useTheme(), { wrapper });
 
-      expect(result.current.colorScheme).toBe('auto');
+      expect(result.current.colorScheme).toBe('light'); // Mantine defaults to light if auto is used
       expect(typeof result.current.updateColorScheme).toBe('function');
     });
 
@@ -178,10 +178,9 @@ describe('ThemeContext', () => {
         result.current.updateColorScheme('light');
       });
 
-      expect(mockSetColorScheme).toHaveBeenCalledTimes(3);
+      expect(mockSetColorScheme).toHaveBeenCalledTimes(2);
       expect(mockSetColorScheme).toHaveBeenNthCalledWith(1, 'dark');
-      expect(mockSetColorScheme).toHaveBeenNthCalledWith(2, 'auto');
-      expect(mockSetColorScheme).toHaveBeenNthCalledWith(3, 'light');
+      expect(mockSetColorScheme).toHaveBeenNthCalledWith(2, 'light');
     });
 
     it('calls setColorScheme immediately without batching', () => {

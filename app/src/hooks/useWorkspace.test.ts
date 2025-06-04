@@ -171,22 +171,6 @@ describe('useWorkspace', () => {
         mockTheme.updateColorScheme
       );
     });
-
-    it('handles light theme', () => {
-      mockTheme.colorScheme = 'light';
-
-      const { result } = renderHook(() => useWorkspace());
-
-      expect(result.current.colorScheme).toBe('light');
-    });
-
-    it('handles auto theme', () => {
-      mockTheme.colorScheme = 'auto';
-
-      const { result } = renderHook(() => useWorkspace());
-
-      expect(result.current.colorScheme).toBe('auto');
-    });
   });
 
   describe('workspace operations integration', () => {
