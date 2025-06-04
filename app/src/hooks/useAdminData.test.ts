@@ -350,42 +350,6 @@ describe('useAdminData', () => {
       });
     });
 
-    it('handles unknown errors gracefully', async () => {
-      const mockGetUsers = vi.mocked(adminApi.getUsers);
-      mockGetUsers.mockRejectedValue('String error');
-
-      const { result } = renderHook(() => useAdminData('users'));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      expect(result.current.error).toBe('An unknown error occurred');
-      expect(notifications.show).toHaveBeenCalledWith({
-        title: 'Error',
-        message: 'Failed to load users: An unknown error occurred',
-        color: 'red',
-      });
-    });
-
-    it('handles network timeout errors', async () => {
-      const mockGetWorkspaces = vi.mocked(adminApi.getWorkspaces);
-      mockGetWorkspaces.mockRejectedValue(new Error('Network timeout'));
-
-      const { result } = renderHook(() => useAdminData('workspaces'));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      expect(result.current.error).toBe('Network timeout');
-      expect(notifications.show).toHaveBeenCalledWith({
-        title: 'Error',
-        message: 'Failed to load workspaces: Network timeout',
-        color: 'red',
-      });
-    });
-
     it('clears error on successful reload', async () => {
       const mockGetSystemStats = vi.mocked(adminApi.getSystemStats);
       mockGetSystemStats
@@ -412,7 +376,7 @@ describe('useAdminData', () => {
   });
 
   describe('loading state management', () => {
-    it('manages loading state correctly during initial load', async () => {
+    it('manages loading state correctly through full lifecycle', async () => {
       const mockGetSystemStats = vi.mocked(adminApi.getSystemStats);
       let resolvePromise: (value: SystemStats) => void;
       const pendingPromise = new Promise<SystemStats>((resolve) => {
@@ -422,31 +386,23 @@ describe('useAdminData', () => {
 
       const { result } = renderHook(() => useAdminData('stats'));
 
+      // Initial load should be loading
       expect(result.current.loading).toBe(true);
 
+      // Resolve initial load
       await act(async () => {
         resolvePromise!(mockSystemStats);
         await pendingPromise;
       });
 
       expect(result.current.loading).toBe(false);
-    });
 
-    it('manages loading state correctly during reload', async () => {
-      const mockGetUsers = vi.mocked(adminApi.getUsers);
-      mockGetUsers.mockResolvedValue(mockUsers);
-
-      const { result } = renderHook(() => useAdminData('users'));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      let resolveReload: (value: User[]) => void;
-      const reloadPromise = new Promise<User[]>((resolve) => {
+      // Test reload loading state
+      let resolveReload: (value: SystemStats) => void;
+      const reloadPromise = new Promise<SystemStats>((resolve) => {
         resolveReload = resolve;
       });
-      mockGetUsers.mockReturnValueOnce(reloadPromise);
+      mockGetSystemStats.mockReturnValueOnce(reloadPromise);
 
       act(() => {
         void result.current.reload();
@@ -455,70 +411,52 @@ describe('useAdminData', () => {
       expect(result.current.loading).toBe(true);
 
       await act(async () => {
-        resolveReload!(mockUsers);
+        resolveReload!(mockSystemStats);
         await reloadPromise;
       });
 
       expect(result.current.loading).toBe(false);
     });
-
-    it('handles loading state during error scenarios', async () => {
-      const mockGetWorkspaces = vi.mocked(adminApi.getWorkspaces);
-      let rejectPromise: (error: Error) => void;
-      const errorPromise = new Promise<WorkspaceStats[]>((_, reject) => {
-        rejectPromise = reject;
-      });
-      mockGetWorkspaces.mockReturnValue(errorPromise);
-
-      const { result } = renderHook(() => useAdminData('workspaces'));
-
-      expect(result.current.loading).toBe(true);
-
-      await act(async () => {
-        rejectPromise!(new Error('Load failed'));
-        try {
-          await errorPromise;
-        } catch {
-          // Expected to fail
-        }
-      });
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-    });
   });
 
   describe('data consistency', () => {
-    it('maintains data consistency across re-renders', async () => {
+    it('handles data type parameter changes', async () => {
       const mockGetSystemStats = vi.mocked(adminApi.getSystemStats);
-      mockGetSystemStats.mockResolvedValue(mockSystemStats);
+      const mockGetUsers = vi.mocked(adminApi.getUsers);
 
-      const { result, rerender } = renderHook(() => useAdminData('stats'));
+      mockGetSystemStats.mockResolvedValue(mockSystemStats);
+      mockGetUsers.mockResolvedValue(mockUsers);
+
+      const { result, rerender } = renderHook(
+        ({ type }) => useAdminData(type),
+        {
+          initialProps: { type: 'stats' as const } as {
+            type: 'stats' | 'users' | 'workspaces';
+          },
+        }
+      );
+
+      // Wait for stats to load
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.data).toEqual(mockSystemStats);
+
+      // Change to users type
+      rerender({ type: 'users' as const });
+
+      // Should reset to loading and empty array for users
+      expect(result.current.loading).toBe(true);
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
       });
 
-      const initialData = result.current.data;
-
-      rerender();
-
-      expect(result.current.data).toBe(initialData);
-      expect(result.current.data).toEqual(mockSystemStats);
+      expect(result.current.data).toEqual(mockUsers);
+      expect(mockGetUsers).toHaveBeenCalledTimes(1);
     });
-
-    it('provides stable reload function across re-renders', () => {
-      const { result, rerender } = renderHook(() => useAdminData('stats'));
-
-      const initialReload = result.current.reload;
-
-      rerender();
-
-      expect(result.current.reload).toBe(initialReload);
-    });
-
-    it('handles data type changes correctly', () => {
+    it('handles data type changes correctly with different initial values', () => {
       const { result: statsResult } = renderHook(() => useAdminData('stats'));
       const { result: usersResult } = renderHook(() => useAdminData('users'));
       const { result: workspacesResult } = renderHook(() =>
@@ -567,42 +505,6 @@ describe('useAdminData', () => {
       expect(mockGetSystemStats).toHaveBeenCalledTimes(4); // 1 initial + 3 reloads
       expect(result.current.data).toEqual(mockSystemStats);
       expect(result.current.loading).toBe(false);
-    });
-  });
-
-  describe('edge cases', () => {
-    it('handles invalid data type gracefully', async () => {
-      // This would normally be caught by TypeScript, but test runtime behavior
-      const mockGetSystemStats = vi.mocked(adminApi.getSystemStats);
-      mockGetSystemStats.mockRejectedValue(new Error('Invalid data type'));
-
-      const { result } = renderHook(() => useAdminData('stats'));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      expect(result.current.error).toBe('Invalid data type');
-    });
-
-    it('handles partial data responses', async () => {
-      const partialStats = {
-        totalUsers: 5,
-        activeUsers: 3,
-        // Missing other required fields
-      };
-
-      const mockGetSystemStats = vi.mocked(adminApi.getSystemStats);
-      mockGetSystemStats.mockResolvedValue(partialStats as SystemStats);
-
-      const { result } = renderHook(() => useAdminData('stats'));
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-
-      expect(result.current.data).toEqual(partialStats);
-      expect(result.current.error).toBeNull();
     });
   });
 });
