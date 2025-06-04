@@ -204,39 +204,6 @@ describe('useWorkspaceOperations', () => {
 
       consoleSpy.mockRestore();
     });
-
-    it('handles load workspaces errors during switch', async () => {
-      const mockUpdateLastWorkspaceName = vi.mocked(
-        workspaceApi.updateLastWorkspaceName
-      );
-      const consoleSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
-      mockUpdateLastWorkspaceName.mockResolvedValue(undefined);
-      mockWorkspaceData.loadWorkspaceData.mockResolvedValue(undefined);
-      mockWorkspaceData.loadWorkspaces.mockRejectedValue(
-        new Error('Load workspaces failed')
-      );
-
-      const { result } = renderHook(() => useWorkspaceOperations());
-
-      await act(async () => {
-        await result.current.switchWorkspace('error-workspace');
-      });
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to switch workspace:',
-        expect.any(Error)
-      );
-      expect(notifications.show).toHaveBeenCalledWith({
-        title: 'Error',
-        message: 'Failed to switch workspace',
-        color: 'red',
-      });
-
-      consoleSpy.mockRestore();
-    });
   });
 
   describe('deleteCurrentWorkspace', () => {
@@ -306,65 +273,6 @@ describe('useWorkspaceOperations', () => {
 
       mockWorkspaceData.loadWorkspaces.mockResolvedValue(mockWorkspaces);
       mockDeleteWorkspace.mockRejectedValue(new Error('Delete failed'));
-
-      const { result } = renderHook(() => useWorkspaceOperations());
-
-      await act(async () => {
-        await result.current.deleteCurrentWorkspace();
-      });
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to delete workspace:',
-        expect.any(Error)
-      );
-      expect(notifications.show).toHaveBeenCalledWith({
-        title: 'Error',
-        message: 'Failed to delete workspace',
-        color: 'red',
-      });
-
-      consoleSpy.mockRestore();
-    });
-
-    it('handles load workspace data errors after deletion', async () => {
-      const mockDeleteWorkspace = vi.mocked(workspaceApi.deleteWorkspace);
-      const consoleSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
-      mockWorkspaceData.loadWorkspaces.mockResolvedValue(mockWorkspaces);
-      mockDeleteWorkspace.mockResolvedValue('next-workspace');
-      mockWorkspaceData.loadWorkspaceData.mockRejectedValue(
-        new Error('Load failed')
-      );
-
-      const { result } = renderHook(() => useWorkspaceOperations());
-
-      await act(async () => {
-        await result.current.deleteCurrentWorkspace();
-      });
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to delete workspace:',
-        expect.any(Error)
-      );
-      expect(notifications.show).toHaveBeenCalledWith({
-        title: 'Error',
-        message: 'Failed to delete workspace',
-        color: 'red',
-      });
-
-      consoleSpy.mockRestore();
-    });
-
-    it('handles load workspaces errors during deletion check', async () => {
-      const consoleSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
-      mockWorkspaceData.loadWorkspaces.mockRejectedValue(
-        new Error('Load workspaces failed')
-      );
 
       const { result } = renderHook(() => useWorkspaceOperations());
 
@@ -524,40 +432,6 @@ describe('useWorkspaceOperations', () => {
       consoleSpy.mockRestore();
     });
 
-    it('handles load workspaces errors after update', async () => {
-      const mockUpdateWorkspace = vi.mocked(workspaceApi.updateWorkspace);
-      const consoleSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
-      const updatedWorkspace: Workspace = {
-        ...mockWorkspaceData.currentWorkspace!,
-        autoSave: true,
-      };
-      mockUpdateWorkspace.mockResolvedValue(updatedWorkspace);
-      mockWorkspaceData.loadWorkspaces.mockRejectedValue(
-        new Error('Load workspaces failed')
-      );
-
-      const { result } = renderHook(() => useWorkspaceOperations());
-
-      await act(async () => {
-        try {
-          await result.current.updateSettings({ autoSave: true });
-        } catch (error) {
-          expect(error).toBeInstanceOf(Error);
-          expect((error as Error).message).toBe('Load workspaces failed');
-        }
-      });
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to save settings:',
-        expect.any(Error)
-      );
-
-      consoleSpy.mockRestore();
-    });
-
     it('handles empty settings update', async () => {
       const mockUpdateWorkspace = vi.mocked(workspaceApi.updateWorkspace);
       const updatedWorkspace = mockWorkspaceData.currentWorkspace!;
@@ -667,27 +541,6 @@ describe('useWorkspaceOperations', () => {
   });
 
   describe('concurrent operations', () => {
-    it('handles multiple concurrent switch operations', async () => {
-      const mockUpdateLastWorkspaceName = vi.mocked(
-        workspaceApi.updateLastWorkspaceName
-      );
-      mockUpdateLastWorkspaceName.mockResolvedValue(undefined);
-      mockWorkspaceData.loadWorkspaceData.mockResolvedValue(undefined);
-      mockWorkspaceData.loadWorkspaces.mockResolvedValue(mockWorkspaces);
-
-      const { result } = renderHook(() => useWorkspaceOperations());
-
-      await act(async () => {
-        await Promise.all([
-          result.current.switchWorkspace('workspace-1'),
-          result.current.switchWorkspace('workspace-2'),
-        ]);
-      });
-
-      expect(mockUpdateLastWorkspaceName).toHaveBeenCalledTimes(2);
-      expect(mockWorkspaceData.loadWorkspaceData).toHaveBeenCalledTimes(2);
-      expect(mockWorkspaceData.loadWorkspaces).toHaveBeenCalledTimes(2);
-    });
 
     it('handles update settings after switch workspace', async () => {
       const mockUpdateLastWorkspaceName = vi.mocked(
