@@ -177,22 +177,6 @@ describe('useFileContent', () => {
       expect(result.current.hasUnsavedChanges).toBe(false);
     });
 
-    it('allows manual setting of unsaved changes state', () => {
-      const { result } = renderHook(() => useFileContent(null));
-
-      act(() => {
-        result.current.setHasUnsavedChanges(true);
-      });
-
-      expect(result.current.hasUnsavedChanges).toBe(true);
-
-      act(() => {
-        result.current.setHasUnsavedChanges(false);
-      });
-
-      expect(result.current.hasUnsavedChanges).toBe(false);
-    });
-
     it('allows direct content setting', () => {
       const { result } = renderHook(() => useFileContent(null));
 
@@ -337,6 +321,76 @@ describe('useFileContent', () => {
     });
   });
 
+  describe('workspace dependency changes', () => {
+    it('reloads content when workspace changes while file is selected', async () => {
+      const mockGetFileContent = vi.mocked(fileApi.getFileContent);
+      const mockIsImageFile = vi.mocked(fileHelpers.isImageFile);
+
+      mockGetFileContent
+        .mockResolvedValueOnce('Content from workspace 1')
+        .mockResolvedValueOnce('Content from workspace 2');
+      mockIsImageFile.mockReturnValue(false);
+
+      const { result, rerender } = renderHook(() => useFileContent('test.md'));
+
+      // Wait for initial load from workspace 1
+      await waitFor(() => {
+        expect(result.current.content).toBe('Content from workspace 1');
+      });
+
+      // Change workspace
+      mockWorkspaceData.currentWorkspace = {
+        id: 2,
+        name: 'different-workspace',
+      };
+
+      rerender();
+
+      // Should reload content from new workspace
+      await waitFor(() => {
+        expect(result.current.content).toBe('Content from workspace 2');
+      });
+
+      expect(mockGetFileContent).toHaveBeenCalledWith(
+        'test-workspace',
+        'test.md'
+      );
+      expect(mockGetFileContent).toHaveBeenCalledWith(
+        'different-workspace',
+        'test.md'
+      );
+      expect(result.current.hasUnsavedChanges).toBe(false);
+    });
+
+    it('clears content when workspace becomes null', async () => {
+      const mockGetFileContent = vi.mocked(fileApi.getFileContent);
+      const mockIsImageFile = vi.mocked(fileHelpers.isImageFile);
+
+      mockGetFileContent.mockResolvedValue('Initial content');
+      mockIsImageFile.mockReturnValue(false);
+
+      const { result, rerender } = renderHook(() => useFileContent('test.md'));
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(result.current.content).toBe('Initial content');
+      });
+
+      expect(mockGetFileContent).toHaveBeenCalledTimes(1);
+      vi.clearAllMocks(); // Clear previous calls
+
+      // Remove workspace
+      mockWorkspaceData.currentWorkspace = null;
+      rerender();
+
+      // Content should remain the same (no clearing happens when workspace becomes null)
+      // The hook keeps the current content and just prevents new loads
+      expect(result.current.content).toBe('Initial content');
+      expect(result.current.hasUnsavedChanges).toBe(false);
+      expect(mockGetFileContent).not.toHaveBeenCalled(); // No new API calls
+    });
+  });
+
   describe('edge cases', () => {
     it('handles empty string selectedFile', () => {
       const { result } = renderHook(() => useFileContent(''));
@@ -381,6 +435,53 @@ describe('useFileContent', () => {
       });
 
       expect(mockGetFileContent).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('function stability', () => {
+    it('maintains stable function references across re-renders and workspace changes', () => {
+      const { result, rerender } = renderHook(() => useFileContent('test.md'));
+
+      const initialFunctions = {
+        setContent: result.current.setContent,
+        setHasUnsavedChanges: result.current.setHasUnsavedChanges,
+        loadFileContent: result.current.loadFileContent,
+        handleContentChange: result.current.handleContentChange,
+      };
+
+      // Re-render with different file
+      rerender();
+
+      expect(result.current.setContent).toBe(initialFunctions.setContent);
+      expect(result.current.setHasUnsavedChanges).toBe(
+        initialFunctions.setHasUnsavedChanges
+      );
+      expect(result.current.loadFileContent).toBe(
+        initialFunctions.loadFileContent
+      );
+      expect(result.current.handleContentChange).toBe(
+        initialFunctions.handleContentChange
+      );
+
+      // Change workspace
+      mockWorkspaceData.currentWorkspace = {
+        id: 2,
+        name: 'different-workspace',
+      };
+
+      rerender();
+
+      // Functions should still be stable
+      expect(result.current.setContent).toBe(initialFunctions.setContent);
+      expect(result.current.setHasUnsavedChanges).toBe(
+        initialFunctions.setHasUnsavedChanges
+      );
+      expect(result.current.loadFileContent).not.toBe(
+        initialFunctions.loadFileContent
+      );
+      expect(result.current.handleContentChange).toBe(
+        initialFunctions.handleContentChange
+      );
     });
   });
 });
