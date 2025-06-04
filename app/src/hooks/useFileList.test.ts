@@ -333,6 +333,31 @@ describe('useFileList', () => {
       expect(result.current.files).toEqual(complexFiles);
     });
 
+    it('handles large file lists efficiently', async () => {
+      const mockListFiles = vi.mocked(fileApi.listFiles);
+
+      // Create a large file list
+      const largeFileList: FileNode[] = Array.from(
+        { length: 1000 },
+        (_, i) => ({
+          id: `file-${i}`,
+          name: `file-${i}.md`,
+          path: `folder/file-${i}.md`,
+        })
+      );
+
+      mockListFiles.mockResolvedValue(largeFileList);
+
+      const { result } = renderHook(() => useFileList());
+
+      await act(async () => {
+        await result.current.loadFileList();
+      });
+
+      expect(result.current.files).toEqual(largeFileList);
+      expect(result.current.files).toHaveLength(1000);
+    });
+
     it('handles files with special characters', async () => {
       const specialFiles: FileNode[] = [
         {
