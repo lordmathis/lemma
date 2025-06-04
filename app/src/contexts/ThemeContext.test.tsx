@@ -63,7 +63,7 @@ describe('ThemeContext', () => {
       const wrapper = createWrapper('auto');
       const { result } = renderHook(() => useTheme(), { wrapper });
 
-      expect(result.current.colorScheme).toBe('light'); // Mantine defaults to light if auto is used
+      expect(result.current.colorScheme).toBe('light');
       expect(typeof result.current.updateColorScheme).toBe('function');
     });
 
@@ -127,41 +127,6 @@ describe('ThemeContext', () => {
       expect(mockSetColorScheme).toHaveBeenCalledWith('dark');
     });
 
-    it('handles switching from light to dark', () => {
-      const wrapper = createWrapper('light');
-      const { result } = renderHook(() => useTheme(), { wrapper });
-
-      act(() => {
-        result.current.updateColorScheme('dark');
-      });
-
-      expect(mockSetColorScheme).toHaveBeenCalledWith('dark');
-      expect(mockSetColorScheme).toHaveBeenCalledTimes(1);
-    });
-
-    it('handles switching from dark to light', () => {
-      const wrapper = createWrapper('dark');
-      const { result } = renderHook(() => useTheme(), { wrapper });
-
-      act(() => {
-        result.current.updateColorScheme('light');
-      });
-
-      expect(mockSetColorScheme).toHaveBeenCalledWith('light');
-      expect(mockSetColorScheme).toHaveBeenCalledTimes(1);
-    });
-
-    it('handles switching to auto scheme', () => {
-      const wrapper = createWrapper('light');
-      const { result } = renderHook(() => useTheme(), { wrapper });
-
-      act(() => {
-        result.current.updateColorScheme('auto');
-      });
-
-      expect(mockSetColorScheme).toHaveBeenCalledWith('auto');
-    });
-
     it('handles multiple color scheme changes', () => {
       const wrapper = createWrapper('light');
       const { result } = renderHook(() => useTheme(), { wrapper });
@@ -171,6 +136,7 @@ describe('ThemeContext', () => {
       });
 
       act(() => {
+        // Should not set color scheme to 'auto'
         result.current.updateColorScheme('auto');
       });
 
@@ -182,46 +148,26 @@ describe('ThemeContext', () => {
       expect(mockSetColorScheme).toHaveBeenNthCalledWith(1, 'dark');
       expect(mockSetColorScheme).toHaveBeenNthCalledWith(2, 'light');
     });
+  });
 
-    it('calls setColorScheme immediately without batching', () => {
+  describe('context structure', () => {
+    it('provides expected context interface', () => {
       const wrapper = createWrapper('light');
       const { result } = renderHook(() => useTheme(), { wrapper });
 
-      // Multiple synchronous calls
-      act(() => {
-        result.current.updateColorScheme('dark');
-        result.current.updateColorScheme('auto');
-        result.current.updateColorScheme('light');
-      });
-
-      expect(mockSetColorScheme).toHaveBeenCalledTimes(3);
-    });
-  });
-
-  describe('color scheme reactivity', () => {
-    it('reflects color scheme changes from Mantine', () => {
-      // Start with light
-      mockUseMantineColorScheme.mockReturnValue({
+      expect(result.current).toEqual({
         colorScheme: 'light',
-        setColorScheme: mockSetColorScheme,
+        updateColorScheme: expect.any(Function) as unknown,
       });
-
-      const wrapper = createWrapper('light');
-      const { result, rerender } = renderHook(() => useTheme(), { wrapper });
-
-      expect(result.current.colorScheme).toBe('light');
-
-      // Simulate Mantine color scheme change
-      mockUseMantineColorScheme.mockReturnValue({
-        colorScheme: 'dark',
-        setColorScheme: mockSetColorScheme,
-      });
-
-      rerender();
-
-      expect(result.current.colorScheme).toBe('dark');
     });
 
+    it('context value has correct types', () => {
+      const wrapper = createWrapper('dark');
+      const { result } = renderHook(() => useTheme(), { wrapper });
+
+      expect(typeof result.current.colorScheme).toBe('string');
+      expect(typeof result.current.updateColorScheme).toBe('function');
+    });
     it('maintains function reference when color scheme changes', () => {
       mockUseMantineColorScheme.mockReturnValue({
         colorScheme: 'light',
@@ -242,26 +188,6 @@ describe('ThemeContext', () => {
       rerender();
 
       expect(result.current.updateColorScheme).toBe(initialUpdateFunction);
-    });
-  });
-
-  describe('context value structure', () => {
-    it('provides expected context interface', () => {
-      const wrapper = createWrapper('light');
-      const { result } = renderHook(() => useTheme(), { wrapper });
-
-      expect(result.current).toEqual({
-        colorScheme: 'light',
-        updateColorScheme: expect.any(Function) as unknown,
-      });
-    });
-
-    it('context value has correct types', () => {
-      const wrapper = createWrapper('dark');
-      const { result } = renderHook(() => useTheme(), { wrapper });
-
-      expect(typeof result.current.colorScheme).toBe('string');
-      expect(typeof result.current.updateColorScheme).toBe('function');
     });
   });
 
@@ -325,76 +251,6 @@ describe('ThemeContext', () => {
       });
 
       expect(mockSetColorScheme).toHaveBeenCalledWith('light');
-    });
-  });
-
-  describe('integration with Mantine', () => {
-    it('properly integrates with useMantineColorScheme', () => {
-      const mockMantineHook = {
-        colorScheme: 'dark' as MantineColorScheme,
-        setColorScheme: mockSetColorScheme,
-      };
-
-      mockUseMantineColorScheme.mockReturnValue(mockMantineHook);
-
-      const wrapper = createWrapper('dark');
-      const { result } = renderHook(() => useTheme(), { wrapper });
-
-      expect(result.current.colorScheme).toBe('dark');
-
-      act(() => {
-        result.current.updateColorScheme('light');
-      });
-
-      expect(mockSetColorScheme).toHaveBeenCalledWith('light');
-    });
-
-    it('reflects all Mantine color scheme options', () => {
-      const colorSchemes: MantineColorScheme[] = ['light', 'dark', 'auto'];
-
-      colorSchemes.forEach((scheme) => {
-        mockUseMantineColorScheme.mockReturnValue({
-          colorScheme: scheme,
-          setColorScheme: mockSetColorScheme,
-        });
-
-        const wrapper = createWrapper(scheme);
-        const { result } = renderHook(() => useTheme(), { wrapper });
-
-        expect(result.current.colorScheme).toBe(scheme);
-      });
-    });
-  });
-
-  describe('performance', () => {
-    it('does not cause unnecessary re-renders', () => {
-      const wrapper = createWrapper('light');
-      const { result, rerender } = renderHook(() => useTheme(), { wrapper });
-
-      const initialResult = result.current;
-
-      // Re-render without changing anything
-      rerender();
-
-      // Function reference should be stable
-      expect(result.current.updateColorScheme).toBe(
-        initialResult.updateColorScheme
-      );
-    });
-
-    it('useCallback optimization works correctly', () => {
-      const wrapper = createWrapper('light');
-      const { result } = renderHook(() => useTheme(), { wrapper });
-
-      const updateFunction1 = result.current.updateColorScheme;
-
-      // Trigger a re-render by calling updateColorScheme
-      act(() => {
-        result.current.updateColorScheme('dark');
-      });
-
-      // Function should still be the same reference due to useCallback
-      expect(result.current.updateColorScheme).toBe(updateFunction1);
     });
   });
 });

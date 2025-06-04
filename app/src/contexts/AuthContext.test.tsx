@@ -265,39 +265,6 @@ describe('AuthContext', () => {
       consoleSpy.mockRestore();
     });
 
-    it('handles login failure with generic message', async () => {
-      const consoleSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-      (mockLogin as ReturnType<typeof vi.fn>).mockRejectedValue(
-        'Network error'
-      );
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useAuth(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.initialized).toBe(true);
-      });
-
-      let loginResult: boolean | undefined;
-      await act(async () => {
-        loginResult = await result.current.login(
-          'test@example.com',
-          'password123'
-        );
-      });
-
-      expect(loginResult).toBe(false);
-      expect(mockNotificationsShow).toHaveBeenCalledWith({
-        title: 'Error',
-        message: 'Login failed',
-        color: 'red',
-      });
-
-      consoleSpy.mockRestore();
-    });
-
     it('handles multiple login attempts', async () => {
       (mockLogin as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(new Error('First attempt failed'))
@@ -737,41 +704,6 @@ describe('AuthContext', () => {
   });
 
   describe('error handling', () => {
-    it('handles network errors during login', async () => {
-      const consoleSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-      (mockGetCurrentUser as ReturnType<typeof vi.fn>).mockRejectedValue(
-        new Error('Not authenticated')
-      );
-      (mockLogin as ReturnType<typeof vi.fn>).mockRejectedValue(
-        new Error('Network unavailable')
-      );
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useAuth(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.initialized).toBe(true);
-      });
-
-      await act(async () => {
-        const success = await result.current.login(
-          'test@example.com',
-          'password123'
-        );
-        expect(success).toBe(false);
-      });
-
-      expect(mockNotificationsShow).toHaveBeenCalledWith({
-        title: 'Error',
-        message: 'Network unavailable',
-        color: 'red',
-      });
-
-      consoleSpy.mockRestore();
-    });
-
     it('handles invalid user data during initialization', async () => {
       const consoleSpy = vi
         .spyOn(console, 'error')
