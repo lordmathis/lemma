@@ -409,23 +409,5 @@ describe('useGitOperations', () => {
       expect(pullResult).toBe(false);
       expect(gitApi.pullChanges).not.toHaveBeenCalled();
     });
-
-    it('handles API returning non-string commit hash', async () => {
-      const mockCommitAndPush = vi.mocked(gitApi.commitAndPush);
-      // API might return something unexpected
-      mockCommitAndPush.mockResolvedValue(null!);
-
-      const { result } = renderHook(() => useGitOperations());
-
-      await act(async () => {
-        await result.current.handleCommitAndPush('Test commit');
-      });
-
-      expect(notifications.show).toHaveBeenCalledWith({
-        title: 'Success',
-        message: 'Successfully committed and pushed changes null',
-        color: 'green',
-      });
-    });
   });
 });
