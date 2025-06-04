@@ -496,22 +496,5 @@ describe('useProfileSettings', () => {
       expect(returnedUser).toEqual(mockUser);
       expect(mockUpdateProfile).toHaveBeenCalledWith({});
     });
-
-    it('handles update with undefined values', async () => {
-      const mockUpdateProfile = vi.mocked(userApi.updateProfile);
-      mockUpdateProfile.mockResolvedValue(mockUser);
-
-      const { result } = renderHook(() => useProfileSettings());
-
-      const updateRequest: UpdateProfileRequest = {};
-
-      let returnedUser: User | null = null;
-      await act(async () => {
-        returnedUser = await result.current.updateProfile(updateRequest);
-      });
-
-      expect(returnedUser).toEqual(mockUser);
-      expect(mockUpdateProfile).toHaveBeenCalledWith(updateRequest);
-    });
   });
 });
