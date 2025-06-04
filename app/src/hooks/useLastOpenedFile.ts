@@ -24,7 +24,7 @@ export const useLastOpenedFile = (): UseLastOpenedFileResult => {
 
   const saveLastOpenedFile = useCallback(
     async (filePath: string): Promise<void> => {
-      if (!currentWorkspace) return;
+      if (!currentWorkspace || !filePath.trim()) return;
 
       try {
         await updateLastOpenedFile(currentWorkspace.name, filePath);

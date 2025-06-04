@@ -183,6 +183,22 @@ describe('useLastOpenedFile', () => {
       expect(fileApi.updateLastOpenedFile).not.toHaveBeenCalled();
     });
 
+    it('does nothing when file path is empty', async () => {
+      const mockUpdateLastOpenedFile = vi.mocked(fileApi.updateLastOpenedFile);
+      mockUpdateLastOpenedFile.mockResolvedValue(undefined);
+
+      const { result } = renderHook(() => useLastOpenedFile());
+
+      await act(async () => {
+        await result.current.saveLastOpenedFile('');
+      });
+
+      expect(mockUpdateLastOpenedFile).not.toHaveBeenCalledWith(
+        'test-workspace',
+        ''
+      );
+    });
+
     it('handles different file path formats', async () => {
       const mockUpdateLastOpenedFile = vi.mocked(fileApi.updateLastOpenedFile);
       mockUpdateLastOpenedFile.mockResolvedValue(undefined);
@@ -210,22 +226,6 @@ describe('useLastOpenedFile', () => {
       }
 
       expect(mockUpdateLastOpenedFile).toHaveBeenCalledTimes(testCases.length);
-    });
-
-    it('handles empty file path', async () => {
-      const mockUpdateLastOpenedFile = vi.mocked(fileApi.updateLastOpenedFile);
-      mockUpdateLastOpenedFile.mockResolvedValue(undefined);
-
-      const { result } = renderHook(() => useLastOpenedFile());
-
-      await act(async () => {
-        await result.current.saveLastOpenedFile('');
-      });
-
-      expect(mockUpdateLastOpenedFile).toHaveBeenCalledWith(
-        'test-workspace',
-        ''
-      );
     });
   });
 
