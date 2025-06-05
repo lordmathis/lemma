@@ -41,6 +41,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({
       <Stack gap="md">
         <PasswordInput
           label="Current Password"
+          type="password"
           value={settings.currentPassword || ''}
           onChange={(e) =>
             handlePasswordChange('currentPassword', e.currentTarget.value)
@@ -49,6 +50,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({
         />
         <PasswordInput
           label="New Password"
+          type="password"
           value={settings.newPassword || ''}
           onChange={(e) =>
             handlePasswordChange('newPassword', e.currentTarget.value)
@@ -57,6 +59,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({
         />
         <PasswordInput
           label="Confirm New Password"
+          type="password"
           value={confirmPassword}
           onChange={(e) =>
             handlePasswordChange('confirmNewPassword', e.currentTarget.value)
