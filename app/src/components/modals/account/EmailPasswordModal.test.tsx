@@ -29,8 +29,8 @@ describe('EmailPasswordModal', () => {
     mockOnConfirm.mockResolvedValue(true);
   });
 
-  describe('Modal Visibility', () => {
-    it('shows modal with email confirmation message when opened', () => {
+  describe('Modal Visibility and Content', () => {
+    it('renders modal with correct content when opened', () => {
       render(
         <EmailPasswordModal
           opened={true}
@@ -55,7 +55,7 @@ describe('EmailPasswordModal', () => {
       ).toBeInTheDocument();
     });
 
-    it('hides modal when closed', () => {
+    it('does not render when closed', () => {
       render(
         <EmailPasswordModal
           opened={false}
@@ -68,7 +68,7 @@ describe('EmailPasswordModal', () => {
       expect(screen.queryByText('Confirm Password')).not.toBeInTheDocument();
     });
 
-    it('displays different email addresses correctly', () => {
+    it('displays various email addresses correctly', () => {
       const customEmail = 'user@custom.com';
       render(
         <EmailPasswordModal

@@ -28,8 +28,8 @@ describe('DeleteAccountModal', () => {
     mockOnConfirm.mockResolvedValue(undefined);
   });
 
-  describe('Modal Visibility', () => {
-    it('shows modal with warning and form when opened', () => {
+  describe('Modal Visibility and Content', () => {
+    it('renders modal with correct content when opened', () => {
       render(
         <DeleteAccountModal
           opened={true}
@@ -50,11 +50,15 @@ describe('DeleteAccountModal', () => {
       expect(
         screen.getByTestId('delete-account-password-input')
       ).toBeInTheDocument();
-      expect(screen.getByTestId('cancel-delete-button')).toBeInTheDocument();
-      expect(screen.getByTestId('confirm-delete-button')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('cancel-delete-account-button')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('confirm-delete-account-button')
+      ).toBeInTheDocument();
     });
 
-    it('hides modal when closed', () => {
+    it('does not render when closed', () => {
       render(
         <DeleteAccountModal
           opened={false}
@@ -67,7 +71,7 @@ describe('DeleteAccountModal', () => {
     });
   });
 
-  describe('Password Input and Validation', () => {
+  describe('Form Validation', () => {
     it('updates password value when user types', () => {
       render(
         <DeleteAccountModal
@@ -93,7 +97,7 @@ describe('DeleteAccountModal', () => {
       );
 
       const passwordInput = screen.getByTestId('delete-account-password-input');
-      const deleteButton = screen.getByTestId('confirm-delete-button');
+      const deleteButton = screen.getByTestId('confirm-delete-account-button');
 
       // Test empty password
       fireEvent.click(deleteButton);
@@ -104,8 +108,10 @@ describe('DeleteAccountModal', () => {
       fireEvent.click(deleteButton);
       expect(mockOnConfirm).not.toHaveBeenCalled();
     });
+  });
 
-    it('submits with valid password and clears field on success', async () => {
+  describe('User Actions', () => {
+    it('calls onConfirm with valid password and clears field on success', async () => {
       render(
         <DeleteAccountModal
           opened={true}
@@ -115,7 +121,7 @@ describe('DeleteAccountModal', () => {
       );
 
       const passwordInput = screen.getByTestId('delete-account-password-input');
-      const deleteButton = screen.getByTestId('confirm-delete-button');
+      const deleteButton = screen.getByTestId('confirm-delete-account-button');
 
       fireEvent.change(passwordInput, { target: { value: 'validpassword' } });
       fireEvent.click(deleteButton);
@@ -127,6 +133,20 @@ describe('DeleteAccountModal', () => {
       await waitFor(() => {
         expect((passwordInput as HTMLInputElement).value).toBe('');
       });
+    });
+
+    it('calls onClose when cancel button is clicked', () => {
+      render(
+        <DeleteAccountModal
+          opened={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('cancel-delete-account-button'));
+      expect(mockOnClose).toHaveBeenCalled();
+      expect(mockOnConfirm).not.toHaveBeenCalled();
     });
 
     it('preserves password in field when submission fails', async () => {
@@ -141,7 +161,7 @@ describe('DeleteAccountModal', () => {
       );
 
       const passwordInput = screen.getByTestId('delete-account-password-input');
-      const deleteButton = screen.getByTestId('confirm-delete-button');
+      const deleteButton = screen.getByTestId('confirm-delete-account-button');
 
       fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
       fireEvent.click(deleteButton);
@@ -165,7 +185,7 @@ describe('DeleteAccountModal', () => {
         />
       );
 
-      const cancelButton = screen.getByTestId('cancel-delete-button');
+      const cancelButton = screen.getByTestId('cancel-delete-account-button');
       fireEvent.click(cancelButton);
 
       expect(mockOnClose).toHaveBeenCalled();
@@ -182,7 +202,7 @@ describe('DeleteAccountModal', () => {
       );
 
       const passwordInput = screen.getByTestId('delete-account-password-input');
-      const deleteButton = screen.getByTestId('confirm-delete-button');
+      const deleteButton = screen.getByTestId('confirm-delete-account-button');
 
       fireEvent.change(passwordInput, { target: { value: 'testpassword' } });
 
@@ -240,7 +260,7 @@ describe('DeleteAccountModal', () => {
       fireEvent.change(passwordInput, { target: { value: 'userpassword' } });
 
       // 3. User confirms deletion
-      const deleteButton = screen.getByTestId('confirm-delete-button');
+      const deleteButton = screen.getByTestId('confirm-delete-account-button');
       fireEvent.click(deleteButton);
 
       // 4. System processes deletion
@@ -267,7 +287,7 @@ describe('DeleteAccountModal', () => {
       const passwordInput = screen.getByTestId('delete-account-password-input');
       fireEvent.change(passwordInput, { target: { value: 'somepassword' } });
 
-      const cancelButton = screen.getByTestId('cancel-delete-button');
+      const cancelButton = screen.getByTestId('cancel-delete-account-button');
       fireEvent.click(cancelButton);
 
       // Modal closes without deletion

@@ -62,14 +62,14 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
           <Button
             variant="default"
             onClick={onClose}
-            data-testid="cancel-delete-button"
+            data-testid="cancel-delete-account-button"
           >
             Cancel
           </Button>
           <Button
             color="red"
             onClick={() => void handleConfirm()}
-            data-testid="confirm-delete-button"
+            data-testid="confirm-delete-account-button"
           >
             Delete
           </Button>

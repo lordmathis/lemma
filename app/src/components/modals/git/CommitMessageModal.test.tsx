@@ -55,20 +55,26 @@ describe('CommitMessageModal', () => {
     mockModalContext.setCommitMessageModalVisible.mockClear();
   });
 
-  describe('Modal Rendering and Controls', () => {
-    it('renders modal with form elements when open', () => {
+  describe('Modal Visibility and Content', () => {
+    it('renders modal with correct content when opened', () => {
       render(<CommitMessageModal onCommitAndPush={mockOnCommitAndPush} />);
 
       expect(screen.getByText('Enter Commit Message')).toBeInTheDocument();
       expect(screen.getByTestId('commit-message-input')).toBeInTheDocument();
-      expect(screen.getByTestId('cancel-commit-button')).toBeInTheDocument();
-      expect(screen.getByTestId('commit-button')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('cancel-commit-message-button')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('confirm-commit-message-button')
+      ).toBeInTheDocument();
     });
+  });
 
-    it('closes modal when cancel button is clicked', () => {
+  describe('User Actions', () => {
+    it('calls onClose when cancel button is clicked', () => {
       render(<CommitMessageModal onCommitAndPush={mockOnCommitAndPush} />);
 
-      const cancelButton = screen.getByTestId('cancel-commit-button');
+      const cancelButton = screen.getByTestId('cancel-commit-message-button');
       fireEvent.click(cancelButton);
 
       expect(
@@ -77,7 +83,7 @@ describe('CommitMessageModal', () => {
     });
   });
 
-  describe('Form Input and Validation', () => {
+  describe('Form Validation', () => {
     it('updates input value when user types', () => {
       render(<CommitMessageModal onCommitAndPush={mockOnCommitAndPush} />);
 
@@ -90,7 +96,7 @@ describe('CommitMessageModal', () => {
     it('disables commit button when input is empty', () => {
       render(<CommitMessageModal onCommitAndPush={mockOnCommitAndPush} />);
 
-      const commitButton = screen.getByTestId('commit-button');
+      const commitButton = screen.getByTestId('confirm-commit-message-button');
       expect(commitButton).toBeDisabled();
     });
 
@@ -98,18 +104,20 @@ describe('CommitMessageModal', () => {
       render(<CommitMessageModal onCommitAndPush={mockOnCommitAndPush} />);
 
       const messageInput = screen.getByTestId('commit-message-input');
-      const commitButton = screen.getByTestId('commit-button');
+      const commitButton = screen.getByTestId('confirm-commit-message-button');
 
       fireEvent.change(messageInput, { target: { value: 'Test commit' } });
 
       expect(commitButton).not.toBeDisabled();
     });
+  });
 
-    it('trims whitespace from commit messages', async () => {
+  describe('Commit and Push Flow', () => {
+    it('calls onCommitAndPush with trimmed message', async () => {
       render(<CommitMessageModal onCommitAndPush={mockOnCommitAndPush} />);
 
       const messageInput = screen.getByTestId('commit-message-input');
-      const commitButton = screen.getByTestId('commit-button');
+      const commitButton = screen.getByTestId('confirm-commit-message-button');
 
       fireEvent.change(messageInput, {
         target: { value: '  Update README  ' },
@@ -120,14 +128,12 @@ describe('CommitMessageModal', () => {
         expect(mockOnCommitAndPush).toHaveBeenCalledWith('Update README');
       });
     });
-  });
 
-  describe('Form Submission', () => {
-    it('calls onCommitAndPush with message when commit button clicked', async () => {
+    it('calls onCommitAndPush when commit button clicked', async () => {
       render(<CommitMessageModal onCommitAndPush={mockOnCommitAndPush} />);
 
       const messageInput = screen.getByTestId('commit-message-input');
-      const commitButton = screen.getByTestId('commit-button');
+      const commitButton = screen.getByTestId('confirm-commit-message-button');
 
       fireEvent.change(messageInput, {
         target: { value: 'Fix bug in editor' },
@@ -165,7 +171,7 @@ describe('CommitMessageModal', () => {
       render(<CommitMessageModal onCommitAndPush={mockOnCommitAndPush} />);
 
       const messageInput = screen.getByTestId('commit-message-input');
-      const commitButton = screen.getByTestId('commit-button');
+      const commitButton = screen.getByTestId('confirm-commit-message-button');
 
       fireEvent.change(messageInput, { target: { value: 'Initial commit' } });
       fireEvent.click(commitButton);
@@ -197,8 +203,8 @@ describe('CommitMessageModal', () => {
     it('has accessible buttons with proper roles', () => {
       render(<CommitMessageModal onCommitAndPush={mockOnCommitAndPush} />);
 
-      const cancelButton = screen.getByTestId('cancel-commit-button');
-      const commitButton = screen.getByTestId('commit-button');
+      const cancelButton = screen.getByTestId('cancel-commit-message-button');
+      const commitButton = screen.getByTestId('confirm-commit-message-button');
 
       // Mantine buttons are semantic HTML buttons
       expect(cancelButton.tagName).toBe('BUTTON');

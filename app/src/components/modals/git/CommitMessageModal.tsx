@@ -53,13 +53,13 @@ const CommitMessageModal: React.FC<CommitMessageModalProps> = ({
           <Button
             variant="default"
             onClick={() => setCommitMessageModalVisible(false)}
-            data-testid="cancel-commit-button"
+            data-testid="cancel-commit-message-button"
           >
             Cancel
           </Button>
           <Button
             onClick={() => void handleSubmit()}
-            data-testid="commit-button"
+            data-testid="confirm-commit-message-button"
             disabled={!message.trim()}
           >
             Commit

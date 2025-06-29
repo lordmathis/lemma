@@ -36,8 +36,8 @@ describe('CreateUserModal', () => {
     mockOnCreateUser.mockResolvedValue(true);
   });
 
-  describe('Modal Visibility and Basic Interaction', () => {
-    it('renders modal when opened with all form elements', () => {
+  describe('Modal Visibility and Content', () => {
+    it('renders modal with correct content when opened', () => {
       render(
         <CreateUserModal
           opened={true}

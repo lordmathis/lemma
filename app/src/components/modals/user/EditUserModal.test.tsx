@@ -45,8 +45,8 @@ describe('EditUserModal', () => {
     mockOnEditUser.mockResolvedValue(true);
   });
 
-  describe('Modal Visibility and Form Pre-population', () => {
-    it('renders modal when opened with all form elements pre-populated', () => {
+  describe('Modal Visibility and Content', () => {
+    it('renders modal with correct content when opened', () => {
       render(
         <EditUserModal
           opened={true}

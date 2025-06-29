@@ -33,14 +33,14 @@ const DeleteFileModal: React.FC<DeleteFileModalProps> = ({
         <Button
           variant="default"
           onClick={() => setDeleteFileModalVisible(false)}
-          data-testid="cancel-delete-button"
+          data-testid="cancel-delete-file-button"
         >
           Cancel
         </Button>
         <Button
           color="red"
           onClick={() => void handleConfirm()}
-          data-testid="confirm-delete-button"
+          data-testid="confirm-delete-file-button"
         >
           Delete
         </Button>

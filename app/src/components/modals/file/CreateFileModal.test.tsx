@@ -49,20 +49,26 @@ describe('CreateFileModal', () => {
     mockModalContext.setNewFileModalVisible.mockClear();
   });
 
-  describe('Basic functionality', () => {
-    it('renders modal with all essential elements', () => {
+  describe('Modal Visibility and Content', () => {
+    it('renders modal with correct content when opened', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       expect(screen.getByText('Create New File')).toBeInTheDocument();
       expect(screen.getByTestId('file-name-input')).toBeInTheDocument();
-      expect(screen.getByTestId('cancel-create-button')).toBeInTheDocument();
-      expect(screen.getByTestId('confirm-create-button')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('cancel-create-file-button')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('confirm-create-file-button')
+      ).toBeInTheDocument();
     });
+  });
 
-    it('closes modal when cancel button is clicked', () => {
+  describe('User Actions', () => {
+    it('calls onClose when cancel button is clicked', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
-      fireEvent.click(screen.getByTestId('cancel-create-button'));
+      fireEvent.click(screen.getByTestId('cancel-create-file-button'));
 
       expect(mockModalContext.setNewFileModalVisible).toHaveBeenCalledWith(
         false
@@ -77,11 +83,13 @@ describe('CreateFileModal', () => {
 
       expect((fileNameInput as HTMLInputElement).value).toBe('test-file.md');
     });
+  });
 
+  describe('Form Validation', () => {
     it('has disabled create button when input is empty', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
-      const createButton = screen.getByTestId('confirm-create-button');
+      const createButton = screen.getByTestId('confirm-create-file-button');
       expect(createButton).toBeDisabled();
     });
 
@@ -89,7 +97,7 @@ describe('CreateFileModal', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
+      const createButton = screen.getByTestId('confirm-create-file-button');
 
       fireEvent.change(fileNameInput, { target: { value: 'test.md' } });
 
@@ -97,12 +105,12 @@ describe('CreateFileModal', () => {
     });
   });
 
-  describe('File creation flow', () => {
-    it('creates file successfully with valid input', async () => {
+  describe('File Creation Flow', () => {
+    it('calls onCreateFile when confirmed with valid input', async () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
+      const createButton = screen.getByTestId('confirm-create-file-button');
 
       fireEvent.change(fileNameInput, { target: { value: 'new-document.md' } });
       fireEvent.click(createButton);
@@ -136,7 +144,7 @@ describe('CreateFileModal', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
+      const createButton = screen.getByTestId('confirm-create-file-button');
 
       fireEvent.change(fileNameInput, {
         target: { value: '  spaced-file.md  ' },
@@ -161,7 +169,7 @@ describe('CreateFileModal', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
+      const createButton = screen.getByTestId('confirm-create-file-button');
 
       fireEvent.change(fileNameInput, { target: { value: '   ' } });
 
@@ -170,7 +178,7 @@ describe('CreateFileModal', () => {
     });
   });
 
-  describe('File name variations', () => {
+  describe('File Name Variations', () => {
     it.each([
       ['file-with_special.chars (1).md', 'special characters'],
       ['README', 'no extension'],
@@ -180,7 +188,7 @@ describe('CreateFileModal', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
+      const createButton = screen.getByTestId('confirm-create-file-button');
 
       fireEvent.change(fileNameInput, { target: { value: fileName } });
       fireEvent.click(createButton);

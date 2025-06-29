@@ -89,8 +89,8 @@ describe('CreateWorkspaceModal', () => {
     mockUseModalContext.mockReturnValue(mockModalContext);
   });
 
-  describe('Modal Visibility and Basic Interaction', () => {
-    it('renders modal with form elements when visible', () => {
+  describe('Modal Visibility and Content', () => {
+    it('renders modal with correct content when opened', () => {
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
       );
@@ -119,8 +119,10 @@ describe('CreateWorkspaceModal', () => {
         screen.queryByText('Create New Workspace')
       ).not.toBeInTheDocument();
     });
+  });
 
-    it('closes modal when cancel button is clicked', () => {
+  describe('User Actions', () => {
+    it('calls onClose when cancel button is clicked', () => {
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
       );
@@ -268,7 +270,7 @@ describe('CreateWorkspaceModal', () => {
     });
   });
 
-  describe('Successful Workspace Creation', () => {
+  describe('Workspace Creation Flow', () => {
     it('completes full successful creation flow', async () => {
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />

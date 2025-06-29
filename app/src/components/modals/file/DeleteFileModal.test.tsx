@@ -49,8 +49,8 @@ describe('DeleteFileModal', () => {
     mockModalContext.setDeleteFileModalVisible.mockClear();
   });
 
-  describe('Basic functionality', () => {
-    it('renders modal with file confirmation and action buttons', () => {
+  describe('Modal Visibility and Content', () => {
+    it('renders modal with correct content when opened', () => {
       render(
         <DeleteFileModal
           onDeleteFile={mockOnDeleteFile}
@@ -62,8 +62,12 @@ describe('DeleteFileModal', () => {
       expect(
         screen.getByText(/Are you sure you want to delete "test-file.md"?/)
       ).toBeInTheDocument();
-      expect(screen.getByTestId('cancel-delete-button')).toBeInTheDocument();
-      expect(screen.getByTestId('confirm-delete-button')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('cancel-delete-file-button')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('confirm-delete-file-button')
+      ).toBeInTheDocument();
     });
 
     it('renders modal with null file selection', () => {
@@ -76,8 +80,10 @@ describe('DeleteFileModal', () => {
         screen.getByText(/Are you sure you want to delete/)
       ).toBeInTheDocument();
     });
+  });
 
-    it('closes modal when cancel button is clicked', () => {
+  describe('User Actions', () => {
+    it('calls onClose when cancel button is clicked', () => {
       render(
         <DeleteFileModal
           onDeleteFile={mockOnDeleteFile}
@@ -85,7 +91,7 @@ describe('DeleteFileModal', () => {
         />
       );
 
-      fireEvent.click(screen.getByTestId('cancel-delete-button'));
+      fireEvent.click(screen.getByTestId('cancel-delete-file-button'));
 
       expect(mockModalContext.setDeleteFileModalVisible).toHaveBeenCalledWith(
         false
@@ -93,8 +99,8 @@ describe('DeleteFileModal', () => {
     });
   });
 
-  describe('File deletion flow', () => {
-    it('deletes file successfully when confirmed', async () => {
+  describe('File Deletion Flow', () => {
+    it('calls onDeleteFile when confirmed', async () => {
       render(
         <DeleteFileModal
           onDeleteFile={mockOnDeleteFile}
@@ -102,7 +108,7 @@ describe('DeleteFileModal', () => {
         />
       );
 
-      fireEvent.click(screen.getByTestId('confirm-delete-button'));
+      fireEvent.click(screen.getByTestId('confirm-delete-file-button'));
 
       await waitFor(() => {
         expect(mockOnDeleteFile).toHaveBeenCalledWith('document.md');
@@ -120,7 +126,7 @@ describe('DeleteFileModal', () => {
         <DeleteFileModal onDeleteFile={mockOnDeleteFile} selectedFile={null} />
       );
 
-      fireEvent.click(screen.getByTestId('confirm-delete-button'));
+      fireEvent.click(screen.getByTestId('confirm-delete-file-button'));
 
       expect(mockOnDeleteFile).not.toHaveBeenCalled();
     });
@@ -130,7 +136,7 @@ describe('DeleteFileModal', () => {
         <DeleteFileModal onDeleteFile={mockOnDeleteFile} selectedFile="" />
       );
 
-      fireEvent.click(screen.getByTestId('confirm-delete-button'));
+      fireEvent.click(screen.getByTestId('confirm-delete-file-button'));
 
       expect(mockOnDeleteFile).not.toHaveBeenCalled();
     });
@@ -143,7 +149,7 @@ describe('DeleteFileModal', () => {
         />
       );
 
-      fireEvent.click(screen.getByTestId('cancel-delete-button'));
+      fireEvent.click(screen.getByTestId('cancel-delete-file-button'));
 
       expect(mockOnDeleteFile).not.toHaveBeenCalled();
       expect(mockModalContext.setDeleteFileModalVisible).toHaveBeenCalledWith(
@@ -171,7 +177,7 @@ describe('DeleteFileModal', () => {
         screen.getByText(`Are you sure you want to delete "${fileName}"?`)
       ).toBeInTheDocument();
 
-      fireEvent.click(screen.getByTestId('confirm-delete-button'));
+      fireEvent.click(screen.getByTestId('confirm-delete-file-button'));
 
       await waitFor(() => {
         expect(mockOnDeleteFile).toHaveBeenCalledWith(fileName);
