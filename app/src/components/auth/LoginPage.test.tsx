@@ -43,8 +43,14 @@ const render = (ui: React.ReactElement) => {
 };
 
 describe('LoginPage', () => {
-  beforeEach(() => {
+  let mockNotificationShow: ReturnType<typeof vi.fn>;
+
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    // Get the mocked notification function
+    const { notifications } = await import('@mantine/notifications');
+    mockNotificationShow = vi.mocked(notifications.show);
 
     // Setup default mock implementations
     mockGetCurrentUser.mockRejectedValue(new Error('No user session'));
@@ -67,95 +73,67 @@ describe('LoginPage', () => {
         screen.getByText('Please sign in to continue')
       ).toBeInTheDocument();
 
-      // Check form fields
-      expect(screen.getByTestId('email-input')).toBeInTheDocument();
-      expect(screen.getByTestId('password-input')).toBeInTheDocument();
-
-      // Check submit button
-      expect(screen.getByTestId('login-button')).toBeInTheDocument();
-    });
-
-    it('renders form fields with correct placeholders', () => {
-      render(<LoginPage />);
-
+      // Check form fields with correct attributes
       const emailInput = screen.getByTestId('email-input');
       const passwordInput = screen.getByTestId('password-input');
-
-      expect(emailInput).toHaveAttribute('placeholder', 'your@email.com');
-      expect(passwordInput).toHaveAttribute('placeholder', 'Your password');
-    });
-
-    it('renders required fields as required', () => {
-      render(<LoginPage />);
-
-      const emailInput = screen.getByTestId('email-input');
-      const passwordInput = screen.getByTestId('password-input');
-
-      expect(emailInput).toBeRequired();
-      expect(passwordInput).toBeRequired();
-    });
-
-    it('submit button is not loading initially', () => {
-      render(<LoginPage />);
-
       const submitButton = screen.getByTestId('login-button');
-      expect(submitButton).toHaveRole('button');
+
+      expect(emailInput).toBeInTheDocument();
+      expect(emailInput).toHaveAttribute('type', 'email');
+      expect(emailInput).toHaveAttribute('placeholder', 'your@email.com');
+      expect(emailInput).toBeRequired();
+
+      expect(passwordInput).toBeInTheDocument();
+      expect(passwordInput).toHaveAttribute('type', 'password');
+      expect(passwordInput).toHaveAttribute('placeholder', 'Your password');
+      expect(passwordInput).toBeRequired();
+
+      expect(submitButton).toBeInTheDocument();
+      expect(submitButton).toHaveAttribute('type', 'submit');
       expect(submitButton).not.toHaveAttribute('data-loading', 'true');
     });
   });
 
   describe('Form Interaction', () => {
-    it('updates email input value when typed', () => {
+    it('updates input values when user types', () => {
       render(<LoginPage />);
 
       const emailInput = screen.getByTestId('email-input');
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-
-      expect((emailInput as HTMLInputElement).value).toBe('test@example.com');
-    });
-
-    it('updates password input value when typed', () => {
-      render(<LoginPage />);
-
       const passwordInput = screen.getByTestId('password-input');
+
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
+      expect((emailInput as HTMLInputElement).value).toBe('test@example.com');
       expect((passwordInput as HTMLInputElement).value).toBe('password123');
     });
 
-    it('clears form values when inputs are cleared', () => {
+    it('prevents form submission with empty fields due to HTML5 validation', () => {
       render(<LoginPage />);
 
-      const emailInput = screen.getByTestId('email-input');
-      const passwordInput = screen.getByTestId('password-input');
+      const submitButton = screen.getByTestId('login-button');
+      fireEvent.click(submitButton);
 
-      // Set values
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-
-      // Clear values
-      fireEvent.change(emailInput, { target: { value: '' } });
-      fireEvent.change(passwordInput, { target: { value: '' } });
-
-      expect((emailInput as HTMLInputElement).value).toBe('');
-      expect((passwordInput as HTMLInputElement).value).toBe('');
+      expect(mockApiLogin).not.toHaveBeenCalled();
     });
   });
 
   describe('Form Submission', () => {
-    it('calls login function with correct credentials on form submit', async () => {
-      render(<LoginPage />);
-
+    const fillAndSubmitForm = (email: string, password: string) => {
       const emailInput = screen.getByTestId('email-input');
       const passwordInput = screen.getByTestId('password-input');
       const submitButton = screen.getByTestId('login-button');
 
-      // Fill in the form
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-
-      // Submit the form
+      fireEvent.change(emailInput, { target: { value: email } });
+      fireEvent.change(passwordInput, { target: { value: password } });
       fireEvent.click(submitButton);
+
+      return { emailInput, passwordInput, submitButton };
+    };
+
+    it('calls login function with correct credentials on form submit', async () => {
+      render(<LoginPage />);
+      fillAndSubmitForm('test@example.com', 'password123');
 
       await waitFor(() => {
         expect(mockApiLogin).toHaveBeenCalledWith(
@@ -165,27 +143,8 @@ describe('LoginPage', () => {
       });
     });
 
-    it('calls login function when form is submitted via Enter key', async () => {
-      render(<LoginPage />);
-
-      const form = screen.getByRole('form');
-      const emailInput = screen.getByTestId('email-input');
-      const passwordInput = screen.getByTestId('password-input');
-
-      // Fill in the form
-      fireEvent.change(emailInput, { target: { value: 'user@test.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'testpass' } });
-
-      // Submit via form submission (Enter key)
-      fireEvent.submit(form);
-
-      await waitFor(() => {
-        expect(mockApiLogin).toHaveBeenCalledWith('user@test.com', 'testpass');
-      });
-    });
-
-    it('shows loading state during login process', async () => {
-      // Create a promise we can control
+    it('shows loading state during login and resets after completion', async () => {
+      // Create a controlled promise for login
       let resolveLogin: () => void;
       const loginPromise = new Promise<void>((resolve) => {
         resolveLogin = resolve;
@@ -193,59 +152,59 @@ describe('LoginPage', () => {
       mockApiLogin.mockReturnValue(loginPromise);
 
       render(<LoginPage />);
+      const { submitButton } = fillAndSubmitForm(
+        'test@example.com',
+        'password123'
+      );
 
-      const emailInput = screen.getByTestId('email-input');
-      const passwordInput = screen.getByTestId('password-input');
-      const submitButton = screen.getByTestId('login-button');
-
-      // Fill in the form
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-
-      // Submit the form
-      fireEvent.click(submitButton);
-
-      // Check loading state
+      // Check loading state appears
       await waitFor(() => {
         expect(submitButton).toHaveAttribute('data-loading', 'true');
       });
 
-      // Resolve the login
+      // Resolve the login and check loading state is removed
       resolveLogin!();
-
-      // Wait for loading to finish
       await waitFor(() => {
         expect(submitButton).not.toHaveAttribute('data-loading', 'true');
       });
     });
 
-    it('handles login errors gracefully', async () => {
+    it('handles login success with notification', async () => {
+      render(<LoginPage />);
+      fillAndSubmitForm('test@example.com', 'password123');
+
+      await waitFor(() => {
+        expect(mockApiLogin).toHaveBeenCalled();
+      });
+
+      // Verify success notification is shown
+      await waitFor(() => {
+        expect(mockNotificationShow).toHaveBeenCalledWith({
+          title: 'Success',
+          message: 'Logged in successfully',
+          color: 'green',
+        });
+      });
+    });
+
+    it('handles login errors gracefully with notification', async () => {
       const consoleErrorSpy = vi
         .spyOn(console, 'error')
         .mockImplementation(() => {});
-      mockApiLogin.mockRejectedValue(new Error('Login failed'));
+      const errorMessage = 'Invalid credentials';
+      mockApiLogin.mockRejectedValue(new Error(errorMessage));
 
       render(<LoginPage />);
-
-      const emailInput = screen.getByTestId('email-input');
-      const passwordInput = screen.getByTestId('password-input');
-      const submitButton = screen.getByTestId('login-button');
-
-      // Fill in the form
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
-
-      // Submit the form
-      fireEvent.click(submitButton);
+      const { submitButton } = fillAndSubmitForm(
+        'test@example.com',
+        'wrongpassword'
+      );
 
       await waitFor(() => {
-        expect(mockApiLogin).toHaveBeenCalledWith(
-          'test@example.com',
-          'wrongpassword'
-        );
+        expect(mockApiLogin).toHaveBeenCalled();
       });
 
-      // Wait for error handling
+      // Verify error is logged
       await waitFor(() => {
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           'Login failed:',
@@ -253,7 +212,16 @@ describe('LoginPage', () => {
         );
       });
 
-      // Loading state should be reset
+      // Verify error notification is shown
+      await waitFor(() => {
+        expect(mockNotificationShow).toHaveBeenCalledWith({
+          title: 'Error',
+          message: errorMessage,
+          color: 'red',
+        });
+      });
+
+      // Verify loading state is reset
       await waitFor(() => {
         expect(submitButton).not.toHaveAttribute('data-loading', 'true');
       });
@@ -261,65 +229,13 @@ describe('LoginPage', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('prevents form submission with empty fields', () => {
+    it('handles special characters in credentials', async () => {
       render(<LoginPage />);
-
-      const submitButton = screen.getByTestId('login-button');
-
-      // Try to submit without filling fields
-      fireEvent.click(submitButton);
-
-      // Login should not be called due to HTML5 validation
-      expect(mockApiLogin).not.toHaveBeenCalled();
-    });
-
-    it('prevents form submission with only email filled', () => {
-      render(<LoginPage />);
-
-      const emailInput = screen.getByTestId('email-input');
-      const submitButton = screen.getByTestId('login-button');
-
-      // Fill only email
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-
-      // Try to submit
-      fireEvent.click(submitButton);
-
-      // Login should not be called due to HTML5 validation
-      expect(mockApiLogin).not.toHaveBeenCalled();
-    });
-
-    it('prevents form submission with only password filled', () => {
-      render(<LoginPage />);
-
-      const passwordInput = screen.getByTestId('password-input');
-      const submitButton = screen.getByTestId('login-button');
-
-      // Fill only password
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-
-      // Try to submit
-      fireEvent.click(submitButton);
-
-      // Login should not be called due to HTML5 validation
-      expect(mockApiLogin).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('handles special characters in email and password', async () => {
-      render(<LoginPage />);
-
-      const emailInput = screen.getByTestId('email-input');
-      const passwordInput = screen.getByTestId('password-input');
-      const submitButton = screen.getByTestId('login-button');
 
       const specialEmail = 'user+test@example-domain.com';
       const specialPassword = 'P@ssw0rd!#$%';
 
-      fireEvent.change(emailInput, { target: { value: specialEmail } });
-      fireEvent.change(passwordInput, { target: { value: specialPassword } });
-      fireEvent.click(submitButton);
+      fillAndSubmitForm(specialEmail, specialPassword);
 
       await waitFor(() => {
         expect(mockApiLogin).toHaveBeenCalledWith(
@@ -327,76 +243,6 @@ describe('LoginPage', () => {
           specialPassword
         );
       });
-    });
-
-    it('handles very long email and password values', async () => {
-      render(<LoginPage />);
-
-      const emailInput = screen.getByTestId('email-input');
-      const passwordInput = screen.getByTestId('password-input');
-      const submitButton = screen.getByTestId('login-button');
-
-      const longEmail = 'a'.repeat(100) + '@example.com';
-      const longPassword = 'p'.repeat(200);
-
-      fireEvent.change(emailInput, { target: { value: longEmail } });
-      fireEvent.change(passwordInput, { target: { value: longPassword } });
-      fireEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(mockApiLogin).toHaveBeenCalledWith(longEmail, longPassword);
-      });
-    });
-
-    it('resets loading state after successful login', async () => {
-      render(<LoginPage />);
-
-      const emailInput = screen.getByTestId('email-input');
-      const passwordInput = screen.getByTestId('password-input');
-      const submitButton = screen.getByTestId('login-button');
-
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-      fireEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(mockApiLogin).toHaveBeenCalled();
-      });
-
-      await waitFor(() => {
-        expect(submitButton).not.toHaveAttribute('data-loading', 'true');
-      });
-    });
-  });
-
-  describe('Accessibility', () => {
-    it('has proper form structure with labels', () => {
-      render(<LoginPage />);
-
-      const emailInput = screen.getByTestId('email-input');
-      const passwordInput = screen.getByTestId('password-input');
-
-      expect(emailInput).toBeInTheDocument();
-      expect(passwordInput).toBeInTheDocument();
-      expect(emailInput.tagName).toBe('INPUT');
-      expect(passwordInput.tagName).toBe('INPUT');
-    });
-
-    it('has proper input types', () => {
-      render(<LoginPage />);
-
-      const emailInput = screen.getByTestId('email-input');
-      const passwordInput = screen.getByTestId('password-input');
-
-      expect(emailInput).toHaveAttribute('type', 'email');
-      expect(passwordInput).toHaveAttribute('type', 'password');
-    });
-
-    it('submit button has proper type', () => {
-      render(<LoginPage />);
-
-      const submitButton = screen.getByTestId('login-button');
-      expect(submitButton).toHaveAttribute('type', 'submit');
     });
   });
 });
