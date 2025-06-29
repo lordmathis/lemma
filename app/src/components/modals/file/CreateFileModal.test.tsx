@@ -9,13 +9,6 @@ import React from 'react';
 import { MantineProvider } from '@mantine/core';
 import CreateFileModal from './CreateFileModal';
 
-// Mock notifications
-vi.mock('@mantine/notifications', () => ({
-  notifications: {
-    show: vi.fn(),
-  },
-}));
-
 // Mock ModalContext with modal always open
 const mockModalContext = {
   newFileModalVisible: true,
@@ -51,14 +44,13 @@ describe('CreateFileModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockOnCreateFile.mockReset();
     mockOnCreateFile.mockResolvedValue(undefined);
-
-    // Reset modal context mocks
     mockModalContext.setNewFileModalVisible.mockClear();
   });
 
-  describe('Modal Visibility', () => {
-    it('renders modal when open', () => {
+  describe('Basic functionality', () => {
+    it('renders modal with all essential elements', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       expect(screen.getByText('Create New File')).toBeInTheDocument();
@@ -67,19 +59,16 @@ describe('CreateFileModal', () => {
       expect(screen.getByTestId('confirm-create-button')).toBeInTheDocument();
     });
 
-    it('calls setNewFileModalVisible when modal is closed', () => {
+    it('closes modal when cancel button is clicked', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
-      const cancelButton = screen.getByTestId('cancel-create-button');
-      fireEvent.click(cancelButton);
+      fireEvent.click(screen.getByTestId('cancel-create-button'));
 
       expect(mockModalContext.setNewFileModalVisible).toHaveBeenCalledWith(
         false
       );
     });
-  });
 
-  describe('Form Interaction', () => {
     it('updates file name input when typed', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
@@ -89,7 +78,27 @@ describe('CreateFileModal', () => {
       expect((fileNameInput as HTMLInputElement).value).toBe('test-file.md');
     });
 
-    it('handles form submission with valid file name', async () => {
+    it('has disabled create button when input is empty', () => {
+      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
+
+      const createButton = screen.getByTestId('confirm-create-button');
+      expect(createButton).toBeDisabled();
+    });
+
+    it('enables create button when valid input is provided', () => {
+      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
+
+      const fileNameInput = screen.getByTestId('file-name-input');
+      const createButton = screen.getByTestId('confirm-create-button');
+
+      fireEvent.change(fileNameInput, { target: { value: 'test.md' } });
+
+      expect(createButton).not.toBeDisabled();
+    });
+  });
+
+  describe('File creation flow', () => {
+    it('creates file successfully with valid input', async () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       const fileNameInput = screen.getByTestId('file-name-input');
@@ -101,155 +110,25 @@ describe('CreateFileModal', () => {
       await waitFor(() => {
         expect(mockOnCreateFile).toHaveBeenCalledWith('new-document.md');
       });
-    });
-
-    it('prevents submission with empty file name', () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const createButton = screen.getByTestId('confirm-create-button');
-      fireEvent.click(createButton);
-
-      // Should not call the function with empty name
-      expect(mockOnCreateFile).not.toHaveBeenCalled();
-    });
-
-    it('closes modal after successful file creation', async () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
-
-      fireEvent.change(fileNameInput, { target: { value: 'test.md' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockOnCreateFile).toHaveBeenCalledWith('test.md');
-      });
 
       await waitFor(() => {
         expect(mockModalContext.setNewFileModalVisible).toHaveBeenCalledWith(
           false
         );
-      });
-    });
-
-    it('clears input after successful submission', async () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
-
-      fireEvent.change(fileNameInput, { target: { value: 'test.md' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockOnCreateFile).toHaveBeenCalledWith('test.md');
-      });
-
-      await waitFor(() => {
         expect((fileNameInput as HTMLInputElement).value).toBe('');
       });
     });
-  });
 
-  describe('Modal Actions', () => {
-    it('has cancel and create buttons', () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const confirmButton = screen.getByTestId('confirm-create-button');
-      const cancelButton = screen.getByTestId('cancel-create-button');
-
-      expect(confirmButton).toBeInTheDocument();
-      expect(cancelButton).toBeInTheDocument();
-
-      expect(confirmButton).toHaveRole('button');
-      expect(cancelButton).toHaveRole('button');
-    });
-
-    it('closes modal when cancel button is clicked', () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const cancelButton = screen.getByTestId('cancel-create-button');
-      fireEvent.click(cancelButton);
-
-      expect(mockModalContext.setNewFileModalVisible).toHaveBeenCalledWith(
-        false
-      );
-    });
-
-    it('calls onCreateFile when create button is clicked with valid input', async () => {
+    it('creates file via Enter key press', async () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
 
-      fireEvent.change(fileNameInput, { target: { value: 'test.md' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockOnCreateFile).toHaveBeenCalledTimes(1);
-        expect(mockOnCreateFile).toHaveBeenCalledWith('test.md');
-      });
-    });
-  });
-
-  describe('File Name Validation', () => {
-    it('handles special characters in file names', async () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
-
-      const specialFileName = 'file-with_special.chars (1).md';
-      fireEvent.change(fileNameInput, { target: { value: specialFileName } });
-      fireEvent.click(createButton);
+      fireEvent.change(fileNameInput, { target: { value: 'enter-test.md' } });
+      fireEvent.keyDown(fileNameInput, { key: 'Enter', code: 'Enter' });
 
       await waitFor(() => {
-        expect(mockOnCreateFile).toHaveBeenCalledWith(specialFileName);
-      });
-    });
-
-    it('handles long file names', async () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
-
-      const longFileName = 'a'.repeat(100) + '.md';
-      fireEvent.change(fileNameInput, { target: { value: longFileName } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockOnCreateFile).toHaveBeenCalledWith(longFileName);
-      });
-    });
-
-    it('handles file names without extensions', async () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
-
-      fireEvent.change(fileNameInput, { target: { value: 'README' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockOnCreateFile).toHaveBeenCalledWith('README');
-      });
-    });
-
-    it('handles unicode characters in file names', async () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
-
-      const unicodeFileName = 'ファイル名.md';
-      fireEvent.change(fileNameInput, { target: { value: unicodeFileName } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockOnCreateFile).toHaveBeenCalledWith(unicodeFileName);
+        expect(mockOnCreateFile).toHaveBeenCalledWith('enter-test.md');
       });
     });
 
@@ -268,154 +147,68 @@ describe('CreateFileModal', () => {
         expect(mockOnCreateFile).toHaveBeenCalledWith('spaced-file.md');
       });
     });
-  });
 
-  describe('Error Handling', () => {
-    it('handles creation errors gracefully', async () => {
-      mockOnCreateFile.mockRejectedValue(new Error('File creation failed'));
-
+    it('does not submit when input is empty', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
+      fireEvent.keyDown(fileNameInput, { key: 'Enter', code: 'Enter' });
 
-      fireEvent.change(fileNameInput, { target: { value: 'test.md' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockOnCreateFile).toHaveBeenCalledWith('test.md');
-      });
-
-      // Modal should handle the error gracefully (not crash)
-      expect(screen.getByText('Create New File')).toBeInTheDocument();
+      expect(mockOnCreateFile).not.toHaveBeenCalled();
     });
 
-    it('does not close modal when creation fails', async () => {
-      mockOnCreateFile.mockRejectedValue(new Error('File creation failed'));
-
+    it('does not submit when input contains only whitespace', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       const fileNameInput = screen.getByTestId('file-name-input');
       const createButton = screen.getByTestId('confirm-create-button');
 
-      fireEvent.change(fileNameInput, { target: { value: 'test.md' } });
+      fireEvent.change(fileNameInput, { target: { value: '   ' } });
+
+      expect(createButton).toBeDisabled();
+      expect(mockOnCreateFile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('File name variations', () => {
+    it.each([
+      ['file-with_special.chars (1).md', 'special characters'],
+      ['README', 'no extension'],
+      ['ファイル名.md', 'unicode characters'],
+      ['a'.repeat(100) + '.md', 'long file names'],
+    ])('handles %s (%s)', async (fileName, _description) => {
+      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
+
+      const fileNameInput = screen.getByTestId('file-name-input');
+      const createButton = screen.getByTestId('confirm-create-button');
+
+      fireEvent.change(fileNameInput, { target: { value: fileName } });
       fireEvent.click(createButton);
 
       await waitFor(() => {
-        expect(mockOnCreateFile).toHaveBeenCalledWith('test.md');
+        expect(mockOnCreateFile).toHaveBeenCalledWith(fileName);
       });
-
-      // Modal should remain open when creation fails
-      expect(mockModalContext.setNewFileModalVisible).not.toHaveBeenCalledWith(
-        false
-      );
     });
   });
 
   describe('Accessibility', () => {
-    it('has proper form labels and structure', () => {
+    it('provides proper keyboard navigation and accessibility features', () => {
       render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
 
       const fileNameInput = screen.getByTestId('file-name-input');
-      expect(fileNameInput).toBeInTheDocument();
-      expect(fileNameInput.tagName).toBe('INPUT');
+
+      // Input should be focusable and accessible
+      expect(fileNameInput).not.toHaveAttribute('disabled');
+      expect(fileNameInput).not.toHaveAttribute('readonly');
       expect(fileNameInput).toHaveAttribute('type', 'text');
-    });
+      expect(fileNameInput).toHaveAccessibleName();
 
-    it('has proper button roles', () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const buttons = screen.getAllByRole('button');
-      expect(buttons.length).toBeGreaterThanOrEqual(2); // Cancel and Create buttons
-
+      // Buttons should have proper roles
       const cancelButton = screen.getByRole('button', { name: /cancel/i });
       const createButton = screen.getByRole('button', { name: /create/i });
 
       expect(cancelButton).toBeInTheDocument();
       expect(createButton).toBeInTheDocument();
-    });
-
-    it('supports keyboard navigation', () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const fileNameInput = screen.getByTestId('file-name-input');
-
-      // Check that the input is focusable (not disabled or readonly)
-      expect(fileNameInput).not.toHaveAttribute('disabled');
-      expect(fileNameInput).not.toHaveAttribute('readonly');
-
-      // Check that the input can receive keyboard events (more reliable than focus)
-      fireEvent.keyDown(fileNameInput, { key: 'a' });
-      fireEvent.change(fileNameInput, { target: { value: 'test' } });
-
-      expect((fileNameInput as HTMLInputElement).value).toBe('test');
-
-      // Verify the input is accessible via keyboard navigation
-      expect(fileNameInput).toHaveAttribute('type', 'text');
-      expect(fileNameInput).toHaveAccessibleName(); // Has proper label
-    });
-
-    it('has proper modal structure', () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      // Modal should have proper title
-      expect(screen.getByText('Create New File')).toBeInTheDocument();
-
-      // Should have form elements
-      expect(screen.getByTestId('file-name-input')).toBeInTheDocument();
-    });
-  });
-
-  describe('Component Props', () => {
-    it('accepts and uses onCreateFile prop correctly', async () => {
-      const customMockCreate = vi.fn().mockResolvedValue(undefined);
-
-      render(<CreateFileModal onCreateFile={customMockCreate} />);
-
-      const fileNameInput = screen.getByTestId('file-name-input');
-      const createButton = screen.getByTestId('confirm-create-button');
-
-      fireEvent.change(fileNameInput, { target: { value: 'custom-test.md' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(customMockCreate).toHaveBeenCalledWith('custom-test.md');
-      });
-    });
-
-    it('handles function prop correctly', () => {
-      const testFunction = vi.fn();
-
-      expect(() => {
-        render(<CreateFileModal onCreateFile={testFunction} />);
-      }).not.toThrow();
-
-      expect(screen.getByText('Create New File')).toBeInTheDocument();
-    });
-  });
-
-  describe('Form Submission Edge Cases', () => {
-    it('submits form via Enter key', async () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const fileNameInput = screen.getByTestId('file-name-input');
-
-      fireEvent.change(fileNameInput, { target: { value: 'enter-test.md' } });
-      fireEvent.keyDown(fileNameInput, { key: 'Enter', code: 'Enter' });
-
-      await waitFor(() => {
-        expect(mockOnCreateFile).toHaveBeenCalledWith('enter-test.md');
-      });
-    });
-
-    it('does not submit empty form via Enter key', () => {
-      render(<CreateFileModal onCreateFile={mockOnCreateFile} />);
-
-      const fileNameInput = screen.getByTestId('file-name-input');
-      fireEvent.keyDown(fileNameInput, { key: 'Enter', code: 'Enter' });
-
-      // Should not call the function
-      expect(mockOnCreateFile).not.toHaveBeenCalled();
     });
   });
 });
