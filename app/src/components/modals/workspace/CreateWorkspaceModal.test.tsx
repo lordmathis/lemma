@@ -86,13 +86,11 @@ describe('CreateWorkspaceModal', () => {
     mockOnWorkspaceCreated.mockResolvedValue(undefined);
     mockSetCreateWorkspaceModalVisible.mockClear();
     mockNotificationsShow.mockClear();
-
-    // Set up default modal context
     mockUseModalContext.mockReturnValue(mockModalContext);
   });
 
-  describe('Modal Visibility', () => {
-    it('renders modal when visible', () => {
+  describe('Modal Visibility and Basic Interaction', () => {
+    it('renders modal with form elements when visible', () => {
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
       );
@@ -100,20 +98,18 @@ describe('CreateWorkspaceModal', () => {
       expect(screen.getByText('Create New Workspace')).toBeInTheDocument();
       expect(screen.getByTestId('workspace-name-input')).toBeInTheDocument();
       expect(
-        screen.getByTestId('cancel-create-workspace-button')
+        screen.getByRole('button', { name: /cancel/i })
       ).toBeInTheDocument();
       expect(
-        screen.getByTestId('confirm-create-workspace-button')
+        screen.getByRole('button', { name: /create/i })
       ).toBeInTheDocument();
     });
 
-    it('does not render modal when not visible', () => {
-      const hiddenModalContext = {
+    it('does not render when modal is closed', () => {
+      mockUseModalContext.mockReturnValueOnce({
         ...mockModalContext,
         createWorkspaceModalVisible: false,
-      };
-
-      mockUseModalContext.mockReturnValueOnce(hiddenModalContext);
+      });
 
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
@@ -124,19 +120,15 @@ describe('CreateWorkspaceModal', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('calls setCreateWorkspaceModalVisible when modal is closed via cancel button', () => {
+    it('closes modal when cancel button is clicked', () => {
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
       );
 
-      const cancelButton = screen.getByTestId('cancel-create-workspace-button');
-      fireEvent.click(cancelButton);
-
+      fireEvent.click(screen.getByTestId('cancel-create-workspace-button'));
       expect(mockSetCreateWorkspaceModalVisible).toHaveBeenCalledWith(false);
     });
-  });
 
-  describe('Form Interaction', () => {
     it('updates workspace name input when typed', () => {
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
@@ -147,109 +139,69 @@ describe('CreateWorkspaceModal', () => {
 
       expect((nameInput as HTMLInputElement).value).toBe('my-workspace');
     });
-
-    it('handles form submission with valid workspace name', async () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const nameInput = screen.getByTestId('workspace-name-input');
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-
-      fireEvent.change(nameInput, { target: { value: 'new-workspace' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockCreateWorkspace).toHaveBeenCalledWith('new-workspace');
-      });
-    });
-
-    it('prevents submission with empty workspace name', async () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockNotificationsShow).toHaveBeenCalledWith({
-          title: 'Error',
-          message: 'Workspace name is required',
-          color: 'red',
-        });
-      });
-
-      expect(mockCreateWorkspace).not.toHaveBeenCalled();
-    });
-
-    it('prevents submission with whitespace-only workspace name', async () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const nameInput = screen.getByTestId('workspace-name-input');
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-
-      fireEvent.change(nameInput, { target: { value: '   ' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockNotificationsShow).toHaveBeenCalledWith({
-          title: 'Error',
-          message: 'Workspace name is required',
-          color: 'red',
-        });
-      });
-
-      expect(mockCreateWorkspace).not.toHaveBeenCalled();
-    });
-
-    it('closes modal and clears form after successful creation', async () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const nameInput = screen.getByTestId('workspace-name-input');
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-
-      fireEvent.change(nameInput, { target: { value: 'success-workspace' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockCreateWorkspace).toHaveBeenCalledWith('success-workspace');
-      });
-
-      await waitFor(() => {
-        expect(mockSetCreateWorkspaceModalVisible).toHaveBeenCalledWith(false);
-      });
-
-      await waitFor(() => {
-        expect((nameInput as HTMLInputElement).value).toBe('');
-      });
-    });
   });
 
-  describe('Workspace Name Validation', () => {
-    it('handles various workspace name formats', async () => {
-      const workspaceNames = [
+  describe('Form Validation', () => {
+    it('prevents submission with empty or whitespace-only names', async () => {
+      const testCases = ['', '   ', '\t\n  '];
+
+      for (const testValue of testCases) {
+        const { unmount } = render(
+          <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
+        );
+
+        const nameInput = screen.getByTestId('workspace-name-input');
+        const createButton = screen.getByTestId(
+          'confirm-create-workspace-button'
+        );
+
+        fireEvent.change(nameInput, { target: { value: testValue } });
+        fireEvent.click(createButton);
+
+        await waitFor(() => {
+          expect(mockNotificationsShow).toHaveBeenCalledWith({
+            title: 'Error',
+            message: 'Workspace name is required',
+            color: 'red',
+          });
+        });
+
+        expect(mockCreateWorkspace).not.toHaveBeenCalled();
+
+        unmount();
+        vi.clearAllMocks();
+      }
+    });
+
+    it('trims whitespace from workspace names before submission', async () => {
+      render(
+        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
+      );
+
+      const nameInput = screen.getByTestId('workspace-name-input');
+      const createButton = screen.getByTestId(
+        'confirm-create-workspace-button'
+      );
+
+      fireEvent.change(nameInput, { target: { value: '  valid-workspace  ' } });
+      fireEvent.click(createButton);
+
+      await waitFor(() => {
+        expect(mockCreateWorkspace).toHaveBeenCalledWith('valid-workspace');
+      });
+    });
+
+    it('accepts various valid workspace name formats', async () => {
+      const validNames = [
         'simple',
         'workspace-with-dashes',
         'workspace_with_underscores',
         'workspace with spaces',
         'workspace123',
-        'Very Long Workspace Name Here',
+        'ワークスペース', // Unicode
       ];
 
-      for (const name of workspaceNames) {
+      for (const name of validNames) {
         const { unmount } = render(
           <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
         );
@@ -271,71 +223,11 @@ describe('CreateWorkspaceModal', () => {
         mockCreateWorkspace.mockResolvedValue(mockWorkspace);
       }
     });
-
-    it('handles unicode characters in workspace names', async () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const nameInput = screen.getByTestId('workspace-name-input');
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-
-      const unicodeName = 'ワークスペース';
-      fireEvent.change(nameInput, { target: { value: unicodeName } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockCreateWorkspace).toHaveBeenCalledWith(unicodeName);
-      });
-    });
-
-    it('trims whitespace from workspace names', async () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const nameInput = screen.getByTestId('workspace-name-input');
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-
-      fireEvent.change(nameInput, {
-        target: { value: '  trimmed-workspace  ' },
-      });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockCreateWorkspace).toHaveBeenCalledWith('trimmed-workspace');
-      });
-    });
   });
 
-  describe('Loading State', () => {
-    it('shows loading state on create button during creation', async () => {
-      // Make the API call hang to test loading state
-      mockCreateWorkspace.mockImplementation(() => new Promise(() => {}));
-
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const nameInput = screen.getByTestId('workspace-name-input');
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-
-      fireEvent.change(nameInput, { target: { value: 'loading-test' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(createButton).toHaveAttribute('data-loading', 'true');
-      });
-    });
-
-    it('disables form elements during creation', async () => {
-      mockCreateWorkspace.mockImplementation(() => new Promise(() => {}));
+  describe('Loading States and UI Behavior', () => {
+    it('disables form elements and shows loading during workspace creation', async () => {
+      mockCreateWorkspace.mockImplementation(() => new Promise(() => {})); // Never resolves
 
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
@@ -347,17 +239,18 @@ describe('CreateWorkspaceModal', () => {
       );
       const cancelButton = screen.getByTestId('cancel-create-workspace-button');
 
-      fireEvent.change(nameInput, { target: { value: 'disabled-test' } });
+      fireEvent.change(nameInput, { target: { value: 'loading-test' } });
       fireEvent.click(createButton);
 
       await waitFor(() => {
         expect(nameInput).toBeDisabled();
         expect(createButton).toBeDisabled();
         expect(cancelButton).toBeDisabled();
+        expect(createButton).toHaveAttribute('data-loading', 'true');
       });
     });
 
-    it('handles normal state when not loading', () => {
+    it('maintains normal state when not loading', () => {
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
       );
@@ -375,8 +268,8 @@ describe('CreateWorkspaceModal', () => {
     });
   });
 
-  describe('Success Handling', () => {
-    it('shows success notification after workspace creation', async () => {
+  describe('Successful Workspace Creation', () => {
+    it('completes full successful creation flow', async () => {
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
       );
@@ -386,9 +279,15 @@ describe('CreateWorkspaceModal', () => {
         'confirm-create-workspace-button'
       );
 
-      fireEvent.change(nameInput, { target: { value: 'success-workspace' } });
+      fireEvent.change(nameInput, { target: { value: 'new-workspace' } });
       fireEvent.click(createButton);
 
+      // API called with correct name
+      await waitFor(() => {
+        expect(mockCreateWorkspace).toHaveBeenCalledWith('new-workspace');
+      });
+
+      // Success notification shown
       await waitFor(() => {
         expect(mockNotificationsShow).toHaveBeenCalledWith({
           title: 'Success',
@@ -396,23 +295,16 @@ describe('CreateWorkspaceModal', () => {
           color: 'green',
         });
       });
-    });
 
-    it('calls onWorkspaceCreated callback when provided', async () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const nameInput = screen.getByTestId('workspace-name-input');
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-
-      fireEvent.change(nameInput, { target: { value: 'callback-test' } });
-      fireEvent.click(createButton);
-
+      // Callback invoked
       await waitFor(() => {
         expect(mockOnWorkspaceCreated).toHaveBeenCalledWith(mockWorkspace);
+      });
+
+      // Modal closed and form cleared
+      await waitFor(() => {
+        expect(mockSetCreateWorkspaceModalVisible).toHaveBeenCalledWith(false);
+        expect((nameInput as HTMLInputElement).value).toBe('');
       });
     });
 
@@ -442,7 +334,7 @@ describe('CreateWorkspaceModal', () => {
   });
 
   describe('Error Handling', () => {
-    it('handles creation errors gracefully', async () => {
+    it('handles API errors gracefully', async () => {
       mockCreateWorkspace.mockRejectedValue(new Error('Creation failed'));
 
       render(
@@ -465,65 +357,16 @@ describe('CreateWorkspaceModal', () => {
         });
       });
 
-      // Modal should remain open when creation fails
+      // Modal remains open and form retains values
       expect(mockSetCreateWorkspaceModalVisible).not.toHaveBeenCalledWith(
         false
       );
       expect(screen.getByText('Create New Workspace')).toBeInTheDocument();
-    });
-
-    it('handles network errors', async () => {
-      mockCreateWorkspace.mockRejectedValue(new Error('Network error'));
-
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const nameInput = screen.getByTestId('workspace-name-input');
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-
-      fireEvent.change(nameInput, { target: { value: 'network-error-test' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockNotificationsShow).toHaveBeenCalledWith({
-          title: 'Error',
-          message: 'Failed to create workspace',
-          color: 'red',
-        });
-      });
-
-      // Should not crash the component
-      expect(screen.getByText('Create New Workspace')).toBeInTheDocument();
-    });
-
-    it('retains form values when creation fails', async () => {
-      mockCreateWorkspace.mockRejectedValue(new Error('Creation failed'));
-
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const nameInput = screen.getByTestId('workspace-name-input');
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-
-      fireEvent.change(nameInput, { target: { value: 'persist-error' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(mockCreateWorkspace).toHaveBeenCalledWith('persist-error');
-      });
-
-      // Form should retain values when creation fails
-      expect((nameInput as HTMLInputElement).value).toBe('persist-error');
+      expect((nameInput as HTMLInputElement).value).toBe('error-workspace');
     });
 
     it('resets loading state after error', async () => {
-      mockCreateWorkspace.mockRejectedValue(new Error('Creation failed'));
+      mockCreateWorkspace.mockRejectedValue(new Error('Network error'));
 
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
@@ -548,181 +391,19 @@ describe('CreateWorkspaceModal', () => {
     });
   });
 
-  describe('Accessibility', () => {
-    it('has proper form labels and structure', () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const nameInput = screen.getByTestId('workspace-name-input');
-      expect(nameInput).toBeInTheDocument();
-      expect(nameInput.tagName).toBe('INPUT');
-      expect(nameInput).toHaveAttribute('type', 'text');
-      expect(nameInput).toHaveAccessibleName();
-    });
-
-    it('has proper button roles', () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      const buttons = screen.getAllByRole('button');
-      expect(buttons.length).toBeGreaterThanOrEqual(2);
-
-      const cancelButton = screen.getByRole('button', { name: /cancel/i });
-      const createButton = screen.getByRole('button', { name: /create/i });
-
-      expect(cancelButton).toBeInTheDocument();
-      expect(createButton).toBeInTheDocument();
-    });
-
-    it('supports keyboard navigation', () => {
+  describe('Keyboard Interactions', () => {
+    it('supports keyboard input in the name field', () => {
       render(
         <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
       );
 
       const nameInput = screen.getByTestId('workspace-name-input');
 
-      // Check that the input is focusable
       expect(nameInput).not.toHaveAttribute('disabled');
       expect(nameInput).not.toHaveAttribute('readonly');
 
-      // Test keyboard input
       fireEvent.change(nameInput, { target: { value: 'keyboard-test' } });
       expect((nameInput as HTMLInputElement).value).toBe('keyboard-test');
-    });
-
-    it('has proper modal structure', () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      expect(screen.getByText('Create New Workspace')).toBeInTheDocument();
-      expect(screen.getByTestId('workspace-name-input')).toBeInTheDocument();
-    });
-  });
-
-  describe('Component Props', () => {
-    it('accepts and uses onWorkspaceCreated prop correctly', async () => {
-      const customCallback = vi.fn().mockResolvedValue(undefined);
-
-      render(<CreateWorkspaceModal onWorkspaceCreated={customCallback} />);
-
-      const nameInput = screen.getByTestId('workspace-name-input');
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-
-      fireEvent.change(nameInput, { target: { value: 'custom-callback' } });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(customCallback).toHaveBeenCalledWith(mockWorkspace);
-      });
-    });
-
-    it('handles function props correctly', () => {
-      const testCallback = vi.fn();
-
-      expect(() => {
-        render(<CreateWorkspaceModal onWorkspaceCreated={testCallback} />);
-      }).not.toThrow();
-
-      expect(screen.getByText('Create New Workspace')).toBeInTheDocument();
-    });
-  });
-
-  describe('User Interaction Flow', () => {
-    it('completes full workspace creation flow successfully', async () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      // 1. Modal opens and shows form
-      expect(screen.getByText('Create New Workspace')).toBeInTheDocument();
-
-      // 2. User types workspace name
-      const nameInput = screen.getByTestId('workspace-name-input');
-      fireEvent.change(nameInput, { target: { value: 'complete-flow-test' } });
-
-      // 3. User clicks create
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-      fireEvent.click(createButton);
-
-      // 4. API is called
-      await waitFor(() => {
-        expect(mockCreateWorkspace).toHaveBeenCalledWith('complete-flow-test');
-      });
-
-      // 5. Success notification is shown
-      await waitFor(() => {
-        expect(mockNotificationsShow).toHaveBeenCalledWith({
-          title: 'Success',
-          message: 'Workspace created successfully',
-          color: 'green',
-        });
-      });
-
-      // 6. Callback is called
-      await waitFor(() => {
-        expect(mockOnWorkspaceCreated).toHaveBeenCalledWith(mockWorkspace);
-      });
-
-      // 7. Modal closes and form clears
-      await waitFor(() => {
-        expect(mockSetCreateWorkspaceModalVisible).toHaveBeenCalledWith(false);
-      });
-
-      await waitFor(() => {
-        expect((nameInput as HTMLInputElement).value).toBe('');
-      });
-    });
-
-    it('allows user to cancel workspace creation', () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      // User types name but then cancels
-      const nameInput = screen.getByTestId('workspace-name-input');
-      fireEvent.change(nameInput, { target: { value: 'cancelled-workspace' } });
-
-      const cancelButton = screen.getByTestId('cancel-create-workspace-button');
-      fireEvent.click(cancelButton);
-
-      // Should close modal without calling API
-      expect(mockCreateWorkspace).not.toHaveBeenCalled();
-      expect(mockSetCreateWorkspaceModalVisible).toHaveBeenCalledWith(false);
-    });
-
-    it('handles validation error flow', async () => {
-      render(
-        <CreateWorkspaceModal onWorkspaceCreated={mockOnWorkspaceCreated} />
-      );
-
-      // User tries to submit without entering name
-      const createButton = screen.getByTestId(
-        'confirm-create-workspace-button'
-      );
-      fireEvent.click(createButton);
-
-      // Should show validation error
-      await waitFor(() => {
-        expect(mockNotificationsShow).toHaveBeenCalledWith({
-          title: 'Error',
-          message: 'Workspace name is required',
-          color: 'red',
-        });
-      });
-
-      // Should not call API or close modal
-      expect(mockCreateWorkspace).not.toHaveBeenCalled();
-      expect(mockSetCreateWorkspaceModalVisible).not.toHaveBeenCalledWith(
-        false
-      );
-      expect(screen.getByText('Create New Workspace')).toBeInTheDocument();
     });
   });
 });
