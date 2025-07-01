@@ -243,7 +243,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
               Cancel
             </Button>
             <Button
-              onClick={() => void handleSubmit}
+              onClick={() => void handleSubmit()}
               loading={loading}
               disabled={!state.hasUnsavedChanges}
             >
