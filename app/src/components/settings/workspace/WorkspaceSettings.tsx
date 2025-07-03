@@ -235,7 +235,7 @@ const WorkspaceSettings: React.FC = () => {
           <Button variant="default" onClick={handleClose}>
             Cancel
           </Button>
-          <Button onClick={() => void handleSubmit}>Save Changes</Button>
+          <Button onClick={() => void handleSubmit()}>Save Changes</Button>
         </Group>
       </Stack>
     </Modal>
