@@ -86,6 +86,7 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ currentUser }) => {
         <Group gap="xs" justify="flex-end">
           <ActionIcon
             variant="subtle"
+            aria-label="Edit user"
             color="blue"
             onClick={() => setEditModalData(user)}
           >
@@ -93,6 +94,7 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ currentUser }) => {
           </ActionIcon>
           <ActionIcon
             variant="subtle"
+            aria-label="Delete user"
             color="red"
             onClick={() => handleDeleteClick(user)}
             disabled={user.id === currentUser.id}
@@ -125,6 +127,7 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ currentUser }) => {
         </Text>
         <Button
           leftSection={<IconPlus size={16} />}
+          aria-label="Create user"
           onClick={() => setCreateModalOpened(true)}
         >
           Create User
