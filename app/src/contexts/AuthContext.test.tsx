@@ -65,7 +65,7 @@ describe('AuthContext', () => {
   });
 
   describe('AuthProvider initialization', () => {
-    it('initializes with null user and loading state', () => {
+    it('initializes with null user and loading state', async () => {
       (mockGetCurrentUser as ReturnType<typeof vi.fn>).mockRejectedValue(
         new Error('Not authenticated')
       );
@@ -76,9 +76,13 @@ describe('AuthContext', () => {
       expect(result.current.user).toBeNull();
       expect(result.current.loading).toBe(true);
       expect(result.current.initialized).toBe(false);
+
+      await waitFor(() => {
+        expect(result.current.initialized).toBe(true);
+      });
     });
 
-    it('provides all expected functions', () => {
+    it('provides all expected functions', async () => {
       (mockGetCurrentUser as ReturnType<typeof vi.fn>).mockRejectedValue(
         new Error('Not authenticated')
       );
@@ -90,6 +94,10 @@ describe('AuthContext', () => {
       expect(typeof result.current.logout).toBe('function');
       expect(typeof result.current.refreshToken).toBe('function');
       expect(typeof result.current.refreshUser).toBe('function');
+
+      await waitFor(() => {
+        expect(result.current.initialized).toBe(true);
+      });
     });
 
     it('loads current user on mount when authenticated', async () => {
@@ -654,7 +662,7 @@ describe('AuthContext', () => {
   });
 
   describe('loading states', () => {
-    it('shows loading during initialization', () => {
+    it('shows loading during initialization', async () => {
       let resolveGetCurrentUser: (value: User) => void;
       const pendingPromise = new Promise<User>((resolve) => {
         resolveGetCurrentUser = resolve;
@@ -669,8 +677,13 @@ describe('AuthContext', () => {
       expect(result.current.loading).toBe(true);
       expect(result.current.initialized).toBe(false);
 
-      act(() => {
+      await act(async () => {
         resolveGetCurrentUser!(mockUser);
+        await pendingPromise;
+      });
+
+      await waitFor(() => {
+        expect(result.current.initialized).toBe(true);
       });
     });
 
