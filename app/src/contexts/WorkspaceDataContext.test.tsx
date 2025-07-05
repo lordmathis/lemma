@@ -114,7 +114,7 @@ describe('WorkspaceDataContext', () => {
   });
 
   describe('WorkspaceDataProvider initialization', () => {
-    it('initializes with null workspace and loading state', () => {
+    it('initializes with null workspace and loading state', async () => {
       (mockGetLastWorkspaceName as ReturnType<typeof vi.fn>).mockResolvedValue(
         null
       );
@@ -127,9 +127,13 @@ describe('WorkspaceDataContext', () => {
       expect(result.current.loading).toBe(true);
       expect(result.current.workspaces).toEqual([]);
       expect(result.current.settings).toEqual(DEFAULT_WORKSPACE_SETTINGS);
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
-    it('provides all expected functions', () => {
+    it('provides all expected functions', async () => {
       (mockGetLastWorkspaceName as ReturnType<typeof vi.fn>).mockResolvedValue(
         null
       );
@@ -141,6 +145,10 @@ describe('WorkspaceDataContext', () => {
       expect(typeof result.current.loadWorkspaces).toBe('function');
       expect(typeof result.current.loadWorkspaceData).toBe('function');
       expect(typeof result.current.setCurrentWorkspace).toBe('function');
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
     it('loads last workspace when available', async () => {
@@ -633,7 +641,7 @@ describe('WorkspaceDataContext', () => {
   });
 
   describe('loading states', () => {
-    it('shows loading during initialization', () => {
+    it('shows loading during initialization', async () => {
       let resolveGetLastWorkspaceName: (value: string | null) => void;
       const pendingPromise = new Promise<string | null>((resolve) => {
         resolveGetLastWorkspaceName = resolve;
@@ -648,8 +656,13 @@ describe('WorkspaceDataContext', () => {
 
       expect(result.current.loading).toBe(true);
 
-      act(() => {
+      await act(async () => {
         resolveGetLastWorkspaceName!(null);
+        await pendingPromise;
+      });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
       });
     });
 
