@@ -32,7 +32,13 @@ const FileActions: React.FC<FileActionsProps> = ({
   return (
     <Group gap="xs">
       <Tooltip label="Create new file">
-        <ActionIcon variant="default" size="md" onClick={handleCreateFile}>
+        <ActionIcon
+          variant="default"
+          size="md"
+          onClick={handleCreateFile}
+          aria-label="Create new file"
+          data-testid="create-file-button"
+        >
           <IconPlus size={16} />
         </ActionIcon>
       </Tooltip>
@@ -46,6 +52,8 @@ const FileActions: React.FC<FileActionsProps> = ({
           onClick={handleDeleteFile}
           disabled={!selectedFile}
           color="red"
+          aria-label="Delete current file"
+          data-testid="delete-file-button"
         >
           <IconTrash size={16} />
         </ActionIcon>
@@ -67,6 +75,8 @@ const FileActions: React.FC<FileActionsProps> = ({
             });
           }}
           disabled={!settings.gitEnabled}
+          aria-label="Pull changes from remote"
+          data-testid="pull-changes-button"
         >
           <IconGitPullRequest size={16} />
         </ActionIcon>
@@ -86,6 +96,8 @@ const FileActions: React.FC<FileActionsProps> = ({
           size="md"
           onClick={handleCommitAndPush}
           disabled={!settings.gitEnabled || settings.gitAutoCommit}
+          aria-label="Commit and push changes"
+          data-testid="commit-push-button"
         >
           <IconGitCommit size={16} />
         </ActionIcon>
