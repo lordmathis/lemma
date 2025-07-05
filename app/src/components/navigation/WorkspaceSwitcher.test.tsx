@@ -93,7 +93,6 @@ describe('WorkspaceSwitcher', () => {
     vi.mocked(useWorkspace).mockReturnValue({
       currentWorkspace: mockCurrentWorkspace,
       workspaces: [],
-      settings: mockCurrentWorkspace,
       updateSettings: vi.fn(),
       loading: false,
       colorScheme: 'light',
@@ -137,7 +136,6 @@ describe('WorkspaceSwitcher', () => {
     vi.mocked(useWorkspace).mockReturnValue({
       currentWorkspace: null,
       workspaces: [],
-      settings: mockCurrentWorkspace,
       updateSettings: vi.fn(),
       loading: false,
       colorScheme: 'light',

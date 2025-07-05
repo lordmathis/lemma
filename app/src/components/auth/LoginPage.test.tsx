@@ -238,7 +238,7 @@ describe('LoginPage', () => {
     });
 
     it('handles special characters in credentials', async () => {
-      render(<LoginPage />);
+      await render(<LoginPage />);
 
       const specialEmail = 'user+test@example-domain.com';
       const specialPassword = 'P@ssw0rd!#$%';
