@@ -135,7 +135,11 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
     void processContent();
   }, [content, processor, currentWorkspace]);
 
-  return <div className="markdown-preview">{processedContent}</div>;
+  return (
+    <div className="markdown-preview" data-testid="markdown-preview">
+      {processedContent}
+    </div>
+  );
 };
 
 export default MarkdownPreview;

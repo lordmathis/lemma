@@ -233,6 +233,13 @@ export function remarkWikiLinks(workspaceName: string) {
         }
 
         try {
+          // Skip API call for empty or whitespace-only filenames
+          if (!match.fileName.trim()) {
+            newNodes.push(createTextNode(match.fullMatch));
+            lastIndex = match.index + match.fullMatch.length;
+            continue;
+          }
+
           const lookupFileName: string = match.isImage
             ? match.fileName
             : addMarkdownExtension(match.fileName);

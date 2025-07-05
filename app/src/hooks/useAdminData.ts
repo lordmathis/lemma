@@ -28,7 +28,7 @@ export const useAdminData = <T extends AdminDataType>(
   type: T
 ): AdminDataResult<T> => {
   // Initialize with the appropriate empty type
-  const getInitialData = (): AdminData<T> => {
+  const getInitialData = useCallback((): AdminData<T> => {
     if (type === 'stats') {
       return {} as SystemStats as AdminData<T>;
     } else if (type === 'workspaces') {
@@ -38,11 +38,17 @@ export const useAdminData = <T extends AdminDataType>(
     } else {
       return [] as unknown as AdminData<T>;
     }
-  };
+  }, [type]);
 
   const [data, setData] = useState<AdminData<T>>(getInitialData());
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Reset data when type changes
+  useEffect(() => {
+    setData(getInitialData());
+    setError(null);
+  }, [type, getInitialData]);
 
   const loadData = useCallback(async () => {
     setLoading(true);

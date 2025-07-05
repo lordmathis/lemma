@@ -47,6 +47,10 @@ const UserMenu: React.FC = () => {
             radius="xl"
             style={{ cursor: 'pointer' }}
             onClick={() => setOpened((o) => !o)}
+            aria-label="User menu"
+            aria-expanded={opened}
+            aria-haspopup="menu"
+            role="button"
           >
             <IconUser size={24} />
           </Avatar>

@@ -7,7 +7,7 @@ interface ProfileSettingsProps {
   onInputChange: (key: keyof UserProfileSettings, value: string) => void;
 }
 
-const ProfileSettingsComponent: React.FC<ProfileSettingsProps> = ({
+const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   settings,
   onInputChange,
 }) => (
@@ -15,18 +15,22 @@ const ProfileSettingsComponent: React.FC<ProfileSettingsProps> = ({
     <Stack gap="md">
       <TextInput
         label="Display Name"
+        type="text"
         value={settings.displayName || ''}
         onChange={(e) => onInputChange('displayName', e.currentTarget.value)}
         placeholder="Enter display name"
+        data-testid="display-name-input"
       />
       <TextInput
         label="Email"
+        type="email"
         value={settings.email || ''}
         onChange={(e) => onInputChange('email', e.currentTarget.value)}
         placeholder="Enter email"
+        data-testid="email-input"
       />
     </Stack>
   </Box>
 );
 
-export default ProfileSettingsComponent;
+export default ProfileSettings;

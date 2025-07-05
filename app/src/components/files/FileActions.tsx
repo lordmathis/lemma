@@ -18,7 +18,7 @@ const FileActions: React.FC<FileActionsProps> = ({
   handlePullChanges,
   selectedFile,
 }) => {
-  const { settings } = useWorkspace();
+  const { currentWorkspace } = useWorkspace();
   const {
     setNewFileModalVisible,
     setDeleteFileModalVisible,
@@ -32,7 +32,13 @@ const FileActions: React.FC<FileActionsProps> = ({
   return (
     <Group gap="xs">
       <Tooltip label="Create new file">
-        <ActionIcon variant="default" size="md" onClick={handleCreateFile}>
+        <ActionIcon
+          variant="default"
+          size="md"
+          onClick={handleCreateFile}
+          aria-label="Create new file"
+          data-testid="create-file-button"
+        >
           <IconPlus size={16} />
         </ActionIcon>
       </Tooltip>
@@ -46,6 +52,8 @@ const FileActions: React.FC<FileActionsProps> = ({
           onClick={handleDeleteFile}
           disabled={!selectedFile}
           color="red"
+          aria-label="Delete current file"
+          data-testid="delete-file-button"
         >
           <IconTrash size={16} />
         </ActionIcon>
@@ -53,7 +61,7 @@ const FileActions: React.FC<FileActionsProps> = ({
 
       <Tooltip
         label={
-          settings.gitEnabled
+          currentWorkspace?.gitEnabled
             ? 'Pull changes from remote'
             : 'Git is not enabled'
         }
@@ -66,7 +74,9 @@ const FileActions: React.FC<FileActionsProps> = ({
               console.error('Error pulling changes:', error);
             });
           }}
-          disabled={!settings.gitEnabled}
+          disabled={!currentWorkspace?.gitEnabled}
+          aria-label="Pull changes from remote"
+          data-testid="pull-changes-button"
         >
           <IconGitPullRequest size={16} />
         </ActionIcon>
@@ -74,9 +84,9 @@ const FileActions: React.FC<FileActionsProps> = ({
 
       <Tooltip
         label={
-          !settings.gitEnabled
+          !currentWorkspace?.gitEnabled
             ? 'Git is not enabled'
-            : settings.gitAutoCommit
+            : currentWorkspace.gitAutoCommit
             ? 'Auto-commit is enabled'
             : 'Commit and push changes'
         }
@@ -85,7 +95,11 @@ const FileActions: React.FC<FileActionsProps> = ({
           variant="default"
           size="md"
           onClick={handleCommitAndPush}
-          disabled={!settings.gitEnabled || settings.gitAutoCommit}
+          disabled={
+            !currentWorkspace?.gitEnabled || currentWorkspace.gitAutoCommit
+          }
+          aria-label="Commit and push changes"
+          data-testid="commit-push-button"
         >
           <IconGitCommit size={16} />
         </ActionIcon>

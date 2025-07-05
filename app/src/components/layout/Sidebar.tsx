@@ -19,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   files,
   loadFileList,
 }) => {
-  const { settings } = useWorkspace();
+  const { currentWorkspace } = useWorkspace();
   const { handlePull } = useGitOperations();
 
   useEffect(() => {
@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <FileTree
         files={files}
         handleFileSelect={handleFileSelect}
-        showHiddenFiles={settings.showHiddenFiles || false}
+        showHiddenFiles={currentWorkspace?.showHiddenFiles || false}
       />
     </Box>
   );

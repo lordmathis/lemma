@@ -153,7 +153,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
     }
   };
 
-  const handleEmailConfirm = async (password: string): Promise<void> => {
+  const handleEmailConfirm = async (password: string): Promise<boolean> => {
     const updates: UserProfileSettings = {
       ...state.localSettings,
       currentPassword: password,
@@ -181,6 +181,11 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
       dispatch({ type: SettingsActionType.MARK_SAVED });
       setEmailModalOpened(false);
       onClose();
+      return true;
+    } else {
+      // TODO: Handle errors appropriately
+      // notifications.show({...
+      return false;
     }
   };
 
@@ -238,7 +243,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
               Cancel
             </Button>
             <Button
-              onClick={() => void handleSubmit}
+              onClick={() => void handleSubmit()}
               loading={loading}
               disabled={!state.hasUnsavedChanges}
             >

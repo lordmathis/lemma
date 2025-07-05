@@ -14,10 +14,18 @@ const CommitMessageModal: React.FC<CommitMessageModalProps> = ({
     useModalContext();
 
   const handleSubmit = async (): Promise<void> => {
-    if (message) {
-      await onCommitAndPush(message);
+    const commitMessage = message.trim();
+    if (commitMessage) {
+      await onCommitAndPush(commitMessage);
       setMessage('');
       setCommitMessageModalVisible(false);
+    }
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent): void => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      void handleSubmit();
     }
   };
 
@@ -31,10 +39,13 @@ const CommitMessageModal: React.FC<CommitMessageModalProps> = ({
     >
       <Box maw={400} mx="auto">
         <TextInput
+          type="text"
           label="Commit Message"
+          data-testid="commit-message-input"
           placeholder="Enter commit message"
           value={message}
           onChange={(event) => setMessage(event.currentTarget.value)}
+          onKeyDown={handleKeyDown}
           mb="md"
           w="100%"
         />
@@ -42,10 +53,17 @@ const CommitMessageModal: React.FC<CommitMessageModalProps> = ({
           <Button
             variant="default"
             onClick={() => setCommitMessageModalVisible(false)}
+            data-testid="cancel-commit-message-button"
           >
             Cancel
           </Button>
-          <Button onClick={() => void handleSubmit()}>Commit</Button>
+          <Button
+            onClick={() => void handleSubmit()}
+            data-testid="confirm-commit-message-button"
+            disabled={!message.trim()}
+          >
+            Commit
+          </Button>
         </Group>
       </Box>
     </Modal>

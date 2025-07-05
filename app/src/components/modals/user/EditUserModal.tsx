@@ -72,6 +72,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
           label="Email"
           required
           value={formData.email}
+          data-testid="edit-user-email-input"
           onChange={(e) =>
             setFormData({ ...formData, email: e.currentTarget.value })
           }
@@ -80,6 +81,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         <TextInput
           label="Display Name"
           value={formData.displayName}
+          data-testid="edit-user-display-name-input"
           onChange={(e) =>
             setFormData({ ...formData, displayName: e.currentTarget.value })
           }
@@ -89,6 +91,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
           label="Role"
           required
           value={formData.role ? formData.role.toString() : null}
+          data-testid="edit-user-role-select"
           onChange={(value) =>
             setFormData({ ...formData, role: value as UserRole })
           }
@@ -101,6 +104,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         <PasswordInput
           label="New Password"
           value={formData.password}
+          data-testid="edit-user-password-input"
           onChange={(e) =>
             setFormData({ ...formData, password: e.currentTarget.value })
           }
@@ -110,10 +114,18 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
           Leave password empty to keep the current password
         </Text>
         <Group justify="flex-end" mt="md">
-          <Button variant="default" onClick={onClose}>
+          <Button
+            variant="default"
+            onClick={onClose}
+            data-testid="cancel-edit-user-button"
+          >
             Cancel
           </Button>
-          <Button onClick={() => void handleSubmit} loading={loading}>
+          <Button
+            onClick={() => void handleSubmit()}
+            loading={loading}
+            data-testid="confirm-edit-user-button"
+          >
             Save Changes
           </Button>
         </Group>

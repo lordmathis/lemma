@@ -95,6 +95,7 @@ const WorkspaceSwitcher: React.FC = () => {
               <ActionIcon
                 variant="default"
                 size="md"
+                aria-label="Create New Workspace"
                 onClick={handleCreateWorkspace}
               >
                 <IconFolderPlus size={16} />
@@ -152,6 +153,7 @@ const WorkspaceSwitcher: React.FC = () => {
                               variant="subtle"
                               size="lg"
                               color={getConditionalColor(theme, true)}
+                              aria-label="Workspace Settings"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSettingsModalVisible(true);

@@ -12,9 +12,16 @@ const CreateFileModal: React.FC<CreateFileModalProps> = ({ onCreateFile }) => {
 
   const handleSubmit = async (): Promise<void> => {
     if (fileName) {
-      await onCreateFile(fileName);
+      await onCreateFile(fileName.trim());
       setFileName('');
       setNewFileModalVisible(false);
+    }
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent): void => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      void handleSubmit();
     }
   };
 
@@ -29,9 +36,12 @@ const CreateFileModal: React.FC<CreateFileModalProps> = ({ onCreateFile }) => {
       <Box maw={400} mx="auto">
         <TextInput
           label="File Name"
+          type="text"
           placeholder="Enter file name"
+          data-testid="file-name-input"
           value={fileName}
           onChange={(event) => setFileName(event.currentTarget.value)}
+          onKeyDown={handleKeyDown}
           mb="md"
           w="100%"
         />
@@ -39,10 +49,17 @@ const CreateFileModal: React.FC<CreateFileModalProps> = ({ onCreateFile }) => {
           <Button
             variant="default"
             onClick={() => setNewFileModalVisible(false)}
+            data-testid="cancel-create-file-button"
           >
             Cancel
           </Button>
-          <Button onClick={() => void handleSubmit()}>Create</Button>
+          <Button
+            onClick={() => void handleSubmit()}
+            data-testid="confirm-create-file-button"
+            disabled={!fileName.trim()}
+          >
+            Create
+          </Button>
         </Group>
       </Box>
     </Modal>

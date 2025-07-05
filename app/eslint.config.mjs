@@ -104,4 +104,11 @@ export default defineConfig([
       '@typescript-eslint/no-non-null-assertion': 'warn',
     },
   },
+  // Override configuration for test files
+  {
+    files: ['**/*.test.ts', '**/*.test.tsx'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
 ]);

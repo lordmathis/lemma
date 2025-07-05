@@ -28,11 +28,19 @@ const DeleteWorkspaceModal: React.FC<DeleteUserModalProps> = ({
         permanently deleted.
       </Text>
       <Group justify="flex-end" mt="xl">
-        <Button variant="default" onClick={onClose}>
+        <Button
+          variant="default"
+          onClick={onClose}
+          data-testid="cancel-delete-workspace-button"
+        >
           Cancel
         </Button>
-        <Button color="red" onClick={() => void onConfirm}>
-          Delete Workspace
+        <Button
+          color="red"
+          onClick={() => void onConfirm()}
+          data-testid="confirm-delete-workspace-button"
+        >
+          Delete
         </Button>
       </Group>
     </Stack>

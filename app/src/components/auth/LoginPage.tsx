@@ -37,11 +37,13 @@ const LoginPage: React.FC = () => {
       </Text>
 
       <Paper withBorder shadow="md" p={30} mt={30} radius="md">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} role="form">
           <Stack>
             <TextInput
+              type="email"
               label="Email"
               placeholder="your@email.com"
+              data-testid="email-input"
               required
               value={email}
               onChange={(event) => setEmail(event.currentTarget.value)}
@@ -50,12 +52,13 @@ const LoginPage: React.FC = () => {
             <PasswordInput
               label="Password"
               placeholder="Your password"
+              data-testid="password-input"
               required
               value={password}
               onChange={(event) => setPassword(event.currentTarget.value)}
             />
 
-            <Button type="submit" loading={loading}>
+            <Button type="submit" loading={loading} data-testid="login-button">
               Sign in
             </Button>
           </Stack>

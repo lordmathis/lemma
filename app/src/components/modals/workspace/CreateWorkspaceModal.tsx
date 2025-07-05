@@ -18,7 +18,8 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     useModalContext();
 
   const handleSubmit = async (): Promise<void> => {
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
       notifications.show({
         title: 'Error',
         message: 'Workspace name is required',
@@ -29,7 +30,7 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
 
     setLoading(true);
     try {
-      const workspace = await createWorkspace(name);
+      const workspace = await createWorkspace(trimmedName);
       notifications.show({
         title: 'Success',
         message: 'Workspace created successfully',
@@ -61,8 +62,10 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     >
       <Box maw={400} mx="auto">
         <TextInput
+          type="text"
           label="Workspace Name"
           placeholder="Enter workspace name"
+          data-testid="workspace-name-input"
           value={name}
           onChange={(event) => setName(event.currentTarget.value)}
           mb="md"
@@ -74,10 +77,15 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
             variant="default"
             onClick={() => setCreateWorkspaceModalVisible(false)}
             disabled={loading}
+            data-testid="cancel-create-workspace-button"
           >
             Cancel
           </Button>
-          <Button onClick={() => void handleSubmit} loading={loading}>
+          <Button
+            onClick={() => void handleSubmit()}
+            loading={loading}
+            data-testid="confirm-create-workspace-button"
+          >
             Create
           </Button>
         </Group>

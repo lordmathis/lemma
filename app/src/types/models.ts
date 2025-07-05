@@ -1,3 +1,5 @@
+import type { Parent } from 'unist';
+
 /**
  * User model from the API
  */
@@ -206,10 +208,44 @@ export interface WorkspaceStats {
   fileCountStats?: FileCountStats;
 }
 
+// isWorkspaceStats checks if the given object is a valid WorkspaceStats object
+export function isWorkspaceStats(obj: unknown): obj is WorkspaceStats {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'userID' in obj &&
+    typeof (obj as WorkspaceStats).userID === 'number' &&
+    'userEmail' in obj &&
+    typeof (obj as WorkspaceStats).userEmail === 'string' &&
+    'workspaceID' in obj &&
+    typeof (obj as WorkspaceStats).workspaceID === 'number' &&
+    'workspaceName' in obj &&
+    typeof (obj as WorkspaceStats).workspaceName === 'string' &&
+    'workspaceCreatedAt' in obj &&
+    typeof (obj as WorkspaceStats).workspaceCreatedAt === 'string' &&
+    (!('fileCountStats' in obj) ||
+      (obj as WorkspaceStats).fileCountStats === undefined ||
+      (obj as WorkspaceStats).fileCountStats === null ||
+      isFileCountStats((obj as WorkspaceStats).fileCountStats))
+  );
+}
+
 // Define FileCountStats based on the Go struct definition of storage.FileCountStats
 export interface FileCountStats {
   totalFiles: number;
   totalSize: number;
+}
+
+// isFileCountStats checks if the given object is a valid FileCountStats object
+export function isFileCountStats(obj: unknown): obj is FileCountStats {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'totalFiles' in obj &&
+    typeof (obj as FileCountStats).totalFiles === 'number' &&
+    'totalSize' in obj &&
+    typeof (obj as FileCountStats).totalSize === 'number'
+  );
 }
 
 export interface UserStats {
@@ -284,4 +320,67 @@ export interface ProfileSettingsState {
 export interface SettingsAction<T> {
   type: SettingsActionType;
   payload?: T;
+}
+
+// WikiLinks
+
+/**
+ * Represents a wiki link match from the regex
+ */
+export interface WikiLinkMatch {
+  fullMatch: string;
+  isImage: boolean; // Changed from string to boolean
+  fileName: string;
+  displayText: string;
+  heading?: string | undefined;
+  index: number;
+}
+
+/**
+ * Node replacement information for processing
+ */
+export interface ReplacementInfo {
+  matches: WikiLinkMatch[];
+  parent: Parent;
+  index: number;
+}
+
+/**
+ * Properties for link nodes
+ */
+export interface LinkNodeProps {
+  style?: {
+    color?: string;
+    textDecoration?: string;
+  };
+}
+
+/**
+ * Link node with data properties
+ */
+export interface LinkNode extends Node {
+  type: 'link';
+  url: string;
+  children: Node[];
+  data?: {
+    hProperties?: LinkNodeProps;
+  };
+}
+
+/**
+ * Image node
+ */
+export interface ImageNode extends Node {
+  type: 'image';
+  url: string;
+  alt?: string;
+  title?: string;
+}
+
+/**
+ * Text node
+ */
+export interface TextNode extends Node {
+  type: 'text';
+  value: string;
 }
