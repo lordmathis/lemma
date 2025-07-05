@@ -14,7 +14,11 @@ const Layout: React.FC = () => {
 
   if (workspaceLoading) {
     return (
-      <Center style={{ height: '100vh' }}>
+      <Center
+        style={{ height: '100vh' }}
+        role="status"
+        aria-label="Loading workspace"
+      >
         <Loader size="xl" />
       </Center>
     );
