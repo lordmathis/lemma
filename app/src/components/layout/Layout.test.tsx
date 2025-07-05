@@ -72,7 +72,6 @@ describe('Layout', () => {
     vi.mocked(useWorkspace).mockReturnValue({
       currentWorkspace: mockCurrentWorkspace,
       workspaces: [],
-      settings: mockCurrentWorkspace,
       updateSettings: vi.fn(),
       loading: false,
       colorScheme: 'light',
@@ -112,7 +111,6 @@ describe('Layout', () => {
     vi.mocked(useWorkspace).mockReturnValue({
       currentWorkspace: mockCurrentWorkspace,
       workspaces: [],
-      settings: mockCurrentWorkspace,
       updateSettings: vi.fn(),
       loading: true,
       colorScheme: 'light',
@@ -137,7 +135,6 @@ describe('Layout', () => {
     vi.mocked(useWorkspace).mockReturnValue({
       currentWorkspace: null,
       workspaces: [],
-      settings: mockCurrentWorkspace,
       updateSettings: vi.fn(),
       loading: false,
       colorScheme: 'light',

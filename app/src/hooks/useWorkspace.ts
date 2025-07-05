@@ -1,13 +1,12 @@
 import { useWorkspaceData } from '../contexts/WorkspaceDataContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useWorkspaceOperations } from './useWorkspaceOperations';
-import type { Workspace, DEFAULT_WORKSPACE_SETTINGS } from '@/types/models';
+import type { Workspace } from '@/types/models';
 import type { MantineColorScheme } from '@mantine/core';
 
 interface UseWorkspaceResult {
   currentWorkspace: Workspace | null;
   workspaces: Workspace[];
-  settings: Workspace | typeof DEFAULT_WORKSPACE_SETTINGS;
   updateSettings: (newSettings: Partial<Workspace>) => Promise<void>;
   loading: boolean;
   colorScheme: MantineColorScheme;
@@ -17,8 +16,7 @@ interface UseWorkspaceResult {
 }
 
 export const useWorkspace = (): UseWorkspaceResult => {
-  const { currentWorkspace, workspaces, settings, loading } =
-    useWorkspaceData();
+  const { currentWorkspace, workspaces, loading } = useWorkspaceData();
   const { colorScheme, updateColorScheme } = useTheme();
   const { switchWorkspace, deleteCurrentWorkspace, updateSettings } =
     useWorkspaceOperations();
@@ -26,7 +24,6 @@ export const useWorkspace = (): UseWorkspaceResult => {
   return {
     currentWorkspace,
     workspaces,
-    settings,
     updateSettings,
     loading,
     colorScheme,

@@ -85,7 +85,6 @@ describe('useWorkspace', () => {
     // Reset mock data to defaults
     mockWorkspaceData.currentWorkspace = null;
     mockWorkspaceData.workspaces = [];
-    mockWorkspaceData.settings = DEFAULT_WORKSPACE_SETTINGS;
     mockWorkspaceData.loading = false;
     mockTheme.colorScheme = 'light';
   });
@@ -100,7 +99,6 @@ describe('useWorkspace', () => {
 
       expect(result.current.currentWorkspace).toBeNull();
       expect(result.current.workspaces).toEqual([]);
-      expect(result.current.settings).toEqual(DEFAULT_WORKSPACE_SETTINGS);
       expect(result.current.loading).toBe(false);
       expect(result.current.colorScheme).toBe('light');
     });
@@ -119,13 +117,11 @@ describe('useWorkspace', () => {
     it('returns current workspace data', () => {
       mockWorkspaceData.currentWorkspace = mockWorkspace;
       mockWorkspaceData.workspaces = mockWorkspaces;
-      mockWorkspaceData.settings = mockWorkspace;
 
       const { result } = renderHook(() => useWorkspace());
 
       expect(result.current.currentWorkspace).toEqual(mockWorkspace);
       expect(result.current.workspaces).toEqual(mockWorkspaces);
-      expect(result.current.settings).toEqual(mockWorkspace);
     });
 
     it('returns loading state from workspace data', () => {
@@ -134,24 +130,6 @@ describe('useWorkspace', () => {
       const { result } = renderHook(() => useWorkspace());
 
       expect(result.current.loading).toBe(true);
-    });
-
-    it('uses default settings when no current workspace', () => {
-      mockWorkspaceData.currentWorkspace = null;
-      mockWorkspaceData.settings = DEFAULT_WORKSPACE_SETTINGS;
-
-      const { result } = renderHook(() => useWorkspace());
-
-      expect(result.current.settings).toEqual(DEFAULT_WORKSPACE_SETTINGS);
-    });
-
-    it('uses current workspace as settings when available', () => {
-      mockWorkspaceData.currentWorkspace = mockWorkspace;
-      mockWorkspaceData.settings = mockWorkspace;
-
-      const { result } = renderHook(() => useWorkspace());
-
-      expect(result.current.settings).toEqual(mockWorkspace);
     });
   });
 
@@ -203,7 +181,6 @@ describe('useWorkspace', () => {
     it('returns consistent data across multiple renders', () => {
       mockWorkspaceData.currentWorkspace = mockWorkspace;
       mockWorkspaceData.workspaces = mockWorkspaces;
-      mockWorkspaceData.settings = mockWorkspace;
       mockTheme.colorScheme = 'dark';
 
       const { result, rerender } = renderHook(() => useWorkspace());
@@ -216,7 +193,6 @@ describe('useWorkspace', () => {
         firstResult.currentWorkspace
       );
       expect(result.current.workspaces).toEqual(firstResult.workspaces);
-      expect(result.current.settings).toEqual(firstResult.settings);
       expect(result.current.colorScheme).toEqual(firstResult.colorScheme);
     });
 
@@ -230,13 +206,11 @@ describe('useWorkspace', () => {
       // Add workspace data
       mockWorkspaceData.currentWorkspace = mockWorkspace;
       mockWorkspaceData.workspaces = mockWorkspaces;
-      mockWorkspaceData.settings = mockWorkspace;
 
       rerender();
 
       expect(result.current.currentWorkspace).toEqual(mockWorkspace);
       expect(result.current.workspaces).toEqual(mockWorkspaces);
-      expect(result.current.settings).toEqual(mockWorkspace);
     });
 
     it('reflects theme changes', () => {
@@ -334,7 +308,6 @@ describe('useWorkspace', () => {
       const expectedKeys = [
         'currentWorkspace',
         'workspaces',
-        'settings',
         'updateSettings',
         'loading',
         'colorScheme',
@@ -356,7 +329,6 @@ describe('useWorkspace', () => {
           typeof result.current.currentWorkspace === 'object'
       ).toBe(true);
       expect(Array.isArray(result.current.workspaces)).toBe(true);
-      expect(typeof result.current.settings === 'object').toBe(true);
       expect(typeof result.current.updateSettings === 'function').toBe(true);
       expect(typeof result.current.loading === 'boolean').toBe(true);
       expect(typeof result.current.colorScheme === 'string').toBe(true);
@@ -373,13 +345,11 @@ describe('useWorkspace', () => {
       // Simulate undefined data that might occur during loading
       mockWorkspaceData.currentWorkspace = null;
       mockWorkspaceData.workspaces = [];
-      mockWorkspaceData.settings = DEFAULT_WORKSPACE_SETTINGS;
 
       const { result } = renderHook(() => useWorkspace());
 
       expect(result.current.currentWorkspace).toBeNull();
       expect(result.current.workspaces).toEqual([]);
-      expect(result.current.settings).toEqual(DEFAULT_WORKSPACE_SETTINGS);
       expect(typeof result.current.updateSettings).toBe('function');
     });
 
@@ -395,7 +365,6 @@ describe('useWorkspace', () => {
       const singleWorkspace = [mockWorkspace];
       mockWorkspaceData.workspaces = singleWorkspace;
       mockWorkspaceData.currentWorkspace = mockWorkspace;
-      mockWorkspaceData.settings = mockWorkspace;
 
       const { result } = renderHook(() => useWorkspace());
 
@@ -411,12 +380,10 @@ describe('useWorkspace', () => {
       };
 
       mockWorkspaceData.currentWorkspace = minimalWorkspace;
-      mockWorkspaceData.settings = minimalWorkspace;
 
       const { result } = renderHook(() => useWorkspace());
 
       expect(result.current.currentWorkspace).toEqual(minimalWorkspace);
-      expect(result.current.settings).toEqual(minimalWorkspace);
     });
   });
 
@@ -424,7 +391,6 @@ describe('useWorkspace', () => {
     it('provides complete workspace management interface', () => {
       mockWorkspaceData.currentWorkspace = mockWorkspace;
       mockWorkspaceData.workspaces = mockWorkspaces;
-      mockWorkspaceData.settings = mockWorkspace;
       mockTheme.colorScheme = 'light';
 
       const { result } = renderHook(() => useWorkspace());
@@ -432,7 +398,6 @@ describe('useWorkspace', () => {
       // Should have all data
       expect(result.current.currentWorkspace).toEqual(mockWorkspace);
       expect(result.current.workspaces).toEqual(mockWorkspaces);
-      expect(result.current.settings).toEqual(mockWorkspace);
       expect(result.current.colorScheme).toBe('light');
 
       // Should have all operations
@@ -457,12 +422,8 @@ describe('useWorkspace', () => {
 
     it('supports settings management workflow', () => {
       mockWorkspaceData.currentWorkspace = mockWorkspace;
-      mockWorkspaceData.settings = mockWorkspace;
 
       const { result } = renderHook(() => useWorkspace());
-
-      // Should have current settings
-      expect(result.current.settings).toEqual(mockWorkspace);
 
       // Should provide update function
       expect(typeof result.current.updateSettings).toBe('function');
@@ -491,7 +452,6 @@ describe('useWorkspace', () => {
     it('correctly integrates with WorkspaceDataContext mock', () => {
       mockWorkspaceData.currentWorkspace = mockWorkspace;
       mockWorkspaceData.workspaces = mockWorkspaces;
-      mockWorkspaceData.settings = mockWorkspace;
       mockWorkspaceData.loading = true;
 
       const { result } = renderHook(() => useWorkspace());
@@ -500,7 +460,6 @@ describe('useWorkspace', () => {
         mockWorkspaceData.currentWorkspace
       );
       expect(result.current.workspaces).toBe(mockWorkspaceData.workspaces);
-      expect(result.current.settings).toBe(mockWorkspaceData.settings);
       expect(result.current.loading).toBe(mockWorkspaceData.loading);
     });
 

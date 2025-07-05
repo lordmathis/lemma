@@ -58,7 +58,10 @@ describe('Sidebar', () => {
     },
   ];
 
-  const mockSettings = {
+  const mockCurrentWorkspace = {
+    id: 1,
+    name: 'test-workspace',
+    createdAt: '2024-01-01T00:00:00Z',
     gitEnabled: true,
     gitAutoCommit: false,
     theme: Theme.Light,
@@ -88,7 +91,6 @@ describe('Sidebar', () => {
     vi.mocked(useWorkspace).mockReturnValue({
       currentWorkspace: null,
       workspaces: [],
-      settings: mockSettings,
       updateSettings: vi.fn(),
       loading: false,
       colorScheme: 'light',
@@ -122,9 +124,8 @@ describe('Sidebar', () => {
   it('passes showHiddenFiles setting to file tree', async () => {
     const { useWorkspace } = await import('../../hooks/useWorkspace');
     vi.mocked(useWorkspace).mockReturnValue({
-      currentWorkspace: null,
+      currentWorkspace: { ...mockCurrentWorkspace, showHiddenFiles: true },
       workspaces: [],
-      settings: { ...mockSettings, showHiddenFiles: true },
       updateSettings: vi.fn(),
       loading: false,
       colorScheme: 'light',

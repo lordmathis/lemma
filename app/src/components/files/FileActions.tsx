@@ -18,7 +18,7 @@ const FileActions: React.FC<FileActionsProps> = ({
   handlePullChanges,
   selectedFile,
 }) => {
-  const { settings } = useWorkspace();
+  const { currentWorkspace } = useWorkspace();
   const {
     setNewFileModalVisible,
     setDeleteFileModalVisible,
@@ -61,7 +61,7 @@ const FileActions: React.FC<FileActionsProps> = ({
 
       <Tooltip
         label={
-          settings.gitEnabled
+          currentWorkspace?.gitEnabled
             ? 'Pull changes from remote'
             : 'Git is not enabled'
         }
@@ -74,7 +74,7 @@ const FileActions: React.FC<FileActionsProps> = ({
               console.error('Error pulling changes:', error);
             });
           }}
-          disabled={!settings.gitEnabled}
+          disabled={!currentWorkspace?.gitEnabled}
           aria-label="Pull changes from remote"
           data-testid="pull-changes-button"
         >
@@ -84,9 +84,9 @@ const FileActions: React.FC<FileActionsProps> = ({
 
       <Tooltip
         label={
-          !settings.gitEnabled
+          !currentWorkspace?.gitEnabled
             ? 'Git is not enabled'
-            : settings.gitAutoCommit
+            : currentWorkspace.gitAutoCommit
             ? 'Auto-commit is enabled'
             : 'Commit and push changes'
         }
@@ -95,7 +95,9 @@ const FileActions: React.FC<FileActionsProps> = ({
           variant="default"
           size="md"
           onClick={handleCommitAndPush}
-          disabled={!settings.gitEnabled || settings.gitAutoCommit}
+          disabled={
+            !currentWorkspace?.gitEnabled || currentWorkspace.gitAutoCommit
+          }
           aria-label="Commit and push changes"
           data-testid="commit-push-button"
         >

@@ -9,7 +9,7 @@ import React from 'react';
 import { MantineProvider } from '@mantine/core';
 import MarkdownPreview from './MarkdownPreview';
 import { notifications } from '@mantine/notifications';
-import { Theme, DEFAULT_WORKSPACE_SETTINGS } from '../../types/models';
+import { Theme } from '../../types/models';
 
 // Mock notifications
 vi.mock('@mantine/notifications', () => ({
@@ -70,7 +70,6 @@ describe('MarkdownPreview', () => {
         lastOpenedFilePath: '',
       },
       workspaces: [],
-      settings: DEFAULT_WORKSPACE_SETTINGS,
       updateSettings: vi.fn(),
       loading: false,
       colorScheme: 'light',
@@ -213,7 +212,6 @@ describe('MarkdownPreview', () => {
     vi.mocked(useWorkspace).mockReturnValue({
       currentWorkspace: null,
       workspaces: [],
-      settings: DEFAULT_WORKSPACE_SETTINGS,
       updateSettings: vi.fn(),
       loading: false,
       colorScheme: 'light',

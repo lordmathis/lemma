@@ -23,7 +23,10 @@ describe('FileActions', () => {
   const mockSetDeleteFileModalVisible = vi.fn();
   const mockSetCommitMessageModalVisible = vi.fn();
 
-  const mockSettings = {
+  const mockCurrentWorkspace = {
+    id: 1,
+    name: 'Test Workspace',
+    createdAt: '2024-01-01T00:00:00Z',
     gitEnabled: true,
     gitAutoCommit: false,
     theme: Theme.Light,
@@ -61,9 +64,8 @@ describe('FileActions', () => {
 
     const { useWorkspace } = await import('../../hooks/useWorkspace');
     vi.mocked(useWorkspace).mockReturnValue({
-      currentWorkspace: null,
+      currentWorkspace: mockCurrentWorkspace,
       workspaces: [],
-      settings: mockSettings,
       updateSettings: vi.fn(),
       loading: false,
       colorScheme: 'light',
@@ -140,9 +142,8 @@ describe('FileActions', () => {
   it('disables git buttons when git is not enabled', async () => {
     const { useWorkspace } = await import('../../hooks/useWorkspace');
     vi.mocked(useWorkspace).mockReturnValue({
-      currentWorkspace: null,
+      currentWorkspace: { ...mockCurrentWorkspace, gitEnabled: false },
       workspaces: [],
-      settings: { ...mockSettings, gitEnabled: false },
       updateSettings: vi.fn(),
       loading: false,
       colorScheme: 'light',
@@ -186,9 +187,8 @@ describe('FileActions', () => {
   it('disables commit button when auto-commit is enabled', async () => {
     const { useWorkspace } = await import('../../hooks/useWorkspace');
     vi.mocked(useWorkspace).mockReturnValue({
-      currentWorkspace: null,
+      currentWorkspace: { ...mockCurrentWorkspace, gitAutoCommit: true },
       workspaces: [],
-      settings: { ...mockSettings, gitAutoCommit: true },
       updateSettings: vi.fn(),
       loading: false,
       colorScheme: 'light',
