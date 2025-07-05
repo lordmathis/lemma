@@ -83,13 +83,18 @@ describe('useAdminData', () => {
   });
 
   describe('stats data type', () => {
-    it('initializes with empty stats and loading state', () => {
+    it('initializes with empty stats and loading state', async () => {
       const { result } = renderHook(() => useAdminData('stats'));
 
       expect(result.current.data).toEqual({});
       expect(result.current.loading).toBe(true);
       expect(result.current.error).toBeNull();
       expect(typeof result.current.reload).toBe('function');
+
+      // Wait for the hook to complete its async initialization
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
     it('loads system stats successfully', async () => {
@@ -148,13 +153,18 @@ describe('useAdminData', () => {
   });
 
   describe('users data type', () => {
-    it('initializes with empty users array and loading state', () => {
+    it('initializes with empty users array and loading state', async () => {
       const { result } = renderHook(() => useAdminData('users'));
 
       expect(result.current.data).toEqual([]);
       expect(result.current.loading).toBe(true);
       expect(result.current.error).toBeNull();
       expect(typeof result.current.reload).toBe('function');
+
+      // Wait for the hook to complete its async initialization
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
     it('loads users successfully', async () => {
@@ -227,13 +237,18 @@ describe('useAdminData', () => {
   });
 
   describe('workspaces data type', () => {
-    it('initializes with empty workspaces array and loading state', () => {
+    it('initializes with empty workspaces array and loading state', async () => {
       const { result } = renderHook(() => useAdminData('workspaces'));
 
       expect(result.current.data).toEqual([]);
       expect(result.current.loading).toBe(true);
       expect(result.current.error).toBeNull();
       expect(typeof result.current.reload).toBe('function');
+
+      // Wait for the hook to complete its async initialization
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
     it('loads workspaces successfully', async () => {
@@ -456,22 +471,69 @@ describe('useAdminData', () => {
       expect(result.current.data).toEqual(mockUsers);
       expect(mockGetUsers).toHaveBeenCalledTimes(1);
     });
-    it('handles data type changes correctly with different initial values', () => {
-      const { result: statsResult } = renderHook(() => useAdminData('stats'));
-      const { result: usersResult } = renderHook(() => useAdminData('users'));
-      const { result: workspacesResult } = renderHook(() =>
-        useAdminData('workspaces')
+    it('handles data type changes correctly with different initial values', async () => {
+      const mockGetSystemStats = vi.mocked(adminApi.getSystemStats);
+      const mockGetUsers = vi.mocked(adminApi.getUsers);
+      const mockGetWorkspaces = vi.mocked(adminApi.getWorkspaces);
+
+      mockGetSystemStats.mockResolvedValue(mockSystemStats);
+      mockGetUsers.mockResolvedValue(mockUsers);
+      mockGetWorkspaces.mockResolvedValue(mockWorkspaceStats);
+
+      const { result, rerender } = renderHook(
+        ({ type }) => useAdminData(type),
+        {
+          initialProps: { type: 'stats' as const } as {
+            type: 'stats' | 'users' | 'workspaces';
+          },
+        }
       );
 
-      // Different data types should have different initial values
-      expect(statsResult.current.data).toEqual({});
-      expect(usersResult.current.data).toEqual([]);
-      expect(workspacesResult.current.data).toEqual([]);
+      // Wait for stats to load
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+      expect(result.current.data).toEqual(mockSystemStats);
+
+      // Change to users type - should reset to empty array and reload
+      act(() => {
+        rerender({ type: 'users' as const });
+      });
+
+      // Data should reset to empty array immediately when type changes
+      expect(result.current.data).toEqual([]);
+      expect(result.current.loading).toBe(true);
+      expect(result.current.error).toBeNull();
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+      expect(result.current.data).toEqual(mockUsers);
+
+      // Change to workspaces type - should reset to empty array and reload
+      act(() => {
+        rerender({ type: 'workspaces' as const });
+      });
+
+      // Data should reset to empty array immediately when type changes
+      expect(result.current.data).toEqual([]);
+      expect(result.current.loading).toBe(true);
+      expect(result.current.error).toBeNull();
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+      expect(result.current.data).toEqual(mockWorkspaceStats);
+
+      // Verify correct API calls were made
+      expect(mockGetSystemStats).toHaveBeenCalledTimes(1);
+      expect(mockGetUsers).toHaveBeenCalledTimes(1);
+      expect(mockGetWorkspaces).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('function stability', () => {
-    it('maintains stable reload function reference', () => {
+    it('maintains stable reload function reference', async () => {
       const { result, rerender } = renderHook(() => useAdminData('stats'));
 
       const initialReload = result.current.reload;
@@ -479,6 +541,11 @@ describe('useAdminData', () => {
       rerender();
 
       expect(result.current.reload).toBe(initialReload);
+
+      // Wait for the hook to complete its async initialization
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
   });
 

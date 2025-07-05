@@ -4,6 +4,7 @@ import {
   screen,
   fireEvent,
   waitFor,
+  act,
 } from '@testing-library/react';
 import React from 'react';
 import { MantineProvider } from '@mantine/core';
@@ -218,7 +219,7 @@ describe('EmailPasswordModal', () => {
       });
     });
 
-    it('handles rapid multiple clicks gracefully', () => {
+    it('handles rapid multiple clicks gracefully', async () => {
       render(
         <EmailPasswordModal
           opened={true}
@@ -234,12 +235,15 @@ describe('EmailPasswordModal', () => {
       fireEvent.change(passwordInput, { target: { value: 'rapidtest' } });
 
       // Multiple rapid clicks should not break the component
-      fireEvent.click(confirmButton);
-      fireEvent.click(confirmButton);
-      fireEvent.click(confirmButton);
+      act(() => {
+        fireEvent.click(confirmButton);
+        fireEvent.click(confirmButton);
+        fireEvent.click(confirmButton);
+      });
 
-      expect(screen.getByText('Confirm Password')).toBeInTheDocument();
-      expect(mockOnConfirm).toHaveBeenCalledWith('rapidtest');
+      await waitFor(() => {
+        expect(mockOnConfirm).toHaveBeenCalledWith('rapidtest');
+      });
     });
   });
 

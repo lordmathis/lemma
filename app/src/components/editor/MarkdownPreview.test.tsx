@@ -272,7 +272,7 @@ describe('MarkdownPreview', () => {
     });
   });
 
-  it('handles markdown processing errors gracefully', () => {
+  it('handles markdown processing errors gracefully', async () => {
     // Mock console.error to avoid noise in test output
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -286,9 +286,12 @@ describe('MarkdownPreview', () => {
       />
     );
 
-    // Should still render something even if processing has issues
-    const markdownPreview = screen.getByTestId('markdown-preview');
-    expect(markdownPreview).toBeInTheDocument();
+    // Wait for async content processing to complete
+    await waitFor(() => {
+      // Should still render something even if processing has issues
+      const markdownPreview = screen.getByTestId('markdown-preview');
+      expect(markdownPreview).toBeInTheDocument();
+    });
 
     consoleSpy.mockRestore();
   });

@@ -4,6 +4,7 @@ import {
   screen,
   fireEvent,
   waitFor,
+  act,
 } from '@testing-library/react';
 import React from 'react';
 import { MantineProvider } from '@mantine/core';
@@ -192,7 +193,7 @@ describe('DeleteAccountModal', () => {
       expect(mockOnConfirm).not.toHaveBeenCalled();
     });
 
-    it('handles rapid multiple clicks gracefully', () => {
+    it('handles rapid multiple clicks gracefully', async () => {
       render(
         <DeleteAccountModal
           opened={true}
@@ -207,12 +208,16 @@ describe('DeleteAccountModal', () => {
       fireEvent.change(passwordInput, { target: { value: 'testpassword' } });
 
       // Multiple rapid clicks should not break the component
-      fireEvent.click(deleteButton);
-      fireEvent.click(deleteButton);
-      fireEvent.click(deleteButton);
+      act(() => {
+        fireEvent.click(deleteButton);
+        fireEvent.click(deleteButton);
+        fireEvent.click(deleteButton);
+      });
 
       expect(screen.getByText('Delete Account')).toBeInTheDocument();
-      expect(mockOnConfirm).toHaveBeenCalledWith('testpassword');
+      await waitFor(() => {
+        expect(mockOnConfirm).toHaveBeenCalledWith('testpassword');
+      });
     });
   });
 

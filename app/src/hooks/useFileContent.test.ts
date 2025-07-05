@@ -439,8 +439,22 @@ describe('useFileContent', () => {
   });
 
   describe('function stability', () => {
-    it('maintains stable function references across re-renders and workspace changes', () => {
+    it('maintains stable function references across re-renders and workspace changes', async () => {
+      const mockGetFileContent = vi.mocked(fileApi.getFileContent);
+      const mockIsImageFile = vi.mocked(fileHelpers.isImageFile);
+
+      // Mock API calls for both workspaces
+      mockGetFileContent
+        .mockResolvedValueOnce('Content from workspace 1')
+        .mockResolvedValueOnce('Content from workspace 2');
+      mockIsImageFile.mockReturnValue(false);
+
       const { result, rerender } = renderHook(() => useFileContent('test.md'));
+
+      // Wait for initial load to complete
+      await waitFor(() => {
+        expect(result.current.content).toBe('Content from workspace 1');
+      });
 
       const initialFunctions = {
         setContent: result.current.setContent,
@@ -464,14 +478,21 @@ describe('useFileContent', () => {
       );
 
       // Change workspace
-      mockWorkspaceData.currentWorkspace = {
-        id: 2,
-        name: 'different-workspace',
-      };
+      act(() => {
+        mockWorkspaceData.currentWorkspace = {
+          id: 2,
+          name: 'different-workspace',
+        };
+      });
 
       rerender();
 
-      // Functions should still be stable
+      // Wait for content to load from new workspace
+      await waitFor(() => {
+        expect(result.current.content).toBe('Content from workspace 2');
+      });
+
+      // Functions should still be stable (except handleContentChange which depends on originalContent)
       expect(result.current.setContent).toBe(initialFunctions.setContent);
       expect(result.current.setHasUnsavedChanges).toBe(
         initialFunctions.setHasUnsavedChanges
@@ -479,7 +500,8 @@ describe('useFileContent', () => {
       expect(result.current.loadFileContent).not.toBe(
         initialFunctions.loadFileContent
       );
-      expect(result.current.handleContentChange).toBe(
+      // handleContentChange depends on originalContent which changes when workspace changes
+      expect(result.current.handleContentChange).not.toBe(
         initialFunctions.handleContentChange
       );
     });

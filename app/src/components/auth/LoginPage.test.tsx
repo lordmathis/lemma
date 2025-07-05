@@ -38,8 +38,16 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 // Custom render function
-const render = (ui: React.ReactElement) => {
-  return rtlRender(ui, { wrapper: TestWrapper });
+const render = async (ui: React.ReactElement) => {
+  const result = rtlRender(ui, { wrapper: TestWrapper });
+
+  // Wait for AuthProvider initialization to complete
+  await waitFor(() => {
+    // The LoginPage should be rendered (indicates AuthProvider has initialized)
+    expect(screen.getByText('Welcome to Lemma')).toBeInTheDocument();
+  });
+
+  return result;
 };
 
 describe('LoginPage', () => {
@@ -64,8 +72,8 @@ describe('LoginPage', () => {
   });
 
   describe('Initial Render', () => {
-    it('renders the login form with all required elements', () => {
-      render(<LoginPage />);
+    it('renders the login form with all required elements', async () => {
+      await render(<LoginPage />);
 
       // Check title and subtitle
       expect(screen.getByText('Welcome to Lemma')).toBeInTheDocument();
@@ -95,8 +103,8 @@ describe('LoginPage', () => {
   });
 
   describe('Form Interaction', () => {
-    it('updates input values when user types', () => {
-      render(<LoginPage />);
+    it('updates input values when user types', async () => {
+      await render(<LoginPage />);
 
       const emailInput = screen.getByTestId('email-input');
       const passwordInput = screen.getByTestId('password-input');
@@ -108,8 +116,8 @@ describe('LoginPage', () => {
       expect((passwordInput as HTMLInputElement).value).toBe('password123');
     });
 
-    it('prevents form submission with empty fields due to HTML5 validation', () => {
-      render(<LoginPage />);
+    it('prevents form submission with empty fields due to HTML5 validation', async () => {
+      await render(<LoginPage />);
 
       const submitButton = screen.getByTestId('login-button');
       fireEvent.click(submitButton);
@@ -132,7 +140,7 @@ describe('LoginPage', () => {
     };
 
     it('calls login function with correct credentials on form submit', async () => {
-      render(<LoginPage />);
+      await render(<LoginPage />);
       fillAndSubmitForm('test@example.com', 'password123');
 
       await waitFor(() => {
@@ -151,7 +159,7 @@ describe('LoginPage', () => {
       });
       mockApiLogin.mockReturnValue(loginPromise);
 
-      render(<LoginPage />);
+      await render(<LoginPage />);
       const { submitButton } = fillAndSubmitForm(
         'test@example.com',
         'password123'
@@ -170,7 +178,7 @@ describe('LoginPage', () => {
     });
 
     it('handles login success with notification', async () => {
-      render(<LoginPage />);
+      await render(<LoginPage />);
       fillAndSubmitForm('test@example.com', 'password123');
 
       await waitFor(() => {
@@ -194,7 +202,7 @@ describe('LoginPage', () => {
       const errorMessage = 'Invalid credentials';
       mockApiLogin.mockRejectedValue(new Error(errorMessage));
 
-      render(<LoginPage />);
+      await render(<LoginPage />);
       const { submitButton } = fillAndSubmitForm(
         'test@example.com',
         'wrongpassword'
