@@ -37,11 +37,16 @@ const Sidebar: React.FC<SidebarProps> = ({
         overflow: 'hidden',
       }}
     >
-      <FileActions handlePullChanges={handlePull} selectedFile={selectedFile} />
+      <FileActions
+        handlePullChanges={handlePull}
+        selectedFile={selectedFile}
+        loadFileList={loadFileList}
+      />
       <FileTree
         files={files}
         handleFileSelect={handleFileSelect}
         showHiddenFiles={currentWorkspace?.showHiddenFiles || false}
+        loadFileList={loadFileList}
       />
     </Box>
   );

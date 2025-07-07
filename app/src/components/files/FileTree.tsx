@@ -8,6 +8,7 @@ import {
 } from '@tabler/icons-react';
 import { Tooltip, Text, Box } from '@mantine/core';
 import useResizeObserver from '@react-hook/resize-observer';
+import { useFileOperations } from '../../hooks/useFileOperations';
 import type { FileNode } from '@/types/models';
 
 interface Size {
@@ -19,12 +20,7 @@ interface FileTreeProps {
   files: FileNode[];
   handleFileSelect: (filePath: string | null) => Promise<void>;
   showHiddenFiles: boolean;
-  onFileMove?: (
-    dragIds: string[],
-    parentId: string | null,
-    index: number
-  ) => Promise<void>;
-  onFileUpload?: (files: FileList, targetPath?: string) => Promise<void>;
+  loadFileList: () => Promise<void>;
 }
 
 const useSize = (target: React.RefObject<HTMLElement>): Size | undefined => {
@@ -111,11 +107,11 @@ const FileTree: React.FC<FileTreeProps> = ({
   files,
   handleFileSelect,
   showHiddenFiles,
-  onFileMove,
-  onFileUpload,
+  loadFileList,
 }) => {
   const target = useRef<HTMLDivElement>(null);
   const size = useSize(target);
+  const { handleMove, handleUpload } = useFileOperations();
 
   // State for drag and drop overlay
   const [isDragOver, setIsDragOver] = useState(false);
@@ -136,7 +132,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   };
 
   // Handle file movement within the tree
-  const handleMove = useCallback(
+  const handleTreeMove = useCallback(
     async ({
       dragIds,
       parentId,
@@ -146,11 +142,16 @@ const FileTree: React.FC<FileTreeProps> = ({
       parentId: string | null;
       index: number;
     }) => {
-      if (onFileMove) {
-        await onFileMove(dragIds, parentId, index);
+      try {
+        const success = await handleMove(dragIds, parentId, index);
+        if (success) {
+          await loadFileList();
+        }
+      } catch (error) {
+        console.error('Error moving files:', error);
       }
     },
-    [onFileMove]
+    [handleMove, loadFileList]
   );
 
   // External file drag and drop handlers
@@ -189,14 +190,22 @@ const FileTree: React.FC<FileTreeProps> = ({
       setIsDragOver(false);
 
       const { files } = e.dataTransfer;
-      if (files && files.length > 0 && onFileUpload) {
-        // Handle the upload without awaiting to avoid the eslint warning
-        onFileUpload(files).catch((error) => {
-          console.error('Error uploading files:', error);
-        });
+      if (files && files.length > 0) {
+        const uploadFiles = async () => {
+          try {
+            const success = await handleUpload(files);
+            if (success) {
+              await loadFileList();
+            }
+          } catch (error) {
+            console.error('Error uploading files:', error);
+          }
+        };
+
+        void uploadFiles();
       }
     },
-    [onFileUpload]
+    [handleUpload, loadFileList]
   );
 
   return (
@@ -247,7 +256,8 @@ const FileTree: React.FC<FileTreeProps> = ({
           height={size.height}
           indent={24}
           rowHeight={28}
-          onMove={handleMove}
+          // Enable drag and drop for moving files
+          onMove={handleTreeMove}
           onActivate={(node) => {
             const fileNode = node.data;
             if (!node.isInternal) {

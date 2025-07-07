@@ -9,6 +9,12 @@ interface UseFileOperationsResult {
   handleSave: (filePath: string, content: string) => Promise<boolean>;
   handleDelete: (filePath: string) => Promise<boolean>;
   handleCreate: (fileName: string, initialContent?: string) => Promise<boolean>;
+  handleUpload: (files: FileList, targetPath?: string) => Promise<boolean>;
+  handleMove: (
+    dragIds: string[],
+    parentId: string | null,
+    index: number
+  ) => Promise<boolean>;
 }
 
 export const useFileOperations = (): UseFileOperationsResult => {
@@ -109,5 +115,83 @@ export const useFileOperations = (): UseFileOperationsResult => {
     [currentWorkspace, autoCommit]
   );
 
-  return { handleSave, handleDelete, handleCreate };
+  // Add these to your hook implementation:
+  const handleUpload = useCallback(
+    async (files: FileList, targetPath?: string): Promise<boolean> => {
+      if (!currentWorkspace) return false;
+
+      try {
+        // TODO: Implement your file upload API call
+        // Example:
+        // const formData = new FormData();
+        // Array.from(files).forEach((file, index) => {
+        //   formData.append(`file${index}`, file);
+        // });
+        // if (targetPath) {
+        //   formData.append('targetPath', targetPath);
+        // }
+        // await uploadFiles(currentWorkspace.name, formData);
+
+        notifications.show({
+          title: 'Success',
+          message: `Successfully uploaded ${files.length} file(s)`,
+          color: 'green',
+        });
+
+        // Auto-commit if enabled
+        await autoCommit('multiple files', FileAction.Create);
+        return true;
+      } catch (error) {
+        console.error('Error uploading files:', error);
+        notifications.show({
+          title: 'Error',
+          message: 'Failed to upload files',
+          color: 'red',
+        });
+        return false;
+      }
+    },
+    [currentWorkspace, autoCommit]
+  );
+
+  const handleMove = useCallback(
+    async (
+      dragIds: string[],
+      parentId: string | null,
+      index: number
+    ): Promise<boolean> => {
+      if (!currentWorkspace) return false;
+
+      try {
+        // TODO: Implement your file move API call
+        // Example:
+        // await moveFiles(currentWorkspace.name, {
+        //   sourceIds: dragIds,
+        //   targetParentId: parentId,
+        //   targetIndex: index
+        // });
+
+        notifications.show({
+          title: 'Success',
+          message: `Successfully moved ${dragIds.length} file(s)`,
+          color: 'green',
+        });
+
+        // Auto-commit if enabled
+        await autoCommit('multiple files', FileAction.Update);
+        return true;
+      } catch (error) {
+        console.error('Error moving files:', error);
+        notifications.show({
+          title: 'Error',
+          message: 'Failed to move files',
+          color: 'red',
+        });
+        return false;
+      }
+    },
+    [currentWorkspace, autoCommit]
+  );
+
+  return { handleSave, handleDelete, handleCreate, handleUpload, handleMove };
 };

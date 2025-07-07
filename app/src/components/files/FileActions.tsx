@@ -9,17 +9,18 @@ import {
 } from '@tabler/icons-react';
 import { useModalContext } from '../../contexts/ModalContext';
 import { useWorkspace } from '../../hooks/useWorkspace';
+import { useFileOperations } from '../../hooks/useFileOperations';
 
 interface FileActionsProps {
   handlePullChanges: () => Promise<boolean>;
   selectedFile: string | null;
-  onFileUpload?: (files: FileList) => Promise<void>;
+  loadFileList: () => Promise<void>;
 }
 
 const FileActions: React.FC<FileActionsProps> = ({
   handlePullChanges,
   selectedFile,
-  onFileUpload,
+  loadFileList,
 }) => {
   const { currentWorkspace } = useWorkspace();
   const {
@@ -27,6 +28,8 @@ const FileActions: React.FC<FileActionsProps> = ({
     setDeleteFileModalVisible,
     setCommitMessageModalVisible,
   } = useModalContext();
+
+  const { handleUpload } = useFileOperations();
 
   // Hidden file input for upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,10 +46,20 @@ const FileActions: React.FC<FileActionsProps> = ({
     event: React.ChangeEvent<HTMLInputElement>
   ): void => {
     const files = event.target.files;
-    if (files && files.length > 0 && onFileUpload) {
-      onFileUpload(files).catch((error) => {
-        console.error('Error uploading files:', error);
-      });
+    if (files && files.length > 0) {
+      const uploadFiles = async () => {
+        try {
+          const success = await handleUpload(files);
+          if (success) {
+            await loadFileList();
+          }
+        } catch (error) {
+          console.error('Error uploading files:', error);
+        }
+      };
+
+      void uploadFiles();
+
       // Reset the input so the same file can be selected again
       event.target.value = '';
     }
