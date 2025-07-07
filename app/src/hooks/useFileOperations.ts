@@ -15,6 +15,7 @@ interface UseFileOperationsResult {
     parentId: string | null,
     index: number
   ) => Promise<boolean>;
+  handleRename: (oldPath: string, newPath: string) => Promise<boolean>;
 }
 
 export const useFileOperations = (): UseFileOperationsResult => {
@@ -193,5 +194,40 @@ export const useFileOperations = (): UseFileOperationsResult => {
     [currentWorkspace, autoCommit]
   );
 
-  return { handleSave, handleDelete, handleCreate, handleUpload, handleMove };
+  const handleRename = useCallback(
+    async (oldPath: string, newPath: string): Promise<boolean> => {
+      if (!currentWorkspace) return false;
+
+      try {
+        // TODO: Replace with your actual rename API call
+        // await renameFile(currentWorkspace.name, oldPath, newPath);
+
+        notifications.show({
+          title: 'Success',
+          message: 'File renamed successfully',
+          color: 'green',
+        });
+        await autoCommit(newPath, FileAction.Update);
+        return true;
+      } catch (error) {
+        console.error('Error renaming file:', error);
+        notifications.show({
+          title: 'Error',
+          message: 'Failed to rename file',
+          color: 'red',
+        });
+        return false;
+      }
+    },
+    [currentWorkspace, autoCommit]
+  );
+
+  return {
+    handleSave,
+    handleDelete,
+    handleCreate,
+    handleUpload,
+    handleMove,
+    handleRename,
+  };
 };

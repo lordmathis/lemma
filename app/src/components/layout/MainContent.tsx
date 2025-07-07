@@ -5,11 +5,13 @@ import { IconCode, IconEye, IconPointFilled } from '@tabler/icons-react';
 import ContentView from '../editor/ContentView';
 import CreateFileModal from '../modals/file/CreateFileModal';
 import DeleteFileModal from '../modals/file/DeleteFileModal';
+import RenameFileModal from '../modals/file/RenameFileModal';
 import CommitMessageModal from '../modals/git/CommitMessageModal';
 
 import { useFileContent } from '../../hooks/useFileContent';
 import { useFileOperations } from '../../hooks/useFileOperations';
 import { useGitOperations } from '../../hooks/useGitOperations';
+import { useModalContext } from '../../contexts/ModalContext';
 
 type ViewTab = 'source' | 'preview';
 
@@ -31,8 +33,10 @@ const MainContent: React.FC<MainContentProps> = ({
     setHasUnsavedChanges,
     handleContentChange,
   } = useFileContent(selectedFile);
-  const { handleSave, handleCreate, handleDelete } = useFileOperations();
+  const { handleSave, handleCreate, handleDelete, handleRename } =
+    useFileOperations();
   const { handleCommitAndPush } = useGitOperations();
+  const { setRenameFileModalVisible } = useModalContext();
 
   const handleTabChange = useCallback((value: string | null): void => {
     if (value) {
@@ -73,14 +77,50 @@ const MainContent: React.FC<MainContentProps> = ({
     [handleDelete, handleFileSelect, loadFileList]
   );
 
+  const handleRenameFile = useCallback(
+    async (oldPath: string, newPath: string): Promise<void> => {
+      const success = await handleRename(oldPath, newPath);
+      if (success) {
+        await loadFileList();
+        // If we renamed the currently selected file, update the selection
+        if (selectedFile === oldPath) {
+          await handleFileSelect(newPath);
+        }
+      }
+    },
+    [handleRename, handleFileSelect, loadFileList, selectedFile]
+  );
+
+  const handleBreadcrumbClick = useCallback(() => {
+    if (selectedFile) {
+      setRenameFileModalVisible(true);
+    }
+  }, [selectedFile, setRenameFileModalVisible]);
+
   const renderBreadcrumbs = useMemo(() => {
     if (!selectedFile) return null;
     const pathParts = selectedFile.split('/');
-    const items = pathParts.map((part, index) => (
-      <Text key={index} size="sm">
-        {part}
-      </Text>
-    ));
+    const items = pathParts.map((part, index) => {
+      // Make the filename (last part) clickable for rename
+      const isFileName = index === pathParts.length - 1;
+      return (
+        <Text
+          key={index}
+          size="sm"
+          style={{
+            cursor: isFileName ? 'pointer' : 'default',
+            ...(isFileName && {
+              textDecoration: 'underline',
+              textDecorationStyle: 'dotted',
+            }),
+          }}
+          onClick={isFileName ? handleBreadcrumbClick : undefined}
+          title={isFileName ? 'Click to rename file' : undefined}
+        >
+          {part}
+        </Text>
+      );
+    });
 
     return (
       <Group>
@@ -93,7 +133,7 @@ const MainContent: React.FC<MainContentProps> = ({
         )}
       </Group>
     );
-  }, [selectedFile, hasUnsavedChanges]);
+  }, [selectedFile, hasUnsavedChanges, handleBreadcrumbClick]);
 
   return (
     <Box
@@ -126,6 +166,10 @@ const MainContent: React.FC<MainContentProps> = ({
       <CreateFileModal onCreateFile={handleCreateFile} />
       <DeleteFileModal
         onDeleteFile={handleDeleteFile}
+        selectedFile={selectedFile}
+      />
+      <RenameFileModal
+        onRenameFile={handleRenameFile}
         selectedFile={selectedFile}
       />
       <CommitMessageModal onCommitAndPush={handleCommitAndPush} />

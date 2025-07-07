@@ -10,6 +10,8 @@ interface ModalContextType {
   setNewFileModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
   deleteFileModalVisible: boolean;
   setDeleteFileModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  renameFileModalVisible: boolean;
+  setRenameFileModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
   commitMessageModalVisible: boolean;
   setCommitMessageModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
   settingsModalVisible: boolean;
@@ -30,6 +32,7 @@ interface ModalProviderProps {
 export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const [newFileModalVisible, setNewFileModalVisible] = useState(false);
   const [deleteFileModalVisible, setDeleteFileModalVisible] = useState(false);
+  const [renameFileModalVisible, setRenameFileModalVisible] = useState(false);
   const [commitMessageModalVisible, setCommitMessageModalVisible] =
     useState(false);
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
@@ -43,6 +46,8 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     setNewFileModalVisible,
     deleteFileModalVisible,
     setDeleteFileModalVisible,
+    renameFileModalVisible,
+    setRenameFileModalVisible,
     commitMessageModalVisible,
     setCommitMessageModalVisible,
     settingsModalVisible,

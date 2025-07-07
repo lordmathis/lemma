@@ -6,6 +6,7 @@ import {
   IconGitPullRequest,
   IconGitCommit,
   IconUpload,
+  IconEdit,
 } from '@tabler/icons-react';
 import { useModalContext } from '../../contexts/ModalContext';
 import { useWorkspace } from '../../hooks/useWorkspace';
@@ -27,6 +28,7 @@ const FileActions: React.FC<FileActionsProps> = ({
     setNewFileModalVisible,
     setDeleteFileModalVisible,
     setCommitMessageModalVisible,
+    setRenameFileModalVisible,
   } = useModalContext();
 
   const { handleUpload } = useFileOperations();
@@ -36,6 +38,7 @@ const FileActions: React.FC<FileActionsProps> = ({
 
   const handleCreateFile = (): void => setNewFileModalVisible(true);
   const handleDeleteFile = (): void => setDeleteFileModalVisible(true);
+  const handleRenameFile = (): void => setRenameFileModalVisible(true);
   const handleCommitAndPush = (): void => setCommitMessageModalVisible(true);
 
   const handleUploadClick = (): void => {
@@ -88,6 +91,21 @@ const FileActions: React.FC<FileActionsProps> = ({
           data-testid="upload-files-button"
         >
           <IconUpload size={16} />
+        </ActionIcon>
+      </Tooltip>
+
+      <Tooltip
+        label={selectedFile ? 'Rename current file' : 'No file selected'}
+      >
+        <ActionIcon
+          variant="default"
+          size="md"
+          onClick={handleRenameFile}
+          disabled={!selectedFile}
+          aria-label="Rename current file"
+          data-testid="rename-file-button"
+        >
+          <IconEdit size={16} />
         </ActionIcon>
       </Tooltip>
 
