@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ActionIcon, Tooltip, Group } from '@mantine/core';
 import {
   IconPlus,
   IconTrash,
   IconGitPullRequest,
   IconGitCommit,
+  IconUpload,
 } from '@tabler/icons-react';
 import { useModalContext } from '../../contexts/ModalContext';
 import { useWorkspace } from '../../hooks/useWorkspace';
@@ -12,11 +13,13 @@ import { useWorkspace } from '../../hooks/useWorkspace';
 interface FileActionsProps {
   handlePullChanges: () => Promise<boolean>;
   selectedFile: string | null;
+  onFileUpload?: (files: FileList) => Promise<void>;
 }
 
 const FileActions: React.FC<FileActionsProps> = ({
   handlePullChanges,
   selectedFile,
+  onFileUpload,
 }) => {
   const { currentWorkspace } = useWorkspace();
   const {
@@ -25,9 +28,29 @@ const FileActions: React.FC<FileActionsProps> = ({
     setCommitMessageModalVisible,
   } = useModalContext();
 
+  // Hidden file input for upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleCreateFile = (): void => setNewFileModalVisible(true);
   const handleDeleteFile = (): void => setDeleteFileModalVisible(true);
   const handleCommitAndPush = (): void => setCommitMessageModalVisible(true);
+
+  const handleUploadClick = (): void => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    const files = event.target.files;
+    if (files && files.length > 0 && onFileUpload) {
+      onFileUpload(files).catch((error) => {
+        console.error('Error uploading files:', error);
+      });
+      // Reset the input so the same file can be selected again
+      event.target.value = '';
+    }
+  };
 
   return (
     <Group gap="xs">
@@ -40,6 +63,18 @@ const FileActions: React.FC<FileActionsProps> = ({
           data-testid="create-file-button"
         >
           <IconPlus size={16} />
+        </ActionIcon>
+      </Tooltip>
+
+      <Tooltip label="Upload files">
+        <ActionIcon
+          variant="default"
+          size="md"
+          onClick={handleUploadClick}
+          aria-label="Upload files"
+          data-testid="upload-files-button"
+        >
+          <IconUpload size={16} />
         </ActionIcon>
       </Tooltip>
 
@@ -104,6 +139,16 @@ const FileActions: React.FC<FileActionsProps> = ({
           <IconGitCommit size={16} />
         </ActionIcon>
       </Tooltip>
+
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileInputChange}
+        multiple
+        aria-label="File upload input"
+      />
     </Group>
   );
 };
