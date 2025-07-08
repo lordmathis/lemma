@@ -121,7 +121,7 @@ export const deleteWorkspace = async (
  * @throws {Error} If the API call fails or returns an invalid response
  */
 export const getLastWorkspaceName = async (): Promise<string> => {
-  const response = await apiCall(`${API_BASE_URL}/workspaces/last`);
+  const response = await apiCall(`${API_BASE_URL}/workspaces/_op/last`);
   const data: unknown = await response.json();
   if (
     typeof data !== 'object' ||
@@ -139,7 +139,7 @@ export const getLastWorkspaceName = async (): Promise<string> => {
  * @throws {Error} If the API call fails or returns an invalid response
  */
 export const updateLastWorkspaceName = async (workspaceName: string) => {
-  const response = await apiCall(`${API_BASE_URL}/workspaces/last`, {
+  const response = await apiCall(`${API_BASE_URL}/workspaces/_op/last`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

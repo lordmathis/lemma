@@ -47,7 +47,7 @@ export const lookupFileByName = async (
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName
-    )}/files/lookup?filename=${encodeURIComponent(filename)}`
+    )}/files/_op/lookup?filename=${encodeURIComponent(filename)}`
   );
   const data: unknown = await response.json();
   if (!isLookupResponse(data)) {
@@ -135,7 +135,9 @@ export const getLastOpenedFile = async (
   workspaceName: string
 ): Promise<string> => {
   const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${encodeURIComponent(workspaceName)}/files/last`
+    `${API_BASE_URL}/workspaces/${encodeURIComponent(
+      workspaceName
+    )}/files/_op/last`
   );
   const data: unknown = await response.json();
   if (
@@ -161,7 +163,7 @@ export const updateLastOpenedFile = async (
   await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName
-    )}/files/last`,
+    )}/files/_op/last`,
     {
       method: 'PUT',
       headers: {
