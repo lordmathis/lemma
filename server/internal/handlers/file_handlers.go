@@ -90,7 +90,7 @@ func (h *Handler) ListFiles() http.HandlerFunc {
 // @Success 200 {object} LookupResponse
 // @Failure 400 {object} ErrorResponse "Filename is required"
 // @Failure 404 {object} ErrorResponse "File not found"
-// @Router /workspaces/{workspace_name}/files/lookup [get]
+// @Router /workspaces/{workspace_name}/files/_op/lookup [get]
 func (h *Handler) LookupFileByName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -382,7 +382,7 @@ func (h *Handler) DeleteFile() http.HandlerFunc {
 // @Success 200 {object} LastOpenedFileResponse
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 500 {object} ErrorResponse "Failed to get last opened file"
-// @Router /workspaces/{workspace_name}/files/last [get]
+// @Router /workspaces/{workspace_name}/files/_op/last [get]
 func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -433,7 +433,7 @@ func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 404 {object} ErrorResponse "File not found"
 // @Failure 500 {object} ErrorResponse "Failed to update file"
-// @Router /workspaces/{workspace_name}/files/last [put]
+// @Router /workspaces/{workspace_name}/files/_op/last [put]
 func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)

@@ -407,7 +407,7 @@ func (h *Handler) DeleteWorkspace() http.HandlerFunc {
 // @Produce json
 // @Success 200 {object} LastWorkspaceNameResponse
 // @Failure 500 {object} ErrorResponse "Failed to get last workspace"
-// @Router /workspaces/last [get]
+// @Router /workspaces/_op/last [get]
 func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -444,7 +444,7 @@ func (h *Handler) GetLastWorkspaceName() http.HandlerFunc {
 // @Success 204 "No Content - Last workspace updated successfully"
 // @Failure 400 {object} ErrorResponse "Invalid request body"
 // @Failure 500 {object} ErrorResponse "Failed to update last workspace"
-// @Router /workspaces/last [put]
+// @Router /workspaces/_op/last [put]
 func (h *Handler) UpdateLastWorkspaceName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)

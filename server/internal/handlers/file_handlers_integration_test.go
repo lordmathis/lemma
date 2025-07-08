@@ -124,7 +124,7 @@ func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			// Search for the file
-			rr = h.makeRequest(t, http.MethodGet, baseURL+"/lookup?filename="+filename, nil, h.RegularTestUser)
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/_op/lookup?filename="+filename, nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var response struct {
@@ -135,7 +135,7 @@ func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
 			assert.Len(t, response.Paths, 2)
 
 			// Search for non-existent file
-			rr = h.makeRequest(t, http.MethodGet, baseURL+"/lookup?filename=nonexistent.md", nil, h.RegularTestUser)
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/_op/lookup?filename=nonexistent.md", nil, h.RegularTestUser)
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 		})
 
@@ -158,7 +158,7 @@ func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
 
 		t.Run("last opened file", func(t *testing.T) {
 			// Initially should be empty
-			rr := h.makeRequest(t, http.MethodGet, baseURL+"/last", nil, h.RegularTestUser)
+			rr := h.makeRequest(t, http.MethodGet, baseURL+"/_op/last", nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var response struct {
@@ -174,11 +174,11 @@ func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
 			}{
 				FilePath: "docs/readme.md",
 			}
-			rr = h.makeRequest(t, http.MethodPut, baseURL+"/last", updateReq, h.RegularTestUser)
+			rr = h.makeRequest(t, http.MethodPut, baseURL+"/_op/last", updateReq, h.RegularTestUser)
 			require.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Verify update
-			rr = h.makeRequest(t, http.MethodGet, baseURL+"/last", nil, h.RegularTestUser)
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/_op/last", nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			err = json.NewDecoder(rr.Body).Decode(&response)
@@ -187,7 +187,7 @@ func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
 
 			// Test invalid file path
 			updateReq.FilePath = "nonexistent.md"
-			rr = h.makeRequest(t, http.MethodPut, baseURL+"/last", updateReq, h.RegularTestUser)
+			rr = h.makeRequest(t, http.MethodPut, baseURL+"/_op/last", updateReq, h.RegularTestUser)
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 		})
 
@@ -202,8 +202,8 @@ func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
 				{"get file", http.MethodGet, baseURL + "/test.md", nil},
 				{"save file", http.MethodPost, baseURL + "/test.md", "content"},
 				{"delete file", http.MethodDelete, baseURL + "/test.md", nil},
-				{"get last file", http.MethodGet, baseURL + "/last", nil},
-				{"update last file", http.MethodPut, baseURL + "/last", struct{ FilePath string }{"test.md"}},
+				{"get last file", http.MethodGet, baseURL + "/_op/last", nil},
+				{"update last file", http.MethodPut, baseURL + "/_op/last", struct{ FilePath string }{"test.md"}},
 			}
 
 			for _, tc := range tests {
