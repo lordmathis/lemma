@@ -239,5 +239,36 @@ func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
 				})
 			}
 		})
+
+		t.Run("upload file", func(t *testing.T) {
+			t.Run("successful upload", func(t *testing.T) {
+				fileName := "uploaded-test.txt"
+				fileContent := "This is an uploaded file"
+
+				rr := h.makeUploadRequest(t, baseURL+"/_op/upload/uploads", fileName, fileContent, h.RegularTestUser)
+				require.Equal(t, http.StatusOK, rr.Code)
+
+				// Verify response structure
+				var response struct {
+					FilePath  string `json:"filePath"`
+					Size      int64  `json:"size"`
+					UpdatedAt string `json:"updatedAt"`
+				}
+				err := json.NewDecoder(rr.Body).Decode(&response)
+				require.NoError(t, err)
+				assert.Equal(t, "uploads/"+fileName, response.FilePath)
+				assert.Equal(t, int64(len(fileContent)), response.Size)
+
+				// Verify file was saved
+				rr = h.makeRequest(t, http.MethodGet, baseURL+"/uploads/"+fileName, nil, h.RegularTestUser)
+				require.Equal(t, http.StatusOK, rr.Code)
+				assert.Equal(t, fileContent, rr.Body.String())
+			})
+
+			t.Run("upload without file", func(t *testing.T) {
+				rr := h.makeUploadRequest(t, baseURL+"/_op/upload/test", "", "", h.RegularTestUser)
+				assert.Equal(t, http.StatusBadRequest, rr.Code)
+			})
+		})
 	})
 }
