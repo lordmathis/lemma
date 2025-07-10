@@ -133,6 +133,9 @@ func setupRouter(o Options) *chi.Mux {
 						r.Put("/_op/last", handler.UpdateLastOpenedFile())
 						r.Get("/_op/lookup", handler.LookupFileByName())
 
+						r.Post("/_op/upload/*", handler.UploadFile())
+						r.Put("/_op/move", handler.MoveFile())
+
 						r.Post("/*", handler.SaveFile())
 						r.Get("/*", handler.GetFileContent())
 						r.Delete("/*", handler.DeleteFile())

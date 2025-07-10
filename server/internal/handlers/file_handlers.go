@@ -302,6 +302,132 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 	}
 }
 
+// UploadFile godoc
+// @Summary Upload file
+// @Description Uploads a file to the user's workspace
+// @Tags files
+// @ID uploadFile
+// @Security CookieAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param workspace_name path string true "Workspace name"
+// @Param path path string true "Directory path"
+// @Param file formData file true "File to upload"
+// @Success 200 {object} SaveFileResponse
+// @Failure 400 {object} ErrorResponse "Failed to get file from form"
+// @Failure 400 {object} ErrorResponse "Invalid file path"
+// @Failure 500 {object} ErrorResponse "Failed to read uploaded file"
+// @Failure 500 {object} ErrorResponse "Failed to save file"
+// @Router /workspaces/{workspace_name}/files/_op/upload/{path} [post]
+func (h *Handler) UploadFile() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, ok := context.GetRequestContext(w, r)
+		if !ok {
+			return
+		}
+		log := getFilesLogger().With(
+			"handler", "UploadFile",
+			"userID", ctx.UserID,
+			"workspaceID", ctx.Workspace.ID,
+			"clientIP", r.RemoteAddr,
+		)
+
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			log.Error("failed to get file from form",
+				"error", err.Error(),
+			)
+			respondError(w, "Failed to get file from form", http.StatusBadRequest)
+			return
+		}
+		defer func() {
+			if err := file.Close(); err != nil {
+				log.Error("failed to close uploaded file",
+					"error", err.Error(),
+				)
+			}
+		}()
+
+		decodedPath, err := url.PathUnescape(chi.URLParam(r, "*"))
+		if err != nil {
+			log.Error("failed to decode file path",
+				"filePath", decodedPath,
+				"error", err.Error(),
+			)
+			respondError(w, "Invalid file path", http.StatusBadRequest)
+			return
+		}
+		filePath := decodedPath + "/" + header.Filename
+
+		content := make([]byte, header.Size)
+		_, err = file.Read(content)
+		if err != nil && err != io.EOF {
+			log.Error("failed to read uploaded file",
+				"filePath", filePath,
+				"error", err.Error(),
+			)
+			respondError(w, "Failed to read uploaded file", http.StatusInternalServerError)
+			return
+		}
+
+		err = h.Storage.SaveFile(ctx.UserID, ctx.Workspace.ID, filePath, content)
+		if err != nil {
+			if storage.IsPathValidationError(err) {
+				log.Error("invalid file path attempted",
+					"filePath", filePath,
+					"error", err.Error(),
+				)
+				respondError(w, "Invalid file path", http.StatusBadRequest)
+				return
+			}
+
+			log.Error("failed to save file",
+				"filePath", filePath,
+				"contentSize", len(content),
+				"error", err.Error(),
+			)
+			respondError(w, "Failed to save file", http.StatusInternalServerError)
+			return
+		}
+
+		response := SaveFileResponse{
+			FilePath:  filePath,
+			Size:      int64(len(content)),
+			UpdatedAt: time.Now().UTC(),
+		}
+		respondJSON(w, response)
+	}
+}
+
+// MoveFile godoc
+// @Summary Move file
+// @Description Moves a file to a new location in the user's workspace
+// @Tags files
+// @ID moveFile
+// @Security CookieAuth
+// @Param workspace_name path string true "Workspace name"
+// @Success 204 "No Content - File moved successfully"
+// @Failure 400 {object} ErrorResponse "Invalid file path"
+// @Failure 404 {object} ErrorResponse "File not found"
+// @Failure 500 {object} ErrorResponse "Failed to move file"
+// @Router /workspaces/{workspace_name}/files/_op/move [post]
+func (h *Handler) MoveFile() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, ok := context.GetRequestContext(w, r)
+		if !ok {
+			return
+		}
+		log := getFilesLogger().With(
+			"handler", "MoveFile",
+			"userID", ctx.UserID,
+			"workspaceID", ctx.Workspace.ID,
+			"clientIP", r.RemoteAddr,
+		)
+		// TODO: Implement MoveFile functionality
+		_ = log // Suppress unused variable warning
+	}
+}
+
 // DeleteFile godoc
 // @Summary Delete file
 // @Description Deletes a file in the user's workspace
