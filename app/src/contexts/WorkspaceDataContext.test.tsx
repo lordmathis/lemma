@@ -126,7 +126,6 @@ describe('WorkspaceDataContext', () => {
       expect(result.current.currentWorkspace).toBeNull();
       expect(result.current.loading).toBe(true);
       expect(result.current.workspaces).toEqual([]);
-      expect(result.current.settings).toEqual(DEFAULT_WORKSPACE_SETTINGS);
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -171,7 +170,6 @@ describe('WorkspaceDataContext', () => {
 
       expect(result.current.currentWorkspace).toEqual(mockWorkspace);
       expect(result.current.workspaces).toEqual(mockWorkspaceList);
-      expect(result.current.settings).toEqual(mockWorkspace);
       expect(mockGetLastWorkspaceName).toHaveBeenCalledTimes(1);
       expect(mockGetWorkspace).toHaveBeenCalledWith('test-workspace');
       expect(mockListWorkspaces).toHaveBeenCalledTimes(1);
@@ -258,7 +256,6 @@ describe('WorkspaceDataContext', () => {
 
       expect(result.current.currentWorkspace).toBeNull();
       expect(result.current.workspaces).toEqual([]);
-      expect(result.current.settings).toEqual(DEFAULT_WORKSPACE_SETTINGS);
 
       consoleSpy.mockRestore();
     });
@@ -420,7 +417,6 @@ describe('WorkspaceDataContext', () => {
       });
 
       expect(result.current.currentWorkspace).toEqual(mockWorkspace);
-      expect(result.current.settings).toEqual(mockWorkspace);
       expect(mockGetWorkspace).toHaveBeenCalledWith('test-workspace');
       expect(mockUpdateColorScheme).toHaveBeenCalledWith('dark');
     });
@@ -500,7 +496,6 @@ describe('WorkspaceDataContext', () => {
       });
 
       expect(result.current.currentWorkspace).toEqual(mockWorkspace);
-      expect(result.current.settings).toEqual(mockWorkspace);
     });
 
     it('sets workspace to null', async () => {
@@ -524,7 +519,6 @@ describe('WorkspaceDataContext', () => {
       });
 
       expect(result.current.currentWorkspace).toBeNull();
-      expect(result.current.settings).toEqual(DEFAULT_WORKSPACE_SETTINGS);
     });
   });
 
@@ -603,7 +597,6 @@ describe('WorkspaceDataContext', () => {
 
       expect(result.current.currentWorkspace).toBeNull();
       expect(result.current.workspaces).toEqual([]);
-      expect(result.current.settings).toEqual(DEFAULT_WORKSPACE_SETTINGS);
       expect(result.current.loading).toBe(false);
 
       expect(typeof result.current.loadWorkspaces).toBe('function');
@@ -631,7 +624,6 @@ describe('WorkspaceDataContext', () => {
 
       expect(result.current.currentWorkspace).toEqual(mockWorkspace);
       expect(result.current.workspaces).toEqual(mockWorkspaceList);
-      expect(result.current.settings).toEqual(mockWorkspace);
       expect(result.current.loading).toBe(false);
 
       expect(typeof result.current.loadWorkspaces).toBe('function');

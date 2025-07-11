@@ -10,10 +10,14 @@ interface UseGitOperationsResult {
 }
 
 export const useGitOperations = (): UseGitOperationsResult => {
-  const { currentWorkspace, settings } = useWorkspaceData();
+  const { currentWorkspace } = useWorkspaceData();
 
   const handlePull = useCallback(async (): Promise<boolean> => {
-    if (!currentWorkspace || !settings.gitEnabled || !currentWorkspace.name)
+    if (
+      !currentWorkspace ||
+      !currentWorkspace.gitEnabled ||
+      !currentWorkspace.name
+    )
       return false;
 
     try {
@@ -33,11 +37,11 @@ export const useGitOperations = (): UseGitOperationsResult => {
       });
       return false;
     }
-  }, [currentWorkspace, settings.gitEnabled]);
+  }, [currentWorkspace]);
 
   const handleCommitAndPush = useCallback(
     async (message: string): Promise<void> => {
-      if (!currentWorkspace || !settings.gitEnabled) return;
+      if (!currentWorkspace || !currentWorkspace.gitEnabled) return;
 
       try {
         const commitHash: CommitHash = await commitAndPush(
@@ -60,7 +64,7 @@ export const useGitOperations = (): UseGitOperationsResult => {
         return;
       }
     },
-    [currentWorkspace, settings.gitEnabled]
+    [currentWorkspace]
   );
 
   return { handlePull, handleCommitAndPush };

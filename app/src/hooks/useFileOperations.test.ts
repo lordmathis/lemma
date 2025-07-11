@@ -13,21 +13,20 @@ vi.mock('@mantine/notifications', () => ({
 
 // Mock the workspace context and git operations
 const mockWorkspaceData: {
-  currentWorkspace: { id: number; name: string } | null;
-  settings: {
-    gitAutoCommit: boolean;
-    gitEnabled: boolean;
-    gitCommitMsgTemplate: string;
-  };
+  currentWorkspace: {
+    id: number;
+    name: string;
+    gitAutoCommit?: boolean;
+    gitEnabled?: boolean;
+    gitCommitMsgTemplate?: string;
+  } | null;
 } = {
   currentWorkspace: {
     id: 1,
     name: 'test-workspace',
-  },
-  settings: {
     gitAutoCommit: false,
     gitEnabled: false,
-    gitCommitMsgTemplate: '${action} ${filename}',
+    gitCommitMsgTemplate: '${action}: ${filename}',
   },
 };
 
@@ -53,8 +52,6 @@ describe('useFileOperations', () => {
     mockWorkspaceData.currentWorkspace = {
       id: 1,
       name: 'test-workspace',
-    };
-    mockWorkspaceData.settings = {
       gitAutoCommit: false,
       gitEnabled: false,
       gitCommitMsgTemplate: '${action} ${filename}',
@@ -155,8 +152,8 @@ describe('useFileOperations', () => {
       });
 
       // Enable auto-commit
-      mockWorkspaceData.settings.gitAutoCommit = true;
-      mockWorkspaceData.settings.gitEnabled = true;
+      mockWorkspaceData.currentWorkspace!.gitAutoCommit = true;
+      mockWorkspaceData.currentWorkspace!.gitEnabled = true;
 
       const { result } = renderHook(() => useFileOperations());
 
@@ -178,9 +175,9 @@ describe('useFileOperations', () => {
       });
 
       // Enable auto-commit with custom template
-      mockWorkspaceData.settings.gitAutoCommit = true;
-      mockWorkspaceData.settings.gitEnabled = true;
-      mockWorkspaceData.settings.gitCommitMsgTemplate =
+      mockWorkspaceData.currentWorkspace!.gitAutoCommit = true;
+      mockWorkspaceData.currentWorkspace!.gitEnabled = true;
+      mockWorkspaceData.currentWorkspace!.gitCommitMsgTemplate =
         'Modified ${filename} - ${action}';
 
       const { result } = renderHook(() => useFileOperations());
@@ -264,8 +261,8 @@ describe('useFileOperations', () => {
       mockDeleteFile.mockResolvedValue(undefined);
 
       // Enable auto-commit
-      mockWorkspaceData.settings.gitAutoCommit = true;
-      mockWorkspaceData.settings.gitEnabled = true;
+      mockWorkspaceData.currentWorkspace!.gitAutoCommit = true;
+      mockWorkspaceData.currentWorkspace!.gitEnabled = true;
 
       const { result } = renderHook(() => useFileOperations());
 
@@ -382,8 +379,8 @@ describe('useFileOperations', () => {
       });
 
       // Enable auto-commit
-      mockWorkspaceData.settings.gitAutoCommit = true;
-      mockWorkspaceData.settings.gitEnabled = true;
+      mockWorkspaceData.currentWorkspace!.gitAutoCommit = true;
+      mockWorkspaceData.currentWorkspace!.gitEnabled = true;
 
       const { result } = renderHook(() => useFileOperations());
 
@@ -407,8 +404,8 @@ describe('useFileOperations', () => {
       });
 
       // Enable auto-commit but disable git
-      mockWorkspaceData.settings.gitAutoCommit = true;
-      mockWorkspaceData.settings.gitEnabled = false;
+      mockWorkspaceData.currentWorkspace!.gitAutoCommit = true;
+      mockWorkspaceData.currentWorkspace!.gitEnabled = false;
 
       const { result } = renderHook(() => useFileOperations());
 
@@ -428,8 +425,8 @@ describe('useFileOperations', () => {
       });
 
       // Enable git but disable auto-commit
-      mockWorkspaceData.settings.gitAutoCommit = false;
-      mockWorkspaceData.settings.gitEnabled = true;
+      mockWorkspaceData.currentWorkspace!.gitAutoCommit = false;
+      mockWorkspaceData.currentWorkspace!.gitEnabled = true;
 
       const { result } = renderHook(() => useFileOperations());
 
@@ -449,9 +446,10 @@ describe('useFileOperations', () => {
       });
 
       // Enable auto-commit with lowercase template
-      mockWorkspaceData.settings.gitAutoCommit = true;
-      mockWorkspaceData.settings.gitEnabled = true;
-      mockWorkspaceData.settings.gitCommitMsgTemplate = 'updated ${filename}';
+      mockWorkspaceData.currentWorkspace!.gitAutoCommit = true;
+      mockWorkspaceData.currentWorkspace!.gitEnabled = true;
+      mockWorkspaceData.currentWorkspace!.gitCommitMsgTemplate =
+        'updated ${filename}';
 
       const { result } = renderHook(() => useFileOperations());
 
@@ -476,9 +474,9 @@ describe('useFileOperations', () => {
       mockDeleteFile.mockResolvedValue(undefined);
 
       // Enable auto-commit
-      mockWorkspaceData.settings.gitAutoCommit = true;
-      mockWorkspaceData.settings.gitEnabled = true;
-      mockWorkspaceData.settings.gitCommitMsgTemplate =
+      mockWorkspaceData.currentWorkspace!.gitAutoCommit = true;
+      mockWorkspaceData.currentWorkspace!.gitEnabled = true;
+      mockWorkspaceData.currentWorkspace!.gitCommitMsgTemplate =
         '${action}: ${filename}';
 
       const { result } = renderHook(() => useFileOperations());

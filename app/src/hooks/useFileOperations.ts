@@ -19,13 +19,14 @@ interface UseFileOperationsResult {
 }
 
 export const useFileOperations = (): UseFileOperationsResult => {
-  const { currentWorkspace, settings } = useWorkspaceData();
+  const { currentWorkspace } = useWorkspaceData();
   const { handleCommitAndPush } = useGitOperations();
 
   const autoCommit = useCallback(
     async (filePath: string, action: FileAction): Promise<void> => {
-      if (settings.gitAutoCommit && settings.gitEnabled) {
-        let commitMessage = settings.gitCommitMsgTemplate
+      if (!currentWorkspace || !currentWorkspace.gitEnabled) return;
+      if (currentWorkspace.gitAutoCommit && currentWorkspace.gitEnabled) {
+        let commitMessage = currentWorkspace.gitCommitMsgTemplate
           .replace('${filename}', filePath)
           .replace('${action}', action);
 
@@ -35,7 +36,7 @@ export const useFileOperations = (): UseFileOperationsResult => {
         await handleCommitAndPush(commitMessage);
       }
     },
-    [settings, handleCommitAndPush]
+    [currentWorkspace, handleCommitAndPush]
   );
 
   const handleSave = useCallback(
@@ -123,15 +124,6 @@ export const useFileOperations = (): UseFileOperationsResult => {
 
       try {
         // TODO: Implement your file upload API call
-        // Example:
-        // const formData = new FormData();
-        // Array.from(files).forEach((file, index) => {
-        //   formData.append(`file${index}`, file);
-        // });
-        // if (targetPath) {
-        //   formData.append('targetPath', targetPath);
-        // }
-        // await uploadFiles(currentWorkspace.name, formData);
 
         notifications.show({
           title: 'Success',
@@ -165,12 +157,6 @@ export const useFileOperations = (): UseFileOperationsResult => {
 
       try {
         // TODO: Implement your file move API call
-        // Example:
-        // await moveFiles(currentWorkspace.name, {
-        //   sourceIds: dragIds,
-        //   targetParentId: parentId,
-        //   targetIndex: index
-        // });
 
         notifications.show({
           title: 'Success',
