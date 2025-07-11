@@ -3,22 +3,59 @@ import { fireEvent } from '@testing-library/react';
 import { render } from '../../test/utils';
 import FileActions from './FileActions';
 import { Theme } from '@/types/models';
+import { ModalProvider } from '../../contexts/ModalContext';
+import { ThemeProvider } from '../../contexts/ThemeContext';
+import { WorkspaceDataProvider } from '../../contexts/WorkspaceDataContext';
 
 // Mock the contexts and hooks
 vi.mock('../../contexts/ModalContext', () => ({
   useModalContext: vi.fn(),
+  ModalProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 vi.mock('../../hooks/useWorkspace', () => ({
   useWorkspace: vi.fn(),
 }));
 
+// Mock contexts
+vi.mock('../../contexts/ThemeContext', () => ({
+  useTheme: () => ({
+    colorScheme: 'light',
+    updateColorScheme: vi.fn(),
+  }),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
+vi.mock('../../contexts/WorkspaceDataContext', () => ({
+  useWorkspaceData: () => ({
+    currentWorkspace: { name: 'test-workspace', path: '/test' },
+    workspaces: [],
+    settings: {},
+    loading: false,
+    loadWorkspaces: vi.fn(),
+    loadWorkspaceData: vi.fn(),
+    setCurrentWorkspace: vi.fn(),
+  }),
+  WorkspaceDataProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div>{children}</div>
+  <ThemeProvider>
+    <WorkspaceDataProvider>
+      <ModalProvider>{children}</ModalProvider>
+    </WorkspaceDataProvider>
+  </ThemeProvider>
 );
 
 describe('FileActions', () => {
   const mockHandlePullChanges = vi.fn();
+  const mockLoadFileList = vi.fn();
   const mockSetNewFileModalVisible = vi.fn();
   const mockSetDeleteFileModalVisible = vi.fn();
   const mockSetCommitMessageModalVisible = vi.fn();
@@ -52,6 +89,8 @@ describe('FileActions', () => {
       setNewFileModalVisible: mockSetNewFileModalVisible,
       deleteFileModalVisible: false,
       setDeleteFileModalVisible: mockSetDeleteFileModalVisible,
+      renameFileModalVisible: false,
+      setRenameFileModalVisible: vi.fn(),
       commitMessageModalVisible: false,
       setCommitMessageModalVisible: mockSetCommitMessageModalVisible,
       settingsModalVisible: false,
@@ -81,6 +120,7 @@ describe('FileActions', () => {
         <FileActions
           handlePullChanges={mockHandlePullChanges}
           selectedFile={null}
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );
@@ -97,6 +137,7 @@ describe('FileActions', () => {
         <FileActions
           handlePullChanges={mockHandlePullChanges}
           selectedFile="test.md"
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );
@@ -113,6 +154,7 @@ describe('FileActions', () => {
         <FileActions
           handlePullChanges={mockHandlePullChanges}
           selectedFile={null}
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );
@@ -129,6 +171,7 @@ describe('FileActions', () => {
         <FileActions
           handlePullChanges={mockHandlePullChanges}
           selectedFile="test.md"
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );
@@ -157,6 +200,7 @@ describe('FileActions', () => {
         <FileActions
           handlePullChanges={mockHandlePullChanges}
           selectedFile="test.md"
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );
@@ -174,6 +218,7 @@ describe('FileActions', () => {
         <FileActions
           handlePullChanges={mockHandlePullChanges}
           selectedFile="test.md"
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );
@@ -202,6 +247,7 @@ describe('FileActions', () => {
         <FileActions
           handlePullChanges={mockHandlePullChanges}
           selectedFile="test.md"
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );

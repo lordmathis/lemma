@@ -3,6 +3,9 @@ import { fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../../test/utils';
 import FileTree from './FileTree';
 import type { FileNode } from '../../types/models';
+import { ModalProvider } from '../../contexts/ModalContext';
+import { ThemeProvider } from '../../contexts/ThemeContext';
+import { WorkspaceDataProvider } from '../../contexts/WorkspaceDataContext';
 
 // Mock react-arborist
 vi.mock('react-arborist', () => ({
@@ -69,12 +72,76 @@ vi.mock('@react-hook/resize-observer', () => ({
   default: vi.fn(),
 }));
 
+// Mock contexts
+vi.mock('../../contexts/ThemeContext', () => ({
+  useTheme: () => ({
+    colorScheme: 'light',
+    updateColorScheme: vi.fn(),
+  }),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
+vi.mock('../../contexts/WorkspaceDataContext', () => ({
+  useWorkspaceData: () => ({
+    currentWorkspace: { name: 'test-workspace', path: '/test' },
+    workspaces: [],
+    settings: {},
+    loading: false,
+    loadWorkspaces: vi.fn(),
+    loadWorkspaceData: vi.fn(),
+    setCurrentWorkspace: vi.fn(),
+  }),
+  WorkspaceDataProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
+vi.mock('../../contexts/ModalContext', () => ({
+  useModalContext: () => ({
+    newFileModalVisible: false,
+    setNewFileModalVisible: vi.fn(),
+    deleteFileModalVisible: false,
+    setDeleteFileModalVisible: vi.fn(),
+    renameFileModalVisible: false,
+    setRenameFileModalVisible: vi.fn(),
+    commitMessageModalVisible: false,
+    setCommitMessageModalVisible: vi.fn(),
+    settingsModalVisible: false,
+    setSettingsModalVisible: vi.fn(),
+    switchWorkspaceModalVisible: false,
+    setSwitchWorkspaceModalVisible: vi.fn(),
+    createWorkspaceModalVisible: false,
+    setCreateWorkspaceModalVisible: vi.fn(),
+  }),
+  ModalProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
+vi.mock('../../hooks/useFileOperations', () => ({
+  useFileOperations: () => ({
+    handleSave: vi.fn(),
+    handleCreate: vi.fn(),
+    handleDelete: vi.fn(),
+    handleUpload: vi.fn(),
+    handleMove: vi.fn(),
+    handleRename: vi.fn(),
+  }),
+}));
+
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div>{children}</div>
+  <ThemeProvider>
+    <WorkspaceDataProvider>
+      <ModalProvider>{children}</ModalProvider>
+    </WorkspaceDataProvider>
+  </ThemeProvider>
 );
 
 describe('FileTree', () => {
   const mockHandleFileSelect = vi.fn();
+  const mockLoadFileList = vi.fn();
 
   const mockFiles: FileNode[] = [
     {
@@ -112,6 +179,7 @@ describe('FileTree', () => {
           files={mockFiles}
           handleFileSelect={mockHandleFileSelect}
           showHiddenFiles={true}
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );
@@ -128,6 +196,7 @@ describe('FileTree', () => {
           files={mockFiles}
           handleFileSelect={mockHandleFileSelect}
           showHiddenFiles={true}
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );
@@ -147,6 +216,7 @@ describe('FileTree', () => {
           files={mockFiles}
           handleFileSelect={mockHandleFileSelect}
           showHiddenFiles={false}
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );
@@ -166,6 +236,7 @@ describe('FileTree', () => {
           files={mockFiles}
           handleFileSelect={mockHandleFileSelect}
           showHiddenFiles={true}
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );
@@ -183,6 +254,7 @@ describe('FileTree', () => {
           files={[]}
           handleFileSelect={mockHandleFileSelect}
           showHiddenFiles={true}
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );
@@ -199,6 +271,7 @@ describe('FileTree', () => {
           files={mockFiles}
           handleFileSelect={mockHandleFileSelect}
           showHiddenFiles={true}
+          loadFileList={mockLoadFileList}
         />
       </TestWrapper>
     );

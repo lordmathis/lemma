@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '../../test/utils';
 import MainContent from './MainContent';
+import { ModalProvider } from '../../contexts/ModalContext';
+import { ThemeProvider } from '../../contexts/ThemeContext';
+import { WorkspaceDataProvider } from '../../contexts/WorkspaceDataContext';
 
 // Mock child components
 vi.mock('../editor/ContentView', () => ({
@@ -31,6 +34,32 @@ vi.mock('../modals/git/CommitMessageModal', () => ({
   ),
 }));
 
+// Mock contexts
+vi.mock('../../contexts/ThemeContext', () => ({
+  useTheme: () => ({
+    colorScheme: 'light',
+    updateColorScheme: vi.fn(),
+  }),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
+vi.mock('../../contexts/WorkspaceDataContext', () => ({
+  useWorkspaceData: () => ({
+    currentWorkspace: { name: 'test-workspace', path: '/test' },
+    workspaces: [],
+    settings: {},
+    loading: false,
+    loadWorkspaces: vi.fn(),
+    loadWorkspaceData: vi.fn(),
+    setCurrentWorkspace: vi.fn(),
+  }),
+  WorkspaceDataProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
 // Mock hooks
 vi.mock('../../hooks/useFileContent', () => ({
   useFileContent: vi.fn(),
@@ -45,7 +74,11 @@ vi.mock('../../hooks/useGitOperations', () => ({
 }));
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div>{children}</div>
+  <ThemeProvider>
+    <WorkspaceDataProvider>
+      <ModalProvider>{children}</ModalProvider>
+    </WorkspaceDataProvider>
+  </ThemeProvider>
 );
 
 describe('MainContent', () => {
@@ -56,6 +89,9 @@ describe('MainContent', () => {
   const mockHandleSave = vi.fn();
   const mockHandleCreate = vi.fn();
   const mockHandleDelete = vi.fn();
+  const mockHandleUpload = vi.fn();
+  const mockHandleMove = vi.fn();
+  const mockHandleRename = vi.fn();
   const mockHandleCommitAndPush = vi.fn();
 
   beforeEach(async () => {
@@ -76,6 +112,9 @@ describe('MainContent', () => {
       handleSave: mockHandleSave,
       handleCreate: mockHandleCreate,
       handleDelete: mockHandleDelete,
+      handleUpload: mockHandleUpload,
+      handleMove: mockHandleMove,
+      handleRename: mockHandleRename,
     });
 
     const { useGitOperations } = await import('../../hooks/useGitOperations');
