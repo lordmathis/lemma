@@ -5,11 +5,7 @@ import {
   WorkspaceDataProvider,
   useWorkspaceData,
 } from './WorkspaceDataContext';
-import {
-  DEFAULT_WORKSPACE_SETTINGS,
-  type Workspace,
-  Theme,
-} from '@/types/models';
+import { type Workspace, Theme } from '@/types/models';
 
 // Set up mocks before imports are used
 vi.mock('@/api/workspace', () => {

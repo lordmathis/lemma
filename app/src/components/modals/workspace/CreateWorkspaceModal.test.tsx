@@ -52,6 +52,8 @@ describe('CreateWorkspaceModal', () => {
     setNewFileModalVisible: vi.fn(),
     deleteFileModalVisible: false,
     setDeleteFileModalVisible: vi.fn(),
+    renameFileModalVisible: false,
+    setRenameFileModalVisible: vi.fn(),
     commitMessageModalVisible: false,
     setCommitMessageModalVisible: vi.fn(),
     settingsModalVisible: false,
