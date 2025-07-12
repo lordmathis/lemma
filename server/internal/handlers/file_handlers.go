@@ -372,6 +372,19 @@ func (h *Handler) UploadFile() http.HandlerFunc {
 				return
 			}
 
+			// Validate file size to prevent excessive memory allocation
+			// TODO: Make this configurable
+			const maxFileSize = 100 * 1024 * 1024 // 100MB
+			if formFile.Size > maxFileSize {
+				log.Debug("file too large",
+					"fileName", formFile.Filename,
+					"fileSize", formFile.Size,
+					"maxSize", maxFileSize,
+				)
+				respondError(w, "File too large", http.StatusBadRequest)
+				return
+			}
+
 			// Open the uploaded file
 			file, err := formFile.Open()
 			if err != nil {
@@ -391,9 +404,8 @@ func (h *Handler) UploadFile() http.HandlerFunc {
 
 			filePath := decodedPath + "/" + formFile.Filename
 
-			content := make([]byte, formFile.Size)
-			_, err = file.Read(content)
-			if err != nil && err != io.EOF {
+			content, err := io.ReadAll(file)
+			if err != nil {
 				log.Error("failed to read uploaded file",
 					"filePath", filePath,
 					"error", err.Error(),
