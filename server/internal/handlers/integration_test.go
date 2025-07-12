@@ -328,18 +328,20 @@ func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.
 	return h.executeRequest(req)
 }
 
-// makeUploadRequest creates a multipart form request for file uploads
-// If fileName is empty, creates an empty multipart form without a file
-func (h *testHarness) makeUploadRequest(t *testing.T, path, fileName, fileContent string, testUser *testUser) *httptest.ResponseRecorder {
+// makeUploadRequest creates a multipart form request for file uploads (single or multiple)
+// For single file: use map with one entry, e.g., map[string]string{"file.txt": "content"}
+// For multiple files: use map with multiple entries
+// For empty form (no files): pass empty map
+func (h *testHarness) makeUploadRequest(t *testing.T, path string, files map[string]string, testUser *testUser) *httptest.ResponseRecorder {
 	t.Helper()
 
 	// Create multipart form
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
 
-	// Only add file part if fileName is not empty
-	if fileName != "" {
-		part, err := writer.CreateFormFile("file", fileName)
+	// Add all files
+	for fileName, fileContent := range files {
+		part, err := writer.CreateFormFile("files", fileName)
 		if err != nil {
 			t.Fatalf("Failed to create form file: %v", err)
 		}

@@ -24,6 +24,7 @@ type SaveFileResponse struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+// UploadFilesResponse represents a response to an upload files request
 type UploadFilesResponse struct {
 	FilePaths []string `json:"filePaths"`
 }
@@ -330,6 +331,16 @@ func (h *Handler) UploadFile() http.HandlerFunc {
 			"clientIP", r.RemoteAddr,
 		)
 
+		// Parse multipart form (max 32MB in memory)
+		err := r.ParseMultipartForm(32 << 20)
+		if err != nil {
+			log.Error("failed to parse multipart form",
+				"error", err.Error(),
+			)
+			respondError(w, "Failed to parse form", http.StatusBadRequest)
+			return
+		}
+
 		form := r.MultipartForm
 		if form == nil || len(form.File) == 0 {
 			log.Debug("no files found in form")
@@ -338,12 +349,6 @@ func (h *Handler) UploadFile() http.HandlerFunc {
 		}
 
 		uploadPath := r.URL.Query().Get("file_path")
-		if uploadPath == "" {
-			log.Debug("missing file_path parameter")
-			respondError(w, "file_path is required", http.StatusBadRequest)
-			return
-		}
-
 		decodedPath, err := url.PathUnescape(uploadPath)
 		if err != nil {
 			log.Error("failed to decode file path",

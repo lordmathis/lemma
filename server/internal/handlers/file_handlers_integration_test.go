@@ -241,23 +241,22 @@ func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
 		})
 
 		t.Run("upload file", func(t *testing.T) {
-			t.Run("successful upload", func(t *testing.T) {
+			t.Run("successful single file upload", func(t *testing.T) {
 				fileName := "uploaded-test.txt"
 				fileContent := "This is an uploaded file"
 
-				rr := h.makeUploadRequest(t, baseURL+"/upload?file_path="+url.QueryEscape("uploads"), fileName, fileContent, h.RegularTestUser)
+				files := map[string]string{fileName: fileContent}
+				rr := h.makeUploadRequest(t, baseURL+"/upload?file_path="+url.QueryEscape("uploads"), files, h.RegularTestUser)
 				require.Equal(t, http.StatusOK, rr.Code)
 
-				// Verify response structure
+				// Verify response structure for multiple files API
 				var response struct {
-					FilePath  string `json:"filePath"`
-					Size      int64  `json:"size"`
-					UpdatedAt string `json:"updatedAt"`
+					FilePaths []string `json:"filePaths"`
 				}
 				err := json.NewDecoder(rr.Body).Decode(&response)
 				require.NoError(t, err)
-				assert.Equal(t, "uploads/"+fileName, response.FilePath)
-				assert.Equal(t, int64(len(fileContent)), response.Size)
+				require.Len(t, response.FilePaths, 1)
+				assert.Equal(t, "uploads/"+fileName, response.FilePaths[0])
 
 				// Verify file was saved
 				rr = h.makeRequest(t, http.MethodGet, baseURL+"/content?file_path="+url.QueryEscape("uploads/"+fileName), nil, h.RegularTestUser)
@@ -265,8 +264,62 @@ func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
 				assert.Equal(t, fileContent, rr.Body.String())
 			})
 
+			t.Run("successful multiple files upload", func(t *testing.T) {
+				files := map[string]string{
+					"file1.txt": "Content of first file",
+					"file2.md":  "# Content of second file",
+					"file3.py":  "print('Content of third file')",
+				}
+
+				rr := h.makeUploadRequest(t, baseURL+"/upload?file_path="+url.QueryEscape("batch"), files, h.RegularTestUser)
+				require.Equal(t, http.StatusOK, rr.Code)
+
+				// Verify response structure
+				var response struct {
+					FilePaths []string `json:"filePaths"`
+				}
+				err := json.NewDecoder(rr.Body).Decode(&response)
+				require.NoError(t, err)
+				require.Len(t, response.FilePaths, 3)
+
+				// Verify all files were saved with correct paths
+				expectedPaths := []string{"batch/file1.txt", "batch/file2.md", "batch/file3.py"}
+				for _, expectedPath := range expectedPaths {
+					assert.Contains(t, response.FilePaths, expectedPath)
+				}
+
+				// Verify file contents
+				for fileName, expectedContent := range files {
+					filePath := "batch/" + fileName
+					rr = h.makeRequest(t, http.MethodGet, baseURL+"/content?file_path="+url.QueryEscape(filePath), nil, h.RegularTestUser)
+					require.Equal(t, http.StatusOK, rr.Code)
+					assert.Equal(t, expectedContent, rr.Body.String())
+				}
+			})
+
 			t.Run("upload without file", func(t *testing.T) {
-				rr := h.makeUploadRequest(t, baseURL+"/upload?file_path="+url.QueryEscape("test"), "", "", h.RegularTestUser)
+				// Empty map means no files
+				files := map[string]string{}
+				rr := h.makeUploadRequest(t, baseURL+"/upload?file_path="+url.QueryEscape("test"), files, h.RegularTestUser)
+				assert.Equal(t, http.StatusBadRequest, rr.Code)
+			})
+
+			t.Run("upload with missing file_path parameter", func(t *testing.T) {
+				fileName := "test.txt"
+				fileContent := "test content"
+				files := map[string]string{fileName: fileContent}
+
+				rr := h.makeUploadRequest(t, baseURL+"/upload", files, h.RegularTestUser)
+				assert.Equal(t, http.StatusBadRequest, rr.Code)
+			})
+
+			t.Run("upload with invalid file_path", func(t *testing.T) {
+				fileName := "test.txt"
+				fileContent := "test content"
+				invalidPath := "../../../etc/passwd"
+				files := map[string]string{fileName: fileContent}
+
+				rr := h.makeUploadRequest(t, baseURL+"/upload?file_path="+url.QueryEscape(invalidPath), files, h.RegularTestUser)
 				assert.Equal(t, http.StatusBadRequest, rr.Code)
 			})
 		})
