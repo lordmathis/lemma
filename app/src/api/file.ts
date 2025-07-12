@@ -47,7 +47,7 @@ export const lookupFileByName = async (
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName
-    )}/files/_op/lookup?filename=${encodeURIComponent(filename)}`
+    )}/files/lookup?filename=${encodeURIComponent(filename)}`
   );
   const data: unknown = await response.json();
   if (!isLookupResponse(data)) {
@@ -71,7 +71,7 @@ export const getFileContent = async (
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName
-    )}/files/${encodeURIComponent(filePath)}`
+    )}/files/content?file_path=${encodeURIComponent(filePath)}`
   );
   return response.text();
 };
@@ -92,7 +92,7 @@ export const saveFile = async (
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName
-    )}/files/${encodeURIComponent(filePath)}`,
+    )}/files?file_path=${encodeURIComponent(filePath)}`,
     {
       method: 'POST',
       headers: {
@@ -118,7 +118,7 @@ export const deleteFile = async (workspaceName: string, filePath: string) => {
   await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName
-    )}/files/${encodeURIComponent(filePath)}`,
+    )}/files?file_path=${encodeURIComponent(filePath)}`,
     {
       method: 'DELETE',
     }
@@ -135,9 +135,7 @@ export const getLastOpenedFile = async (
   workspaceName: string
 ): Promise<string> => {
   const response = await apiCall(
-    `${API_BASE_URL}/workspaces/${encodeURIComponent(
-      workspaceName
-    )}/files/_op/last`
+    `${API_BASE_URL}/workspaces/${encodeURIComponent(workspaceName)}/files/last`
   );
   const data: unknown = await response.json();
   if (
@@ -163,13 +161,71 @@ export const updateLastOpenedFile = async (
   await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName
-    )}/files/_op/last`,
+    )}/files/last?file_path=${encodeURIComponent(filePath)}`,
     {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ filePath }),
     }
   );
+};
+
+/**
+ * moveFile moves a file to a new location in a workspace
+ * @param workspaceName - The name of the workspace
+ * @param srcPath - The source path of the file to move
+ * @param destPath - The destination path for the file
+ * @returns {Promise<SaveFileResponse>} A promise that resolves to the move file response
+ * @throws {Error} If the API call fails or returns an invalid response
+ */
+export const moveFile = async (
+  workspaceName: string,
+  srcPath: string,
+  destPath: string
+): Promise<SaveFileResponse> => {
+  const response = await apiCall(
+    `${API_BASE_URL}/workspaces/${encodeURIComponent(
+      workspaceName
+    )}/files/move?src_path=${encodeURIComponent(
+      srcPath
+    )}&dest_path=${encodeURIComponent(destPath)}`,
+    {
+      method: 'POST',
+    }
+  );
+  const data: unknown = await response.json();
+  if (!isSaveFileResponse(data)) {
+    throw new Error('Invalid move file response received from API');
+  }
+  return data;
+};
+
+/**
+ * uploadFile uploads a file to a workspace
+ * @param workspaceName - The name of the workspace
+ * @param directoryPath - The directory path where the file should be uploaded
+ * @param file - The file to upload
+ * @returns {Promise<SaveFileResponse>} A promise that resolves to the upload file response
+ * @throws {Error} If the API call fails or returns an invalid response
+ */
+export const uploadFile = async (
+  workspaceName: string,
+  directoryPath: string,
+  file: File
+): Promise<SaveFileResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await apiCall(
+    `${API_BASE_URL}/workspaces/${encodeURIComponent(
+      workspaceName
+    )}/files/upload?file_path=${encodeURIComponent(directoryPath)}`,
+    {
+      method: 'POST',
+      body: formData,
+    }
+  );
+  const data: unknown = await response.json();
+  if (!isSaveFileResponse(data)) {
+    throw new Error('Invalid upload file response received from API');
+  }
+  return data;
 };
