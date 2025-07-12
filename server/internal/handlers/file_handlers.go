@@ -406,6 +406,8 @@ func (h *Handler) UploadFile() http.HandlerFunc {
 // @ID moveFile
 // @Security CookieAuth
 // @Param workspace_name path string true "Workspace name"
+// @Param src_path query string true "Source file path"
+// @Param dest_path query string true "Destination file path"
 // @Success 204 "No Content - File moved successfully"
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 404 {object} ErrorResponse "File not found"
