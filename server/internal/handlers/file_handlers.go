@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -11,8 +10,6 @@ import (
 	"lemma/internal/context"
 	"lemma/internal/logging"
 	"lemma/internal/storage"
-
-	"github.com/go-chi/chi/v5"
 )
 
 // LookupResponse represents a response to a file lookup request
@@ -30,11 +27,6 @@ type SaveFileResponse struct {
 // LastOpenedFileResponse represents a response to a last opened file request
 type LastOpenedFileResponse struct {
 	LastOpenedFilePath string `json:"lastOpenedFilePath"`
-}
-
-// UpdateLastOpenedFileRequest represents a request to update the last opened file
-type UpdateLastOpenedFileRequest struct {
-	FilePath string `json:"filePath"`
 }
 
 func getFilesLogger() logging.Logger {
@@ -90,7 +82,7 @@ func (h *Handler) ListFiles() http.HandlerFunc {
 // @Success 200 {object} LookupResponse
 // @Failure 400 {object} ErrorResponse "Filename is required"
 // @Failure 404 {object} ErrorResponse "File not found"
-// @Router /workspaces/{workspace_name}/files/_op/lookup [get]
+// @Router /workspaces/{workspace_name}/files/lookup [get]
 func (h *Handler) LookupFileByName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -150,13 +142,13 @@ func (h *Handler) LookupFileByName() http.HandlerFunc {
 // @Security CookieAuth
 // @Produce plain
 // @Param workspace_name path string true "Workspace name"
-// @Param file_path path string true "File path"
+// @Param file_path query string true "File path"
 // @Success 200 {string} string "Raw file content"
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 404 {object} ErrorResponse "File not found"
 // @Failure 500 {object} ErrorResponse "Failed to read file"
 // @Failure 500 {object} ErrorResponse "Failed to write response"
-// @Router /workspaces/{workspace_name}/files/{file_path} [get]
+// @Router /workspaces/{workspace_name}/files/content [get]
 func (h *Handler) GetFileContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -170,8 +162,7 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 			"clientIP", r.RemoteAddr,
 		)
 
-		filePath := chi.URLParam(r, "*")
-		// URL-decode the file path
+		filePath := r.URL.Query().Get("file_path")
 		decodedPath, err := url.PathUnescape(filePath)
 		if err != nil {
 			log.Error("failed to decode file path",
@@ -231,12 +222,12 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 // @Accept plain
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
-// @Param file_path path string true "File path"
+// @Param file_path query string true "File path"
 // @Success 200 {object} SaveFileResponse
 // @Failure 400 {object} ErrorResponse "Failed to read request body"
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 500 {object} ErrorResponse "Failed to save file"
-// @Router /workspaces/{workspace_name}/files/{file_path} [post]
+// @Router /workspaces/{workspace_name}/files/ [post]
 func (h *Handler) SaveFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -250,7 +241,7 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 			"clientIP", r.RemoteAddr,
 		)
 
-		filePath := chi.URLParam(r, "*")
+		filePath := r.URL.Query().Get("file_path")
 		// URL-decode the file path
 		decodedPath, err := url.PathUnescape(filePath)
 		if err != nil {
@@ -311,14 +302,14 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 // @Accept multipart/form-data
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
-// @Param path path string true "Directory path"
+// @Param file_path query string true "Directory path"
 // @Param file formData file true "File to upload"
 // @Success 200 {object} SaveFileResponse
 // @Failure 400 {object} ErrorResponse "Failed to get file from form"
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 500 {object} ErrorResponse "Failed to read uploaded file"
 // @Failure 500 {object} ErrorResponse "Failed to save file"
-// @Router /workspaces/{workspace_name}/files/_op/upload/{path} [post]
+// @Router /workspaces/{workspace_name}/files/upload/ [post]
 func (h *Handler) UploadFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -348,33 +339,40 @@ func (h *Handler) UploadFile() http.HandlerFunc {
 			}
 		}()
 
-		decodedPath, err := url.PathUnescape(chi.URLParam(r, "*"))
+		filePath := r.URL.Query().Get("file_path")
+		if filePath == "" {
+			log.Debug("missing file_path parameter")
+			respondError(w, "file_path is required", http.StatusBadRequest)
+			return
+		}
+
+		decodedPath, err := url.PathUnescape(filePath)
 		if err != nil {
 			log.Error("failed to decode file path",
-				"filePath", decodedPath,
+				"filePath", filePath,
 				"error", err.Error(),
 			)
 			respondError(w, "Invalid file path", http.StatusBadRequest)
 			return
 		}
-		filePath := decodedPath + "/" + header.Filename
+		decodedPath = decodedPath + "/" + header.Filename
 
 		content := make([]byte, header.Size)
 		_, err = file.Read(content)
 		if err != nil && err != io.EOF {
 			log.Error("failed to read uploaded file",
-				"filePath", filePath,
+				"filePath", decodedPath,
 				"error", err.Error(),
 			)
 			respondError(w, "Failed to read uploaded file", http.StatusInternalServerError)
 			return
 		}
 
-		err = h.Storage.SaveFile(ctx.UserID, ctx.Workspace.ID, filePath, content)
+		err = h.Storage.SaveFile(ctx.UserID, ctx.Workspace.ID, decodedPath, content)
 		if err != nil {
 			if storage.IsPathValidationError(err) {
 				log.Error("invalid file path attempted",
-					"filePath", filePath,
+					"filePath", decodedPath,
 					"error", err.Error(),
 				)
 				respondError(w, "Invalid file path", http.StatusBadRequest)
@@ -382,7 +380,7 @@ func (h *Handler) UploadFile() http.HandlerFunc {
 			}
 
 			log.Error("failed to save file",
-				"filePath", filePath,
+				"filePath", decodedPath,
 				"contentSize", len(content),
 				"error", err.Error(),
 			)
@@ -391,7 +389,7 @@ func (h *Handler) UploadFile() http.HandlerFunc {
 		}
 
 		response := SaveFileResponse{
-			FilePath:  filePath,
+			FilePath:  decodedPath,
 			Size:      int64(len(content)),
 			UpdatedAt: time.Now().UTC(),
 		}
@@ -412,7 +410,7 @@ func (h *Handler) UploadFile() http.HandlerFunc {
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 404 {object} ErrorResponse "File not found"
 // @Failure 500 {object} ErrorResponse "Failed to move file"
-// @Router /workspaces/{workspace_name}/files/_op/move [post]
+// @Router /workspaces/{workspace_name}/files/move [post]
 func (h *Handler) MoveFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -498,12 +496,12 @@ func (h *Handler) MoveFile() http.HandlerFunc {
 // @ID deleteFile
 // @Security CookieAuth
 // @Param workspace_name path string true "Workspace name"
-// @Param file_path path string true "File path"
+// @Param file_path query string true "File path"
 // @Success 204 "No Content - File deleted successfully"
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 404 {object} ErrorResponse "File not found"
 // @Failure 500 {object} ErrorResponse "Failed to delete file"
-// @Router /workspaces/{workspace_name}/files/{file_path} [delete]
+// @Router /workspaces/{workspace_name}/files/ [delete]
 func (h *Handler) DeleteFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -517,7 +515,13 @@ func (h *Handler) DeleteFile() http.HandlerFunc {
 			"clientIP", r.RemoteAddr,
 		)
 
-		filePath := chi.URLParam(r, "*")
+		filePath := r.URL.Query().Get("file_path")
+		if filePath == "" {
+			log.Debug("missing file_path parameter")
+			respondError(w, "file_path is required", http.StatusBadRequest)
+			return
+		}
+
 		// URL-decode the file path
 		decodedPath, err := url.PathUnescape(filePath)
 		if err != nil {
@@ -571,7 +575,7 @@ func (h *Handler) DeleteFile() http.HandlerFunc {
 // @Success 200 {object} LastOpenedFileResponse
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 500 {object} ErrorResponse "Failed to get last opened file"
-// @Router /workspaces/{workspace_name}/files/_op/last [get]
+// @Router /workspaces/{workspace_name}/files/last [get]
 func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -616,13 +620,13 @@ func (h *Handler) GetLastOpenedFile() http.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
-// @Param body body UpdateLastOpenedFileRequest true "Update last opened file request"
+// @Param file_path query string true "File path"
 // @Success 204 "No Content - Last opened file updated successfully"
 // @Failure 400 {object} ErrorResponse "Invalid request body"
 // @Failure 400 {object} ErrorResponse "Invalid file path"
 // @Failure 404 {object} ErrorResponse "File not found"
 // @Failure 500 {object} ErrorResponse "Failed to update file"
-// @Router /workspaces/{workspace_name}/files/_op/last [put]
+// @Router /workspaces/{workspace_name}/files/last [put]
 func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := context.GetRequestContext(w, r)
@@ -636,60 +640,53 @@ func (h *Handler) UpdateLastOpenedFile() http.HandlerFunc {
 			"clientIP", r.RemoteAddr,
 		)
 
-		var requestBody UpdateLastOpenedFileRequest
-		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-			log.Error("failed to decode request body",
-				"error", err.Error(),
-			)
-			respondError(w, "Invalid request body", http.StatusBadRequest)
+		filePath := r.URL.Query().Get("file_path")
+		if filePath == "" {
+			log.Debug("missing file_path parameter")
+			respondError(w, "file_path is required", http.StatusBadRequest)
 			return
 		}
 
-		// Validate the file path in the workspace
-		if requestBody.FilePath != "" {
-			// URL-decode the file path
-			decodedPath, err := url.PathUnescape(requestBody.FilePath)
-			if err != nil {
-				log.Error("failed to decode file path",
-					"filePath", requestBody.FilePath,
+		decodedPath, err := url.PathUnescape(filePath)
+		if err != nil {
+			log.Error("failed to decode file path",
+				"filePath", filePath,
+				"error", err.Error(),
+			)
+			respondError(w, "Invalid file path", http.StatusBadRequest)
+			return
+		}
+
+		_, err = h.Storage.GetFileContent(ctx.UserID, ctx.Workspace.ID, decodedPath)
+		if err != nil {
+			if storage.IsPathValidationError(err) {
+				log.Error("invalid file path attempted",
+					"filePath", decodedPath,
 					"error", err.Error(),
 				)
 				respondError(w, "Invalid file path", http.StatusBadRequest)
 				return
 			}
-			requestBody.FilePath = decodedPath
 
-			_, err = h.Storage.GetFileContent(ctx.UserID, ctx.Workspace.ID, requestBody.FilePath)
-			if err != nil {
-				if storage.IsPathValidationError(err) {
-					log.Error("invalid file path attempted",
-						"filePath", requestBody.FilePath,
-						"error", err.Error(),
-					)
-					respondError(w, "Invalid file path", http.StatusBadRequest)
-					return
-				}
-
-				if os.IsNotExist(err) {
-					log.Debug("file not found",
-						"filePath", requestBody.FilePath,
-					)
-					respondError(w, "File not found", http.StatusNotFound)
-					return
-				}
-
-				log.Error("failed to validate file path",
-					"filePath", requestBody.FilePath,
-					"error", err.Error(),
+			if os.IsNotExist(err) {
+				log.Debug("file not found",
+					"filePath", decodedPath,
 				)
-				respondError(w, "Failed to update last opened file", http.StatusInternalServerError)
+				respondError(w, "File not found", http.StatusNotFound)
 				return
 			}
+
+			log.Error("failed to validate file path",
+				"filePath", decodedPath,
+				"error", err.Error(),
+			)
+			respondError(w, "Failed to update last opened file", http.StatusInternalServerError)
+			return
 		}
 
-		if err := h.DB.UpdateLastOpenedFile(ctx.Workspace.ID, requestBody.FilePath); err != nil {
+		if err := h.DB.UpdateLastOpenedFile(ctx.Workspace.ID, decodedPath); err != nil {
 			log.Error("failed to update last opened file in database",
-				"filePath", requestBody.FilePath,
+				"filePath", decodedPath,
 				"error", err.Error(),
 			)
 			respondError(w, "Failed to update last opened file", http.StatusInternalServerError)

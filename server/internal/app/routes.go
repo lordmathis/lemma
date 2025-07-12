@@ -129,16 +129,16 @@ func setupRouter(o Options) *chi.Mux {
 					// File routes
 					r.Route("/files", func(r chi.Router) {
 						r.Get("/", handler.ListFiles())
-						r.Get("/_op/last", handler.GetLastOpenedFile())
-						r.Put("/_op/last", handler.UpdateLastOpenedFile())
-						r.Get("/_op/lookup", handler.LookupFileByName())
+						r.Get("/last", handler.GetLastOpenedFile())
+						r.Put("/last", handler.UpdateLastOpenedFile())
+						r.Get("/lookup", handler.LookupFileByName())
 
-						r.Post("/_op/upload/*", handler.UploadFile())
-						r.Put("/_op/move", handler.MoveFile())
+						r.Post("/upload", handler.UploadFile())
+						r.Put("/move", handler.MoveFile())
 
-						r.Post("/*", handler.SaveFile())
-						r.Get("/*", handler.GetFileContent())
-						r.Delete("/*", handler.DeleteFile())
+						r.Post("/", handler.SaveFile())
+						r.Get("/content", handler.GetFileContent())
+						r.Delete("/", handler.DeleteFile())
 					})
 
 					// Git routes
