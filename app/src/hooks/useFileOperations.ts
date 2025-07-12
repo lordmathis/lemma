@@ -122,7 +122,6 @@ export const useFileOperations = (): UseFileOperationsResult => {
       if (!currentWorkspace) return false;
 
       try {
-        // Use unified upload API that handles both single and multiple files
         await uploadFile(currentWorkspace.name, targetPath || '', files);
 
         notifications.show({

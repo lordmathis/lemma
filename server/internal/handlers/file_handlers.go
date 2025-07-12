@@ -24,6 +24,10 @@ type SaveFileResponse struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+type UploadFilesResponse struct {
+	FilePaths []string `json:"filePaths"`
+}
+
 // LastOpenedFileResponse represents a response to a last opened file request
 type LastOpenedFileResponse struct {
 	LastOpenedFilePath string `json:"lastOpenedFilePath"`
@@ -294,8 +298,8 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 }
 
 // UploadFile godoc
-// @Summary Upload file
-// @Description Uploads a file to the user's workspace
+// @Summary Upload files
+// @Description Uploads one or more files to the user's workspace
 // @Tags files
 // @ID uploadFile
 // @Security CookieAuth
@@ -303,10 +307,13 @@ func (h *Handler) SaveFile() http.HandlerFunc {
 // @Produce json
 // @Param workspace_name path string true "Workspace name"
 // @Param file_path query string true "Directory path"
-// @Param file formData file true "File to upload"
-// @Success 200 {object} SaveFileResponse
-// @Failure 400 {object} ErrorResponse "Failed to get file from form"
+// @Param files formData file true "Files to upload"
+// @Success 200 {object} UploadFilesResponse
+// @Failure 400 {object} ErrorResponse "No files found in form"
+// @Failure 400 {object} ErrorResponse "file_path is required"
 // @Failure 400 {object} ErrorResponse "Invalid file path"
+// @Failure 400 {object} ErrorResponse "Empty file uploaded"
+// @Failure 400 {object} ErrorResponse "Failed to get file from form"
 // @Failure 500 {object} ErrorResponse "Failed to read uploaded file"
 // @Failure 500 {object} ErrorResponse "Failed to save file"
 // @Router /workspaces/{workspace_name}/files/upload/ [post]
@@ -323,75 +330,98 @@ func (h *Handler) UploadFile() http.HandlerFunc {
 			"clientIP", r.RemoteAddr,
 		)
 
-		file, header, err := r.FormFile("file")
-		if err != nil {
-			log.Error("failed to get file from form",
-				"error", err.Error(),
-			)
-			respondError(w, "Failed to get file from form", http.StatusBadRequest)
+		form := r.MultipartForm
+		if form == nil || len(form.File) == 0 {
+			log.Debug("no files found in form")
+			respondError(w, "No files found in form", http.StatusBadRequest)
 			return
 		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				log.Error("failed to close uploaded file",
-					"error", err.Error(),
-				)
-			}
-		}()
 
-		filePath := r.URL.Query().Get("file_path")
-		if filePath == "" {
+		uploadPath := r.URL.Query().Get("file_path")
+		if uploadPath == "" {
 			log.Debug("missing file_path parameter")
 			respondError(w, "file_path is required", http.StatusBadRequest)
 			return
 		}
 
-		decodedPath, err := url.PathUnescape(filePath)
+		decodedPath, err := url.PathUnescape(uploadPath)
 		if err != nil {
 			log.Error("failed to decode file path",
-				"filePath", filePath,
+				"filePath", uploadPath,
 				"error", err.Error(),
 			)
 			respondError(w, "Invalid file path", http.StatusBadRequest)
 			return
 		}
-		decodedPath = decodedPath + "/" + header.Filename
 
-		content := make([]byte, header.Size)
-		_, err = file.Read(content)
-		if err != nil && err != io.EOF {
-			log.Error("failed to read uploaded file",
-				"filePath", decodedPath,
-				"error", err.Error(),
-			)
-			respondError(w, "Failed to read uploaded file", http.StatusInternalServerError)
-			return
-		}
+		uploadedPaths := []string{}
 
-		err = h.Storage.SaveFile(ctx.UserID, ctx.Workspace.ID, decodedPath, content)
-		if err != nil {
-			if storage.IsPathValidationError(err) {
-				log.Error("invalid file path attempted",
-					"filePath", decodedPath,
-					"error", err.Error(),
+		for _, formFile := range form.File["files"] {
+
+			if formFile.Filename == "" || formFile.Size == 0 {
+				log.Debug("empty file uploaded",
+					"fileName", formFile.Filename,
+					"fileSize", formFile.Size,
 				)
-				respondError(w, "Invalid file path", http.StatusBadRequest)
+				respondError(w, "Empty file uploaded", http.StatusBadRequest)
 				return
 			}
 
-			log.Error("failed to save file",
-				"filePath", decodedPath,
-				"contentSize", len(content),
-				"error", err.Error(),
-			)
-			respondError(w, "Failed to save file", http.StatusInternalServerError)
-			return
+			// Open the uploaded file
+			file, err := formFile.Open()
+			if err != nil {
+				log.Error("failed to get file from form",
+					"error", err.Error(),
+				)
+				respondError(w, "Failed to get file from form", http.StatusBadRequest)
+				return
+			}
+			defer func() {
+				if err := file.Close(); err != nil {
+					log.Error("failed to close uploaded file",
+						"error", err.Error(),
+					)
+				}
+			}()
+
+			filePath := decodedPath + "/" + formFile.Filename
+
+			content := make([]byte, formFile.Size)
+			_, err = file.Read(content)
+			if err != nil && err != io.EOF {
+				log.Error("failed to read uploaded file",
+					"filePath", filePath,
+					"error", err.Error(),
+				)
+				respondError(w, "Failed to read uploaded file", http.StatusInternalServerError)
+				return
+			}
+
+			err = h.Storage.SaveFile(ctx.UserID, ctx.Workspace.ID, filePath, content)
+			if err != nil {
+				if storage.IsPathValidationError(err) {
+					log.Error("invalid file path attempted",
+						"filePath", filePath,
+						"error", err.Error(),
+					)
+					respondError(w, "Invalid file path", http.StatusBadRequest)
+					return
+				}
+
+				log.Error("failed to save file",
+					"filePath", filePath,
+					"contentSize", len(content),
+					"error", err.Error(),
+				)
+				respondError(w, "Failed to save file", http.StatusInternalServerError)
+				return
+			}
+
+			uploadedPaths = append(uploadedPaths, filePath)
 		}
 
-		response := SaveFileResponse{
-			FilePath:  decodedPath,
-			Size:      int64(len(content)),
-			UpdatedAt: time.Now().UTC(),
+		response := UploadFilesResponse{
+			FilePaths: uploadedPaths,
 		}
 		respondJSON(w, response)
 	}

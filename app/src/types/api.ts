@@ -98,6 +98,24 @@ export function isSaveFileResponse(obj: unknown): obj is SaveFileResponse {
   );
 }
 
+export interface UploadFilesResponse {
+  filePaths: string[];
+}
+
+export function isUploadFilesResponse(
+  obj: unknown
+): obj is UploadFilesResponse {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'filePaths' in obj &&
+    Array.isArray((obj as UploadFilesResponse).filePaths) &&
+    (obj as UploadFilesResponse).filePaths.every(
+      (path) => typeof path === 'string'
+    )
+  );
+}
+
 export interface UpdateLastOpenedFileRequest {
   filePath: string;
 }

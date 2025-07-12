@@ -4,7 +4,9 @@ import {
   API_BASE_URL,
   isLookupResponse,
   isSaveFileResponse,
+  isUploadFilesResponse,
   type SaveFileResponse,
+  type UploadFilesResponse,
 } from '@/types/api';
 
 /**
@@ -203,19 +205,19 @@ export const moveFile = async (
  * @param workspaceName - The name of the workspace
  * @param directoryPath - The directory path where files should be uploaded
  * @param files - Multiple files to upload
- * @returns {Promise<SaveFileResponse>} A promise that resolves to the upload file response
+ * @returns {Promise<UploadFilesResponse>} A promise that resolves to the upload file response
  * @throws {Error} If the API call fails or returns an invalid response
  */
 export const uploadFile = async (
   workspaceName: string,
   directoryPath: string,
   files: FileList
-): Promise<SaveFileResponse> => {
+): Promise<UploadFilesResponse> => {
   const formData = new FormData();
 
   // Add all files to the form data
   Array.from(files).forEach((file) => {
-    formData.append('file', file);
+    formData.append('files', file);
   });
 
   const response = await apiCall(
@@ -228,7 +230,7 @@ export const uploadFile = async (
     }
   );
   const data: unknown = await response.json();
-  if (!isSaveFileResponse(data)) {
+  if (!isUploadFilesResponse(data)) {
     throw new Error('Invalid upload file response received from API');
   }
   return data;
