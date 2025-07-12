@@ -7,7 +7,7 @@ import React, {
   useCallback,
 } from 'react';
 import { notifications } from '@mantine/notifications';
-import { DEFAULT_WORKSPACE_SETTINGS, type Workspace } from '@/types/models';
+import { type Workspace } from '@/types/models';
 import {
   getWorkspace,
   listWorkspaces,
@@ -19,7 +19,6 @@ import { useTheme } from './ThemeContext';
 interface WorkspaceDataContextType {
   currentWorkspace: Workspace | null;
   workspaces: Workspace[];
-  settings: Workspace | typeof DEFAULT_WORKSPACE_SETTINGS;
   loading: boolean;
   loadWorkspaces: () => Promise<Workspace[]>;
   loadWorkspaceData: (workspaceName: string) => Promise<void>;
@@ -121,7 +120,6 @@ export const WorkspaceDataProvider: React.FC<WorkspaceDataProviderProps> = ({
   const value: WorkspaceDataContextType = {
     currentWorkspace,
     workspaces,
-    settings: currentWorkspace || DEFAULT_WORKSPACE_SETTINGS,
     loading,
     loadWorkspaces,
     loadWorkspaceData,

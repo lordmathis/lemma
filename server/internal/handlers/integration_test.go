@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -303,11 +304,19 @@ func (h *testHarness) makeRequest(t *testing.T, method, path string, body any, t
 	return h.executeRequest(req)
 }
 
-// makeRequestRawWithHeaders adds support for custom headers with raw body
-func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.Reader, testUser *testUser) *httptest.ResponseRecorder {
+// makeRequestRaw adds support for raw body requests with optional headers
+func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.Reader, testUser *testUser, headers ...map[string]string) *httptest.ResponseRecorder {
 	t.Helper()
 
 	req := h.newRequestRaw(t, method, path, body)
+
+	// Set custom headers if provided
+	if len(headers) > 0 {
+		for key, value := range headers[0] {
+			req.Header.Set(key, value)
+		}
+	}
+
 	h.addAuthCookies(t, req, testUser)
 
 	needsCSRF := method != http.MethodGet && method != http.MethodHead && method != http.MethodOptions
@@ -317,4 +326,40 @@ func (h *testHarness) makeRequestRaw(t *testing.T, method, path string, body io.
 	}
 
 	return h.executeRequest(req)
+}
+
+// makeUploadRequest creates a multipart form request for file uploads (single or multiple)
+// For single file: use map with one entry, e.g., map[string]string{"file.txt": "content"}
+// For multiple files: use map with multiple entries
+// For empty form (no files): pass empty map
+func (h *testHarness) makeUploadRequest(t *testing.T, path string, files map[string]string, testUser *testUser) *httptest.ResponseRecorder {
+	t.Helper()
+
+	// Create multipart form
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+
+	// Add all files
+	for fileName, fileContent := range files {
+		part, err := writer.CreateFormFile("files", fileName)
+		if err != nil {
+			t.Fatalf("Failed to create form file: %v", err)
+		}
+
+		_, err = part.Write([]byte(fileContent))
+		if err != nil {
+			t.Fatalf("Failed to write file content: %v", err)
+		}
+	}
+
+	err := writer.Close()
+	if err != nil {
+		t.Fatalf("Failed to close multipart writer: %v", err)
+	}
+
+	headers := map[string]string{
+		"Content-Type": writer.FormDataContentType(),
+	}
+
+	return h.makeRequestRaw(t, http.MethodPost, path, &buf, testUser, headers)
 }

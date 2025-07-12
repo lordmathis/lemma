@@ -211,7 +211,7 @@ func testWorkspaceHandlers(t *testing.T, dbConfig DatabaseConfig) {
 
 	t.Run("last workspace", func(t *testing.T) {
 		t.Run("get last workspace", func(t *testing.T) {
-			rr := h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/last", nil, h.RegularTestUser)
+			rr := h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/_op/last", nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var response struct {
@@ -229,11 +229,11 @@ func testWorkspaceHandlers(t *testing.T, dbConfig DatabaseConfig) {
 				WorkspaceName: workspace.Name,
 			}
 
-			rr := h.makeRequest(t, http.MethodPut, "/api/v1/workspaces/last", req, h.RegularTestUser)
+			rr := h.makeRequest(t, http.MethodPut, "/api/v1/workspaces/_op/last", req, h.RegularTestUser)
 			require.Equal(t, http.StatusNoContent, rr.Code)
 
 			// Verify the update
-			rr = h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/last", nil, h.RegularTestUser)
+			rr = h.makeRequest(t, http.MethodGet, "/api/v1/workspaces/_op/last", nil, h.RegularTestUser)
 			require.Equal(t, http.StatusOK, rr.Code)
 
 			var response struct {

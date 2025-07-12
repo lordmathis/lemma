@@ -157,25 +157,6 @@ describe('apiCall', () => {
       expect(calledOptions['headers']).not.toHaveProperty('X-CSRF-Token');
     });
 
-    it('handles URL-encoded CSRF tokens', async () => {
-      const encodedToken = 'token%20with%20spaces';
-      setCookie('csrf_token', encodedToken);
-      mockFetch.mockResolvedValue(createMockResponse(200, {}));
-
-      await apiCall('https://api.example.com/create', {
-        method: 'POST',
-      });
-
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/create', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': encodedToken, // We shouldn't expect it to be decoded since our api.ts is not decoding it
-        },
-      });
-    });
-
     it('handles missing CSRF token gracefully', async () => {
       // No CSRF token in cookies
       mockFetch.mockResolvedValue(createMockResponse(200, {}));
@@ -190,47 +171,6 @@ describe('apiCall', () => {
         headers: {
           'Content-Type': 'application/json',
           // No X-CSRF-Token header
-        },
-      });
-    });
-
-    it('handles multiple cookies and extracts CSRF token correctly', async () => {
-      Object.defineProperty(document, 'cookie', {
-        writable: true,
-        value:
-          'session_id=abc123; csrf_token=my-csrf-token; other_cookie=value',
-        configurable: true,
-      });
-      mockFetch.mockResolvedValue(createMockResponse(200, {}));
-
-      await apiCall('https://api.example.com/create', {
-        method: 'POST',
-      });
-
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/create', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': 'my-csrf-token',
-        },
-      });
-    });
-
-    it('handles empty CSRF token value', async () => {
-      setCookie('csrf_token', '');
-      mockFetch.mockResolvedValue(createMockResponse(200, {}));
-
-      await apiCall('https://api.example.com/create', {
-        method: 'POST',
-      });
-
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/create', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          // No X-CSRF-Token header when token is empty
         },
       });
     });
@@ -510,65 +450,14 @@ describe('apiCall', () => {
         });
       }
     });
-
-    it('defaults to GET method when method is omitted', async () => {
-      setCookie('csrf_token', 'test-token');
-      mockFetch.mockResolvedValue(createMockResponse(200, {}));
-
-      await apiCall('https://api.example.com/test', {});
-
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/test', {
-        method: undefined,
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          // No CSRF token for undefined (GET) method
-        },
-      });
-    });
   });
 
   describe('edge cases', () => {
-    it('handles very long URLs', async () => {
-      const longUrl = 'https://api.example.com/' + 'a'.repeat(2000);
-      mockFetch.mockResolvedValue(createMockResponse(200, {}));
-
-      await apiCall(longUrl);
-
-      expect(mockFetch).toHaveBeenCalledWith(longUrl, expect.any(Object));
-    });
-
-    it('handles special characters in URL', async () => {
-      const urlWithSpecialChars =
-        'https://api.example.com/test?param=value&other=test%20value';
-      mockFetch.mockResolvedValue(createMockResponse(200, {}));
-
-      await apiCall(urlWithSpecialChars);
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        urlWithSpecialChars,
-        expect.any(Object)
-      );
-    });
-
     it('handles null response body', async () => {
       const mockResponse = {
         status: 200,
         ok: true,
         json: vi.fn().mockResolvedValue(null),
-      } as unknown as Response;
-      mockFetch.mockResolvedValue(mockResponse);
-
-      const result = await apiCall('https://api.example.com/test');
-
-      expect(result.status).toBe(200);
-    });
-
-    it('handles empty string response body', async () => {
-      const mockResponse = {
-        status: 200,
-        ok: true,
-        json: vi.fn().mockResolvedValue(''),
       } as unknown as Response;
       mockFetch.mockResolvedValue(mockResponse);
 

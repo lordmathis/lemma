@@ -10,6 +10,7 @@ import (
 type fileSystem interface {
 	ReadFile(path string) ([]byte, error)
 	WriteFile(path string, data []byte, perm fs.FileMode) error
+	MoveFile(src, dst string) error
 	Remove(path string) error
 	MkdirAll(path string, perm fs.FileMode) error
 	RemoveAll(path string) error
@@ -36,6 +37,27 @@ func (f *osFS) ReadFile(path string) ([]byte, error) { return os.ReadFile(path) 
 // WriteFile writes the given data to the file at the given path.
 func (f *osFS) WriteFile(path string, data []byte, perm fs.FileMode) error {
 	return os.WriteFile(path, data, perm)
+}
+
+// MoveFile moves the file from src to dst, overwriting if necessary.
+func (f *osFS) MoveFile(src, dst string) error {
+	_, err := os.Stat(src)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return os.ErrNotExist
+		}
+	}
+	if err := os.Rename(src, dst); err != nil {
+		if os.IsExist(err) {
+			// If the destination exists, remove it and try again
+			if err := os.Remove(dst); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+			return os.Rename(src, dst)
+		}
+		return err
+	}
+	return nil
 }
 
 // Remove deletes the file at the given path.

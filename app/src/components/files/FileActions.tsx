@@ -1,33 +1,72 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ActionIcon, Tooltip, Group } from '@mantine/core';
 import {
   IconPlus,
   IconTrash,
   IconGitPullRequest,
   IconGitCommit,
+  IconUpload,
+  IconEdit,
 } from '@tabler/icons-react';
 import { useModalContext } from '../../contexts/ModalContext';
 import { useWorkspace } from '../../hooks/useWorkspace';
+import { useFileOperations } from '../../hooks/useFileOperations';
 
 interface FileActionsProps {
   handlePullChanges: () => Promise<boolean>;
   selectedFile: string | null;
+  loadFileList: () => Promise<void>;
 }
 
 const FileActions: React.FC<FileActionsProps> = ({
   handlePullChanges,
   selectedFile,
+  loadFileList,
 }) => {
   const { currentWorkspace } = useWorkspace();
   const {
     setNewFileModalVisible,
     setDeleteFileModalVisible,
     setCommitMessageModalVisible,
+    setRenameFileModalVisible,
   } = useModalContext();
+
+  const { handleUpload } = useFileOperations();
+
+  // Hidden file input for upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreateFile = (): void => setNewFileModalVisible(true);
   const handleDeleteFile = (): void => setDeleteFileModalVisible(true);
+  const handleRenameFile = (): void => setRenameFileModalVisible(true);
   const handleCommitAndPush = (): void => setCommitMessageModalVisible(true);
+
+  const handleUploadClick = (): void => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const uploadFiles = async () => {
+        try {
+          const success = await handleUpload(files);
+          if (success) {
+            await loadFileList();
+          }
+        } catch (error) {
+          console.error('Error uploading files:', error);
+        }
+      };
+
+      void uploadFiles();
+
+      // Reset the input so the same file can be selected again
+      event.target.value = '';
+    }
+  };
 
   return (
     <Group gap="xs">
@@ -40,6 +79,33 @@ const FileActions: React.FC<FileActionsProps> = ({
           data-testid="create-file-button"
         >
           <IconPlus size={16} />
+        </ActionIcon>
+      </Tooltip>
+
+      <Tooltip label="Upload files">
+        <ActionIcon
+          variant="default"
+          size="md"
+          onClick={handleUploadClick}
+          aria-label="Upload files"
+          data-testid="upload-files-button"
+        >
+          <IconUpload size={16} />
+        </ActionIcon>
+      </Tooltip>
+
+      <Tooltip
+        label={selectedFile ? 'Rename current file' : 'No file selected'}
+      >
+        <ActionIcon
+          variant="default"
+          size="md"
+          onClick={handleRenameFile}
+          disabled={!selectedFile}
+          aria-label="Rename current file"
+          data-testid="rename-file-button"
+        >
+          <IconEdit size={16} />
         </ActionIcon>
       </Tooltip>
 
@@ -104,6 +170,16 @@ const FileActions: React.FC<FileActionsProps> = ({
           <IconGitCommit size={16} />
         </ActionIcon>
       </Tooltip>
+
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileInputChange}
+        multiple
+        aria-label="File upload input"
+      />
     </Group>
   );
 };

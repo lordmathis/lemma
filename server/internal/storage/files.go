@@ -14,6 +14,7 @@ type FileManager interface {
 	FindFileByName(userID, workspaceID int, filename string) ([]string, error)
 	GetFileContent(userID, workspaceID int, filePath string) ([]byte, error)
 	SaveFile(userID, workspaceID int, filePath string, content []byte) error
+	MoveFile(userID, workspaceID int, srcPath string, dstPath string) error
 	DeleteFile(userID, workspaceID int, filePath string) error
 	GetFileStats(userID, workspaceID int) (*FileCountStats, error)
 	GetTotalFileStats() (*FileCountStats, error)
@@ -171,6 +172,34 @@ func (s *Service) SaveFile(userID, workspaceID int, filePath string, content []b
 		"workspaceID", workspaceID,
 		"path", filePath,
 		"size", len(content))
+	return nil
+}
+
+// MoveFile moves a file from srcPath to dstPath within the workspace directory.
+// Both paths must be relative to the workspace directory given by userID and workspaceID.
+// If the destination file already exists, it will be overwritten.
+func (s *Service) MoveFile(userID, workspaceID int, srcPath string, dstPath string) error {
+	log := getLogger()
+
+	srcFullPath, err := s.ValidatePath(userID, workspaceID, srcPath)
+	if err != nil {
+		return err
+	}
+
+	dstFullPath, err := s.ValidatePath(userID, workspaceID, dstPath)
+	if err != nil {
+		return err
+	}
+
+	if err := s.fs.MoveFile(srcFullPath, dstFullPath); err != nil {
+		return err
+	}
+
+	log.Debug("file moved",
+		"userID", userID,
+		"workspaceID", workspaceID,
+		"src", srcPath,
+		"dst", dstPath)
 	return nil
 }
 

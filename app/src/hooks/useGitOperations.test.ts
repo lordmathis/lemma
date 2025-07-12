@@ -13,14 +13,11 @@ vi.mock('@mantine/notifications', () => ({
 
 // Mock the workspace context
 const mockWorkspaceData: {
-  currentWorkspace: { id: number; name: string } | null;
-  settings: { gitEnabled: boolean };
+  currentWorkspace: { id: number; name: string; gitEnabled: boolean } | null;
 } = {
   currentWorkspace: {
     id: 1,
     name: 'test-workspace',
-  },
-  settings: {
     gitEnabled: true,
   },
 };
@@ -39,8 +36,6 @@ describe('useGitOperations', () => {
     mockWorkspaceData.currentWorkspace = {
       id: 1,
       name: 'test-workspace',
-    };
-    mockWorkspaceData.settings = {
       gitEnabled: true,
     };
   });
@@ -114,7 +109,7 @@ describe('useGitOperations', () => {
     });
 
     it('returns false when git is disabled', async () => {
-      mockWorkspaceData.settings.gitEnabled = false;
+      mockWorkspaceData.currentWorkspace!.gitEnabled = false;
 
       const { result } = renderHook(() => useGitOperations());
 
@@ -208,7 +203,7 @@ describe('useGitOperations', () => {
     });
 
     it('does nothing when git is disabled', async () => {
-      mockWorkspaceData.settings.gitEnabled = false;
+      mockWorkspaceData.currentWorkspace!.gitEnabled = false;
 
       const { result } = renderHook(() => useGitOperations());
 
@@ -306,6 +301,7 @@ describe('useGitOperations', () => {
       mockWorkspaceData.currentWorkspace = {
         id: 2,
         name: 'different-workspace',
+        gitEnabled: true,
       };
 
       rerender();
@@ -321,10 +317,10 @@ describe('useGitOperations', () => {
       const { result, rerender } = renderHook(() => useGitOperations());
 
       // Initially git is enabled
-      expect(mockWorkspaceData.settings.gitEnabled).toBe(true);
+      expect(mockWorkspaceData.currentWorkspace!.gitEnabled).toBe(true);
 
       // Disable git
-      mockWorkspaceData.settings.gitEnabled = false;
+      mockWorkspaceData.currentWorkspace!.gitEnabled = false;
       rerender();
 
       let pullResult: boolean | undefined;
@@ -381,6 +377,7 @@ describe('useGitOperations', () => {
       mockWorkspaceData.currentWorkspace = {
         id: 1,
         name: undefined!,
+        gitEnabled: true,
       };
 
       const { result } = renderHook(() => useGitOperations());
@@ -395,7 +392,9 @@ describe('useGitOperations', () => {
     });
 
     it('handles missing settings gracefully', async () => {
-      mockWorkspaceData.settings = {
+      mockWorkspaceData.currentWorkspace = {
+        id: 1,
+        name: 'test-workspace',
         gitEnabled: undefined!,
       };
 

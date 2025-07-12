@@ -4,7 +4,9 @@ import {
   API_BASE_URL,
   isLookupResponse,
   isSaveFileResponse,
+  isUploadFilesResponse,
   type SaveFileResponse,
+  type UploadFilesResponse,
 } from '@/types/api';
 
 /**
@@ -71,7 +73,7 @@ export const getFileContent = async (
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName
-    )}/files/${encodeURIComponent(filePath)}`
+    )}/files/content?file_path=${encodeURIComponent(filePath)}`
   );
   return response.text();
 };
@@ -92,7 +94,7 @@ export const saveFile = async (
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName
-    )}/files/${encodeURIComponent(filePath)}`,
+    )}/files?file_path=${encodeURIComponent(filePath)}`,
     {
       method: 'POST',
       headers: {
@@ -118,7 +120,7 @@ export const deleteFile = async (workspaceName: string, filePath: string) => {
   await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName
-    )}/files/${encodeURIComponent(filePath)}`,
+    )}/files?file_path=${encodeURIComponent(filePath)}`,
     {
       method: 'DELETE',
     }
@@ -161,13 +163,75 @@ export const updateLastOpenedFile = async (
   await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(
       workspaceName
-    )}/files/last`,
+    )}/files/last?file_path=${encodeURIComponent(filePath)}`,
     {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ filePath }),
     }
   );
+};
+
+/**
+ * moveFile moves a file to a new location in a workspace
+ * @param workspaceName - The name of the workspace
+ * @param srcPath - The source path of the file to move
+ * @param destPath - The destination path for the file
+ * @returns {Promise<SaveFileResponse>} A promise that resolves to the move file response
+ * @throws {Error} If the API call fails or returns an invalid response
+ */
+export const moveFile = async (
+  workspaceName: string,
+  srcPath: string,
+  destPath: string
+): Promise<SaveFileResponse> => {
+  const response = await apiCall(
+    `${API_BASE_URL}/workspaces/${encodeURIComponent(
+      workspaceName
+    )}/files/move?src_path=${encodeURIComponent(
+      srcPath
+    )}&dest_path=${encodeURIComponent(destPath)}`,
+    {
+      method: 'POST',
+    }
+  );
+  const data: unknown = await response.json();
+  if (!isSaveFileResponse(data)) {
+    throw new Error('Invalid move file response received from API');
+  }
+  return data;
+};
+
+/**
+ * uploadFile uploads multiple files to a workspace
+ * @param workspaceName - The name of the workspace
+ * @param directoryPath - The directory path where files should be uploaded
+ * @param files - Multiple files to upload
+ * @returns {Promise<UploadFilesResponse>} A promise that resolves to the upload file response
+ * @throws {Error} If the API call fails or returns an invalid response
+ */
+export const uploadFile = async (
+  workspaceName: string,
+  directoryPath: string,
+  files: FileList
+): Promise<UploadFilesResponse> => {
+  const formData = new FormData();
+
+  // Add all files to the form data
+  Array.from(files).forEach((file) => {
+    formData.append('files', file);
+  });
+
+  const response = await apiCall(
+    `${API_BASE_URL}/workspaces/${encodeURIComponent(
+      workspaceName
+    )}/files/upload?file_path=${encodeURIComponent(directoryPath)}`,
+    {
+      method: 'POST',
+      body: formData,
+    }
+  );
+  const data: unknown = await response.json();
+  if (!isUploadFilesResponse(data)) {
+    throw new Error('Invalid upload file response received from API');
+  }
+  return data;
 };

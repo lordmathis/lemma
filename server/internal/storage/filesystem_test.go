@@ -43,6 +43,7 @@ type mockFS struct {
 	// Record operations for verification
 	ReadCalls   map[string]int
 	WriteCalls  map[string][]byte
+	MoveCalls   map[string]string
 	RemoveCalls []string
 	MkdirCalls  []string
 
@@ -56,6 +57,7 @@ type mockFS struct {
 		err     error
 	}
 	WriteFileError error
+	MoveFileError  error
 	RemoveError    error
 	MkdirError     error
 	StatError      error
@@ -66,6 +68,7 @@ func NewMockFS() *mockFS {
 	return &mockFS{
 		ReadCalls:   make(map[string]int),
 		WriteCalls:  make(map[string][]byte),
+		MoveCalls:   make(map[string]string),
 		RemoveCalls: make([]string, 0),
 		MkdirCalls:  make([]string, 0),
 		ReadFileReturns: make(map[string]struct {
@@ -86,6 +89,14 @@ func (m *mockFS) ReadFile(path string) ([]byte, error) {
 func (m *mockFS) WriteFile(path string, data []byte, _ fs.FileMode) error {
 	m.WriteCalls[path] = data
 	return m.WriteFileError
+}
+
+func (m *mockFS) MoveFile(src, dst string) error {
+	m.MoveCalls[src] = dst
+	if src == dst {
+		return nil // No-op if source and destination are the same
+	}
+	return m.MoveFileError
 }
 
 func (m *mockFS) Remove(path string) error {

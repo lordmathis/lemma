@@ -407,3 +407,105 @@ func TestDeleteFile(t *testing.T) {
 		})
 	}
 }
+
+func TestMoveFile(t *testing.T) {
+	mockFS := NewMockFS()
+	s := storage.NewServiceWithOptions("test-root", storage.Options{
+		Fs:           mockFS,
+		NewGitClient: nil,
+	})
+
+	testCases := []struct {
+		name        string
+		userID      int
+		workspaceID int
+		srcPath     string
+		dstPath     string
+		mockErr     error
+		wantErr     bool
+	}{
+		{
+			name:        "successful move",
+			userID:      1,
+			workspaceID: 1,
+			srcPath:     "test.md",
+			dstPath:     "moved.md",
+			mockErr:     nil,
+			wantErr:     false,
+		},
+		{
+			name:        "move to subdirectory",
+			userID:      1,
+			workspaceID: 1,
+			srcPath:     "test.md",
+			dstPath:     "subdir/test.md",
+			mockErr:     nil,
+			wantErr:     false,
+		},
+		{
+			name:        "invalid source path",
+			userID:      1,
+			workspaceID: 1,
+			srcPath:     "../../../etc/passwd",
+			dstPath:     "test.md",
+			mockErr:     nil,
+			wantErr:     true,
+		},
+		{
+			name:        "invalid destination path",
+			userID:      1,
+			workspaceID: 1,
+			srcPath:     "test.md",
+			dstPath:     "../../../etc/passwd",
+			mockErr:     nil,
+			wantErr:     true,
+		},
+		{
+			name:        "filesystem move error",
+			userID:      1,
+			workspaceID: 1,
+			srcPath:     "test.md",
+			dstPath:     "moved.md",
+			mockErr:     fs.ErrPermission,
+			wantErr:     true,
+		},
+		{
+			name:        "same source and destination",
+			userID:      1,
+			workspaceID: 1,
+			srcPath:     "test.md",
+			dstPath:     "test.md",
+			mockErr:     nil,
+			wantErr:     false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockFS.MoveFileError = tc.mockErr
+			err := s.MoveFile(tc.userID, tc.workspaceID, tc.srcPath, tc.dstPath)
+
+			if tc.wantErr {
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			expectedSrcPath := filepath.Join("test-root", "1", "1", tc.srcPath)
+			expectedDstPath := filepath.Join("test-root", "1", "1", tc.dstPath)
+
+			if dstPath, ok := mockFS.MoveCalls[expectedSrcPath]; ok {
+				if dstPath != expectedDstPath {
+					t.Errorf("move destination = %q, want %q", dstPath, expectedDstPath)
+				}
+			} else {
+				t.Error("expected move call not made")
+			}
+		})
+	}
+}

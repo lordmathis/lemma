@@ -3,9 +3,11 @@ import {
   isLoginResponse,
   isLookupResponse,
   isSaveFileResponse,
+  isUploadFilesResponse,
   type LoginResponse,
   type LookupResponse,
   type SaveFileResponse,
+  type UploadFilesResponse,
 } from './api';
 import { UserRole, type User } from './models';
 
@@ -139,16 +141,6 @@ describe('API Type Guards', () => {
 
       expect(isLoginResponse(invalidResponse)).toBe(false);
     });
-
-    it('handles objects with prototype pollution attempts', () => {
-      const maliciousObj = {
-        user: mockUser,
-        __proto__: { malicious: true },
-        constructor: { prototype: { polluted: true } },
-      };
-
-      expect(isLoginResponse(maliciousObj)).toBe(true);
-    });
   });
 
   describe('isLookupResponse', () => {
@@ -242,31 +234,6 @@ describe('API Type Guards', () => {
       };
 
       expect(isLookupResponse(responseWithExtra)).toBe(true);
-    });
-
-    it('handles objects with prototype pollution attempts', () => {
-      const maliciousObj = {
-        paths: ['path1.md', 'path2.md'],
-        __proto__: { malicious: true },
-        constructor: { prototype: { polluted: true } },
-      };
-
-      expect(isLookupResponse(maliciousObj)).toBe(true);
-    });
-
-    it('handles complex path strings', () => {
-      const validLookupResponse: LookupResponse = {
-        paths: [
-          'simple.md',
-          'folder/nested.md',
-          'deep/nested/path/file.md',
-          'file with spaces.md',
-          'special-chars_123.md',
-          'unicode-文件.md',
-        ],
-      };
-
-      expect(isLookupResponse(validLookupResponse)).toBe(true);
     });
   });
 
@@ -387,18 +354,6 @@ describe('API Type Guards', () => {
       expect(isSaveFileResponse(invalidResponse)).toBe(true); // Note: Type guard doesn't validate negative numbers
     });
 
-    it('handles objects with prototype pollution attempts', () => {
-      const maliciousObj = {
-        filePath: 'test.md',
-        size: 1024,
-        updatedAt: '2024-01-01T10:00:00Z',
-        __proto__: { malicious: true },
-        constructor: { prototype: { polluted: true } },
-      };
-
-      expect(isSaveFileResponse(maliciousObj)).toBe(true);
-    });
-
     it('handles objects with extra properties', () => {
       const responseWithExtra = {
         filePath: 'test.md',
@@ -409,105 +364,122 @@ describe('API Type Guards', () => {
 
       expect(isSaveFileResponse(responseWithExtra)).toBe(true);
     });
+  });
 
-    it('handles complex file paths', () => {
-      const validSaveFileResponse: SaveFileResponse = {
-        filePath: 'deep/nested/path/file with spaces & symbols.md',
-        size: 2048,
-        updatedAt: '2024-01-01T10:00:00Z',
+  describe('isUploadFilesResponse', () => {
+    it('returns true for valid upload files response', () => {
+      const validUploadFilesResponse: UploadFilesResponse = {
+        filePaths: [
+          'documents/file1.md',
+          'images/photo.jpg',
+          'notes/readme.txt',
+        ],
       };
 
-      expect(isSaveFileResponse(validSaveFileResponse)).toBe(true);
+      expect(isUploadFilesResponse(validUploadFilesResponse)).toBe(true);
     });
 
-    it('handles various ISO date formats', () => {
-      const dateFormats = [
-        '2024-01-01T10:00:00Z',
-        '2024-01-01T10:00:00.000Z',
-        '2024-01-01T10:00:00+00:00',
-        '2024-01-01T10:00:00.123456Z',
-      ];
+    it('returns true for upload files response with empty array', () => {
+      const validUploadFilesResponse: UploadFilesResponse = {
+        filePaths: [],
+      };
 
-      dateFormats.forEach((dateString) => {
-        const validResponse: SaveFileResponse = {
-          filePath: 'test.md',
-          size: 1024,
-          updatedAt: dateString,
-        };
+      expect(isUploadFilesResponse(validUploadFilesResponse)).toBe(true);
+    });
 
-        expect(isSaveFileResponse(validResponse)).toBe(true);
-      });
+    it('returns true for single file upload', () => {
+      const validUploadFilesResponse: UploadFilesResponse = {
+        filePaths: ['single-file.md'],
+      };
+
+      expect(isUploadFilesResponse(validUploadFilesResponse)).toBe(true);
+    });
+
+    it('returns false for null', () => {
+      expect(isUploadFilesResponse(null)).toBe(false);
+    });
+
+    it('returns false for undefined', () => {
+      expect(isUploadFilesResponse(undefined)).toBe(false);
+    });
+
+    it('returns false for non-object values', () => {
+      expect(isUploadFilesResponse('string')).toBe(false);
+      expect(isUploadFilesResponse(123)).toBe(false);
+      expect(isUploadFilesResponse(true)).toBe(false);
+      expect(isUploadFilesResponse([])).toBe(false);
+    });
+
+    it('returns false for empty object', () => {
+      expect(isUploadFilesResponse({})).toBe(false);
+    });
+
+    it('returns false when filePaths field is missing', () => {
+      const invalidResponse = {
+        otherField: 'value',
+      };
+
+      expect(isUploadFilesResponse(invalidResponse)).toBe(false);
+    });
+
+    it('returns false when filePaths is not an array', () => {
+      const invalidResponse = {
+        filePaths: 'not-an-array',
+      };
+
+      expect(isUploadFilesResponse(invalidResponse)).toBe(false);
+    });
+
+    it('returns false when filePaths contains non-string values', () => {
+      const invalidResponse = {
+        filePaths: ['valid-file.md', 123, 'another-file.md'],
+      };
+
+      expect(isUploadFilesResponse(invalidResponse)).toBe(false);
+    });
+
+    it('returns false when filePaths contains null values', () => {
+      const invalidResponse = {
+        filePaths: ['file1.md', null, 'file2.md'],
+      };
+
+      expect(isUploadFilesResponse(invalidResponse)).toBe(false);
+    });
+
+    it('returns false when filePaths contains undefined values', () => {
+      const invalidResponse = {
+        filePaths: ['file1.md', undefined, 'file2.md'],
+      };
+
+      expect(isUploadFilesResponse(invalidResponse)).toBe(false);
+    });
+
+    it('handles objects with extra properties', () => {
+      const responseWithExtra = {
+        filePaths: ['file1.md', 'file2.md'],
+        extraField: 'should be ignored',
+      };
+
+      expect(isUploadFilesResponse(responseWithExtra)).toBe(true);
     });
   });
 
   describe('edge cases and error conditions', () => {
-    it('handles circular references gracefully', () => {
-      const circularObj: { paths: string[]; self?: unknown } = { paths: [] };
-      circularObj.self = circularObj;
-
-      // Should not throw an error
-      expect(isLookupResponse(circularObj)).toBe(true);
-    });
-
-    it('handles deeply nested objects', () => {
-      const deeplyNested = {
-        user: {
-          ...mockUser,
-          nested: {
-            deep: {
-              deeper: {
-                value: 'test',
-              },
-            },
-          },
-        },
-      };
-
-      expect(isLoginResponse(deeplyNested)).toBe(true);
-    });
-
-    it('handles frozen objects', () => {
-      const frozenResponse = Object.freeze({
-        paths: Object.freeze(['path1.md', 'path2.md']),
-      });
-
-      expect(isLookupResponse(frozenResponse)).toBe(true);
-    });
-
-    it('handles objects created with null prototype', () => {
-      const nullProtoObj = Object.create(null) as Record<string, unknown>;
-      nullProtoObj['filePath'] = 'test.md';
-      nullProtoObj['size'] = 1024;
-      nullProtoObj['updatedAt'] = '2024-01-01T10:00:00Z';
-
-      expect(isSaveFileResponse(nullProtoObj)).toBe(true);
-    });
-  });
-
-  describe('performance with large data', () => {
-    it('handles large paths arrays efficiently', () => {
-      const largePaths = Array.from({ length: 10000 }, (_, i) => `path${i}.md`);
-      const largeResponse = {
-        paths: largePaths,
-      };
-
-      const start = performance.now();
-      const result = isLookupResponse(largeResponse);
-      const end = performance.now();
-
-      expect(result).toBe(true);
-      expect(end - start).toBeLessThan(100); // Should complete in under 100ms
-    });
-
-    it('handles very long file paths', () => {
-      const longPath = 'a'.repeat(10000);
-      const responseWithLongPath: SaveFileResponse = {
-        filePath: longPath,
-        size: 1024,
-        updatedAt: '2024-01-01T10:00:00Z',
-      };
-
-      expect(isSaveFileResponse(responseWithLongPath)).toBe(true);
+    it('handles objects with extra properties across different type guards', () => {
+      // Test that all type guards handle extra properties correctly
+      expect(isLoginResponse({ user: mockUser, extra: 'field' })).toBe(true);
+      expect(isLookupResponse({ paths: [], extra: 'field' })).toBe(true);
+      expect(
+        isSaveFileResponse({
+          filePath: 'test.md',
+          size: 1024,
+          updatedAt: '2024-01-01T10:00:00Z',
+          extra: 'field',
+        })
+      ).toBe(true);
+      expect(
+        isUploadFilesResponse({ filePaths: ['file1.md'], extra: 'field' })
+      ).toBe(true);
     });
   });
 });

@@ -114,8 +114,8 @@ func setupRouter(o Options) *chi.Mux {
 			r.Route("/workspaces", func(r chi.Router) {
 				r.Get("/", handler.ListWorkspaces())
 				r.Post("/", handler.CreateWorkspace())
-				r.Get("/last", handler.GetLastWorkspaceName())
-				r.Put("/last", handler.UpdateLastWorkspaceName())
+				r.Get("/_op/last", handler.GetLastWorkspaceName())
+				r.Put("/_op/last", handler.UpdateLastWorkspaceName())
 
 				// Single workspace routes
 				r.Route("/{workspaceName}", func(r chi.Router) {
@@ -133,9 +133,12 @@ func setupRouter(o Options) *chi.Mux {
 						r.Put("/last", handler.UpdateLastOpenedFile())
 						r.Get("/lookup", handler.LookupFileByName())
 
-						r.Post("/*", handler.SaveFile())
-						r.Get("/*", handler.GetFileContent())
-						r.Delete("/*", handler.DeleteFile())
+						r.Post("/upload", handler.UploadFile())
+						r.Put("/move", handler.MoveFile())
+
+						r.Post("/", handler.SaveFile())
+						r.Get("/content", handler.GetFileContent())
+						r.Delete("/", handler.DeleteFile())
 					})
 
 					// Git routes
