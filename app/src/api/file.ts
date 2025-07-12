@@ -199,20 +199,24 @@ export const moveFile = async (
 };
 
 /**
- * uploadFile uploads a file to a workspace
+ * uploadFile uploads multiple files to a workspace
  * @param workspaceName - The name of the workspace
- * @param directoryPath - The directory path where the file should be uploaded
- * @param file - The file to upload
+ * @param directoryPath - The directory path where files should be uploaded
+ * @param files - Multiple files to upload
  * @returns {Promise<SaveFileResponse>} A promise that resolves to the upload file response
  * @throws {Error} If the API call fails or returns an invalid response
  */
 export const uploadFile = async (
   workspaceName: string,
   directoryPath: string,
-  file: File
+  files: FileList
 ): Promise<SaveFileResponse> => {
   const formData = new FormData();
-  formData.append('file', file);
+
+  // Add all files to the form data
+  Array.from(files).forEach((file) => {
+    formData.append('file', file);
+  });
 
   const response = await apiCall(
     `${API_BASE_URL}/workspaces/${encodeURIComponent(

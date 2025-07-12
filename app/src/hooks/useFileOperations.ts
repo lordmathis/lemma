@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
-import { saveFile, deleteFile } from '../api/file';
+import { saveFile, deleteFile, uploadFile, moveFile } from '../api/file';
 import { useWorkspaceData } from '../contexts/WorkspaceDataContext';
 import { useGitOperations } from './useGitOperations';
 import { FileAction } from '@/types/models';
@@ -11,9 +11,9 @@ interface UseFileOperationsResult {
   handleCreate: (fileName: string, initialContent?: string) => Promise<boolean>;
   handleUpload: (files: FileList, targetPath?: string) => Promise<boolean>;
   handleMove: (
-    dragIds: string[],
-    parentId: string | null,
-    index: number
+    filePaths: string[],
+    destinationParentPath: string,
+    index?: number
   ) => Promise<boolean>;
   handleRename: (oldPath: string, newPath: string) => Promise<boolean>;
 }
@@ -117,13 +117,13 @@ export const useFileOperations = (): UseFileOperationsResult => {
     [currentWorkspace, autoCommit]
   );
 
-  // Add these to your hook implementation:
   const handleUpload = useCallback(
     async (files: FileList, targetPath?: string): Promise<boolean> => {
       if (!currentWorkspace) return false;
 
       try {
-        // TODO: Implement your file upload API call
+        // Use unified upload API that handles both single and multiple files
+        await uploadFile(currentWorkspace.name, targetPath || '', files);
 
         notifications.show({
           title: 'Success',
@@ -149,18 +149,32 @@ export const useFileOperations = (): UseFileOperationsResult => {
 
   const handleMove = useCallback(
     async (
-      dragIds: string[],
-      parentId: string | null,
-      index: number
+      filePaths: string[],
+      destinationParentPath: string,
+      _index?: number
     ): Promise<boolean> => {
       if (!currentWorkspace) return false;
 
       try {
-        // TODO: Implement your file move API call
+        // Move each file to the destination directory
+        const movePromises = filePaths.map(async (filePath) => {
+          // Extract the filename from the path
+          const fileName = filePath.split('/').pop() || '';
+
+          // Construct the destination path
+          const destinationPath = destinationParentPath
+            ? `${destinationParentPath}/${fileName}`
+            : fileName;
+
+          // Call the API to move the file
+          await moveFile(currentWorkspace.name, filePath, destinationPath);
+        });
+
+        await Promise.all(movePromises);
 
         notifications.show({
           title: 'Success',
-          message: `Successfully moved ${dragIds.length} file(s)`,
+          message: `Successfully moved ${filePaths.length} file(s)`,
           color: 'green',
         });
 
@@ -185,8 +199,8 @@ export const useFileOperations = (): UseFileOperationsResult => {
       if (!currentWorkspace) return false;
 
       try {
-        // TODO: Replace with your actual rename API call
-        // await renameFile(currentWorkspace.name, oldPath, newPath);
+        // Use moveFile API for renaming (rename is essentially a move operation)
+        await moveFile(currentWorkspace.name, oldPath, newPath);
 
         notifications.show({
           title: 'Success',

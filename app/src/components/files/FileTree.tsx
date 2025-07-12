@@ -103,7 +103,49 @@ function Node({
   );
 }
 
-const FileTree: React.FC<FileTreeProps> = ({
+// Utility function to recursively find file paths by IDs
+const findFilePathsById = (files: FileNode[], ids: string[]): string[] => {
+  const paths: string[] = [];
+
+  const searchFiles = (nodes: FileNode[]) => {
+    for (const node of nodes) {
+      if (ids.includes(node.id)) {
+        paths.push(node.path);
+      }
+      if (node.children) {
+        searchFiles(node.children);
+      }
+    }
+  };
+
+  searchFiles(files);
+  return paths;
+};
+
+// Utility function to find parent path by ID
+const findParentPathById = (
+  files: FileNode[],
+  parentId: string | null
+): string => {
+  if (!parentId) return '';
+
+  const searchFiles = (nodes: FileNode[]): string | null => {
+    for (const node of nodes) {
+      if (node.id === parentId) {
+        return node.path;
+      }
+      if (node.children) {
+        const result = searchFiles(node.children);
+        if (result) return result;
+      }
+    }
+    return null;
+  };
+
+  return searchFiles(files) || '';
+};
+
+export const FileTree: React.FC<FileTreeProps> = ({
   files,
   handleFileSelect,
   showHiddenFiles,
@@ -143,7 +185,14 @@ const FileTree: React.FC<FileTreeProps> = ({
       index: number;
     }) => {
       try {
-        const success = await handleMove(dragIds, parentId, index);
+        // Map dragged file IDs to their corresponding paths
+        const dragPaths = findFilePathsById(filteredFiles, dragIds);
+
+        // Find the parent path where files will be moved
+        const targetParentPath = findParentPathById(filteredFiles, parentId);
+
+        // Move files to the new location
+        const success = await handleMove(dragPaths, targetParentPath, index);
         if (success) {
           await loadFileList();
         }
@@ -151,7 +200,7 @@ const FileTree: React.FC<FileTreeProps> = ({
         console.error('Error moving files:', error);
       }
     },
-    [handleMove, loadFileList]
+    [handleMove, loadFileList, filteredFiles]
   );
 
   // External file drag and drop handlers
@@ -256,7 +305,6 @@ const FileTree: React.FC<FileTreeProps> = ({
           height={size.height}
           indent={24}
           rowHeight={28}
-          // Enable drag and drop for moving files
           onMove={handleTreeMove}
           onActivate={(node) => {
             const fileNode = node.data;
