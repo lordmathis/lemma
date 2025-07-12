@@ -41,6 +41,12 @@ func (f *osFS) WriteFile(path string, data []byte, perm fs.FileMode) error {
 
 // MoveFile moves the file from src to dst, overwriting if necessary.
 func (f *osFS) MoveFile(src, dst string) error {
+	_, err := os.Stat(src)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return os.ErrNotExist
+		}
+	}
 	if err := os.Rename(src, dst); err != nil {
 		if os.IsExist(err) {
 			// If the destination exists, remove it and try again

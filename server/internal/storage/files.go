@@ -192,7 +192,7 @@ func (s *Service) MoveFile(userID, workspaceID int, srcPath string, dstPath stri
 	}
 
 	if err := s.fs.MoveFile(srcFullPath, dstFullPath); err != nil {
-		return fmt.Errorf("failed to move file: %w", err)
+		return err
 	}
 
 	log.Debug("file moved",

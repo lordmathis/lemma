@@ -423,8 +423,69 @@ func (h *Handler) MoveFile() http.HandlerFunc {
 			"workspaceID", ctx.Workspace.ID,
 			"clientIP", r.RemoteAddr,
 		)
-		// TODO: Implement MoveFile functionality
-		_ = log // Suppress unused variable warning
+
+		srcPath := r.URL.Query().Get("src_path")
+		destPath := r.URL.Query().Get("dest_path")
+		if srcPath == "" || destPath == "" {
+			log.Debug("missing src_path or dest_path parameter")
+			respondError(w, "src_path and dest_path are required", http.StatusBadRequest)
+			return
+		}
+
+		// URL-decode the source and destination paths
+		decodedSrcPath, err := url.PathUnescape(srcPath)
+		if err != nil {
+			log.Error("failed to decode source file path",
+				"srcPath", srcPath,
+				"error", err.Error(),
+			)
+			respondError(w, "Invalid source file path", http.StatusBadRequest)
+			return
+		}
+
+		decodedDestPath, err := url.PathUnescape(destPath)
+		if err != nil {
+			log.Error("failed to decode destination file path",
+				"destPath", destPath,
+				"error", err.Error(),
+			)
+			respondError(w, "Invalid destination file path", http.StatusBadRequest)
+			return
+		}
+
+		err = h.Storage.MoveFile(ctx.UserID, ctx.Workspace.ID, decodedSrcPath, decodedDestPath)
+		if err != nil {
+			if storage.IsPathValidationError(err) {
+				log.Error("invalid file path attempted",
+					"srcPath", decodedSrcPath,
+					"destPath", decodedDestPath,
+					"error", err.Error(),
+				)
+				respondError(w, "Invalid file path", http.StatusBadRequest)
+				return
+			}
+			if os.IsNotExist(err) {
+				log.Debug("file not found",
+					"srcPath", decodedSrcPath,
+				)
+				respondError(w, "File not found", http.StatusNotFound)
+				return
+			}
+			log.Error("failed to move file",
+				"srcPath", decodedSrcPath,
+				"destPath", decodedDestPath,
+				"error", err.Error(),
+			)
+			respondError(w, "Failed to move file", http.StatusInternalServerError)
+			return
+		}
+
+		response := SaveFileResponse{
+			FilePath:  decodedDestPath,
+			Size:      -1, // Size is not applicable for move operation
+			UpdatedAt: time.Now().UTC(),
+		}
+		respondJSON(w, response)
 	}
 }
 
