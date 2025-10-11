@@ -74,7 +74,8 @@ export const WorkspaceDataProvider: React.FC<WorkspaceDataProviderProps> = ({
         });
       }
     },
-    [updateColorScheme]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   const loadFirstAvailableWorkspace = useCallback(async (): Promise<void> => {

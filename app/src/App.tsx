@@ -1,5 +1,9 @@
 import React from 'react';
-import { MantineProvider, ColorSchemeScript } from '@mantine/core';
+import {
+  MantineProvider,
+  ColorSchemeScript,
+  localStorageColorSchemeManager,
+} from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { ModalsProvider } from '@mantine/modals';
 import Layout from './components/layout/Layout';
@@ -39,11 +43,18 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = () => {
 
 type AppProps = object;
 
+const colorSchemeManager = localStorageColorSchemeManager({
+  key: 'mantine-color-scheme',
+});
+
 const App: React.FC<AppProps> = () => {
   return (
     <>
       <ColorSchemeScript defaultColorScheme="light" />
-      <MantineProvider defaultColorScheme="light">
+      <MantineProvider
+        defaultColorScheme="light"
+        colorSchemeManager={colorSchemeManager}
+      >
         <Notifications />
         <ModalsProvider>
           <AuthProvider>

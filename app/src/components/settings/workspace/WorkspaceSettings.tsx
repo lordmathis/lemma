@@ -18,7 +18,7 @@ import { useModalContext } from '../../../contexts/ModalContext';
 import DangerZoneSettings from './DangerZoneSettings';
 import AccordionControl from '../AccordionControl';
 import {
-  type Theme,
+  Theme,
   type Workspace,
   type SettingsAction,
   SettingsActionType,
@@ -72,7 +72,7 @@ function settingsReducer(
 }
 
 const WorkspaceSettings: React.FC = () => {
-  const { currentWorkspace, updateSettings } = useWorkspace();
+  const { currentWorkspace, updateSettings, updateColorScheme, colorScheme } = useWorkspace();
   const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
   const isInitialMount = useRef<boolean>(true);
@@ -118,7 +118,13 @@ const WorkspaceSettings: React.FC = () => {
         return;
       }
 
-      await updateSettings(state.localSettings);
+      // Save with current Mantine theme
+      const settingsToSave = {
+        ...state.localSettings,
+        theme: colorScheme as Theme,
+      };
+
+      await updateSettings(settingsToSave);
       dispatch({ type: SettingsActionType.MARK_SAVED });
       notifications.show({
         message: 'Settings saved successfully',
@@ -137,8 +143,12 @@ const WorkspaceSettings: React.FC = () => {
   };
 
   const handleClose = useCallback(() => {
+    // Revert theme to saved state
+    if (state.initialSettings.theme) {
+      updateColorScheme(state.initialSettings.theme);
+    }
     setSettingsModalVisible(false);
-  }, [setSettingsModalVisible]);
+  }, [setSettingsModalVisible, state.initialSettings.theme, updateColorScheme]);
 
   return (
     <Modal
@@ -180,11 +190,7 @@ const WorkspaceSettings: React.FC = () => {
           <Accordion.Item value="appearance">
             <AccordionControl>Appearance</AccordionControl>
             <Accordion.Panel>
-              <AppearanceSettings
-                onThemeChange={(newTheme: string) =>
-                  handleInputChange('theme', newTheme as Theme)
-                }
-              />
+              <AppearanceSettings />
             </Accordion.Panel>
           </Accordion.Item>
 

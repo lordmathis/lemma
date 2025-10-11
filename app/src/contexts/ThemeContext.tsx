@@ -2,6 +2,7 @@ import React, {
   createContext,
   useContext,
   useCallback,
+  useMemo,
   type ReactNode,
 } from 'react';
 import { useMantineColorScheme, type MantineColorScheme } from '@mantine/core';
@@ -32,11 +33,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   );
 
   // Ensure colorScheme is never undefined by falling back to light theme
-  const value: ThemeContextType = {
-    colorScheme:
-      colorScheme === 'light' || colorScheme === 'dark' ? colorScheme : 'light',
-    updateColorScheme,
-  };
+  const normalizedColorScheme =
+    colorScheme === 'light' || colorScheme === 'dark' ? colorScheme : 'light';
+
+  const value: ThemeContextType = useMemo(
+    () => ({
+      colorScheme: normalizedColorScheme,
+      updateColorScheme,
+    }),
+    [normalizedColorScheme, updateColorScheme]
+  );
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
