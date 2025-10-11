@@ -52,9 +52,8 @@ export default defineConfig(({ mode }) => ({
 
           // Markdown processing
           markdown: [
-            'react-syntax-highlighter',
+            'rehype-highlight',
             'rehype-mathjax',
-            'rehype-prism',
             'rehype-react',
             'remark',
             'remark-math',

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, type ReactNode } from 'react';
-import { unified, type Preset } from 'unified';
+import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMath from 'remark-math';
 import remarkRehype from 'remark-rehype';
 import rehypeMathjax from 'rehype-mathjax';
 import rehypeReact, { type Options } from 'rehype-react';
-import rehypePrism from 'rehype-prism';
+import rehypeHighlight from 'rehype-highlight';
 import * as prod from 'react/jsx-runtime';
 import { notifications } from '@mantine/notifications';
 import { remarkWikiLinks } from '../../utils/remarkWikiLinks';
@@ -82,7 +82,7 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
       .use(remarkMath)
       .use(remarkRehype)
       .use(rehypeMathjax)
-      .use(rehypePrism as Preset)
+      .use(rehypeHighlight)
       .use(rehypeReact, {
         jsx: prod.jsx,
         jsxs: prod.jsxs,
