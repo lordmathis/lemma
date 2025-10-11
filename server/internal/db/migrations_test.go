@@ -26,7 +26,6 @@ func TestMigrate(t *testing.T) {
 			"users",
 			"workspaces",
 			"sessions",
-			"system_settings",
 			"schema_migrations",
 		}
 

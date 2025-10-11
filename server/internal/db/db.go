@@ -68,11 +68,9 @@ type SessionStore interface {
 	CleanExpiredSessions() error
 }
 
-// SystemStore defines the methods for interacting with system settings and stats in the database
+// SystemStore defines the methods for interacting with system stats in the database
 type SystemStore interface {
 	GetSystemStats() (*UserStats, error)
-	GetSystemSetting(key string) (string, error)
-	SetSystemSetting(key, value string) error
 }
 
 type StructScanner interface {

@@ -39,7 +39,7 @@ Lemma can be configured using environment variables. Here are the available conf
 - `LEMMA_PORT`: Port to run the server on (default: "8080")
 - `LEMMA_DOMAIN`: Domain name where the application is hosted for cookie authentication
 - `LEMMA_CORS_ORIGINS`: Comma-separated list of allowed CORS origins
-- `LEMMA_JWT_SIGNING_KEY`: Key used for signing JWT tokens
+- `LEMMA_JWT_SIGNING_KEY`: Key used for signing JWT tokens. If not provided, a key will be automatically generated and stored in `{LEMMA_WORKDIR}/secrets/jwt_signing_key`
 - `LEMMA_LOG_LEVEL`: Logging level (defaults to DEBUG in development mode, INFO in production)
 - `LEMMA_RATE_LIMIT_REQUESTS`: Number of allowed requests per window (default: 100)
 - `LEMMA_RATE_LIMIT_WINDOW`: Duration of the rate limit window (default: 15m)
