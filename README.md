@@ -28,7 +28,6 @@ Lemma can be configured using environment variables. Here are the available conf
 
 - `LEMMA_ADMIN_EMAIL`: Email address for the admin account
 - `LEMMA_ADMIN_PASSWORD`: Password for the admin account
-- `LEMMA_ENCRYPTION_KEY`: Base64-encoded 32-byte key used for encrypting sensitive data
 
 ### Optional Environment Variables
 
@@ -39,21 +38,17 @@ Lemma can be configured using environment variables. Here are the available conf
 - `LEMMA_PORT`: Port to run the server on (default: "8080")
 - `LEMMA_DOMAIN`: Domain name where the application is hosted for cookie authentication
 - `LEMMA_CORS_ORIGINS`: Comma-separated list of allowed CORS origins
-- `LEMMA_JWT_SIGNING_KEY`: Key used for signing JWT tokens
+- `LEMMA_ENCRYPTION_KEY`: Base64-encoded 32-byte key used for encrypting sensitive data. If not provided, a key will be automatically generated and stored in `{LEMMA_WORKDIR}/secrets/encryption_key`
+- `LEMMA_JWT_SIGNING_KEY`: Key used for signing JWT tokens. If not provided, a key will be automatically generated and stored in `{LEMMA_WORKDIR}/secrets/jwt_signing_key`
 - `LEMMA_LOG_LEVEL`: Logging level (defaults to DEBUG in development mode, INFO in production)
 - `LEMMA_RATE_LIMIT_REQUESTS`: Number of allowed requests per window (default: 100)
 - `LEMMA_RATE_LIMIT_WINDOW`: Duration of the rate limit window (default: 15m)
 
-### Generating Encryption Keys
+### Security Keys
 
-The encryption key must be a base64-encoded 32-byte value. You can generate a secure encryption key using OpenSSL:
+Both the encryption key and JWT signing key are automatically generated on first startup if not provided via environment variables. The keys are stored in `{LEMMA_WORKDIR}/secrets/` with restrictive file permissions (0600).
 
-```bash
-# Generate a random 32-byte key and encode it as base64
-openssl rand -base64 32
-```
-
-Store the generated key securely - it will be needed to decrypt any data encrypted by the application. If the key is lost or changed, previously encrypted data will become inaccessible.
+**Important**: Back up the `secrets` directory! If these keys are lost, encrypted data will become inaccessible and all users will need to re-authenticate.
 
 ## Running the backend server
 

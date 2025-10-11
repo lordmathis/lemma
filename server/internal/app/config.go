@@ -48,12 +48,20 @@ func DefaultConfig() *Config {
 // validate checks if the configuration is valid
 func (c *Config) validate() error {
 	if c.AdminEmail == "" || c.AdminPassword == "" {
-		return fmt.Errorf("LEMMA_ADMIN_EMAIL and LEMMA_ADMIN_PASSWORD must be set")
+		return fmt.Errorf(`admin credentials not configured
+
+To get started, set these environment variables:
+  export LEMMA_ADMIN_EMAIL="admin@example.com"
+  export LEMMA_ADMIN_PASSWORD="your-secure-password"
+
+Then start the server again.`)
 	}
 
-	// Validate encryption key
-	if err := secrets.ValidateKey(c.EncryptionKey); err != nil {
-		return fmt.Errorf("invalid LEMMA_ENCRYPTION_KEY: %w", err)
+	// Validate encryption key if provided (if not provided, it will be auto-generated)
+	if c.EncryptionKey != "" {
+		if err := secrets.ValidateKey(c.EncryptionKey); err != nil {
+			return fmt.Errorf("invalid LEMMA_ENCRYPTION_KEY: %w", err)
+		}
 	}
 
 	return nil
