@@ -110,10 +110,10 @@ const WorkspaceSwitcher: React.FC = () => {
                 </Center>
               ) : (
                 workspaces.map((workspace) => {
-                  const isSelected = workspace.name === currentWorkspace?.name;
+                  const isSelected = workspace.id === currentWorkspace?.id;
                   return (
                     <Paper
-                      key={workspace.name}
+                      key={workspace.id}
                       p="xs"
                       withBorder
                       style={(theme) =>

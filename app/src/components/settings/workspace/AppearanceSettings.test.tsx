@@ -20,8 +20,6 @@ const render = (ui: React.ReactElement) => {
 };
 
 describe('AppearanceSettings', () => {
-  const mockOnThemeChange = vi.fn();
-
   beforeEach(async () => {
     vi.clearAllMocks();
     const { useTheme } = await import('../../../contexts/ThemeContext');
@@ -32,7 +30,7 @@ describe('AppearanceSettings', () => {
   });
 
   it('renders dark mode toggle with correct state', () => {
-    render(<AppearanceSettings onThemeChange={mockOnThemeChange} />);
+    render(<AppearanceSettings />);
 
     expect(screen.getByText('Dark Mode')).toBeInTheDocument();
     const toggle = screen.getByRole('switch');
@@ -46,20 +44,19 @@ describe('AppearanceSettings', () => {
       updateColorScheme: mockUpdateColorScheme,
     });
 
-    render(<AppearanceSettings onThemeChange={mockOnThemeChange} />);
+    render(<AppearanceSettings />);
 
     const toggle = screen.getByRole('switch');
     expect(toggle).toBeChecked();
   });
 
   it('toggles theme from light to dark', () => {
-    render(<AppearanceSettings onThemeChange={mockOnThemeChange} />);
+    render(<AppearanceSettings />);
 
     const toggle = screen.getByRole('switch');
     fireEvent.click(toggle);
 
     expect(mockUpdateColorScheme).toHaveBeenCalledWith(Theme.Dark);
-    expect(mockOnThemeChange).toHaveBeenCalledWith(Theme.Dark);
   });
 
   it('toggles theme from dark to light', async () => {
@@ -69,12 +66,11 @@ describe('AppearanceSettings', () => {
       updateColorScheme: mockUpdateColorScheme,
     });
 
-    render(<AppearanceSettings onThemeChange={mockOnThemeChange} />);
+    render(<AppearanceSettings />);
 
     const toggle = screen.getByRole('switch');
     fireEvent.click(toggle);
 
     expect(mockUpdateColorScheme).toHaveBeenCalledWith(Theme.Light);
-    expect(mockOnThemeChange).toHaveBeenCalledWith(Theme.Light);
   });
 });

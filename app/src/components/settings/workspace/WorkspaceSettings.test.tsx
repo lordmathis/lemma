@@ -11,6 +11,7 @@ import WorkspaceSettings from './WorkspaceSettings';
 import { Theme } from '@/types/models';
 
 const mockUpdateSettings = vi.fn();
+const mockUpdateColorScheme = vi.fn();
 vi.mock('../../../hooks/useWorkspace', () => ({
   useWorkspace: vi.fn(),
 }));
@@ -48,11 +49,9 @@ vi.mock('./GeneralSettings', () => ({
 }));
 
 vi.mock('./AppearanceSettings', () => ({
-  default: ({ onThemeChange }: { onThemeChange: (theme: string) => void }) => (
+  default: () => (
     <div data-testid="appearance-settings">
-      <button onClick={() => onThemeChange('dark')} data-testid="theme-toggle">
-        Toggle Theme
-      </button>
+      Appearance Settings
     </div>
   ),
 }));
@@ -105,7 +104,7 @@ describe('WorkspaceSettings', () => {
       updateSettings: mockUpdateSettings,
       loading: false,
       colorScheme: 'light',
-      updateColorScheme: vi.fn(),
+      updateColorScheme: mockUpdateColorScheme,
       switchWorkspace: vi.fn(),
       deleteCurrentWorkspace: vi.fn(),
     });
@@ -152,13 +151,10 @@ describe('WorkspaceSettings', () => {
     });
   });
 
-  it('handles theme changes', () => {
+  it('renders appearance settings', () => {
     render(<WorkspaceSettings />);
 
-    const themeToggle = screen.getByTestId('theme-toggle');
-    fireEvent.click(themeToggle);
-
-    expect(screen.getByText('Unsaved Changes')).toBeInTheDocument();
+    expect(screen.getByTestId('appearance-settings')).toBeInTheDocument();
   });
 
   it('closes modal when cancel is clicked', () => {
@@ -191,5 +187,17 @@ describe('WorkspaceSettings', () => {
     });
 
     expect(mockUpdateSettings).not.toHaveBeenCalled();
+  });
+
+  it('reverts theme when canceling', () => {
+    render(<WorkspaceSettings />);
+
+    // Click cancel
+    const cancelButton = screen.getByRole('button', { name: 'Cancel' });
+    fireEvent.click(cancelButton);
+
+    // Theme should be reverted to saved state (Light)
+    expect(mockUpdateColorScheme).toHaveBeenCalledWith(Theme.Light);
+    expect(mockSetSettingsModalVisible).toHaveBeenCalledWith(false);
   });
 });

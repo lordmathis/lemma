@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useCallback, useRef } from 'react';
+import React, { useReducer, useEffect, useCallback } from 'react';
 import {
   Modal,
   Badge,
@@ -72,14 +72,13 @@ function settingsReducer(
 }
 
 const WorkspaceSettings: React.FC = () => {
-  const { currentWorkspace, updateSettings } = useWorkspace();
+  const { currentWorkspace, updateSettings, updateColorScheme, colorScheme } =
+    useWorkspace();
   const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
-  const isInitialMount = useRef<boolean>(true);
 
   useEffect(() => {
-    if (isInitialMount.current && currentWorkspace) {
-      isInitialMount.current = false;
+    if (currentWorkspace && settingsModalVisible) {
       const settings: Partial<Workspace> = {
         name: currentWorkspace.name,
         theme: currentWorkspace.theme,
@@ -96,7 +95,7 @@ const WorkspaceSettings: React.FC = () => {
       };
       dispatch({ type: SettingsActionType.INIT_SETTINGS, payload: settings });
     }
-  }, [currentWorkspace]);
+  }, [currentWorkspace, settingsModalVisible]);
 
   const handleInputChange = useCallback(
     <K extends keyof Workspace>(key: K, value: Workspace[K]): void => {
@@ -118,7 +117,13 @@ const WorkspaceSettings: React.FC = () => {
         return;
       }
 
-      await updateSettings(state.localSettings);
+      // Save with current Mantine theme
+      const settingsToSave = {
+        ...state.localSettings,
+        theme: colorScheme as Theme,
+      };
+
+      await updateSettings(settingsToSave);
       dispatch({ type: SettingsActionType.MARK_SAVED });
       notifications.show({
         message: 'Settings saved successfully',
@@ -137,8 +142,12 @@ const WorkspaceSettings: React.FC = () => {
   };
 
   const handleClose = useCallback(() => {
+    // Revert theme to saved state
+    if (state.initialSettings.theme) {
+      updateColorScheme(state.initialSettings.theme);
+    }
     setSettingsModalVisible(false);
-  }, [setSettingsModalVisible]);
+  }, [setSettingsModalVisible, state.initialSettings.theme, updateColorScheme]);
 
   return (
     <Modal
@@ -180,11 +189,7 @@ const WorkspaceSettings: React.FC = () => {
           <Accordion.Item value="appearance">
             <AccordionControl>Appearance</AccordionControl>
             <Accordion.Panel>
-              <AppearanceSettings
-                onThemeChange={(newTheme: string) =>
-                  handleInputChange('theme', newTheme as Theme)
-                }
-              />
+              <AppearanceSettings />
             </Accordion.Panel>
           </Accordion.Item>
 
