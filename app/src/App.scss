@@ -108,3 +108,29 @@ $navbar-height: 64px;
 .tree {
   padding-top: $padding;
 }
+
+// Syntax highlighting themes
+@import 'highlight.js/styles/github.css' layer(light-theme);
+@import 'highlight.js/styles/github-dark.css' layer(dark-theme);
+
+// Show light theme by default
+@layer light-theme {
+  [data-mantine-color-scheme='light'] .markdown-preview {
+    pre code.hljs {
+      display: block;
+      overflow-x: auto;
+      padding: 1em;
+    }
+  }
+}
+
+// Show dark theme in dark mode
+@layer dark-theme {
+  [data-mantine-color-scheme='dark'] .markdown-preview {
+    pre code.hljs {
+      display: block;
+      overflow-x: auto;
+      padding: 1em;
+    }
+  }
+}

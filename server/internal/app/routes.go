@@ -64,16 +64,16 @@ func setupRouter(o Options) *chi.Mux {
 
 	// API routes
 	r.Route("/api/v1", func(r chi.Router) {
-		// Rate limiting for API routes
-		if o.Config.RateLimitRequests > 0 {
-			r.Use(httprate.LimitByIP(
-				o.Config.RateLimitRequests,
-				o.Config.RateLimitWindow,
-			))
-		}
-
 		// Public routes (no authentication required)
 		r.Group(func(r chi.Router) {
+			// Rate limiting for authentication endpoints to prevent brute force attacks
+			if o.Config.RateLimitRequests > 0 {
+				r.Use(httprate.LimitByIP(
+					o.Config.RateLimitRequests,
+					o.Config.RateLimitWindow,
+				))
+			}
+
 			r.Post("/auth/login", handler.Login(o.SessionManager, o.CookieService))
 			r.Post("/auth/refresh", handler.RefreshToken(o.SessionManager, o.CookieService))
 		})
