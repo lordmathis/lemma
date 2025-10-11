@@ -1,7 +1,6 @@
 package db_test
 
 import (
-	"encoding/base64"
 	"fmt"
 	"strings"
 	"testing"
@@ -115,33 +114,6 @@ func TestSystemOperations(t *testing.T) {
 					}
 				}
 			})
-		}
-	})
-
-	t.Run("EnsureJWTSecret", func(t *testing.T) {
-		// First call should generate a new secret
-		secret1, err := database.EnsureJWTSecret()
-		if err != nil {
-			t.Fatalf("failed to ensure JWT secret: %v", err)
-		}
-
-		// Verify the secret is a valid base64-encoded string of sufficient length
-		decoded, err := base64.StdEncoding.DecodeString(secret1)
-		if err != nil {
-			t.Errorf("secret is not valid base64: %v", err)
-		}
-		if len(decoded) < 32 {
-			t.Errorf("secret length = %d, want >= 32", len(decoded))
-		}
-
-		// Second call should return the same secret
-		secret2, err := database.EnsureJWTSecret()
-		if err != nil {
-			t.Fatalf("failed to get existing JWT secret: %v", err)
-		}
-
-		if secret2 != secret1 {
-			t.Errorf("got different secret on second call")
 		}
 	})
 

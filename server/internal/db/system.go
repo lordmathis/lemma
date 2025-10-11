@@ -6,44 +6,11 @@ import (
 	"fmt"
 )
 
-const (
-	// JWTSecretKey is the key for the JWT secret in the system settings
-	JWTSecretKey = "jwt_secret"
-)
-
 // UserStats represents system-wide statistics
 type UserStats struct {
 	TotalUsers      int `json:"totalUsers"`
 	TotalWorkspaces int `json:"totalWorkspaces"`
 	ActiveUsers     int `json:"activeUsers"` // Users with activity in last 30 days
-}
-
-// EnsureJWTSecret makes sure a JWT signing secret exists in the database
-// If no secret exists, it generates and stores a new one
-func (db *database) EnsureJWTSecret() (string, error) {
-	log := getLogger().WithGroup("system")
-
-	// First, try to get existing secret
-	secret, err := db.GetSystemSetting(JWTSecretKey)
-	if err == nil {
-		return secret, nil
-	}
-
-	// Generate new secret if none exists
-	newSecret, err := generateRandomSecret(32) // 256 bits
-	if err != nil {
-		return "", fmt.Errorf("failed to generate JWT secret: %w", err)
-	}
-
-	// Store the new secret
-	err = db.SetSystemSetting(JWTSecretKey, newSecret)
-	if err != nil {
-		return "", fmt.Errorf("failed to store JWT secret: %w", err)
-	}
-
-	log.Info("new JWT secret generated and stored")
-
-	return newSecret, nil
 }
 
 // GetSystemSetting retrieves a system setting by key

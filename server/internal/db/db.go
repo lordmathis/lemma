@@ -71,7 +71,6 @@ type SessionStore interface {
 // SystemStore defines the methods for interacting with system settings and stats in the database
 type SystemStore interface {
 	GetSystemStats() (*UserStats, error)
-	EnsureJWTSecret() (string, error)
 	GetSystemSetting(key string) (string, error)
 	SetSystemSetting(key, value string) error
 }
