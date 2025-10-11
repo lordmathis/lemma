@@ -180,15 +180,6 @@ func TestLoad(t *testing.T) {
 				expectedError: "LEMMA_ADMIN_EMAIL and LEMMA_ADMIN_PASSWORD must be set",
 			},
 			{
-				name: "missing encryption key",
-				setupEnv: func(t *testing.T) {
-					cleanup()
-					setEnv(t, "LEMMA_ADMIN_EMAIL", "admin@example.com")
-					setEnv(t, "LEMMA_ADMIN_PASSWORD", "password123")
-				},
-				expectedError: "invalid LEMMA_ENCRYPTION_KEY: encryption key is required",
-			},
-			{
 				name: "invalid encryption key",
 				setupEnv: func(t *testing.T) {
 					cleanup()

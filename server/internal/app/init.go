@@ -19,7 +19,22 @@ import (
 // initSecretsService initializes the secrets service
 func initSecretsService(cfg *Config) (secrets.Service, error) {
 	logging.Debug("initializing secrets service")
-	secretsService, err := secrets.NewService(cfg.EncryptionKey)
+
+	// Get or generate encryption key
+	encryptionKey := cfg.EncryptionKey
+	if encryptionKey == "" {
+		logging.Debug("no encryption key provided, loading/generating from file")
+
+		// Load or generate key from file
+		secretsDir := cfg.WorkDir + "/secrets"
+		var err error
+		encryptionKey, err = secrets.EnsureEncryptionKey(secretsDir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to ensure encryption key: %w", err)
+		}
+	}
+
+	secretsService, err := secrets.NewService(encryptionKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize secrets service: %w", err)
 	}

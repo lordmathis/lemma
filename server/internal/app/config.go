@@ -51,9 +51,11 @@ func (c *Config) validate() error {
 		return fmt.Errorf("LEMMA_ADMIN_EMAIL and LEMMA_ADMIN_PASSWORD must be set")
 	}
 
-	// Validate encryption key
-	if err := secrets.ValidateKey(c.EncryptionKey); err != nil {
-		return fmt.Errorf("invalid LEMMA_ENCRYPTION_KEY: %w", err)
+	// Validate encryption key if provided (if not provided, it will be auto-generated)
+	if c.EncryptionKey != "" {
+		if err := secrets.ValidateKey(c.EncryptionKey); err != nil {
+			return fmt.Errorf("invalid LEMMA_ENCRYPTION_KEY: %w", err)
+		}
 	}
 
 	return nil
