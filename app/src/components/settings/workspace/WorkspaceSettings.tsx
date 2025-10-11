@@ -75,11 +75,9 @@ const WorkspaceSettings: React.FC = () => {
   const { currentWorkspace, updateSettings, updateColorScheme, colorScheme } = useWorkspace();
   const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
-  const isInitialMount = useRef<boolean>(true);
 
   useEffect(() => {
-    if (isInitialMount.current && currentWorkspace) {
-      isInitialMount.current = false;
+    if (currentWorkspace && settingsModalVisible) {
       const settings: Partial<Workspace> = {
         name: currentWorkspace.name,
         theme: currentWorkspace.theme,
@@ -96,7 +94,7 @@ const WorkspaceSettings: React.FC = () => {
       };
       dispatch({ type: SettingsActionType.INIT_SETTINGS, payload: settings });
     }
-  }, [currentWorkspace]);
+  }, [currentWorkspace, settingsModalVisible]);
 
   const handleInputChange = useCallback(
     <K extends keyof Workspace>(key: K, value: Workspace[K]): void => {
