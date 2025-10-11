@@ -168,7 +168,13 @@ func TestLoad(t *testing.T) {
 					setEnv(t, "LEMMA_ADMIN_PASSWORD", "password123")
 					setEnv(t, "LEMMA_ENCRYPTION_KEY", "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=")
 				},
-				expectedError: "LEMMA_ADMIN_EMAIL and LEMMA_ADMIN_PASSWORD must be set",
+				expectedError: `admin credentials not configured
+
+To get started, set these environment variables:
+  export LEMMA_ADMIN_EMAIL="admin@example.com"
+  export LEMMA_ADMIN_PASSWORD="your-secure-password"
+
+Then start the server again.`,
 			},
 			{
 				name: "missing admin password",
@@ -177,7 +183,13 @@ func TestLoad(t *testing.T) {
 					setEnv(t, "LEMMA_ADMIN_EMAIL", "admin@example.com")
 					setEnv(t, "LEMMA_ENCRYPTION_KEY", "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=")
 				},
-				expectedError: "LEMMA_ADMIN_EMAIL and LEMMA_ADMIN_PASSWORD must be set",
+				expectedError: `admin credentials not configured
+
+To get started, set these environment variables:
+  export LEMMA_ADMIN_EMAIL="admin@example.com"
+  export LEMMA_ADMIN_PASSWORD="your-secure-password"
+
+Then start the server again.`,
 			},
 			{
 				name: "invalid encryption key",
