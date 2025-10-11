@@ -83,7 +83,7 @@ describe('fileHelpers', () => {
       const filePath = 'folder/file.md';
 
       const expectedUrl =
-        'http://localhost:8080/api/v1/workspaces/my-workspace/files/folder%2Ffile.md';
+        'http://localhost:8080/api/v1/workspaces/my-workspace/files/content?file_path=folder%2Ffile.md';
       const actualUrl = getFileUrl(workspaceName, filePath);
 
       expect(actualUrl).toBe(expectedUrl);
@@ -94,7 +94,7 @@ describe('fileHelpers', () => {
       const filePath = 'file.md';
 
       const expectedUrl =
-        'http://localhost:8080/api/v1/workspaces/my%20workspace%20with%20spaces/files/file.md';
+        'http://localhost:8080/api/v1/workspaces/my%20workspace%20with%20spaces/files/content?file_path=file.md';
       const actualUrl = getFileUrl(workspaceName, filePath);
 
       expect(actualUrl).toBe(expectedUrl);
@@ -105,7 +105,7 @@ describe('fileHelpers', () => {
       const filePath = 'folder with spaces/file with spaces.md';
 
       const expectedUrl =
-        'http://localhost:8080/api/v1/workspaces/workspace/files/folder%20with%20spaces%2Ffile%20with%20spaces.md';
+        'http://localhost:8080/api/v1/workspaces/workspace/files/content?file_path=folder%20with%20spaces%2Ffile%20with%20spaces.md';
       const actualUrl = getFileUrl(workspaceName, filePath);
 
       expect(actualUrl).toBe(expectedUrl);
@@ -116,7 +116,7 @@ describe('fileHelpers', () => {
       const filePath = 'file?name=test.md';
 
       const expectedUrl =
-        'http://localhost:8080/api/v1/workspaces/test%26workspace/files/file%3Fname%3Dtest.md';
+        'http://localhost:8080/api/v1/workspaces/test%26workspace/files/content?file_path=file%3Fname%3Dtest.md';
       const actualUrl = getFileUrl(workspaceName, filePath);
 
       expect(actualUrl).toBe(expectedUrl);
@@ -127,7 +127,7 @@ describe('fileHelpers', () => {
       const filePath = 'ファイル.md';
 
       const expectedUrl =
-        'http://localhost:8080/api/v1/workspaces/%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88/files/%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB.md';
+        'http://localhost:8080/api/v1/workspaces/%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88/files/content?file_path=%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB.md';
       const actualUrl = getFileUrl(workspaceName, filePath);
 
       expect(actualUrl).toBe(expectedUrl);
@@ -138,7 +138,7 @@ describe('fileHelpers', () => {
       const filePath = 'projects/2024/q1/report.md';
 
       const expectedUrl =
-        'http://localhost:8080/api/v1/workspaces/docs/files/projects%2F2024%2Fq1%2Freport.md';
+        'http://localhost:8080/api/v1/workspaces/docs/files/content?file_path=projects%2F2024%2Fq1%2Freport.md';
       const actualUrl = getFileUrl(workspaceName, filePath);
 
       expect(actualUrl).toBe(expectedUrl);
@@ -146,20 +146,20 @@ describe('fileHelpers', () => {
 
     it('handles edge cases with empty strings', () => {
       expect(getFileUrl('', '')).toBe(
-        'http://localhost:8080/api/v1/workspaces//files/'
+        'http://localhost:8080/api/v1/workspaces//files/content?file_path='
       );
       expect(getFileUrl('workspace', '')).toBe(
-        'http://localhost:8080/api/v1/workspaces/workspace/files/'
+        'http://localhost:8080/api/v1/workspaces/workspace/files/content?file_path='
       );
       expect(getFileUrl('', 'file.md')).toBe(
-        'http://localhost:8080/api/v1/workspaces//files/file.md'
+        'http://localhost:8080/api/v1/workspaces//files/content?file_path=file.md'
       );
     });
 
     it('uses the API base URL correctly', () => {
       const url = getFileUrl('test', 'file.md');
       expect(url).toBe(
-        'http://localhost:8080/api/v1/workspaces/test/files/file.md'
+        'http://localhost:8080/api/v1/workspaces/test/files/content?file_path=file.md'
       );
       expect(url).toContain(window.API_BASE_URL);
     });

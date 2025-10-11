@@ -13,5 +13,5 @@ export const isImageFile = (filePath: string): boolean => {
 export const getFileUrl = (workspaceName: string, filePath: string) => {
   return `${API_BASE_URL}/workspaces/${encodeURIComponent(
     workspaceName
-  )}/files/${encodeURIComponent(filePath)}`;
+  )}/files/content?file_path=${encodeURIComponent(filePath)}`;
 };

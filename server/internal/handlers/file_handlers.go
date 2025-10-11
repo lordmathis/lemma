@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"io"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	"lemma/internal/context"
@@ -205,7 +207,13 @@ func (h *Handler) GetFileContent() http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/plain")
+		// Detect MIME type based on file extension
+		contentType := mime.TypeByExtension(filepath.Ext(decodedPath))
+		if contentType == "" {
+			// Fallback to text/plain if MIME type cannot be determined
+			contentType = "text/plain"
+		}
+		w.Header().Set("Content-Type", contentType)
 		_, err = w.Write(content)
 		if err != nil {
 			log.Error("failed to write response",
