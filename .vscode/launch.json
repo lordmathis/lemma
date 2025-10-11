@@ -2,13 +2,35 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch Lemma Server",
+      "name": "Launch Backend",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/server/cmd/server/main.go",
       "cwd": "${workspaceFolder}",
-      "envFile": "${workspaceFolder}/server/.env"
+      "envFile": "${workspaceFolder}/.env.local"
+    },
+    {
+      "name": "Launch Frontend",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "cwd": "${workspaceFolder}/app",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env.local"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Launch Backend + Frontend",
+      "configurations": ["Launch Backend", "Launch Frontend"],
+      "presentation": {
+        "hidden": false,
+        "group": "",
+        "order": 1
+      },
+      "stopAll": true
     }
   ]
 }
