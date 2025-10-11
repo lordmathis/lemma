@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useCallback, useRef } from 'react';
+import React, { useReducer, useEffect, useCallback } from 'react';
 import {
   Modal,
   Badge,
@@ -18,7 +18,7 @@ import { useModalContext } from '../../../contexts/ModalContext';
 import DangerZoneSettings from './DangerZoneSettings';
 import AccordionControl from '../AccordionControl';
 import {
-  Theme,
+  type Theme,
   type Workspace,
   type SettingsAction,
   SettingsActionType,
@@ -72,7 +72,8 @@ function settingsReducer(
 }
 
 const WorkspaceSettings: React.FC = () => {
-  const { currentWorkspace, updateSettings, updateColorScheme, colorScheme } = useWorkspace();
+  const { currentWorkspace, updateSettings, updateColorScheme, colorScheme } =
+    useWorkspace();
   const { settingsModalVisible, setSettingsModalVisible } = useModalContext();
   const [state, dispatch] = useReducer(settingsReducer, initialState);
 

@@ -20,8 +20,6 @@ const render = (ui: React.ReactElement) => {
 };
 
 describe('AppearanceSettings', () => {
-  const mockOnThemeChange = vi.fn();
-
   beforeEach(async () => {
     vi.clearAllMocks();
     const { useTheme } = await import('../../../contexts/ThemeContext');
