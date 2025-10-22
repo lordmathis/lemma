@@ -156,6 +156,54 @@ func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
 			assert.Equal(t, http.StatusNotFound, rr.Code)
 		})
 
+		t.Run("move file", func(t *testing.T) {
+			srcPath := "original.md"
+			destPath := "moved.md"
+			content := "This file will be moved"
+
+			// Create file
+			rr := h.makeRequestRaw(t, http.MethodPost, baseURL+"?file_path="+url.QueryEscape(srcPath), strings.NewReader(content), h.RegularTestUser)
+			require.Equal(t, http.StatusOK, rr.Code)
+
+			// Move file
+			moveURL := baseURL + "/move?src_path=" + url.QueryEscape(srcPath) + "&dest_path=" + url.QueryEscape(destPath)
+			rr = h.makeRequest(t, http.MethodPost, moveURL, nil, h.RegularTestUser)
+			require.Equal(t, http.StatusOK, rr.Code)
+
+			// Verify source is gone
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/content?file_path="+url.QueryEscape(srcPath), nil, h.RegularTestUser)
+			assert.Equal(t, http.StatusNotFound, rr.Code)
+
+			// Verify destination exists with correct content
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/content?file_path="+url.QueryEscape(destPath), nil, h.RegularTestUser)
+			require.Equal(t, http.StatusOK, rr.Code)
+			assert.Equal(t, content, rr.Body.String())
+		})
+
+		t.Run("rename file in directory", func(t *testing.T) {
+			srcPath := "folder/old-name.md"
+			destPath := "folder/new-name.md"
+			content := "This file will be renamed"
+
+			// Create file
+			rr := h.makeRequestRaw(t, http.MethodPost, baseURL+"?file_path="+url.QueryEscape(srcPath), strings.NewReader(content), h.RegularTestUser)
+			require.Equal(t, http.StatusOK, rr.Code)
+
+			// Rename file (move within same directory)
+			moveURL := baseURL + "/move?src_path=" + url.QueryEscape(srcPath) + "&dest_path=" + url.QueryEscape(destPath)
+			rr = h.makeRequest(t, http.MethodPost, moveURL, nil, h.RegularTestUser)
+			require.Equal(t, http.StatusOK, rr.Code)
+
+			// Verify source is gone
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/content?file_path="+url.QueryEscape(srcPath), nil, h.RegularTestUser)
+			assert.Equal(t, http.StatusNotFound, rr.Code)
+
+			// Verify destination exists with correct content
+			rr = h.makeRequest(t, http.MethodGet, baseURL+"/content?file_path="+url.QueryEscape(destPath), nil, h.RegularTestUser)
+			require.Equal(t, http.StatusOK, rr.Code)
+			assert.Equal(t, content, rr.Body.String())
+		})
+
 		t.Run("last opened file", func(t *testing.T) {
 			// Initially should be empty
 			rr := h.makeRequest(t, http.MethodGet, baseURL+"/last", nil, h.RegularTestUser)
