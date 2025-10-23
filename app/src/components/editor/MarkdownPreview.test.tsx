@@ -120,6 +120,34 @@ describe('MarkdownPreview', () => {
     });
   });
 
+  it('renders code blocks with correct structure for theme switching', async () => {
+    const content = '```javascript\nconst hello = "world";\n```';
+
+    render(
+      <MarkdownPreview
+        content={content}
+        handleFileSelect={mockHandleFileSelect}
+      />
+    );
+
+    await waitFor(() => {
+      // Check that rehype-highlight generates the correct structure
+      const preElement = screen
+        .getByRole('code', { hidden: true })
+        .closest('pre');
+      const codeElement = preElement?.querySelector('code');
+
+      expect(preElement).toBeInTheDocument();
+      expect(codeElement).toBeInTheDocument();
+
+      // The code element should have hljs class for theme switching to work
+      expect(codeElement).toHaveClass('hljs');
+
+      // Should also have language class
+      expect(codeElement).toHaveClass('language-javascript');
+    });
+  });
+
   it('handles image loading errors gracefully', async () => {
     const content = '![Test Image](invalid-image.jpg)';
 

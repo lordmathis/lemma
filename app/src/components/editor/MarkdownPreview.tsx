@@ -10,6 +10,7 @@ import * as prod from 'react/jsx-runtime';
 import { notifications } from '@mantine/notifications';
 import { remarkWikiLinks } from '../../utils/remarkWikiLinks';
 import { useWorkspace } from '../../hooks/useWorkspace';
+import { useHighlightTheme } from '../../hooks/useHighlightTheme';
 
 interface MarkdownPreviewProps {
   content: string;
@@ -28,12 +29,6 @@ interface MarkdownLinkProps {
   [key: string]: unknown;
 }
 
-interface MarkdownCodeProps {
-  children: ReactNode;
-  className?: string;
-  [key: string]: unknown;
-}
-
 const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
   content,
   handleFileSelect,
@@ -42,7 +37,10 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
     null
   );
   const baseUrl = window.API_BASE_URL;
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, colorScheme } = useWorkspace();
+
+  // Use the highlight theme hook
+  useHighlightTheme(colorScheme === 'auto' ? 'light' : colorScheme);
 
   const processor = useMemo(() => {
     const handleLinkClick = (
@@ -107,13 +105,6 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
               {children}
             </a>
           ),
-          code: ({ children, className, ...props }: MarkdownCodeProps) => {
-            return (
-              <pre className={className}>
-                <code {...props}>{children}</code>
-              </pre>
-            );
-          },
         },
       } as Options);
   }, [currentWorkspace?.name, baseUrl, handleFileSelect]);
