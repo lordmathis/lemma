@@ -152,7 +152,9 @@ func setupRouter(o Options) *chi.Mux {
 	})
 
 	// Handle all other routes with static file server
-	r.Get("/*", handlers.NewStaticHandler(o.Config.StaticPath).ServeHTTP)
+	staticHandler := handlers.NewStaticHandler(o.Config.StaticPath)
+	r.Get("/*", staticHandler.ServeHTTP)
+	r.Head("/*", staticHandler.ServeHTTP)
 
 	return r
 }
