@@ -22,6 +22,7 @@ type CreateUserRequest struct {
 	DisplayName string          `json:"displayName"`
 	Password    string          `json:"password"`
 	Role        models.UserRole `json:"role"`
+	Theme       string          `json:"theme,omitempty"`
 }
 
 // UpdateUserRequest holds the request fields for updating a user
@@ -30,6 +31,7 @@ type UpdateUserRequest struct {
 	DisplayName string          `json:"displayName,omitempty"`
 	Password    string          `json:"password,omitempty"`
 	Role        models.UserRole `json:"role,omitempty"`
+	Theme       string          `json:"theme,omitempty"`
 }
 
 // WorkspaceStats holds workspace statistics
@@ -164,11 +166,24 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 			return
 		}
 
+		// Handle theme with validation and default
+		theme := req.Theme
+		if theme == "" {
+			theme = "dark" // Default theme
+		} else if theme != "light" && theme != "dark" {
+			// Invalid theme, fallback to dark
+			log.Debug("invalid theme value in user creation, falling back to dark",
+				"theme", theme,
+			)
+			theme = "dark"
+		}
+
 		user := &models.User{
 			Email:        req.Email,
 			DisplayName:  req.DisplayName,
 			PasswordHash: string(hashedPassword),
 			Role:         req.Role,
+			Theme:        theme,
 		}
 
 		insertedUser, err := h.DB.CreateUser(user)
@@ -196,6 +211,7 @@ func (h *Handler) AdminCreateUser() http.HandlerFunc {
 			"newUserID", insertedUser.ID,
 			"email", insertedUser.Email,
 			"role", insertedUser.Role,
+			"theme", insertedUser.Theme,
 		)
 		respondJSON(w, insertedUser)
 	}
@@ -321,6 +337,17 @@ func (h *Handler) AdminUpdateUser() http.HandlerFunc {
 		if req.Role != "" {
 			user.Role = req.Role
 			updates["role"] = req.Role
+		}
+		if req.Theme != "" {
+			// Validate theme value, fallback to "dark" if invalid
+			if req.Theme != "light" && req.Theme != "dark" {
+				log.Debug("invalid theme value, falling back to dark",
+					"theme", req.Theme,
+				)
+				req.Theme = "dark"
+			}
+			user.Theme = req.Theme
+			updates["theme"] = req.Theme
 		}
 		if req.Password != "" {
 			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)

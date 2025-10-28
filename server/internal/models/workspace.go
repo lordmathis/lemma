@@ -13,7 +13,7 @@ type Workspace struct {
 	LastOpenedFilePath string    `json:"lastOpenedFilePath" db:"last_opened_file_path"`
 
 	// Integrated settings
-	Theme                string `json:"theme" db:"theme" validate:"oneof=light dark"`
+	Theme                string `json:"theme" db:"theme" validate:"required,oneof=light dark"`
 	AutoSave             bool   `json:"autoSave" db:"auto_save"`
 	ShowHiddenFiles      bool   `json:"showHiddenFiles" db:"show_hidden_files"`
 	GitEnabled           bool   `json:"gitEnabled" db:"git_enabled"`
@@ -40,7 +40,7 @@ func (w *Workspace) ValidateGitSettings() error {
 func (w *Workspace) SetDefaultSettings() {
 
 	if w.Theme == "" {
-		w.Theme = "light"
+		w.Theme = "dark"
 	}
 
 	w.AutoSave = w.AutoSave || false

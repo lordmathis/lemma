@@ -16,6 +16,7 @@ type UpdateProfileRequest struct {
 	Email           string `json:"email"`
 	CurrentPassword string `json:"currentPassword"`
 	NewPassword     string `json:"newPassword"`
+	Theme           string `json:"theme"`
 }
 
 // DeleteAccountRequest represents a user account deletion request
@@ -147,6 +148,19 @@ func (h *Handler) UpdateProfile() http.HandlerFunc {
 		if req.DisplayName != "" {
 			user.DisplayName = req.DisplayName
 			updates["displayNameChanged"] = true
+		}
+
+		// Update theme if provided
+		if req.Theme != "" {
+			// Validate theme value, fallback to "dark" if invalid
+			if req.Theme != "light" && req.Theme != "dark" {
+				log.Debug("invalid theme value, falling back to dark",
+					"theme", req.Theme,
+				)
+				req.Theme = "dark"
+			}
+			user.Theme = req.Theme
+			updates["themeChanged"] = true
 		}
 
 		// Update user in database

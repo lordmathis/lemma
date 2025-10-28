@@ -25,6 +25,7 @@ type User struct {
 	DisplayName     string    `json:"displayName" db:"display_name"`
 	PasswordHash    string    `json:"-" db:"password_hash"`
 	Role            UserRole  `json:"role" db:"role" validate:"required,oneof=admin editor viewer"`
+	Theme           string    `json:"theme" db:"theme" validate:"required,oneof=light dark"`
 	CreatedAt       time.Time `json:"createdAt" db:"created_at,default"`
 	LastWorkspaceID int       `json:"lastWorkspaceId" db:"last_workspace_id"`
 }
