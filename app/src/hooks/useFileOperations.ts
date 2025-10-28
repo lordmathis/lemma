@@ -122,7 +122,8 @@ export const useFileOperations = (): UseFileOperationsResult => {
       if (!currentWorkspace) return false;
 
       try {
-        await uploadFile(currentWorkspace.name, targetPath || '', files);
+        // Default to '.' (root directory) if no target path is provided
+        await uploadFile(currentWorkspace.name, targetPath || '.', files);
 
         notifications.show({
           title: 'Success',

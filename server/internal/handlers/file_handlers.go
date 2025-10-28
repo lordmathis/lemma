@@ -410,7 +410,8 @@ func (h *Handler) UploadFile() http.HandlerFunc {
 				}
 			}()
 
-			filePath := decodedPath + "/" + formFile.Filename
+			// Use filepath.Join to properly construct the path
+		filePath := filepath.Join(decodedPath, formFile.Filename)
 
 			content, err := io.ReadAll(file)
 			if err != nil {
