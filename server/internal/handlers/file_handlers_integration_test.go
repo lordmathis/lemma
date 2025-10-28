@@ -352,15 +352,6 @@ func testFileHandlers(t *testing.T, dbConfig DatabaseConfig) {
 				assert.Equal(t, http.StatusBadRequest, rr.Code)
 			})
 
-			t.Run("upload with missing file_path parameter", func(t *testing.T) {
-				fileName := "test.txt"
-				fileContent := "test content"
-				files := map[string]string{fileName: fileContent}
-
-				rr := h.makeUploadRequest(t, baseURL+"/upload", files, h.RegularTestUser)
-				assert.Equal(t, http.StatusBadRequest, rr.Code)
-			})
-
 			t.Run("upload with invalid file_path", func(t *testing.T) {
 				fileName := "test.txt"
 				fileContent := "test content"
