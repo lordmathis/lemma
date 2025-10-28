@@ -29,9 +29,15 @@ export const apiCall = async (
     // Set up headers with CSRF token for non-GET requests
     const method = options.method || 'GET';
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
     };
+
+    // Only set Content-Type to application/json if not already set and body is not FormData
+    // FormData requires the browser to set Content-Type with the boundary parameter
+    const isFormData = options.body instanceof FormData;
+    if (!headers['Content-Type'] && !isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     // Add CSRF token for non-GET methods
     if (method !== 'GET') {
@@ -41,11 +47,18 @@ export const apiCall = async (
       }
     }
 
+    // For FormData, don't include Content-Type in headers - let the browser set it
+    const fetchHeaders = isFormData
+      ? Object.fromEntries(
+          Object.entries(headers).filter(([key]) => key !== 'Content-Type')
+        )
+      : headers;
+
     const response = await fetch(url, {
       ...options,
       // Include credentials to send/receive cookies
       credentials: 'include',
-      headers,
+      headers: fetchHeaders,
     });
     console.debug(`Response status: ${response.status} for URL: ${url}`);
 
