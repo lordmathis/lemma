@@ -8,6 +8,7 @@ export interface User {
   email: string;
   displayName?: string;
   role: UserRole;
+  theme: Theme;
   createdAt: string;
   lastWorkspaceId: number;
 }
@@ -28,6 +29,8 @@ export function isUser(value: unknown): value is User {
       : true) &&
     'role' in value &&
     isUserRole((value as User).role) &&
+    'theme' in value &&
+    (value as User).theme in Theme &&
     'createdAt' in value &&
     typeof (value as User).createdAt === 'string' &&
     'lastWorkspaceId' in value &&
@@ -309,6 +312,7 @@ export interface UserProfileSettings {
   email?: string;
   currentPassword?: string;
   newPassword?: string;
+  theme?: Theme;
 }
 
 export interface ProfileSettingsState {

@@ -89,6 +89,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
         email: user.email,
         currentPassword: '',
         newPassword: '',
+        theme: user.theme,
       };
       dispatch({
         type: SettingsActionType.INIT_SETTINGS,
@@ -107,6 +108,13 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
     });
   };
 
+  const handleThemeChange = (theme: string): void => {
+    dispatch({
+      type: SettingsActionType.UPDATE_LOCAL_SETTINGS,
+      payload: { theme } as UserProfileSettings,
+    });
+  };
+
   const handleSubmit = async (): Promise<void> => {
     const updates: UserProfileSettings = {};
     const needsPasswordConfirmation =
@@ -115,6 +123,14 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
     // Add display name if changed
     if (state.localSettings.displayName !== state.initialSettings.displayName) {
       updates.displayName = state.localSettings.displayName || '';
+    }
+
+    // Add theme if changed
+    if (
+      state.localSettings.theme &&
+      state.localSettings.theme !== state.initialSettings.theme
+    ) {
+      updates.theme = state.localSettings.theme;
     }
 
     // Handle password change
@@ -216,6 +232,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
                 <ProfileSettings
                   settings={state.localSettings}
                   onInputChange={handleInputChange}
+                  onThemeChange={handleThemeChange}
                 />
               </Accordion.Panel>
             </Accordion.Item>

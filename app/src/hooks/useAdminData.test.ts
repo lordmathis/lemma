@@ -4,6 +4,7 @@ import { useAdminData } from './useAdminData';
 import * as adminApi from '@/api/admin';
 import {
   UserRole,
+  Theme,
   type SystemStats,
   type User,
   type WorkspaceStats,
@@ -35,6 +36,7 @@ const mockUsers: User[] = [
     email: 'admin@example.com',
     displayName: 'Admin User',
     role: UserRole.Admin,
+    theme: Theme.Dark,
     createdAt: '2024-01-01T00:00:00Z',
     lastWorkspaceId: 1,
   },
@@ -43,6 +45,7 @@ const mockUsers: User[] = [
     email: 'editor@example.com',
     displayName: 'Editor User',
     role: UserRole.Editor,
+    theme: Theme.Dark,
     createdAt: '2024-01-02T00:00:00Z',
     lastWorkspaceId: 2,
   },

@@ -12,7 +12,8 @@ import {
   refreshToken as apiRefreshToken,
   getCurrentUser,
 } from '@/api/auth';
-import type { User } from '@/types/models';
+import { updateProfile as apiUpdateProfile } from '@/api/user';
+import type { User, UserProfileSettings } from '@/types/models';
 
 interface AuthContextType {
   user: User | null;
@@ -22,6 +23,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
   refreshUser: () => Promise<void>;
+  updateProfile: (updates: UserProfileSettings) => Promise<User>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -109,6 +111,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  const updateProfile = useCallback(
+    async (updates: UserProfileSettings): Promise<User> => {
+      try {
+        const updatedUser = await apiUpdateProfile(updates);
+        setUser(updatedUser);
+        notifications.show({
+          title: 'Success',
+          message: 'Profile updated successfully',
+          color: 'green',
+        });
+        return updatedUser;
+      } catch (error) {
+        console.error('Failed to update profile:', error);
+        notifications.show({
+          title: 'Error',
+          message:
+            error instanceof Error ? error.message : 'Failed to update profile',
+          color: 'red',
+        });
+        throw error;
+      }
+    },
+    []
+  );
+
   const value: AuthContextType = {
     user,
     loading,
@@ -117,6 +144,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     refreshToken,
     refreshUser,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
