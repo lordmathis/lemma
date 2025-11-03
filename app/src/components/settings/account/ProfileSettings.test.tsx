@@ -4,6 +4,25 @@ import React from 'react';
 import { MantineProvider } from '@mantine/core';
 import ProfileSettings from './ProfileSettings';
 import type { UserProfileSettings } from '@/types/models';
+import { Theme, UserRole, type User } from '@/types/models';
+
+// Mock user for AuthContext
+const mockUser: User = {
+  id: 1,
+  email: 'test@example.com',
+  displayName: 'Test User',
+  role: UserRole.Editor,
+  theme: Theme.Dark,
+  createdAt: '2024-01-01T00:00:00Z',
+  lastWorkspaceId: 1,
+};
+
+// Mock the auth context
+vi.mock('../../../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: mockUser,
+  }),
+}));
 
 // Helper wrapper component for testing
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
