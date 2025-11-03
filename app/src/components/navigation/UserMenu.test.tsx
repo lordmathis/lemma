@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../../test/utils';
 import UserMenu from './UserMenu';
-import { UserRole } from '../../types/models';
+import { UserRole, Theme } from '../../types/models';
 
 // Mock the contexts
 vi.mock('../../contexts/AuthContext', () => ({
@@ -37,6 +37,7 @@ describe('UserMenu', () => {
     email: 'test@example.com',
     displayName: 'Test User',
     role: UserRole.Editor,
+    theme: Theme.Dark,
     createdAt: '2024-01-01T00:00:00Z',
     lastWorkspaceId: 1,
   };
@@ -53,6 +54,7 @@ describe('UserMenu', () => {
       login: vi.fn(),
       refreshToken: vi.fn(),
       refreshUser: vi.fn(),
+      updateProfile: vi.fn(),
     });
   });
 
@@ -84,6 +86,7 @@ describe('UserMenu', () => {
       login: vi.fn(),
       refreshToken: vi.fn(),
       refreshUser: vi.fn(),
+      updateProfile: vi.fn(),
     });
 
     const { getByLabelText, getByText } = render(
@@ -145,6 +148,7 @@ describe('UserMenu', () => {
       id: mockUser.id,
       email: mockUser.email,
       role: mockUser.role,
+      theme: mockUser.theme,
       createdAt: mockUser.createdAt,
       lastWorkspaceId: mockUser.lastWorkspaceId,
     };
@@ -157,6 +161,7 @@ describe('UserMenu', () => {
       login: vi.fn(),
       refreshToken: vi.fn(),
       refreshUser: vi.fn(),
+      updateProfile: vi.fn(),
     });
 
     const { getByLabelText, getByText } = render(

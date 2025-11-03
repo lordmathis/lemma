@@ -9,7 +9,7 @@ import {
   type SaveFileResponse,
   type UploadFilesResponse,
 } from './api';
-import { UserRole, type User } from './models';
+import { UserRole, Theme, type User } from './models';
 
 // Mock user data for testing
 const mockUser: User = {
@@ -17,6 +17,7 @@ const mockUser: User = {
   email: 'test@example.com',
   displayName: 'Test User',
   role: UserRole.Editor,
+  theme: Theme.Dark,
   createdAt: '2024-01-01T00:00:00Z',
   lastWorkspaceId: 1,
 };

@@ -8,7 +8,7 @@ import {
 import React from 'react';
 import { MantineProvider } from '@mantine/core';
 import DeleteUserModal from './DeleteUserModal';
-import { UserRole, type User } from '@/types/models';
+import { UserRole, Theme, type User } from '@/types/models';
 
 // Mock notifications
 vi.mock('@mantine/notifications', () => ({
@@ -36,6 +36,7 @@ describe('DeleteUserModal', () => {
     email: 'test@example.com',
     displayName: 'Test User',
     role: UserRole.Editor,
+    theme: Theme.Dark,
     createdAt: '2024-01-01T00:00:00Z',
     lastWorkspaceId: 1,
   };

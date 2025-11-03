@@ -87,7 +87,7 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 			"clientIP", r.RemoteAddr,
 		)
 
-		var workspace models.Workspace
+			var workspace models.Workspace
 		if err := json.NewDecoder(r.Body).Decode(&workspace); err != nil {
 			log.Debug("invalid request body received",
 				"error", err.Error(),
@@ -104,7 +104,21 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 			return
 		}
 
+		// Get user to access their theme preference
+		user, err := h.DB.GetUserByID(ctx.UserID)
+		if err != nil {
+			log.Error("failed to fetch user from database",
+				"error", err.Error(),
+			)
+			respondError(w, "Failed to get user", http.StatusInternalServerError)
+			return
+		}
+
 		workspace.UserID = ctx.UserID
+		// Use user's theme as default if not provided
+		if workspace.Theme == "" {
+			workspace.Theme = user.Theme
+		}
 		if err := h.DB.CreateWorkspace(&workspace); err != nil {
 			log.Error("failed to create workspace in database",
 				"error", err.Error(),
@@ -145,6 +159,7 @@ func (h *Handler) CreateWorkspace() http.HandlerFunc {
 		log.Info("workspace created",
 			"workspaceID", workspace.ID,
 			"workspaceName", workspace.Name,
+			"theme", workspace.Theme,
 			"gitEnabled", workspace.GitEnabled,
 		)
 		respondJSON(w, workspace)

@@ -1,4 +1,4 @@
-import { isUser, type User, type UserRole } from './models';
+import { isUser, type User, type UserRole, type Theme } from './models';
 
 declare global {
   interface Window {
@@ -55,6 +55,7 @@ export interface CreateUserRequest {
   displayName: string;
   password: string;
   role: UserRole;
+  theme?: Theme;
 }
 
 // UpdateUserRequest holds the request fields for updating a user
@@ -63,6 +64,7 @@ export interface UpdateUserRequest {
   displayName?: string;
   password?: string;
   role?: UserRole;
+  theme?: Theme;
 }
 
 export interface LookupResponse {
@@ -126,6 +128,7 @@ export interface UpdateProfileRequest {
   email?: string;
   currentPassword?: string;
   newPassword?: string;
+  theme?: Theme;
 }
 
 // DeleteAccountRequest represents a user account deletion request

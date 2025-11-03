@@ -63,6 +63,7 @@ describe('Models Type Guards', () => {
       email: 'test@example.com',
       displayName: 'Test User',
       role: UserRole.Editor,
+      theme: Theme.Dark,
       createdAt: '2024-01-01T00:00:00Z',
       lastWorkspaceId: 1,
     };
@@ -76,6 +77,7 @@ describe('Models Type Guards', () => {
         id: 1,
         email: 'test@example.com',
         role: UserRole.Editor,
+        theme: Theme.Dark,
         createdAt: '2024-01-01T00:00:00Z',
         lastWorkspaceId: 1,
       };
@@ -186,6 +188,7 @@ describe('Models Type Guards', () => {
         id: 1,
         email: 'test@example.com',
         role: UserRole.Editor,
+        theme: Theme.Dark,
         createdAt: '2024-01-01T00:00:00Z',
         lastWorkspaceId: 1,
         __proto__: { malicious: true },
@@ -771,6 +774,7 @@ describe('Models Type Guards', () => {
         id: 1,
         email: 'test@example.com',
         role: UserRole.Editor,
+        theme: Theme.Dark,
         createdAt: '2024-01-01T00:00:00Z',
         lastWorkspaceId: 1,
       };
@@ -804,6 +808,7 @@ describe('Models Type Guards', () => {
         id: 1,
         email: 'test@example.com',
         role: UserRole.Editor,
+        theme: Theme.Dark,
         createdAt: '2024-01-01T00:00:00Z',
         lastWorkspaceId: 1,
       });
@@ -852,6 +857,7 @@ describe('Models Type Guards', () => {
         id: 1,
         email: longString,
         role: UserRole.Editor,
+        theme: Theme.Dark,
         createdAt: '2024-01-01T00:00:00Z',
         lastWorkspaceId: 1,
       };

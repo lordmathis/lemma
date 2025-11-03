@@ -29,6 +29,7 @@ func TestSessionOperations(t *testing.T) {
 		DisplayName:  "Test User",
 		PasswordHash: "hash",
 		Role:         "editor",
+		Theme:        "dark",
 	})
 	if err != nil {
 		t.Fatalf("failed to create test user: %v", err)

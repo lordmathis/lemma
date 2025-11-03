@@ -118,6 +118,7 @@ func setupAdminUser(database db.Database, storageManager storage.Manager, cfg *C
 		DisplayName:  "Admin",
 		PasswordHash: string(hashedPassword),
 		Role:         models.RoleAdmin,
+		Theme:        "dark", // default theme
 	}
 
 	createdUser, err := database.CreateUser(adminUser)
@@ -132,7 +133,8 @@ func setupAdminUser(database db.Database, storageManager storage.Manager, cfg *C
 
 	logging.Info("admin user setup completed",
 		"userId", createdUser.ID,
-		"workspaceId", createdUser.LastWorkspaceID)
+		"workspaceId", createdUser.LastWorkspaceID,
+		"theme", createdUser.Theme)
 
 	return nil
 }

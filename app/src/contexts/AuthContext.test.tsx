@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
-import { UserRole, type User } from '@/types/models';
+import { UserRole, Theme, type User } from '@/types/models';
 
 // Set up mocks before imports are used
 vi.mock('@/api/auth', () => {
@@ -42,6 +42,7 @@ const mockUser: User = {
   email: 'test@example.com',
   displayName: 'Test User',
   role: UserRole.Editor,
+    theme: Theme.Dark,
   createdAt: '2024-01-01T00:00:00Z',
   lastWorkspaceId: 1,
 };

@@ -3,7 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useUserAdmin } from './useUserAdmin';
 import * as adminApi from '@/api/admin';
 import type { CreateUserRequest, UpdateUserRequest } from '@/types/api';
-import { UserRole, type User } from '@/types/models';
+import { UserRole, Theme, type User } from '@/types/models';
 
 // Mock dependencies
 vi.mock('@/api/admin');
@@ -35,6 +35,7 @@ const mockUsers: User[] = [
     email: 'admin@example.com',
     displayName: 'Admin User',
     role: UserRole.Admin,
+    theme: Theme.Dark,
     createdAt: '2024-01-01T00:00:00Z',
     lastWorkspaceId: 1,
   },
@@ -43,6 +44,7 @@ const mockUsers: User[] = [
     email: 'editor@example.com',
     displayName: 'Editor User',
     role: UserRole.Editor,
+    theme: Theme.Dark,
     createdAt: '2024-01-02T00:00:00Z',
     lastWorkspaceId: 1,
   },
@@ -112,6 +114,7 @@ describe('useUserAdmin', () => {
         email: 'newuser@example.com',
         displayName: 'New User',
         role: UserRole.Viewer,
+    theme: Theme.Dark,
         createdAt: '2024-01-03T00:00:00Z',
         lastWorkspaceId: 1,
       };
@@ -124,6 +127,7 @@ describe('useUserAdmin', () => {
         displayName: 'New User',
         password: 'password123',
         role: UserRole.Viewer,
+    theme: Theme.Dark,
       };
 
       let createResult: boolean | undefined;
@@ -152,6 +156,7 @@ describe('useUserAdmin', () => {
         displayName: 'Test User',
         password: 'password123',
         role: UserRole.Editor,
+    theme: Theme.Dark,
       };
 
       let createResult: boolean | undefined;
@@ -179,6 +184,7 @@ describe('useUserAdmin', () => {
         displayName: 'Test User',
         password: 'password123',
         role: UserRole.Editor,
+    theme: Theme.Dark,
       };
 
       let createResult: boolean | undefined;
@@ -204,6 +210,7 @@ describe('useUserAdmin', () => {
         email: user.email,
         displayName: 'Updated Editor',
         role: user.role,
+        theme: user.theme,
         createdAt: user.createdAt,
         lastWorkspaceId: user.lastWorkspaceId,
       };
@@ -238,6 +245,7 @@ describe('useUserAdmin', () => {
         email: 'newemail@example.com',
         displayName: user.displayName || '',
         role: UserRole.Admin,
+    theme: Theme.Dark,
         createdAt: user.createdAt,
         lastWorkspaceId: user.lastWorkspaceId,
       };
@@ -248,6 +256,7 @@ describe('useUserAdmin', () => {
       const updateRequest: UpdateUserRequest = {
         email: 'newemail@example.com',
         role: UserRole.Admin,
+    theme: Theme.Dark,
       };
 
       let updateResult: boolean | undefined;
@@ -436,6 +445,7 @@ describe('useUserAdmin', () => {
           displayName: 'Test',
           password: 'pass',
           role: UserRole.Viewer,
+    theme: Theme.Dark,
         });
       });
 
@@ -474,6 +484,7 @@ describe('useUserAdmin', () => {
           displayName: 'Test',
           password: 'pass',
           role: UserRole.Viewer,
+    theme: Theme.Dark,
         });
       });
 
@@ -500,6 +511,7 @@ describe('useUserAdmin', () => {
           email: 'user1@example.com',
           displayName: 'User 1',
           role: UserRole.Viewer,
+    theme: Theme.Dark,
           createdAt: '2024-01-03T00:00:00Z',
           lastWorkspaceId: 1,
         })
@@ -508,6 +520,7 @@ describe('useUserAdmin', () => {
           email: 'user2@example.com',
           displayName: 'User 2',
           role: UserRole.Editor,
+    theme: Theme.Dark,
           createdAt: '2024-01-04T00:00:00Z',
           lastWorkspaceId: 1,
         });
@@ -520,12 +533,14 @@ describe('useUserAdmin', () => {
           displayName: 'User 1',
           password: 'pass1',
           role: UserRole.Viewer,
+    theme: Theme.Dark,
         },
         {
           email: 'user2@example.com',
           displayName: 'User 2',
           password: 'pass2',
           role: UserRole.Editor,
+    theme: Theme.Dark,
         },
       ];
 
@@ -555,12 +570,14 @@ describe('useUserAdmin', () => {
           displayName: 'Success User',
           password: 'pass1',
           role: UserRole.Viewer,
+    theme: Theme.Dark,
         },
         {
           email: 'fail@example.com',
           displayName: 'Fail User',
           password: 'pass2',
           role: UserRole.Editor,
+    theme: Theme.Dark,
         },
       ];
 

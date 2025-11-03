@@ -156,6 +156,7 @@ func TestStructQueries(t *testing.T) {
 		DisplayName:  "Struct Query Test",
 		PasswordHash: "hashed_password",
 		Role:         models.RoleEditor,
+		Theme:        "dark",
 	}
 
 	t.Run("InsertStructQuery", func(t *testing.T) {
@@ -243,6 +244,7 @@ func TestStructQueries(t *testing.T) {
 			DisplayName:  "Struct Query Test 2",
 			PasswordHash: "hashed_password2",
 			Role:         models.RoleViewer,
+			Theme:        "light",
 		}
 
 		createdUser2, err := database.CreateUser(secondUser)
@@ -437,6 +439,7 @@ func TestEncryptedFields(t *testing.T) {
 		DisplayName:  "Encryption Test",
 		PasswordHash: "hash",
 		Role:         models.RoleEditor,
+		Theme:        "dark",
 	})
 	if err != nil {
 		t.Fatalf("Failed to create test user: %v", err)

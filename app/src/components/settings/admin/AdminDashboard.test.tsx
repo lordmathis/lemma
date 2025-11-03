@@ -3,7 +3,7 @@ import { render as rtlRender, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { MantineProvider } from '@mantine/core';
 import AdminDashboard from './AdminDashboard';
-import { UserRole, type User } from '@/types/models';
+import { UserRole, Theme, type User } from '@/types/models';
 
 // Mock the auth context
 const mockCurrentUser: User = {
@@ -11,6 +11,7 @@ const mockCurrentUser: User = {
   email: 'admin@example.com',
   displayName: 'Admin User',
   role: UserRole.Admin,
+  theme: Theme.Dark,
   createdAt: '2024-01-01T00:00:00Z',
   lastWorkspaceId: 1,
 };

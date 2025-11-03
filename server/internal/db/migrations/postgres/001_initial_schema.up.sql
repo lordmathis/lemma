@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     display_name TEXT,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL CHECK(role IN ('admin', 'editor', 'viewer')),
+    theme TEXT NOT NULL DEFAULT 'dark' CHECK(theme IN ('light', 'dark')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_workspace_id INTEGER
 );
@@ -19,7 +20,7 @@ CREATE TABLE IF NOT EXISTS workspaces (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_opened_file_path TEXT,
     -- Settings fields
-    theme TEXT NOT NULL DEFAULT 'light' CHECK(theme IN ('light', 'dark')),
+    theme TEXT NOT NULL DEFAULT 'dark' CHECK(theme IN ('light', 'dark')),
     auto_save BOOLEAN NOT NULL DEFAULT FALSE,
     git_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     git_url TEXT,

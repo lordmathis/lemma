@@ -3,7 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useProfileSettings } from './useProfileSettings';
 import * as userApi from '@/api/user';
 import type { UpdateProfileRequest } from '@/types/api';
-import { UserRole, type User } from '@/types/models';
+import { UserRole, Theme, type User } from '@/types/models';
 
 // Mock dependencies
 vi.mock('@/api/user');
@@ -22,6 +22,7 @@ const mockUser: User = {
   email: 'test@example.com',
   displayName: 'Test User',
   role: UserRole.Editor,
+    theme: Theme.Dark,
   createdAt: '2024-01-01T00:00:00Z',
   lastWorkspaceId: 1,
 };

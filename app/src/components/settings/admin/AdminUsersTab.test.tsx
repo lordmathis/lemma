@@ -8,7 +8,7 @@ import {
 import React from 'react';
 import { MantineProvider } from '@mantine/core';
 import AdminUsersTab from './AdminUsersTab';
-import { UserRole, type User } from '@/types/models';
+import { UserRole, Theme, type User } from '@/types/models';
 
 // Mock the user admin hook
 const mockCreate = vi.fn();
@@ -123,6 +123,7 @@ describe('AdminUsersTab', () => {
     email: 'admin@example.com',
     displayName: 'Admin User',
     role: UserRole.Admin,
+    theme: Theme.Dark,
     createdAt: '2024-01-01T00:00:00Z',
     lastWorkspaceId: 1,
   };
@@ -134,6 +135,7 @@ describe('AdminUsersTab', () => {
       email: 'editor@example.com',
       displayName: 'Editor User',
       role: UserRole.Editor,
+      theme: Theme.Dark,
       createdAt: '2024-01-15T00:00:00Z',
       lastWorkspaceId: 2,
     },
@@ -142,6 +144,7 @@ describe('AdminUsersTab', () => {
       email: 'viewer@example.com',
       displayName: 'Viewer User',
       role: UserRole.Viewer,
+      theme: Theme.Dark,
       createdAt: '2024-02-01T00:00:00Z',
       lastWorkspaceId: 3,
     },

@@ -34,6 +34,7 @@ func TestUserOperations(t *testing.T) {
 					DisplayName:  "Test User",
 					PasswordHash: "hashed_password",
 					Role:         models.RoleEditor,
+					Theme:        "dark",
 				},
 				wantErr: false,
 			},
@@ -44,6 +45,7 @@ func TestUserOperations(t *testing.T) {
 					DisplayName:  "Another User",
 					PasswordHash: "different_hash",
 					Role:         models.RoleViewer,
+					Theme:        "light",
 				},
 				wantErr:     true,
 				errContains: "UNIQUE constraint failed",
@@ -108,6 +110,7 @@ func TestUserOperations(t *testing.T) {
 			DisplayName:  "Get By ID User",
 			PasswordHash: "hash",
 			Role:         models.RoleEditor,
+			Theme:        "dark",
 		})
 		if err != nil {
 			t.Fatalf("failed to create test user: %v", err)
@@ -159,6 +162,7 @@ func TestUserOperations(t *testing.T) {
 			DisplayName:  "Get By Email User",
 			PasswordHash: "hash",
 			Role:         models.RoleEditor,
+			Theme:        "dark",
 		})
 		if err != nil {
 			t.Fatalf("failed to create test user: %v", err)
@@ -210,6 +214,7 @@ func TestUserOperations(t *testing.T) {
 			DisplayName:  "Original Name",
 			PasswordHash: "original_hash",
 			Role:         models.RoleEditor,
+			Theme:        "dark",
 		})
 		if err != nil {
 			t.Fatalf("failed to create test user: %v", err)
@@ -249,12 +254,14 @@ func TestUserOperations(t *testing.T) {
 				DisplayName:  "User One",
 				PasswordHash: "hash1",
 				Role:         models.RoleEditor,
+				Theme:        "dark",
 			},
 			{
 				Email:        "user2@example.com",
 				DisplayName:  "User Two",
 				PasswordHash: "hash2",
 				Role:         models.RoleViewer,
+				Theme:        "light",
 			},
 		}
 
@@ -305,6 +312,7 @@ func TestUserOperations(t *testing.T) {
 			DisplayName:  "Workspace User",
 			PasswordHash: "hash",
 			Role:         models.RoleEditor,
+			Theme:        "dark",
 		})
 		if err != nil {
 			t.Fatalf("failed to create test user: %v", err)
@@ -343,6 +351,7 @@ func TestUserOperations(t *testing.T) {
 			DisplayName:  "Delete User",
 			PasswordHash: "hash",
 			Role:         models.RoleEditor,
+			Theme:        "dark",
 		})
 		if err != nil {
 			t.Fatalf("failed to create test user: %v", err)
@@ -377,18 +386,21 @@ func TestUserOperations(t *testing.T) {
 				DisplayName:  "Admin One",
 				PasswordHash: "hash1",
 				Role:         models.RoleAdmin,
+				Theme:        "dark",
 			},
 			{
 				Email:        "admin2@example.com",
 				DisplayName:  "Admin Two",
 				PasswordHash: "hash2",
 				Role:         models.RoleAdmin,
+				Theme:        "light",
 			},
 			{
 				Email:        "editor@example.com",
 				DisplayName:  "Editor",
 				PasswordHash: "hash3",
 				Role:         models.RoleEditor,
+				Theme:        "dark",
 			},
 		}
 
