@@ -213,6 +213,7 @@ func (h *testHarness) createTestUser(t *testing.T, email, password string, role 
 		DisplayName:  "Test User",
 		PasswordHash: string(hashedPassword),
 		Role:         role,
+		Theme:        "dark",
 	}
 
 	user, err = h.DB.CreateUser(user)

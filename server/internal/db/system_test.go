@@ -31,12 +31,14 @@ func TestSystemOperations(t *testing.T) {
 				DisplayName:  "User 1",
 				PasswordHash: "hash1",
 				Role:         "editor",
+				Theme:        "dark",
 			},
 			{
 				Email:        "user2@test.com",
 				DisplayName:  "User 2",
 				PasswordHash: "hash2",
 				Role:         "viewer",
+				Theme:        "light",
 			},
 		}
 
