@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Stack, TextInput, Group, Text, Switch } from '@mantine/core';
-import { IconMoon, IconSun } from '@tabler/icons-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Theme, type UserProfileSettings } from '@/types/models';
 
@@ -44,24 +43,21 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
           placeholder="Enter email"
           data-testid="email-input"
         />
-        <Group justify="space-between" align="flex-start">
-          <div>
-            <Text size="sm" fw={500}>
-              Default Theme
-            </Text>
-            <Text size="xs" c="dimmed">
-              Sets the default theme for new workspaces
-            </Text>
-          </div>
-          <Switch
-            checked={currentTheme === Theme.Dark}
-            onChange={handleThemeToggle}
-            size="lg"
-            onLabel={<IconMoon size={16} />}
-            offLabel={<IconSun size={16} />}
-            data-testid="theme-toggle"
-          />
-        </Group>
+        <Box mb="md">
+          <Group justify="space-between" align="center">
+            <div>
+              <Text size="sm">Default Dark Mode</Text>
+              <Text size="xs" c="dimmed">
+                Sets the default theme for new workspaces
+              </Text>
+            </div>
+            <Switch
+              checked={currentTheme === Theme.Dark}
+              onChange={handleThemeToggle}
+              data-testid="theme-toggle"
+            />
+          </Group>
+        </Box>
       </Stack>
     </Box>
   );
