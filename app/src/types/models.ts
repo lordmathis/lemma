@@ -30,7 +30,8 @@ export function isUser(value: unknown): value is User {
     'role' in value &&
     isUserRole((value as User).role) &&
     'theme' in value &&
-    (value as User).theme in Theme &&
+    typeof (value as User).theme === 'string' &&
+    Object.values(Theme).includes((value as User).theme) &&
     'createdAt' in value &&
     typeof (value as User).createdAt === 'string' &&
     'lastWorkspaceId' in value &&
