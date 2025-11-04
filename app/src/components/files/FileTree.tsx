@@ -6,7 +6,7 @@ import {
   IconFolderOpen,
   IconUpload,
 } from '@tabler/icons-react';
-import { Tooltip, Text, Box } from '@mantine/core';
+import { Text, Box } from '@mantine/core';
 import useResizeObserver from '@react-hook/resize-observer';
 import { useFileOperations } from '../../hooks/useFileOperations';
 import type { FileNode } from '@/types/models';
@@ -53,13 +53,12 @@ function Node({
   style,
   dragHandle,
   onNodeClick,
-  ...rest
 }: {
   node: NodeApi<FileNode>;
   style: React.CSSProperties;
   dragHandle?: React.Ref<HTMLDivElement>;
   onNodeClick?: (node: NodeApi<FileNode>) => void;
-} & Record<string, unknown>) {
+}) {
   const handleClick = () => {
     if (node.isInternal) {
       node.toggle();
@@ -69,37 +68,40 @@ function Node({
   };
 
   return (
-    <Tooltip label={node.data.name} openDelay={500}>
-      <div
-        ref={dragHandle} // This enables dragging for the node
+    <div
+      ref={dragHandle} // This enables dragging for the node
+      style={{
+        ...style,
+        paddingLeft: `${node.level * 20}px`,
+        display: 'flex',
+        alignItems: 'center',
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        // Add visual feedback when being dragged
+        opacity: node.state?.isDragging ? 0.5 : 1,
+        // Highlight when this node will receive the drop
+        backgroundColor: node.state?.willReceiveDrop
+          ? 'rgba(0, 123, 255, 0.2)'
+          : 'transparent',
+        borderRadius: '4px',
+      }}
+      onClick={handleClick}
+      title={node.data.name}
+    >
+      <FileIcon node={node} />
+      <span
         style={{
-          ...style,
-          paddingLeft: `${node.level * 20}px`,
-          display: 'flex',
-          alignItems: 'center',
-          cursor: 'pointer',
-          whiteSpace: 'nowrap',
+          marginLeft: '8px',
+          fontSize: '14px',
           overflow: 'hidden',
-          // Add visual feedback when being dragged
-          opacity: node.state?.isDragging ? 0.5 : 1,
+          textOverflow: 'ellipsis',
+          flexGrow: 1,
         }}
-        onClick={handleClick}
-        {...rest}
       >
-        <FileIcon node={node} />
-        <span
-          style={{
-            marginLeft: '8px',
-            fontSize: '14px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            flexGrow: 1,
-          }}
-        >
-          {node.data.name}
-        </span>
-      </div>
-    </Tooltip>
+        {node.data.name}
+      </span>
+    </div>
   );
 }
 
@@ -205,41 +207,46 @@ export const FileTree: React.FC<FileTreeProps> = ({
 
   // External file drag and drop handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
     // Check if drag contains files (not internal tree nodes)
     if (e.dataTransfer.types.includes('Files')) {
+      e.preventDefault();
+      e.stopPropagation();
       setIsDragOver(true);
     }
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    // Only handle if it's an external file drag
+    if (e.dataTransfer.types.includes('Files')) {
+      e.preventDefault();
+      e.stopPropagation();
 
-    // Only hide overlay when leaving the container itself
-    if (e.currentTarget === e.target) {
-      setIsDragOver(false);
+      // Only hide overlay when leaving the container itself
+      if (e.currentTarget === e.target) {
+        setIsDragOver(false);
+      }
     }
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Set the drop effect to indicate this is a valid drop target
-    e.dataTransfer.dropEffect = 'copy';
+    // Only handle external file drags
+    if (e.dataTransfer.types.includes('Files')) {
+      e.preventDefault();
+      e.stopPropagation();
+      // Set the drop effect to indicate this is a valid drop target
+      e.dataTransfer.dropEffect = 'copy';
+    }
   }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      setIsDragOver(false);
-
       const { files } = e.dataTransfer;
+      // Only handle if it's an external file drop
       if (files && files.length > 0) {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+
         const uploadFiles = async () => {
           try {
             const success = await handleUpload(files);
@@ -305,7 +312,10 @@ export const FileTree: React.FC<FileTreeProps> = ({
           height={size.height}
           indent={24}
           rowHeight={28}
+          idAccessor="id"
           onMove={handleTreeMove}
+          disableDrag={() => false}
+          disableDrop={() => false}
           onActivate={(node) => {
             const fileNode = node.data;
             if (!node.isInternal) {
