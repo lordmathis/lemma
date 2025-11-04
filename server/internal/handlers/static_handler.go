@@ -24,6 +24,28 @@ func getStaticLogger() logging.Logger {
 	return logging.WithGroup("static")
 }
 
+// getContentType returns the appropriate content type based on file extension
+func getContentType(path string) string {
+	switch filepath.Ext(path) {
+	case ".js":
+		return "application/javascript"
+	case ".css":
+		return "text/css"
+	case ".html":
+		return "text/html"
+	case ".json":
+		return "application/json"
+	case ".svg":
+		return "image/svg+xml"
+	case ".xml":
+		return "application/xml"
+	case ".yaml", ".yml":
+		return "application/x-yaml"
+	default:
+		return "application/octet-stream"
+	}
+}
+
 // ServeHTTP serves the static files
 func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log := getStaticLogger().With(
@@ -77,23 +99,28 @@ func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check for pre-compressed version
-	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+	// Check for pre-compressed versions (prefer brotli over gzip)
+	acceptEncoding := r.Header.Get("Accept-Encoding")
+
+	// Try brotli first (better compression ratio)
+	if strings.Contains(acceptEncoding, "br") {
+		brPath := cleanPath + ".br"
+		if _, err := os.Stat(brPath); err == nil {
+			w.Header().Set("Content-Encoding", "br")
+			w.Header().Set("Content-Type", getContentType(cleanPath))
+			w.Header().Set("Vary", "Accept-Encoding")
+			http.ServeFile(w, r, brPath)
+			return
+		}
+	}
+
+	// Fall back to gzip
+	if strings.Contains(acceptEncoding, "gzip") {
 		gzPath := cleanPath + ".gz"
 		if _, err := os.Stat(gzPath); err == nil {
 			w.Header().Set("Content-Encoding", "gzip")
-
-			// Set proper content type based on original file
-			contentType := "application/octet-stream"
-			switch filepath.Ext(cleanPath) {
-			case ".js":
-				contentType = "application/javascript"
-			case ".css":
-				contentType = "text/css"
-			case ".html":
-				contentType = "text/html"
-			}
-			w.Header().Set("Content-Type", contentType)
+			w.Header().Set("Content-Type", getContentType(cleanPath))
+			w.Header().Set("Vary", "Accept-Encoding")
 			http.ServeFile(w, r, gzPath)
 			return
 		}

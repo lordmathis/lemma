@@ -11,7 +11,10 @@ export default defineConfig(({ mode }) => ({
     react({
       include: ['**/*.tsx', '**/*.ts', '**/*.jsx', '**/*.js'],
     }),
-    compression(),
+    compression({
+      threshold: 1024, // Only compress files > 1KB
+      deleteOriginalAssets: false, // Keep original files
+    }),
   ],
 
   root: 'src',
