@@ -108,6 +108,7 @@ func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if _, err := os.Stat(brPath); err == nil {
 			w.Header().Set("Content-Encoding", "br")
 			w.Header().Set("Content-Type", getContentType(cleanPath))
+			w.Header().Set("Vary", "Accept-Encoding")
 			http.ServeFile(w, r, brPath)
 			return
 		}
@@ -119,6 +120,7 @@ func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if _, err := os.Stat(gzPath); err == nil {
 			w.Header().Set("Content-Encoding", "gzip")
 			w.Header().Set("Content-Type", getContentType(cleanPath))
+			w.Header().Set("Vary", "Accept-Encoding")
 			http.ServeFile(w, r, gzPath)
 			return
 		}

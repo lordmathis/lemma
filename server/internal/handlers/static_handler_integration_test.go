@@ -56,6 +56,7 @@ func TestStaticHandler_Integration(t *testing.T) {
 		wantType        string
 		wantEncoding    string
 		wantCacheHeader string
+		wantVary        string
 	}{
 		{
 			name:       "serve index.html",
@@ -73,6 +74,7 @@ func TestStaticHandler_Integration(t *testing.T) {
 			wantType:        "text/css",
 			wantEncoding:    "gzip",
 			wantCacheHeader: "public, max-age=31536000",
+			wantVary:        "Accept-Encoding",
 		},
 		{
 			name:            "serve JS with gzip support",
@@ -83,6 +85,7 @@ func TestStaticHandler_Integration(t *testing.T) {
 			wantType:        "application/javascript",
 			wantEncoding:    "gzip",
 			wantCacheHeader: "public, max-age=31536000",
+			wantVary:        "Accept-Encoding",
 		},
 		{
 			name:            "serve CSS without gzip",
@@ -127,6 +130,7 @@ func TestStaticHandler_Integration(t *testing.T) {
 			wantType:        "text/css",
 			wantEncoding:    "br",
 			wantCacheHeader: "public, max-age=31536000",
+			wantVary:        "Accept-Encoding",
 		},
 		{
 			name:            "serve JS with brotli support",
@@ -137,6 +141,7 @@ func TestStaticHandler_Integration(t *testing.T) {
 			wantType:        "application/javascript",
 			wantEncoding:    "br",
 			wantCacheHeader: "public, max-age=31536000",
+			wantVary:        "Accept-Encoding",
 		},
 		{
 			name:            "prefer brotli over gzip when both supported",
@@ -147,6 +152,7 @@ func TestStaticHandler_Integration(t *testing.T) {
 			wantType:        "application/javascript",
 			wantEncoding:    "br",
 			wantCacheHeader: "public, max-age=31536000",
+			wantVary:        "Accept-Encoding",
 		},
 		{
 			name:            "fallback to gzip when brotli not available",
@@ -157,6 +163,7 @@ func TestStaticHandler_Integration(t *testing.T) {
 			wantType:        "application/javascript",
 			wantEncoding:    "br",
 			wantCacheHeader: "public, max-age=31536000",
+			wantVary:        "Accept-Encoding",
 		},
 	}
 
@@ -182,6 +189,10 @@ func TestStaticHandler_Integration(t *testing.T) {
 
 				if tc.wantCacheHeader != "" {
 					assert.Equal(t, tc.wantCacheHeader, w.Header().Get("Cache-Control"))
+				}
+
+				if tc.wantVary != "" {
+					assert.Equal(t, tc.wantVary, w.Header().Get("Vary"))
 				}
 			}
 		})
