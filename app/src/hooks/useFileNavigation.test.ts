@@ -34,6 +34,9 @@ describe('useFileNavigation', () => {
       id: 1,
       name: 'test-workspace',
     };
+    // Default mock implementations
+    mockLastOpenedFile.loadLastOpenedFile.mockResolvedValue(null);
+    mockLastOpenedFile.saveLastOpenedFile.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
