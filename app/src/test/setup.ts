@@ -1,5 +1,26 @@
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import { vi, beforeAll, afterAll } from 'vitest';
+
+// Suppress console errors during tests
+const originalConsoleError = console.error;
+beforeAll(() => {
+  console.error = (...args: any[]) => {
+    // Suppress specific expected errors during tests
+    const errorString = args.join(' ');
+    if (
+      errorString.includes('Failed to initialize auth') ||
+      errorString.includes('Failed to save last opened file') ||
+      errorString.includes('Failed to load last opened file')
+    ) {
+      return;
+    }
+    originalConsoleError(...args);
+  };
+});
+
+afterAll(() => {
+  console.error = originalConsoleError;
+});
 
 // Mock window.API_BASE_URL
 Object.defineProperty(window, 'API_BASE_URL', {
@@ -23,8 +44,8 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock ResizeObserver - sometimes needed for Mantine components
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+global.ResizeObserver = class ResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+};
