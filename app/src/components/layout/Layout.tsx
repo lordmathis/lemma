@@ -53,6 +53,7 @@ const Layout: React.FC = () => {
             selectedFile={selectedFile}
             handleFileSelect={handleFileSelect}
             loadFileList={loadFileList}
+            files={files}
           />
         </Container>
       </AppShell.Main>

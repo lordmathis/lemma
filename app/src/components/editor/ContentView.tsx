@@ -4,6 +4,7 @@ import Editor from './Editor';
 import MarkdownPreview from './MarkdownPreview';
 import { getFileUrl, isImageFile } from '../../utils/fileHelpers';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
+import type { FileNode } from '../../types/models';
 
 type ViewTab = 'source' | 'preview';
 
@@ -14,6 +15,7 @@ interface ContentViewProps {
   handleContentChange: (content: string) => void;
   handleSave: (filePath: string, content: string) => Promise<boolean>;
   handleFileSelect: (filePath: string | null) => Promise<void>;
+  files: FileNode[];
 }
 
 const ContentView: React.FC<ContentViewProps> = ({
@@ -23,6 +25,7 @@ const ContentView: React.FC<ContentViewProps> = ({
   handleContentChange,
   handleSave,
   handleFileSelect,
+  files,
 }) => {
   const { currentWorkspace } = useWorkspace();
   if (!currentWorkspace) {
@@ -67,6 +70,7 @@ const ContentView: React.FC<ContentViewProps> = ({
       handleContentChange={handleContentChange}
       handleSave={handleSave}
       selectedFile={selectedFile}
+      files={files}
     />
   ) : (
     <MarkdownPreview content={content} handleFileSelect={handleFileSelect} />

@@ -240,17 +240,13 @@ export function remarkWikiLinks(workspaceName: string) {
             continue;
           }
 
-          const lookupFileName: string = match.isImage
-            ? match.fileName
-            : addMarkdownExtension(match.fileName);
+          // If the filename contains a path separator, treat it as a full path
+          // This handles wikilinks with paths like [[folder/subfolder/file]]
+          let filePath: string;
+          if (match.fileName.includes('/')) {
+            // It's already a full path - use it directly
+            filePath = match.isImage ? match.fileName : addMarkdownExtension(match.fileName);
 
-          const paths: string[] = await lookupFileByName(
-            workspaceName,
-            lookupFileName
-          );
-
-          if (paths && paths.length > 0 && paths[0]) {
-            const filePath: string = paths[0];
             if (match.isImage) {
               newNodes.push(
                 createImageNode(workspaceName, filePath, match.displayText)
@@ -266,9 +262,37 @@ export function remarkWikiLinks(workspaceName: string) {
               );
             }
           } else {
-            newNodes.push(
-              createNotFoundLink(match.fileName, match.displayText, baseUrl)
+            // It's just a filename - look it up to find the full path
+            const lookupFileName: string = match.isImage
+              ? match.fileName
+              : addMarkdownExtension(match.fileName);
+
+            const paths: string[] = await lookupFileByName(
+              workspaceName,
+              lookupFileName
             );
+
+            if (paths && paths.length > 0 && paths[0]) {
+              filePath = paths[0];
+              if (match.isImage) {
+                newNodes.push(
+                  createImageNode(workspaceName, filePath, match.displayText)
+                );
+              } else {
+                newNodes.push(
+                  createFileLink(
+                    filePath,
+                    match.displayText,
+                    match.heading,
+                    baseUrl
+                  )
+                );
+              }
+            } else {
+              newNodes.push(
+                createNotFoundLink(match.fileName, match.displayText, baseUrl)
+              );
+            }
           }
         } catch (error) {
           console.debug('File lookup failed:', match.fileName, error);

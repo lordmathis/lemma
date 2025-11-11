@@ -12,6 +12,7 @@ import { useFileContent } from '../../hooks/useFileContent';
 import { useFileOperations } from '../../hooks/useFileOperations';
 import { useGitOperations } from '../../hooks/useGitOperations';
 import { useModalContext } from '../../contexts/ModalContext';
+import type { FileNode } from '../../types/models';
 
 type ViewTab = 'source' | 'preview';
 
@@ -19,12 +20,14 @@ interface MainContentProps {
   selectedFile: string | null;
   handleFileSelect: (filePath: string | null) => Promise<void>;
   loadFileList: () => Promise<void>;
+  files: FileNode[];
 }
 
 const MainContent: React.FC<MainContentProps> = ({
   selectedFile,
   handleFileSelect,
   loadFileList,
+  files,
 }) => {
   const [activeTab, setActiveTab] = useState<ViewTab>('source');
   const {
@@ -161,6 +164,7 @@ const MainContent: React.FC<MainContentProps> = ({
           handleContentChange={handleContentChange}
           handleSave={handleSaveFile}
           handleFileSelect={handleFileSelect}
+          files={files}
         />
       </Box>
       <CreateFileModal onCreateFile={handleCreateFile} />

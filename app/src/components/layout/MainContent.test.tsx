@@ -131,6 +131,7 @@ describe('MainContent', () => {
           selectedFile="docs/guide.md"
           handleFileSelect={mockHandleFileSelect}
           loadFileList={mockLoadFileList}
+          files={[]}
         />
       </TestWrapper>
     );
@@ -156,6 +157,7 @@ describe('MainContent', () => {
           selectedFile="test.md"
           handleFileSelect={mockHandleFileSelect}
           loadFileList={mockLoadFileList}
+          files={[]}
         />
       </TestWrapper>
     );
@@ -172,6 +174,7 @@ describe('MainContent', () => {
           selectedFile="test.md"
           handleFileSelect={mockHandleFileSelect}
           loadFileList={mockLoadFileList}
+          files={[]}
         />
       </TestWrapper>
     );
@@ -188,6 +191,7 @@ describe('MainContent', () => {
           selectedFile={null}
           handleFileSelect={mockHandleFileSelect}
           loadFileList={mockLoadFileList}
+          files={[]}
         />
       </TestWrapper>
     );

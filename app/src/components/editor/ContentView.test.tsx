@@ -104,6 +104,7 @@ describe('ContentView', () => {
           handleContentChange={mockHandleContentChange}
           handleSave={mockHandleSave}
           handleFileSelect={mockHandleFileSelect}
+          files={[]}
         />
       </TestWrapper>
     );
@@ -121,6 +122,7 @@ describe('ContentView', () => {
           handleContentChange={mockHandleContentChange}
           handleSave={mockHandleSave}
           handleFileSelect={mockHandleFileSelect}
+          files={[]}
         />
       </TestWrapper>
     );
@@ -138,6 +140,7 @@ describe('ContentView', () => {
           handleContentChange={mockHandleContentChange}
           handleSave={mockHandleSave}
           handleFileSelect={mockHandleFileSelect}
+          files={[]}
         />
       </TestWrapper>
     );
@@ -157,6 +160,7 @@ describe('ContentView', () => {
           handleContentChange={mockHandleContentChange}
           handleSave={mockHandleSave}
           handleFileSelect={mockHandleFileSelect}
+          files={[]}
         />
       </TestWrapper>
     );
@@ -179,6 +183,7 @@ describe('ContentView', () => {
           handleContentChange={mockHandleContentChange}
           handleSave={mockHandleSave}
           handleFileSelect={mockHandleFileSelect}
+          files={[]}
         />
       </TestWrapper>
     );
@@ -208,6 +213,7 @@ describe('ContentView', () => {
           handleContentChange={mockHandleContentChange}
           handleSave={mockHandleSave}
           handleFileSelect={mockHandleFileSelect}
+          files={[]}
         />
       </TestWrapper>
     );
