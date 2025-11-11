@@ -6,13 +6,17 @@ Yet another markdown editor. Work in progress
 
 ## Features
 
-- Markdown editing with syntax highlighting
-- File tree navigation
-- Git integration for version control
-- Dark and light theme support
-- Multiple workspaces
-- Math equation support (MathJax)
-- Code syntax highlighting
+- **Editing & Content**
+  - **Rich Markdown Editing** - Full-featured editor with syntax highlighting and live preview
+  - **Wikilinks Support** - Create interconnected notes with `[[wikilink]]` syntax and smart autocomplete
+  - **Math Equations** - Render beautiful mathematical expressions with MathJax support
+  - **Code Highlighting** - Syntax highlighting for code blocks in multiple languages
+- **Organization & Workflow**
+  - **File Tree Navigation** - Organized folder structure with intuitive file management
+  - **Multi-Workspace** - Manage multiple projects and note collections in one place
+  - **Git Integration** - Built-in version control to track changes and collaborate safely
+- **Customization**
+  - **Theme Flexibility** - Switch between dark and light modes to match your preference
 
 ## Prerequisites
 
@@ -22,33 +26,32 @@ Yet another markdown editor. Work in progress
 
 ## Configuration
 
-Lemma can be configured using environment variables. Here are the available configuration options:
+Lemma is configured using environment variables.
 
-### Required Environment Variables
+### Environment Variables
 
-- `LEMMA_ADMIN_EMAIL`: Email address for the admin account
-- `LEMMA_ADMIN_PASSWORD`: Password for the admin account
-
-### Optional Environment Variables
-
-- `LEMMA_ENV`: Set to "development" to enable development mode
-- `LEMMA_DB_URL`: URL (Connection string) to the database. Supported databases are sqlite and postgres a (default: "./lemma.db")
-- `LEMMA_WORKDIR`: Working directory for application data (default: "sqlite://lemma.db")
-- `LEMMA_STATIC_PATH`: Path to static files (default: "../app/dist")
-- `LEMMA_PORT`: Port to run the server on (default: "8080")
-- `LEMMA_DOMAIN`: Domain name where the application is hosted for cookie authentication
-- `LEMMA_CORS_ORIGINS`: Comma-separated list of allowed CORS origins
-- `LEMMA_ENCRYPTION_KEY`: Base64-encoded 32-byte key used for encrypting sensitive data. If not provided, a key will be automatically generated and stored in `{LEMMA_WORKDIR}/secrets/encryption_key`
-- `LEMMA_JWT_SIGNING_KEY`: Key used for signing JWT tokens. If not provided, a key will be automatically generated and stored in `{LEMMA_WORKDIR}/secrets/jwt_signing_key`
-- `LEMMA_LOG_LEVEL`: Logging level (defaults to DEBUG in development mode, INFO in production)
-- `LEMMA_RATE_LIMIT_REQUESTS`: Number of allowed requests per window (default: 100)
-- `LEMMA_RATE_LIMIT_WINDOW`: Duration of the rate limit window (default: 15m)
+| Variable                    | Required | Default             | Description                                                                                              |
+| --------------------------- | -------- | ------------------- | -------------------------------------------------------------------------------------------------------- |
+| `LEMMA_ADMIN_EMAIL`         | Yes      | -                   | Email address for the admin account                                                                      |
+| `LEMMA_ADMIN_PASSWORD`      | Yes      | -                   | Password for the admin account                                                                           |
+| `LEMMA_ENV`                 | No       | production          | Set to "development" to enable development mode                                                          |
+| `LEMMA_DB_URL`              | No       | `sqlite://lemma.db` | Database connection string (supports `sqlite://`, `sqlite3://`, `postgres://`, `postgresql://` prefixes) |
+| `LEMMA_WORKDIR`             | No       | `./data`            | Working directory for application data                                                                   |
+| `LEMMA_STATIC_PATH`         | No       | `../app/dist`       | Path to static files                                                                                     |
+| `LEMMA_PORT`                | No       | `8080`              | Port to run the server on                                                                                |
+| `LEMMA_DOMAIN`              | No       | -                   | Domain name for cookie authentication                                                                    |
+| `LEMMA_CORS_ORIGINS`        | No       | -                   | Comma-separated list of allowed CORS origins                                                             |
+| `LEMMA_ENCRYPTION_KEY`      | No       | auto-generated      | Base64-encoded 32-byte key for encrypting sensitive data                                                 |
+| `LEMMA_JWT_SIGNING_KEY`     | No       | auto-generated      | Key used for signing JWT tokens                                                                          |
+| `LEMMA_LOG_LEVEL`           | No       | DEBUG/INFO\*        | Logging level (\*DEBUG in dev, INFO in production)                                                       |
+| `LEMMA_RATE_LIMIT_REQUESTS` | No       | `100`               | Number of allowed requests per window                                                                    |
+| `LEMMA_RATE_LIMIT_WINDOW`   | No       | `15m`               | Duration of the rate limit window                                                                        |
 
 ### Security Keys
 
-Both the encryption key and JWT signing key are automatically generated on first startup if not provided via environment variables. The keys are stored in `{LEMMA_WORKDIR}/secrets/` with restrictive file permissions (0600).
+Security keys (`LEMMA_ENCRYPTION_KEY` and `LEMMA_JWT_SIGNING_KEY`) are automatically generated on first startup if not provided. Keys are stored in `{LEMMA_WORKDIR}/secrets/`.
 
-**Important**: Back up the `secrets` directory! If these keys are lost, encrypted data will become inaccessible and all users will need to re-authenticate.
+**Important:** Back up the `secrets` directory!
 
 ## Running the backend server
 
