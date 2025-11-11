@@ -36,7 +36,7 @@ const CreateFileModal: React.FC<CreateFileModalProps> = ({ onCreateFile }) => {
 
   const handleFolderSelect = (path: string) => {
     setSelectedFolder(path);
-    // Keep popover open so users can continue browsing
+    setPopoverOpened(false);
   };
 
   // Load files when modal opens
