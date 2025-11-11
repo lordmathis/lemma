@@ -29,6 +29,31 @@ vi.mock('../../../contexts/ModalContext', () => ({
   useModalContext: () => mockModalContext,
 }));
 
+// Mock useFileList hook
+const mockLoadFileList = vi.fn();
+const mockFiles = [
+  {
+    id: '1',
+    name: 'docs',
+    path: 'docs',
+    children: [
+      {
+        id: '2',
+        name: 'guides',
+        path: 'docs/guides',
+        children: [],
+      },
+    ],
+  },
+];
+
+vi.mock('../../../hooks/useFileList', () => ({
+  useFileList: () => ({
+    files: mockFiles,
+    loadFileList: mockLoadFileList,
+  }),
+}));
+
 // Helper wrapper component for testing
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <MantineProvider defaultColorScheme="light">{children}</MantineProvider>
@@ -47,6 +72,8 @@ describe('CreateFileModal', () => {
     mockOnCreateFile.mockReset();
     mockOnCreateFile.mockResolvedValue(undefined);
     mockModalContext.setNewFileModalVisible.mockClear();
+    mockLoadFileList.mockClear();
+    mockLoadFileList.mockResolvedValue(undefined);
   });
 
   describe('Modal Visibility and Content', () => {
