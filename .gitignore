@@ -165,3 +165,6 @@ data
 
 # Feature specifications
 spec.md
+
+# Go debug files
+__debug_bin*

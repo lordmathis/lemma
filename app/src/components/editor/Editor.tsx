@@ -1,17 +1,22 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { basicSetup } from 'codemirror';
 import { EditorState } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { defaultKeymap } from '@codemirror/commands';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { autocompletion } from '@codemirror/autocomplete';
 import { useWorkspace } from '../../hooks/useWorkspace';
+import { createWikiLinkCompletions } from '../../utils/wikiLinkCompletion';
+import { flattenFileTree } from '../../utils/fileHelpers';
+import type { FileNode } from '../../types/models';
 
 interface EditorProps {
   content: string;
   handleContentChange: (content: string) => void;
   handleSave: (filePath: string, content: string) => Promise<boolean>;
   selectedFile: string;
+  files: FileNode[];
 }
 
 const Editor: React.FC<EditorProps> = ({
@@ -19,10 +24,18 @@ const Editor: React.FC<EditorProps> = ({
   handleContentChange,
   handleSave,
   selectedFile,
+  files,
 }) => {
-  const { colorScheme } = useWorkspace();
+  const { colorScheme, currentWorkspace } = useWorkspace();
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+
+  // Flatten file tree for autocompletion, respecting showHiddenFiles setting
+  const showHiddenFiles = currentWorkspace?.showHiddenFiles || false;
+  const flatFiles = useMemo(
+    () => flattenFileTree(files, showHiddenFiles),
+    [files, showHiddenFiles]
+  );
 
   useEffect(() => {
     const handleEditorSave = (view: EditorView): boolean => {
@@ -71,6 +84,12 @@ const Editor: React.FC<EditorProps> = ({
         }),
         theme,
         colorScheme === 'dark' ? oneDark : [],
+        autocompletion({
+          override: [createWikiLinkCompletions(flatFiles)],
+          activateOnTyping: true,
+          maxRenderedOptions: 10,
+          closeOnBlur: true,
+        }),
       ],
     });
 
@@ -87,7 +106,7 @@ const Editor: React.FC<EditorProps> = ({
     };
     // TODO: Refactor
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [colorScheme, handleContentChange, handleSave, selectedFile]);
+  }, [colorScheme, handleContentChange, handleSave, selectedFile, flatFiles]);
 
   useEffect(() => {
     if (viewRef.current && content !== viewRef.current.state.doc.toString()) {
