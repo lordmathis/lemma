@@ -6,13 +6,17 @@ Yet another markdown editor. Work in progress
 
 ## Features
 
-- Markdown editing with syntax highlighting
-- File tree navigation
-- Git integration for version control
-- Dark and light theme support
-- Multiple workspaces
-- Math equation support (MathJax)
-- Code syntax highlighting
+- **Editing & Content**
+  - **Rich Markdown Editing** - Full-featured editor with syntax highlighting and live preview
+  - **Wikilinks Support** - Create interconnected notes with `[[wikilink]]` syntax and smart autocomplete
+  - **Math Equations** - Render beautiful mathematical expressions with MathJax support
+  - **Code Highlighting** - Syntax highlighting for code blocks in multiple languages
+- **Organization & Workflow**
+  - **File Tree Navigation** - Organized folder structure with intuitive file management
+  - **Multi-Workspace** - Manage multiple projects and note collections in one place
+  - **Git Integration** - Built-in version control to track changes and collaborate safely
+- **Customization**
+  - **Theme Flexibility** - Switch between dark and light modes to match your preference
 
 ## Prerequisites
 
