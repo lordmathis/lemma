@@ -175,7 +175,7 @@ export interface DefaultFile {
 export const DEFAULT_FILE: DefaultFile = {
   name: 'New File.md',
   path: 'New File.md',
-  content: '# Welcome to NovaMD\n\nStart editing here!',
+  content: '# Welcome to Lemma\n\nStart editing here!',
 };
 
 export interface FileNode {
