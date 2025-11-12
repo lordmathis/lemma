@@ -4,6 +4,8 @@
 
 Yet another markdown editor. Work in progress
 
+![App Screenshot](./.github/screenshot.png)
+
 ## Features
 
 - **Editing & Content**
