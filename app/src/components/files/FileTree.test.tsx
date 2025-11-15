@@ -69,7 +69,19 @@ vi.mock('react-arborist', () => ({
 
 // Mock resize observer hook
 vi.mock('@react-hook/resize-observer', () => ({
-  default: vi.fn(),
+  default: vi.fn(
+    (
+      _target: unknown,
+      callback: (entry: { contentRect: { width: number; height: number } }) => void
+    ) => {
+      // Immediately call the callback with a mock entry to provide size
+      if (callback) {
+        setTimeout(() => {
+          callback({ contentRect: { width: 300, height: 600 } });
+        }, 0);
+      }
+    }
+  ),
 }));
 
 // Mock contexts
@@ -172,7 +184,7 @@ describe('FileTree', () => {
     vi.clearAllMocks();
   });
 
-  it('renders file tree with files', () => {
+  it('renders file tree with files', async () => {
     const { getByTestId } = render(
       <TestWrapper>
         <FileTree
@@ -184,7 +196,9 @@ describe('FileTree', () => {
       </TestWrapper>
     );
 
-    expect(getByTestId('file-tree')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(getByTestId('file-tree')).toBeInTheDocument();
+    });
     expect(getByTestId('file-node-1')).toBeInTheDocument();
     expect(getByTestId('file-node-2')).toBeInTheDocument();
   });
@@ -201,6 +215,10 @@ describe('FileTree', () => {
       </TestWrapper>
     );
 
+    await waitFor(() => {
+      expect(getByTestId('file-node-1')).toBeInTheDocument();
+    });
+
     const fileNode = getByTestId('file-node-1');
     fireEvent.click(fileNode);
 
@@ -209,7 +227,7 @@ describe('FileTree', () => {
     });
   });
 
-  it('filters out hidden files when showHiddenFiles is false', () => {
+  it('filters out hidden files when showHiddenFiles is false', async () => {
     const { getByTestId, queryByTestId } = render(
       <TestWrapper>
         <FileTree
@@ -221,6 +239,10 @@ describe('FileTree', () => {
       </TestWrapper>
     );
 
+    await waitFor(() => {
+      expect(getByTestId('file-node-1')).toBeInTheDocument();
+    });
+
     // Should show regular files
     expect(getByTestId('file-node-1')).toBeInTheDocument();
     expect(getByTestId('file-node-2')).toBeInTheDocument();
@@ -229,7 +251,7 @@ describe('FileTree', () => {
     expect(queryByTestId('file-node-4')).not.toBeInTheDocument();
   });
 
-  it('shows hidden files when showHiddenFiles is true', () => {
+  it('shows hidden files when showHiddenFiles is true', async () => {
     const { getByTestId } = render(
       <TestWrapper>
         <FileTree
@@ -241,13 +263,17 @@ describe('FileTree', () => {
       </TestWrapper>
     );
 
+    await waitFor(() => {
+      expect(getByTestId('file-node-1')).toBeInTheDocument();
+    });
+
     // Should show all files including hidden
     expect(getByTestId('file-node-1')).toBeInTheDocument();
     expect(getByTestId('file-node-2')).toBeInTheDocument();
     expect(getByTestId('file-node-4')).toBeInTheDocument();
   });
 
-  it('renders empty tree when no files provided', () => {
+  it('renders empty tree when no files provided', async () => {
     const { getByTestId } = render(
       <TestWrapper>
         <FileTree
@@ -258,6 +284,10 @@ describe('FileTree', () => {
         />
       </TestWrapper>
     );
+
+    await waitFor(() => {
+      expect(getByTestId('file-tree')).toBeInTheDocument();
+    });
 
     const tree = getByTestId('file-tree');
     expect(tree).toBeInTheDocument();
@@ -275,6 +305,10 @@ describe('FileTree', () => {
         />
       </TestWrapper>
     );
+
+    await waitFor(() => {
+      expect(getByTestId('file-node-2')).toBeInTheDocument();
+    });
 
     // Click on folder (has children)
     const folderNode = getByTestId('file-node-2');

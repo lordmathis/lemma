@@ -1,4 +1,4 @@
-import React, { useRef, useState, useLayoutEffect, useCallback } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { Tree, type NodeApi } from 'react-arborist';
 import {
   IconFile,
@@ -23,14 +23,10 @@ interface FileTreeProps {
   loadFileList: () => Promise<void>;
 }
 
-const useSize = (target: React.RefObject<HTMLElement>): Size | undefined => {
+const useSize = (
+  target: React.RefObject<HTMLElement | null>
+): Size | undefined => {
   const [size, setSize] = useState<Size>();
-
-  useLayoutEffect(() => {
-    if (target.current) {
-      setSize(target.current.getBoundingClientRect());
-    }
-  }, [target]);
 
   useResizeObserver(target, (entry) => setSize(entry.contentRect));
   return size;

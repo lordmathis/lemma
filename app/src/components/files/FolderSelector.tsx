@@ -1,4 +1,4 @@
-import React, { useRef, useLayoutEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Box } from '@mantine/core';
 import { Tree, type NodeApi } from 'react-arborist';
 import {
@@ -21,14 +21,10 @@ interface Size {
   height: number;
 }
 
-const useSize = (target: React.RefObject<HTMLElement>): Size | undefined => {
+const useSize = (
+  target: React.RefObject<HTMLElement | null>
+): Size | undefined => {
   const [size, setSize] = useState<Size>();
-
-  useLayoutEffect(() => {
-    if (target.current) {
-      setSize(target.current.getBoundingClientRect());
-    }
-  }, [target]);
 
   useResizeObserver(target, (entry) => setSize(entry.contentRect));
   return size;
@@ -239,7 +235,10 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
       }}
     >
       {/* Root option */}
-      <RootNode isSelected={selectedPath === ''} onSelect={() => onSelect('')} />
+      <RootNode
+        isSelected={selectedPath === ''}
+        onSelect={() => onSelect('')}
+      />
 
       {/* Folder tree */}
       {size && folders.length > 0 && (
@@ -255,7 +254,11 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
           disableDrop={() => true}
         >
           {(props) => (
-            <FolderNode {...props} selectedPath={selectedPath} onSelect={onSelect} />
+            <FolderNode
+              {...props}
+              selectedPath={selectedPath}
+              onSelect={onSelect}
+            />
           )}
         </Tree>
       )}
