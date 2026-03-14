@@ -6,6 +6,10 @@ Yet another markdown editor. Work in progress
 
 ![App Screenshot](./.github/screenshot.png)
 
+> **⚠️ Notice**
+>
+> This is project is on hiatus. A rewrite is planned. This version will not receive any updates.
+
 ## Features
 
 - **Editing & Content**
